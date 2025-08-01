@@ -18,10 +18,10 @@ This SDK is a monorepo containing the following packages:
 
 | Package                               | Description                                                                                                                              |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **`@io-wallet-sdk/oauth2`** | Implements core OAuth 2.0 flows and security extensions (PAR, DPoP, PKCE, JARM) required for secure interactions.                          |
-| **`@io-wallet-sdk/oid-federation`** | Handles entity discovery and trust chain resolution within the Italian Federation, ensuring all actors are trusted and valid. 🛡️           |
-| **`@io-wallet-sdk/oid4vci`** | Manages **Verifiable Credential Issuance** flows. Use this to build Issuer services for credentials like the `mso_mdoc` (e.g., Digital Driver's License). |
-| **`@io-wallet-sdk/oid4vp`** | Manages **Verifiable Presentation** flows. Use this to build Relying Party services that request and verify user credentials from the IT-Wallet. ✅ |
+| **`@pagopa/io-wallet-oauth2`** | Implements core OAuth 2.0 flows and security extensions (PAR, DPoP, PKCE, JARM) required for secure interactions.                          |
+| **`@pagopa/io-wallet-oid-federation`** | Handles entity discovery and trust chain resolution within the Italian Federation, ensuring all actors are trusted and valid. 🛡️           |
+| **`@pagopa/io-wallet-oid4vci`** | Manages **Verifiable Credential Issuance** flows. Use this to build Issuer services for credentials like the `mso_mdoc` (e.g., Digital Driver's License). |
+| **`@pagopa/io-wallet-oid4vp`** | Manages **Verifiable Presentation** flows. Use this to build Relying Party services that request and verify user credentials from the IT-Wallet. ✅ |
 
 ## Installation
 
