@@ -110,7 +110,7 @@ try {
   const federationEntity = parseWithErrorHandling(
     itWalletEntityConfigurationClaimsSchema,
     federationResponsePayload,
-    "invalid Federation Entity provided"
+    "invalid Federation Entity provided",
   );
 
   console.log("Validation successful:", federationEntity);
