@@ -6,10 +6,6 @@ settings:
 
 importers:
   .:
-    dependencies:
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
     devDependencies:
       "@changesets/cli":
         specifier: ^2.29.5
@@ -17,6 +13,9 @@ importers:
       "@pagopa/eslint-config":
         specifier: ^4.0.1
         version: 4.0.6(eslint@8.57.1)(prettier@3.6.2)(vitest@3.2.4)
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(postcss@8.5.6)(typescript@5.6.3)
@@ -28,10 +27,14 @@ importers:
         version: 3.2.4
 
   packages/oid-federation:
-    devDependencies:
+    dependencies:
       "@openid-federation/core":
         specifier: ^0.2.0
         version: 0.2.0
+      "@openid4vc/utils":
+        specifier: ^0.2.0
+        version: 0.2.0(typescript@5.8.3)
+    devDependencies:
       zod:
         specifier: ^3.24.2
         version: 3.25.76
@@ -515,6 +518,12 @@ packages:
     resolution:
       {
         integrity: sha512-6tb9znTNJvFLAhcIp9XhFrgEU3Uxb42+mxQ4Fz/RKWNTEIybeq/b902OZzUm4m80RUXroNW7MU3CJutF6xSNwA==,
+      }
+
+  "@openid4vc/utils@0.2.0":
+    resolution:
+      {
+        integrity: sha512-CvZxy9eH8582Yb/gzc+XPiaQIbC7Y0IT3F14szGS++o6373dUN12KZQzey4hoRrVO92D04vCXyJY9xctw4zgMw==,
       }
 
   "@pagopa/eslint-config@4.0.6":
@@ -2611,6 +2620,17 @@ packages:
         integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==,
       }
 
+  valibot@0.42.1:
+    resolution:
+      {
+        integrity: sha512-3keXV29Ar5b//Hqi4MbSdV7lfVp6zuYLZuA9V1PvQUsXqogr+u5lvLPLk3A4f74VUXDnf/JfWMN6sB+koJ/FFw==,
+      }
+    peerDependencies:
+      typescript: ">=5"
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   vite-node@3.2.4:
     resolution:
       {
@@ -3076,6 +3096,13 @@ snapshots:
     dependencies:
       buffer: 6.0.3
       zod: 3.25.76
+
+  "@openid4vc/utils@0.2.0(typescript@5.8.3)":
+    dependencies:
+      buffer: 6.0.3
+      valibot: 0.42.1(typescript@5.8.3)
+    transitivePeerDependencies:
+      - typescript
 
   "@pagopa/eslint-config@4.0.6(eslint@8.57.1)(prettier@3.6.2)(vitest@3.2.4)":
     dependencies:
@@ -4268,6 +4295,10 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
+
+  valibot@0.42.1(typescript@5.8.3):
+    optionalDependencies:
+      typescript: 5.8.3
 
   vite-node@3.2.4:
     dependencies:
