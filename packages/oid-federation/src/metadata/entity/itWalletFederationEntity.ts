@@ -2,7 +2,7 @@ import { federationEntityMetadata } from "@openid-federation/core";
 import { z } from "zod";
 /**
  *
- * {@link https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/trust.html#metadata-of-federation-entity-leaves}
+ * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.1.0/en/trust.html#metadata-of-federation-entity-leaves}
  *
  */
 export const itWalletFederationEntityMetadata = federationEntityMetadata.schema

@@ -3,7 +3,7 @@ import { JWKS } from "../../jwk";
 
 /**
  *
- * {@link https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/credential-issuer-solution.html#metadata-for-oauth-authorization-server}
+ * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.1.0/en/credential-issuer-solution.html#metadata-for-oauth-authorization-server}
  *
  */
 export const itWalletAuthorizationServerMetadata = z

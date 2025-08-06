@@ -3,7 +3,7 @@ import { JWKS } from "../../jwk";
 
 /**
  *
- * {@link https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/relying-party-metadata.html}
+ * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.1.0/en/relying-party-metadata.html}
  *
  */
 export const itWalletCredentialVerifierMetadata = z
