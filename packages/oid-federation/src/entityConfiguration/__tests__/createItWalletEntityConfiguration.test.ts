@@ -1,9 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 
-
 describe("createItWalletEntityConfiguration", () => {
-
   const mockHeader = {
     alg: "ES256",
     kid: "test-kid",
@@ -29,7 +27,7 @@ describe("createItWalletEntityConfiguration", () => {
     metadata: {
       federation_entity: {
         contacts: ["info@pagopa.it"],
-        tos_uri: "https://io.italia.it/privacy-policy", 
+        tos_uri: "https://io.italia.it/privacy-policy",
         federation_resolve_endpoint: `https://wallet.example.com/resolve`,
         homepage_uri: "https://io.italia.it",
         logo_uri: "https://io.italia.it/assets/img/io-it-logo-blue.svg",
@@ -57,7 +55,7 @@ describe("createItWalletEntityConfiguration", () => {
     return new TextEncoder().encode(signatureString);
   });
 
-    // Helper to decode Base64Url
+  // Helper to decode Base64Url
   const decodeBase64Url = (str: string) => {
     // Replace URL-safe characters with standard Base64 characters
     let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -98,11 +96,11 @@ describe("createItWalletEntityConfiguration", () => {
 
     // 4. Check that the signature in the final JWT matches what our callback produced.
     const expectedSignature = new TextDecoder().decode(
-      await mockSignJwtCallback.mock.results[0].value
+      await mockSignJwtCallback.mock.results[0].value,
     );
     // The actual signature in the JWT is also Base64Url encoded
     const decodedSignature = new TextDecoder().decode(
-      Uint8Array.from(decodeBase64Url(signatureB64), (c) => c.charCodeAt(0))
+      Uint8Array.from(decodeBase64Url(signatureB64), (c) => c.charCodeAt(0)),
     );
     expect(decodedSignature).toBe(expectedSignature);
   });
@@ -115,7 +113,7 @@ describe("createItWalletEntityConfiguration", () => {
         header: invalidHeader,
         claims: mockClaims,
         signJwtCallback: mockSignJwtCallback,
-      })
+      }),
     ).rejects.toThrow("invalid header claims provided");
   });
 
@@ -127,7 +125,7 @@ describe("createItWalletEntityConfiguration", () => {
         header: mockHeader,
         claims: invalidClaims,
         signJwtCallback: mockSignJwtCallback,
-      })
+      }),
     ).rejects.toThrow("invalid payload claims provided");
   });
 });

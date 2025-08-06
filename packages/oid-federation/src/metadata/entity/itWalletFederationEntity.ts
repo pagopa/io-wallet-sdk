@@ -1,10 +1,15 @@
 import { federationEntityMetadata } from "@openid-federation/core";
 import { z } from "zod";
-
-export const itWalletFederationEntityMetadata =
-  federationEntityMetadata.schema.extend({
+/**
+ *
+ * {@link https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/trust.html#metadata-of-federation-entity-leaves}
+ *
+ */
+export const itWalletFederationEntityMetadata = federationEntityMetadata.schema
+  .extend({
     tos_uri: z.string().url().optional(),
-  });
+  })
+  .passthrough();
 
 export type ItWalletFederationEntityMetadata = z.input<
   typeof itWalletFederationEntityMetadata

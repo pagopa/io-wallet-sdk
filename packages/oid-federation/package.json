@@ -28,11 +28,9 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap"
   },
-  "devDependencies": {
-    "zod": "^3.24.2"
-  },
   "dependencies": {
     "@openid-federation/core": "^0.2.0",
-    "@openid4vc/utils": "^0.2.0"
+    "@openid4vc/utils": "^0.2.0",
+    "zod": "^3.24.2"
   }
 }

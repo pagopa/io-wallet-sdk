@@ -31,15 +31,15 @@ export const createItWalletEntityConfiguration = async ({
   claims,
 }: CreateEntityConfigurationOptions) => {
   const validatedHeader = parseWithErrorHandling(
-      entityConfigurationHeaderSchema,
-      header,
-      'invalid header claims provided'
-    )
+    entityConfigurationHeaderSchema,
+    header,
+    "invalid header claims provided",
+  );
   const validatedClaims = parseWithErrorHandling(
-      itWalletEntityConfigurationClaimsSchema,
-      claims,
-      'invalid payload claims provided'
-    )
+    itWalletEntityConfigurationClaimsSchema,
+    claims,
+    "invalid payload claims provided",
+  );
 
   const toBeSigned = createJwtSignableInput(header, claims);
 
