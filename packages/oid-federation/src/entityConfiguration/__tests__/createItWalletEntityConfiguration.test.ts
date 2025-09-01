@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
+import { Base64 } from "js-base64";
 
 describe("createItWalletEntityConfiguration", () => {
   const mockHeader = {
@@ -55,17 +56,6 @@ describe("createItWalletEntityConfiguration", () => {
     return new TextEncoder().encode(signatureString);
   });
 
-  // Helper to decode Base64Url
-  const decodeBase64Url = (str: string) => {
-    // Replace URL-safe characters with standard Base64 characters
-    let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-    // Pad with '=' if necessary
-    while (base64.length % 4) {
-      base64 += "=";
-    }
-    return atob(base64);
-  };
-
   it("should create a signed entity configuration JWT successfully", async () => {
     const result = await createItWalletEntityConfiguration({
       header: mockHeader,
@@ -81,8 +71,8 @@ describe("createItWalletEntityConfiguration", () => {
     const [headerB64, payloadB64, signatureB64] = parts;
 
     // 2. Decode the header and payload and check their contents.
-    const decodedHeader = JSON.parse(decodeBase64Url(headerB64));
-    const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
+    const decodedHeader = JSON.parse(Base64.decode(headerB64));
+    const decodedPayload = JSON.parse(Base64.decode(payloadB64));
 
     expect(decodedHeader).toEqual(mockHeader);
     expect(decodedPayload).toEqual(mockClaims);
@@ -100,7 +90,7 @@ describe("createItWalletEntityConfiguration", () => {
     );
     // The actual signature in the JWT is also Base64Url encoded
     const decodedSignature = new TextDecoder().decode(
-      Uint8Array.from(decodeBase64Url(signatureB64), (c) => c.charCodeAt(0)),
+      Uint8Array.from(Base64.decode(signatureB64), (c) => c.charCodeAt(0)),
     );
     expect(decodedSignature).toBe(expectedSignature);
   });
