@@ -16,12 +16,7 @@ export interface WalletAttestationOptions {
    * @type {string}
    */
   issuer: string;
-
-  /**
-   * The client identifier for whom the attestation is being created.
-   * @type {string}
-   */
-  clientId: string;
+  
   /**
    * The public part of the DPoP (Demonstrating Proof-of-Possession) key in JWK (JSON Web Key) format.
    * This key is used to bind the attestation to the client's session.

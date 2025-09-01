@@ -26,7 +26,8 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap"
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
+    "test": "vitest"
   },
   "dependencies": {
     "@openid-federation/core": "^0.2.0",
