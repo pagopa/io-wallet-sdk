@@ -19,7 +19,6 @@ describe("ItWalletProvider", () => {
     vi.clearAllMocks();
     
     mockOptions = {
-      issuer: "https://test-issuer.example.com",
     } as Openid4vciWalletProviderOptions;
 
     provider = new ItWalletProvider(mockOptions);
@@ -37,11 +36,13 @@ describe("ItWalletProvider", () => {
       mockWalletAttestationOptions = {
         issuer: "https://wallet-provider.example.com",
         dpopJwkPublic: {
-          kid: "test-key-id",
-          kty: "EC",
-          crv: "P-256",
-          x: "test-x-value",
-          y: "test-y-value",
+          jwk: {
+            kid: "test-key-id",
+            kty: "EC",
+            crv: "P-256",
+            x: "test-x-value",
+            y: "test-y-value",
+          }
         } as ClientAttestationJwtPayload["cnf"],
         signer: {
           walletProviderJwkPublicKid: "provider-key-id",
