@@ -2,6 +2,8 @@
 # It uses "actions/cache" and turborepo in order to perform tasks only on changed files.
 
 name: "Code Review"
+permissions:
+  contents: read
 
 on:
   push:
