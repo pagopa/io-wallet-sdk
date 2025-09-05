@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+        with:
+          ref: main
 
       - name: Setup PNPM
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda #v4.1.0
@@ -32,7 +34,6 @@ jobs:
       - name: Publish package on NPM 📦
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          pnpm config set publish-branch ""
           if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+)\.[0-9]+$ ]]; then
             pnpm publish --access=public --tag=${BASH_REMATCH[1]}
           else
