@@ -1,7 +1,7 @@
 {
   "name": "io-wallet-sdk",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Typescript SDK designed to streamline interactions with the Italian digital wallet ecosystem",
   "repository": {
     "url": "https://github.com/pagopa/io-wallet-sdk",
@@ -11,7 +11,8 @@
     "types:check": "tsc --noEmit",
     "build": "pnpm -r build",
     "test": "vitest",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "code-review": "pnpm types:check && pnpm -r build && pnpm test"
   },
   "keywords": [],
   "author": "PagoPA spa",
