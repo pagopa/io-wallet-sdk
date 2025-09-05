@@ -27,6 +27,18 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4
 
+  packages/oauth2:
+    dependencies:
+      '@openid4vc/oauth2':
+        specifier: ^0.2.0
+        version: 0.2.0(typescript@5.8.3)
+      '@openid4vc/utils':
+        specifier: ^0.2.0
+        version: 0.2.0(typescript@5.8.3)
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+
   packages/oid-federation:
     dependencies:
       '@openid-federation/core':
@@ -332,6 +344,9 @@ packages:
 
   '@openid-federation/core@0.2.0':
     resolution: {integrity: sha512-6tb9znTNJvFLAhcIp9XhFrgEU3Uxb42+mxQ4Fz/RKWNTEIybeq/b902OZzUm4m80RUXroNW7MU3CJutF6xSNwA==}
+
+  '@openid4vc/oauth2@0.2.0':
+    resolution: {integrity: sha512-++omnAoP/niDVhQp2nScNVjXzANX4d86IihmEJHfTHD8JFK+CZA/K0Ctk8yAXxfqY87bUy78Ve01Qqrn+Nw8eA==}
 
   '@openid4vc/utils@0.2.0':
     resolution: {integrity: sha512-CvZxy9eH8582Yb/gzc+XPiaQIbC7Y0IT3F14szGS++o6373dUN12KZQzey4hoRrVO92D04vCXyJY9xctw4zgMw==}
@@ -1998,6 +2013,13 @@ snapshots:
     dependencies:
       buffer: 6.0.3
       zod: 3.25.76
+
+  '@openid4vc/oauth2@0.2.0(typescript@5.8.3)':
+    dependencies:
+      '@openid4vc/utils': 0.2.0(typescript@5.8.3)
+      valibot: 0.42.1(typescript@5.8.3)
+    transitivePeerDependencies:
+      - typescript
 
   '@openid4vc/utils@0.2.0(typescript@5.8.3)':
     dependencies:
