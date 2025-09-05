@@ -32,6 +32,7 @@ jobs:
       - name: Publish package on NPM 📦
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          pnpm config set publish-branch ""
           if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+)\.[0-9]+$ ]]; then
             pnpm publish --access=public --tag=${BASH_REMATCH[1]}
           else
