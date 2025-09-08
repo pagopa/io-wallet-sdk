@@ -36,14 +36,12 @@ describe("ItWalletProvider", () => {
       mockWalletAttestationOptions = {
         issuer: "https://wallet-provider.example.com",
         dpopJwkPublic: {
-          jwk: {
             kid: "test-key-id",
             kty: "EC",
             crv: "P-256",
             x: "test-x-value",
             y: "test-y-value",
-          }
-        } as ClientAttestationJwtPayload["cnf"],
+        },
         signer: {
           walletProviderJwkPublicKid: "provider-key-id",
           trustChain: ["trust-anchor-jwt", "intermediate-jwt"],
@@ -61,7 +59,7 @@ describe("ItWalletProvider", () => {
         confirmation: {
           jwk: mockWalletAttestationOptions.dpopJwkPublic,
         },
-        clientId: mockWalletAttestationOptions.dpopJwkPublic.jwk.kid,
+        clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
         expiresAt: mockWalletAttestationOptions.expiresAt,
         issuer: mockWalletAttestationOptions.issuer,
         signer: {
@@ -88,7 +86,7 @@ describe("ItWalletProvider", () => {
         confirmation: {
           jwk: mockWalletAttestationOptions.dpopJwkPublic,
         },
-        clientId: mockWalletAttestationOptions.dpopJwkPublic.jwk.kid,
+        clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
         expiresAt: new Date("2024-12-31T23:59:59Z"),
         issuer: mockWalletAttestationOptions.issuer,
         signer: {
@@ -115,7 +113,7 @@ describe("ItWalletProvider", () => {
         confirmation: {
           jwk: mockWalletAttestationOptions.dpopJwkPublic,
         },
-        clientId: mockWalletAttestationOptions.dpopJwkPublic.jwk.kid,
+        clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
         expiresAt: new Date("2024-12-31T23:59:59Z"),
         issuer: mockWalletAttestationOptions.issuer,
         signer: {
@@ -133,10 +131,8 @@ describe("ItWalletProvider", () => {
       const customKidOptions = {
         ...mockWalletAttestationOptions,
         dpopJwkPublic: {
-          jwk: {
-            ...mockWalletAttestationOptions.dpopJwkPublic.jwk,
+            ...mockWalletAttestationOptions.dpopJwkPublic,
             kid: "custom-kid-value",
-          }
         },
       };
 

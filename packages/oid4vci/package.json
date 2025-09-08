@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@openid-federation/core": "^0.2.0",
-    "@openid4vc/oauth2": "^0.2.0",
+    "@openid4vc/oauth2": "0.3.0-alpha-20250513122832",
     "@openid4vc/openid4vci": "0.3.0-alpha-20250513122832",
     "@openid4vc/utils": "^0.2.0",
     "zod": "^3.24.2"

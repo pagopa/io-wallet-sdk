@@ -22,7 +22,7 @@ export interface WalletAttestationOptions {
    * This key is used to bind the attestation to the client's session.
    * @type {ClientAttestationJwtPayload['cnf']}
    */
-  dpopJwkPublic: ClientAttestationJwtPayload["cnf"];
+  dpopJwkPublic: ClientAttestationJwtPayload["cnf"]["jwk"];
   signer: {
     /**
      * The Key ID (`kid`) of the wallet provider's public key used for signing the attestation.
@@ -88,7 +88,7 @@ export class ItWalletProvider extends Openid4vciWalletProvider {
     options: WalletAttestationOptions,
   ): Promise<string> {
     const walletAttestation = await this.createWalletAttestationJwt({
-      clientId: options.dpopJwkPublic.jwk.kid,
+      clientId: options.dpopJwkPublic.kid,
       confirmation: {
         // We use the same key for DPoP as the wallet attestation
         jwk: options.dpopJwkPublic,
