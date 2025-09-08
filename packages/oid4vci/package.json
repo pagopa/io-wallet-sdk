@@ -1,16 +1,16 @@
 {
-  "name": "@pagopa/io-wallet-oid-federation",
+  "name": "@pagopa/io-wallet-oid4vci",
   "version": "0.2.0",
   "files": [
     "dist"
   ],
   "license": "Apache-2.0",
   "exports": "./src/index.ts",
-  "homepage": "https://github.com/pagopa/io-wallet-sdk/tree/main/packages/oid-federation",
+  "homepage": "https://github.com/pagopa/io-wallet-sdk/tree/main/packages/oid4vci",
   "repository": {
     "type": "git",
     "url": "https://github.com/pagopa/io-wallet-sdk",
-    "directory": "packages/oid-federation"
+    "directory": "packages/oid4vci"
   },
   "publishConfig": {
     "main": "./dist/index.js",
@@ -26,14 +26,14 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap"
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
+    "test": "vitest"
   },
   "dependencies": {
     "@openid-federation/core": "^0.2.0",
+    "@openid4vc/oauth2": "0.3.0-alpha-20250513122832",
+    "@openid4vc/openid4vci": "0.3.0-alpha-20250513122832",
     "@openid4vc/utils": "^0.2.0",
     "zod": "^3.24.2"
-  },
-  "devDependencies": {
-    "js-base64": "^3.7.8"
   }
 }
