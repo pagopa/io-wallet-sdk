@@ -61,7 +61,7 @@ describe("ItWalletProvider", () => {
         confirmation: {
           jwk: mockWalletAttestationOptions.dpopJwkPublic,
         },
-        clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
+        clientId: mockWalletAttestationOptions.dpopJwkPublic.jwk.kid,
         expiresAt: mockWalletAttestationOptions.expiresAt,
         issuer: mockWalletAttestationOptions.issuer,
         signer: {
@@ -88,7 +88,7 @@ describe("ItWalletProvider", () => {
         confirmation: {
           jwk: mockWalletAttestationOptions.dpopJwkPublic,
         },
-        clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
+        clientId: mockWalletAttestationOptions.dpopJwkPublic.jwk.kid,
         expiresAt: new Date("2024-12-31T23:59:59Z"),
         issuer: mockWalletAttestationOptions.issuer,
         signer: {
@@ -115,7 +115,7 @@ describe("ItWalletProvider", () => {
         confirmation: {
           jwk: mockWalletAttestationOptions.dpopJwkPublic,
         },
-        clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
+        clientId: mockWalletAttestationOptions.dpopJwkPublic.jwk.kid,
         expiresAt: new Date("2024-12-31T23:59:59Z"),
         issuer: mockWalletAttestationOptions.issuer,
         signer: {
@@ -133,8 +133,10 @@ describe("ItWalletProvider", () => {
       const customKidOptions = {
         ...mockWalletAttestationOptions,
         dpopJwkPublic: {
-          ...mockWalletAttestationOptions.dpopJwkPublic,
-          kid: "custom-kid-value",
+          jwk: {
+            ...mockWalletAttestationOptions.dpopJwkPublic.jwk,
+            kid: "custom-kid-value",
+          }
         },
       };
 

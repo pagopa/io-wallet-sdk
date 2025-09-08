@@ -88,7 +88,7 @@ export class ItWalletProvider extends Openid4vciWalletProvider {
     options: WalletAttestationOptions,
   ): Promise<string> {
     const walletAttestation = await this.createWalletAttestationJwt({
-      clientId: options.dpopJwkPublic.kid as string,
+      clientId: options.dpopJwkPublic.jwk.kid,
       confirmation: {
         // We use the same key for DPoP as the wallet attestation
         jwk: options.dpopJwkPublic,
