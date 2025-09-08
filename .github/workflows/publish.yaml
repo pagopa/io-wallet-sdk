@@ -39,8 +39,10 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+)\.[0-9]+$ ]]; then
             pnpm --filter @pagopa/io-wallet-oid-federation publish --access=public --tag=${BASH_REMATCH[1]}
+            pnpm --filter @pagopa/io-wallet-oid4vci publish --access=public --tag=${BASH_REMATCH[1]}
           else
             pnpm --filter @pagopa/io-wallet-oid-federation publish --access=public
+            pnpm --filter @pagopa/io-wallet-oid4vci publish --access=public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
