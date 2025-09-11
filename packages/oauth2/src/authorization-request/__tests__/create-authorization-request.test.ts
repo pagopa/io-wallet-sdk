@@ -119,7 +119,7 @@ describe('createPushedAuthorizationRequest', () => {
 
     await createPushedAuthorizationRequest(baseOptions)
 
-    const expectedIat = Math.floor(mockNow / 1000)
+    const expectedIat = Math.floor(mockNow)
     const expectedExp = expectedIat + (3600)
 
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
