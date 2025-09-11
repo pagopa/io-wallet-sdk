@@ -14,7 +14,6 @@ export const zAuthorizationRequest = z
       credential_configuration_id: z.string()
     }),
     redirect_uri: z.string().url().optional(),
-    jti: z.string(),
     issuer_state: z.optional(z.string()),
 
   })

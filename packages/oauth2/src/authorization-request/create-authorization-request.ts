@@ -74,7 +74,6 @@ export async function createPushedAuthorizationRequest(options: CreatePushedAuth
     authorization_details: options.authorization_details,
     code_challenge: pkce.codeChallenge,
     code_challenge_method: pkce.codeChallengeMethod,
-    jti: encodeToBase64Url(await options.callbacks.generateRandom(RANDOM_BYTES_SIZE))
   }
 
   const { dpop } = options;
@@ -94,6 +93,7 @@ export async function createPushedAuthorizationRequest(options: CreatePushedAuth
         exp: iat + JWT_EXPIRY_SECONDS,
         iat,
         iss: dpop.signer.publicJwk.kid,
+        jti: encodeToBase64Url(await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)),
         ...authorizationRequest
       },
     });
