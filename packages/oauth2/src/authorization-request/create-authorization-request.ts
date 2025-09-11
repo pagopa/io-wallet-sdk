@@ -82,6 +82,7 @@ export async function createPushedAuthorizationRequest(options: CreatePushedAuth
     throw new Error('DPoP signer must have alg and publicJwk.kid properties');
   }
 
+  const iat = Math.floor(Date.now())
   const requestJwt = await options.callbacks.signJwt(dpop.signer, {
       header: {
         alg: dpop.signer.alg,
@@ -90,8 +91,8 @@ export async function createPushedAuthorizationRequest(options: CreatePushedAuth
       },
       payload: {
         aud: options.audience,
-        exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY_SECONDS,
-        iat: Math.floor(Date.now() / 1000),
+        exp: iat + JWT_EXPIRY_SECONDS,
+        iat,
         iss: dpop.signer.publicJwk.kid,
         ...authorizationRequest
       },
