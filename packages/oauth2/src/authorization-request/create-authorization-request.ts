@@ -45,6 +45,16 @@ export interface CreatePushedAuthorizationRequestOptions {
   authorization_details: Record<string, unknown>[]
 
   /**
+   * state parameter to use for PAR. If not provided a value will generated automatically
+   */
+  state?: string
+
+  /**
+   * jti parameter to use for PAR. If not provided a value will generated automatically
+   */
+  jti?: string
+
+  /**
    * Code verifier to use for pkce. If not provided a value will generated when pkce is supported
    */
   pkceCodeVerifier?: string
@@ -67,7 +77,7 @@ export async function createPushedAuthorizationRequest(options: CreatePushedAuth
   const authorizationRequest: AuthorizationRequest = {
     response_type: 'code',
     response_mode: options.responseMode,
-    state: encodeToBase64Url( await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)),
+    state: options.state ?? encodeToBase64Url( await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)),
     client_id: options.clientId,
     redirect_uri: options.redirectUri,
     scope: options.scope,
@@ -93,7 +103,7 @@ export async function createPushedAuthorizationRequest(options: CreatePushedAuth
         exp: iat + JWT_EXPIRY_SECONDS,
         iat,
         iss: dpop.signer.publicJwk.kid,
-        jti: encodeToBase64Url(await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)),
+        jti: options.jti ?? encodeToBase64Url(await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)),
         ...authorizationRequest
       },
     });

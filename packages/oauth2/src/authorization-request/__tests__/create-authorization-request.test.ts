@@ -162,4 +162,25 @@ describe('createPushedAuthorizationRequest', () => {
       })
     })
   })
+
+  it('should use provided state and jti parameters when passed in options', async () => {
+    const customState = 'custom-state-value'
+    const customJti = 'custom-jti-value'
+    
+    const optionsWithStateAndJti = {
+      ...baseOptions,
+      state: customState,
+      jti: customJti
+    }
+
+    await createPushedAuthorizationRequest(optionsWithStateAndJti)
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({
+        state: customState,
+        jti: customJti
+      })
+    })
+  })
 })
