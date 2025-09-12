@@ -9,10 +9,10 @@ export const zAuthorizationRequest = z
     code_challenge: z.string(),
     code_challenge_method: z.string(),
     scope: z.string(),
-    authorization_details: z.object({
+    authorization_details: z.array(z.object({
       type: z.literal("openid_credential"),
       credential_configuration_id: z.string()
-    }),
+    })),
     redirect_uri: z.string().url().optional(),
     issuer_state: z.optional(z.string()),
 

@@ -42,7 +42,7 @@ export interface CreatePushedAuthorizationRequestOptions {
   /**
    * Allows clients to specify their fine-grained authorization requirements using the expressiveness of JSON data structures
    */
-  authorization_details: Record<string, unknown>
+  authorization_details: Record<string, unknown>[]
 
   /**
    * Code verifier to use for pkce. If not provided a value will generated when pkce is supported

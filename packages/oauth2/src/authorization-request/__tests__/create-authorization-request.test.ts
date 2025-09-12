@@ -36,10 +36,10 @@ describe('createPushedAuthorizationRequest', () => {
     scope: 'openid',
     responseMode: 'form_post',
     redirectUri: 'https://client.example.com/callback',
-    authorization_details: {
+    authorization_details: [{
       type: 'openid_credential',
       credential_configuration_id: 'test-config'
-    },
+    }],
     dpop: {
       signer: mockSigner
     }
@@ -82,10 +82,10 @@ describe('createPushedAuthorizationRequest', () => {
         client_id: 'test-client-id',
         redirect_uri: 'https://client.example.com/callback',
         scope: 'openid',
-        authorization_details: {
+        authorization_details: [{
           type: 'openid_credential',
           credential_configuration_id: 'test-config'
-        },
+        }],
         code_challenge: 'test-code-challenge',
         code_challenge_method: 'S256',
         jti: 'base64url_1,2,3,4'
@@ -159,25 +159,6 @@ describe('createPushedAuthorizationRequest', () => {
       }),
       payload: expect.objectContaining({
         iss: 'custom-signer-kid'
-      })
-    })
-  })
-
-  it('should include all authorization request fields in JWT payload', async () => {
-    await createPushedAuthorizationRequest(baseOptions)
-
-    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
-      header: expect.any(Object),
-      payload: expect.objectContaining({
-        response_type: 'code',
-        response_mode: 'form_post',
-        client_id: 'test-client-id',
-        scope: 'openid',
-        authorization_details: {
-          type: 'openid_credential',
-          credential_configuration_id: 'test-config'
-        },
-        redirect_uri: 'https://client.example.com/callback'
       })
     })
   })
