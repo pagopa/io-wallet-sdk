@@ -1,9 +1,14 @@
-import { CallbackContext, HashAlgorithm, HashCallback, Oauth2Error } from '@openid4vc/oauth2'
-import { decodeUtf8String, encodeToBase64Url } from '@openid4vc/utils'
+import {
+  CallbackContext,
+  HashAlgorithm,
+  HashCallback,
+  Oauth2Error,
+} from "@openid4vc/oauth2";
+import { decodeUtf8String, encodeToBase64Url } from "@openid4vc/utils";
 
 export enum PkceCodeChallengeMethod {
-  Plain = 'plain',
-  S256 = 'S256',
+  Plain = "plain",
+  S256 = "S256",
 }
 
 export interface CreatePkceOptions {
@@ -11,58 +16,66 @@ export interface CreatePkceOptions {
    * Also allows string values so it can be directly passed from the
    * 'code_challenge_methods_supported' metadata parameter
    */
-  allowedCodeChallengeMethods?: Array<string | PkceCodeChallengeMethod>
+  allowedCodeChallengeMethods?: (PkceCodeChallengeMethod | string)[];
+
+  callbacks: Pick<CallbackContext, "generateRandom" | "hash">;
 
   /**
    * Code verifier to use. If not provided a value will be generated.
    */
-  codeVerifier?: string
-
-  callbacks: Pick<CallbackContext, 'hash' | 'generateRandom'>
+  codeVerifier?: string;
 }
 
 export interface CreatePkceReturn {
-  codeVerifier: string
-  codeChallenge: string
-  codeChallengeMethod: PkceCodeChallengeMethod
+  codeChallenge: string;
+  codeChallengeMethod: PkceCodeChallengeMethod;
+  codeVerifier: string;
 }
 
-export async function createPkce(options: CreatePkceOptions): Promise<CreatePkceReturn> {
+export async function createPkce(
+  options: CreatePkceOptions,
+): Promise<CreatePkceReturn> {
   const allowedCodeChallengeMethods = options.allowedCodeChallengeMethods ?? [
     PkceCodeChallengeMethod.S256,
     PkceCodeChallengeMethod.Plain,
-  ]
+  ];
 
   if (allowedCodeChallengeMethods.length === 0) {
-    throw new Oauth2Error(`Unable to create PKCE code verifier. 'allowedCodeChallengeMethods' is an empty array.`)
+    throw new Oauth2Error(
+      `Unable to create PKCE code verifier. 'allowedCodeChallengeMethods' is an empty array.`,
+    );
   }
 
-  const codeChallengeMethod = allowedCodeChallengeMethods.includes(PkceCodeChallengeMethod.S256)
+  const codeChallengeMethod = allowedCodeChallengeMethods.includes(
+    PkceCodeChallengeMethod.S256,
+  )
     ? PkceCodeChallengeMethod.S256
-    : PkceCodeChallengeMethod.Plain
+    : PkceCodeChallengeMethod.Plain;
 
-  const codeVerifier = options.codeVerifier ?? encodeToBase64Url(await options.callbacks.generateRandom(64))
+  const codeVerifier =
+    options.codeVerifier ??
+    encodeToBase64Url(await options.callbacks.generateRandom(64));
   return {
-    codeVerifier,
     codeChallenge: await calculateCodeChallenge({
       codeChallengeMethod,
       codeVerifier,
       hashCallback: options.callbacks.hash,
     }),
     codeChallengeMethod,
-  }
+    codeVerifier,
+  };
 }
 
 export interface VerifyPkceOptions {
+  callbacks: Pick<CallbackContext, "hash">;
+
+  codeChallenge: string;
+  codeChallengeMethod: PkceCodeChallengeMethod;
+
   /**
    * secure random code verifier
    */
-  codeVerifier: string
-
-  codeChallenge: string
-  codeChallengeMethod: PkceCodeChallengeMethod
-
-  callbacks: Pick<CallbackContext, 'hash'>
+  codeVerifier: string;
 }
 
 export async function verifyPkce(options: VerifyPkceOptions) {
@@ -70,27 +83,34 @@ export async function verifyPkce(options: VerifyPkceOptions) {
     codeChallengeMethod: options.codeChallengeMethod,
     codeVerifier: options.codeVerifier,
     hashCallback: options.callbacks.hash,
-  })
+  });
 
   if (options.codeChallenge !== calculatedCodeChallenge) {
     throw new Oauth2Error(
-      `Derived code challenge '${calculatedCodeChallenge}' from code_verifier '${options.codeVerifier}' using code challenge method '${options.codeChallengeMethod}' does not match the expected code challenge.`
-    )
+      `Derived code challenge '${calculatedCodeChallenge}' from code_verifier '${options.codeVerifier}' using code challenge method '${options.codeChallengeMethod}' does not match the expected code challenge.`,
+    );
   }
 }
 
 async function calculateCodeChallenge(options: {
-  codeVerifier: string
-  codeChallengeMethod: PkceCodeChallengeMethod
-  hashCallback: HashCallback
+  codeChallengeMethod: PkceCodeChallengeMethod;
+  codeVerifier: string;
+  hashCallback: HashCallback;
 }) {
   if (options.codeChallengeMethod === PkceCodeChallengeMethod.Plain) {
-    return options.codeVerifier
+    return options.codeVerifier;
   }
 
   if (options.codeChallengeMethod === PkceCodeChallengeMethod.S256) {
-    return encodeToBase64Url(await options.hashCallback(decodeUtf8String(options.codeVerifier), HashAlgorithm.Sha256))
+    return encodeToBase64Url(
+      await options.hashCallback(
+        decodeUtf8String(options.codeVerifier),
+        HashAlgorithm.Sha256,
+      ),
+    );
   }
 
-  throw new Oauth2Error(`Unsupported code challenge method ${options.codeChallengeMethod}`)
+  throw new Oauth2Error(
+    `Unsupported code challenge method ${options.codeChallengeMethod}`,
+  );
 }

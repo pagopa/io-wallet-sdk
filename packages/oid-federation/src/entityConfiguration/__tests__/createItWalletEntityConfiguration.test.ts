@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 import { Base64 } from "js-base64";
+import { describe, expect, it, vi } from "vitest";
+
+import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 
 describe("createItWalletEntityConfiguration", () => {
   const mockHeader = {
@@ -10,56 +11,56 @@ describe("createItWalletEntityConfiguration", () => {
   };
 
   const mockClaims = {
-    iss: "https://wallet.example.com",
-    sub: "https://wallet.example.com",
     exp: 1754321794,
     iat: 1754321794,
+    iss: "https://wallet.example.com",
     jwks: {
       keys: [
         {
-          kty: "EC" as const,
           crv: "P-256",
+          kid: "test-kid",
+          kty: "EC" as const,
           x: "...",
           y: "...",
-          kid: "test-kid",
         },
       ],
     },
     metadata: {
       federation_entity: {
         contacts: ["info@pagopa.it"],
-        tos_uri: "https://io.italia.it/privacy-policy",
         federation_resolve_endpoint: `https://wallet.example.com/resolve`,
         homepage_uri: "https://io.italia.it",
         logo_uri: "https://io.italia.it/assets/img/io-it-logo-blue.svg",
         organization_name: "PagoPa S.p.A.",
         policy_uri: "https://io.italia.it/privacy-policy",
+        tos_uri: "https://io.italia.it/privacy-policy",
       },
       wallet_provider: {
         jwks: {
           keys: [
             {
-              kty: "EC" as const,
               crv: "P-256",
+              kid: "test-kid",
+              kty: "EC" as const,
               x: "...",
               y: "...",
-              kid: "test-kid",
             },
           ],
         },
       },
     },
+    sub: "https://wallet.example.com",
   };
 
-  const mockSignJwtCallback = vi.fn(async ({ toBeSigned, jwk }) => {
+  const mockSignJwtCallback = vi.fn(async ({ jwk, toBeSigned }) => {
     const signatureString = `signed-${toBeSigned}-${jwk.kid}`;
     return new TextEncoder().encode(signatureString);
   });
 
   it("should create a signed entity configuration JWT successfully", async () => {
     const result = await createItWalletEntityConfiguration({
-      header: mockHeader,
       claims: mockClaims,
+      header: mockHeader,
       signJwtCallback: mockSignJwtCallback,
     });
 
@@ -100,8 +101,8 @@ describe("createItWalletEntityConfiguration", () => {
 
     await expect(
       createItWalletEntityConfiguration({
-        header: invalidHeader,
         claims: mockClaims,
+        header: invalidHeader,
         signJwtCallback: mockSignJwtCallback,
       }),
     ).rejects.toThrow("invalid header claims provided");
@@ -112,8 +113,8 @@ describe("createItWalletEntityConfiguration", () => {
 
     await expect(
       createItWalletEntityConfiguration({
-        header: mockHeader,
         claims: invalidClaims,
+        header: mockHeader,
         signJwtCallback: mockSignJwtCallback,
       }),
     ).rejects.toThrow("invalid payload claims provided");
