@@ -22,6 +22,7 @@ if [ -n "$(git status --porcelain)" ]; then
   if [ "$newStageFilesCount" -gt 0 ]; then
     echo "🪝 Some files were not well formed: ($newStageFilesCount)."
     exit 1
+  fi
 fi
 
 echo "🪝 Done."
