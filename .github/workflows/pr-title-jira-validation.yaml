@@ -1,4 +1,4 @@
-name: "Pull request linter for Jira task and issue linking"
+name: "Pull request title Jira validation"
 
 permissions:
   contents: read
@@ -13,8 +13,7 @@ on:
       - synchronize
 
 jobs:
-  lint:
-    name: Validate PR Title And Link Jira Issue
+  pr-title-jira-validation:
     runs-on: ubuntu-22.04
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -23,8 +22,7 @@ jobs:
       TITLE: ${{ github.event.pull_request.title }}
       PR_TITLE_SAFE: ${{ github.event.pull_request.title }}
     steps:
-      - name: Validate PR Title Format
-        id: lint
+      - name: Check if title contains Jira issue keys
         run: |
           PR_TITLE="$TITLE"
           if [[ "$PR_TITLE" =~ \[(#?[A-Z]*-[0-9]*,?){1,}\] ]]; then
@@ -35,8 +33,7 @@ jobs:
             echo "VALIDATION_RESULT=failure" >> $GITHUB_ENV
           fi
 
-      - name: Find Existing Jira Comment
-        id: find_comment
+      - name: Find existing Jira comment
         run: |
           EXISTING_COMMENT=$(gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
             --jq ".[] | select(.body | startswith(\"$COMMENT_TITLE\")) | .id")          
@@ -48,7 +45,7 @@ jobs:
             echo "EXISTING_COMMENT_ID=$EXISTING_COMMENT" >> $GITHUB_ENV
           fi
 
-      - name: Create or Update Jira Link Comment
+      - name: Create or update Jira link comment
         run: |
           if [[ "${{ env.VALIDATION_RESULT }}" == "success" ]]; then
             PR_TITLE="$TITLE"

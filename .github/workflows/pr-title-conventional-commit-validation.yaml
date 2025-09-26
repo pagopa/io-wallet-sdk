@@ -1,4 +1,4 @@
-name: "Pull request title linter for conventional commit"
+name: "Pull request title conventional commit validation"
 
 permissions:
   contents: read
@@ -13,8 +13,7 @@ on:
       - synchronize
 
 jobs:
-  lint:
-    name: Validate PR Title
+  pr-title-conventional-commit-validation:
     runs-on: ubuntu-22.04
     env:
       VALID_TYPES: "feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert"
@@ -23,8 +22,7 @@ jobs:
       # https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
       TITLE: ${{ github.event.pull_request.title }}
     steps:
-      - name: Check PR Title Format
-        id: lint
+      - name: Check if title follows conventional commit format
         run: |
           PR_TITLE="$TITLE"
           if [[ "$PR_TITLE" =~ ^([a-z]+)(\(([ a-zA-Z0-9_-]+)\))?:[[:space:]]*(.+)$ ]]; then
@@ -47,7 +45,6 @@ jobs:
           fi
 
       - name: Find Existing Comment
-        id: find_comment
         run: |
           EXISTING_COMMENT=$(gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
             --jq ".[] | select(.body | startswith(\"$COMMENT_TITLE\")) | .id")          
