@@ -97,7 +97,7 @@ jobs:
           echo "Pull request title ($TITLE) is not properly formatted."
           exit 1
   pr-title-jira-validation:
-    name: "Jira issues validation"
+    name: "Jira issue validation"
     runs-on: ubuntu-22.04
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
