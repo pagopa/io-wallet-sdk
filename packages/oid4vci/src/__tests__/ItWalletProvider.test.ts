@@ -1,14 +1,26 @@
-import { describe, it, expect, vi, beforeEach, type MockedFunction } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  type MockedFunction,
+} from "vitest";
 import { ClientAttestationJwtPayload } from "@openid4vc/oauth2";
 import { Openid4vciWalletProviderOptions } from "@openid4vc/openid4vci";
 import { addSecondsToDate } from "@openid4vc/utils";
-import { ItWalletProvider, WalletAttestationOptions } from "../ItWalletProvider";
+import {
+  ItWalletProvider,
+  WalletAttestationOptions,
+} from "../ItWalletProvider";
 
 vi.mock("@openid4vc/utils", () => ({
   addSecondsToDate: vi.fn(),
 }));
 
-const mockAddSecondsToDate = addSecondsToDate as MockedFunction<typeof addSecondsToDate>;
+const mockAddSecondsToDate = addSecondsToDate as MockedFunction<
+  typeof addSecondsToDate
+>;
 
 describe("ItWalletProvider", () => {
   let provider: ItWalletProvider;
@@ -17,13 +29,14 @@ describe("ItWalletProvider", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    mockOptions = {
-    } as Openid4vciWalletProviderOptions;
+
+    mockOptions = {} as Openid4vciWalletProviderOptions;
 
     provider = new ItWalletProvider(mockOptions);
-    
-    mockCreateWalletAttestationJwt = vi.fn().mockResolvedValue("mocked-jwt-token");
+
+    mockCreateWalletAttestationJwt = vi
+      .fn()
+      .mockResolvedValue("mocked-jwt-token");
     provider.createWalletAttestationJwt = mockCreateWalletAttestationJwt;
 
     mockAddSecondsToDate.mockReturnValue(new Date("2024-12-31T23:59:59Z"));
@@ -36,11 +49,11 @@ describe("ItWalletProvider", () => {
       mockWalletAttestationOptions = {
         issuer: "https://wallet-provider.example.com",
         dpopJwkPublic: {
-            kid: "test-key-id",
-            kty: "EC",
-            crv: "P-256",
-            x: "test-x-value",
-            y: "test-y-value",
+          kid: "test-key-id",
+          kty: "EC",
+          crv: "P-256",
+          x: "test-x-value",
+          y: "test-y-value",
         },
         signer: {
           walletProviderJwkPublicKid: "provider-key-id",
@@ -53,7 +66,9 @@ describe("ItWalletProvider", () => {
     });
 
     it("should create wallet attestation JWT with all provided options", async () => {
-      const result = await provider.createItWalletAttestationJwt(mockWalletAttestationOptions);
+      const result = await provider.createItWalletAttestationJwt(
+        mockWalletAttestationOptions,
+      );
 
       expect(mockCreateWalletAttestationJwt).toHaveBeenCalledWith({
         confirmation: {
@@ -81,7 +96,10 @@ describe("ItWalletProvider", () => {
 
       await provider.createItWalletAttestationJwt(optionsWithoutExpiration);
 
-      expect(mockAddSecondsToDate).toHaveBeenCalledWith(expect.any(Date), 3600 * 24 * 60 * 60);
+      expect(mockAddSecondsToDate).toHaveBeenCalledWith(
+        expect.any(Date),
+        3600 * 24 * 60 * 60,
+      );
       expect(mockCreateWalletAttestationJwt).toHaveBeenCalledWith({
         confirmation: {
           jwk: mockWalletAttestationOptions.dpopJwkPublic,
@@ -131,8 +149,8 @@ describe("ItWalletProvider", () => {
       const customKidOptions = {
         ...mockWalletAttestationOptions,
         dpopJwkPublic: {
-            ...mockWalletAttestationOptions.dpopJwkPublic,
-            kid: "custom-kid-value",
+          ...mockWalletAttestationOptions.dpopJwkPublic,
+          kid: "custom-kid-value",
         },
       };
 
@@ -141,7 +159,7 @@ describe("ItWalletProvider", () => {
       expect(mockCreateWalletAttestationJwt).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: "custom-kid-value",
-        })
+        }),
       );
     });
 
@@ -154,7 +172,7 @@ describe("ItWalletProvider", () => {
             alg: "ES256",
             method: "federation",
           }),
-        })
+        }),
       );
     });
 
@@ -163,7 +181,7 @@ describe("ItWalletProvider", () => {
       mockCreateWalletAttestationJwt.mockRejectedValue(error);
 
       await expect(
-        provider.createItWalletAttestationJwt(mockWalletAttestationOptions)
+        provider.createItWalletAttestationJwt(mockWalletAttestationOptions),
       ).rejects.toThrow("JWT creation failed");
     });
   });

@@ -1,7 +1,14 @@
-import { encodeToBase64Url } from '@openid4vc/utils'
-import { AuthorizationServerMetadata, CallbackContext, RequestDpopOptions } from "@openid4vc/oauth2";
-import { createPkce } from '../pkce';
-import { AuthorizationRequest, PushedAuthorizationRequestSigned } from './z-authorization-request';
+import { encodeToBase64Url } from "@openid4vc/utils";
+import {
+  AuthorizationServerMetadata,
+  CallbackContext,
+  RequestDpopOptions,
+} from "@openid4vc/oauth2";
+import { createPkce } from "../pkce";
+import {
+  AuthorizationRequest,
+  PushedAuthorizationRequestSigned,
+} from "./z-authorization-request";
 
 const JWT_EXPIRY_SECONDS = 3600; // 1 hour
 const RANDOM_BYTES_SIZE = 32;
@@ -10,63 +17,64 @@ export interface CreatePushedAuthorizationRequestOptions {
   /**
    * Callback context mostly for crypto related functionality
    */
-  callbacks: Pick<CallbackContext, 'hash' | 'generateRandom' | 'signJwt' >
+  callbacks: Pick<CallbackContext, "hash" | "generateRandom" | "signJwt">;
 
-  codeChallengeMethodsSupported: AuthorizationServerMetadata["code_challenge_methods_supported"]
+  codeChallengeMethodsSupported: AuthorizationServerMetadata["code_challenge_methods_supported"];
 
   /**
    * MUST be set to the thumbprint of the jwk value in the cnf parameter inside the Wallet Attestation.
    */
-  clientId: string
+  clientId: string;
 
   /**
    * It MUST be set to the identifier of the Credential Issuer.
    */
-  audience: string
+  audience: string;
 
   /**
    * Scope to request for the authorization request
    */
-  scope: string
+  scope: string;
 
   /**
    * It MUST be one of the supported values (response_modes_supported) provided in the metadata of the Credential Issuer.
    */
-  responseMode: string
+  responseMode: string;
 
   /**
    * Redirect uri to include in the authorization request
    */
-  redirectUri: string
+  redirectUri: string;
 
   /**
    * Allows clients to specify their fine-grained authorization requirements using the expressiveness of JSON data structures
    */
-  authorization_details: Record<string, unknown>[]
+  authorization_details: Record<string, unknown>[];
 
   /**
    * state parameter to use for PAR. If not provided a value will generated automatically
    */
-  state?: string
+  state?: string;
 
   /**
    * jti parameter to use for PAR. If not provided a value will generated automatically
    */
-  jti?: string
+  jti?: string;
 
   /**
    * Code verifier to use for pkce. If not provided a value will generated when pkce is supported
    */
-  pkceCodeVerifier?: string
+  pkceCodeVerifier?: string;
 
   /**
    * DPoP options
    */
-  dpop: RequestDpopOptions
+  dpop: RequestDpopOptions;
 }
 
-export async function createPushedAuthorizationRequest(options: CreatePushedAuthorizationRequestOptions) : Promise<PushedAuthorizationRequestSigned> {
-
+export async function createPushedAuthorizationRequest(
+  options: CreatePushedAuthorizationRequestOptions,
+): Promise<PushedAuthorizationRequestSigned> {
   // PKCE
   const pkce = await createPkce({
     allowedCodeChallengeMethods: options.codeChallengeMethodsSupported,
@@ -75,41 +83,49 @@ export async function createPushedAuthorizationRequest(options: CreatePushedAuth
   });
 
   const authorizationRequest: AuthorizationRequest = {
-    response_type: 'code',
+    response_type: "code",
     response_mode: options.responseMode,
-    state: options.state ?? encodeToBase64Url( await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)),
+    state:
+      options.state ??
+      encodeToBase64Url(
+        await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
+      ),
     client_id: options.clientId,
     redirect_uri: options.redirectUri,
     scope: options.scope,
     authorization_details: options.authorization_details,
     code_challenge: pkce.codeChallenge,
     code_challenge_method: pkce.codeChallengeMethod,
-  }
+  };
 
   const { dpop } = options;
   if (!dpop.signer.alg || !dpop.signer.publicJwk?.kid) {
-    throw new Error('DPoP signer must have alg and publicJwk.kid properties');
+    throw new Error("DPoP signer must have alg and publicJwk.kid properties");
   }
 
-  const iat = Math.floor(Date.now())
+  const iat = Math.floor(Date.now());
   const requestJwt = await options.callbacks.signJwt(dpop.signer, {
-      header: {
-        alg: dpop.signer.alg,
-        kid: dpop.signer.publicJwk.kid,
-        typ: "jwt",
-      },
-      payload: {
-        aud: options.audience,
-        exp: iat + JWT_EXPIRY_SECONDS,
-        iat,
-        iss: dpop.signer.publicJwk.kid,
-        jti: options.jti ?? encodeToBase64Url(await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)),
-        ...authorizationRequest
-      },
-    });
+    header: {
+      alg: dpop.signer.alg,
+      kid: dpop.signer.publicJwk.kid,
+      typ: "jwt",
+    },
+    payload: {
+      aud: options.audience,
+      exp: iat + JWT_EXPIRY_SECONDS,
+      iat,
+      iss: dpop.signer.publicJwk.kid,
+      jti:
+        options.jti ??
+        encodeToBase64Url(
+          await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
+        ),
+      ...authorizationRequest,
+    },
+  });
 
   return {
     client_id: options.clientId,
-    request: requestJwt.jwt
-  }
+    request: requestJwt.jwt,
+  };
 }

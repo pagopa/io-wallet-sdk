@@ -1,2 +1,2 @@
 export * from "./pkce";
-export * from "./authorization-request"
+export * from "./authorization-request";
