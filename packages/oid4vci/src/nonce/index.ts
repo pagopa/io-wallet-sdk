@@ -1,1 +1,1 @@
-export * from "./z-nonce-response";
+export * from "./get-nonce";

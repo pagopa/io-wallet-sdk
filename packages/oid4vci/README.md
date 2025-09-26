@@ -19,7 +19,7 @@ yarn add @pagopa/io-wallet-oid4vci
 ### Wallet Provider
 
 ```typescript
-import { ItWalletProvider } from '@pagopa/io-wallet-oid4vci';
+import { ItWalletProvider } from "@pagopa/io-wallet-oid4vci";
 
 // Initialize the provider with required options
 const walletProvider = new ItWalletProvider({
@@ -33,7 +33,10 @@ const walletProvider = new ItWalletProvider({
 Create wallet attestations required during the OID4VCI flow:
 
 ```typescript
-import { ItWalletProvider, WalletAttestationOptions } from '@pagopa/io-wallet-oid4vci';
+import {
+  ItWalletProvider,
+  WalletAttestationOptions,
+} from "@pagopa/io-wallet-oid4vci";
 
 // Create wallet attestation
 const attestationOptions: WalletAttestationOptions = {
@@ -44,21 +47,22 @@ const attestationOptions: WalletAttestationOptions = {
     kty: "EC",
     crv: "P-256",
     x: "...",
-    y: "..."
+    y: "...",
   },
   signer: {
     walletProviderJwkPublicKid: "wallet-provider-key-id",
     trustChain: [
       "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9...", // Trust anchor JWT
       // Additional trust chain JWTs
-    ]
+    ],
   },
   walletName: "My Italian Wallet", // Optional
   walletLink: "https://mywalletapp.com", // Optional
-  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // Optional, defaults to 60 days
+  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Optional, defaults to 60 days
 };
 
-const attestationJwt = await walletProvider.createItWalletAttestationJwt(attestationOptions);
+const attestationJwt =
+  await walletProvider.createItWalletAttestationJwt(attestationOptions);
 ```
 
 The wallet attestation JWT can then be used in the OID4VCI protocol flow to prove the wallet's identity and key possession.
