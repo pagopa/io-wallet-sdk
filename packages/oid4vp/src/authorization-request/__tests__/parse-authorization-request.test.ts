@@ -2,7 +2,7 @@ import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
 import { AuthorizationRequestObject } from "../z-request-object";
 import {describe, it, expect} from 'vitest'
 import { parseAuthorizeRequest } from "../parse-authorization-request";
-import { Oid4vpParseError } from "../../error";
+import { Oid4vpParsingError } from "../../error";
 import { AuthorizationRequestParsingError } from "../errors";
 const jose = import('jose')
 
@@ -114,7 +114,7 @@ describe('parseAuthorizationRequest tests', async () => {
             requestObjectJwt : missingMandatoryFieldRequestObjectJwt,
             dpop : {signer},
             callbacks 
-        })).rejects.toThrow(Oid4vpParseError)
+        })).rejects.toThrow(Oid4vpParsingError)
     })
 
     it('should throw an Oid4vpParseError for non conforming structure', () => {
@@ -122,7 +122,7 @@ describe('parseAuthorizationRequest tests', async () => {
             requestObjectJwt : nonConformingRequestObjectJwt,
             dpop : {signer},
             callbacks 
-        })).rejects.toThrow(Oid4vpParseError)
+        })).rejects.toThrow(Oid4vpParsingError)
     })
 
     it('should parse and verify the request object correctly since expiration is not checked', async () => {
@@ -139,7 +139,7 @@ describe('parseAuthorizationRequest tests', async () => {
             requestObjectJwt : 'this is not a JWT',
             dpop : {signer},
             callbacks 
-        })).rejects.toThrow(Oid4vpParseError)
+        })).rejects.toThrow(Oid4vpParsingError)
     })
 
     it('should throw an AuthorizationRequestParsingError because of a malformed signature', () => {

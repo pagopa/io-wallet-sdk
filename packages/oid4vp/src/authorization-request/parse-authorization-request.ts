@@ -1,7 +1,7 @@
 import { CallbackContext, decodeJwt, Oauth2JwtParseError, RequestDpopOptions } from '@openid4vc/oauth2'
 import { AuthorizationRequestObject, zOpenid4vpAuthorizationRequest } from './z-request-object';
 import { AuthorizationRequestParsingError } from './errors';
-import { Oid4vpParseError } from '../error/Oid4vpParseError';
+import { Oid4vpParsingError } from '../error/Oid4vpParsingError';
 import { ValidationError } from '@openid4vc/utils';
 
 export interface ParseAuthorizeRequestOptions {
@@ -40,7 +40,7 @@ export async function parseAuthorizeRequest(options: ParseAuthorizeRequestOption
 
     } catch (error) {
         if (error instanceof Oauth2JwtParseError || error instanceof ValidationError) {
-            throw new Oid4vpParseError(error.message)
+            throw new Oid4vpParsingError(error.message)
         }
         throw new AuthorizationRequestParsingError(
             `Unexpected error during Request Object parsing: ${error instanceof Error ? error.message : String(error)}`
