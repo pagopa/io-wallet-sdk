@@ -69,7 +69,7 @@ describe("ItWalletProvider", () => {
 
     it("should create wallet attestation JWT with all provided options", async () => {
       const result = await provider.createItWalletAttestationJwt(
-        mockWalletAttestationOptions
+        mockWalletAttestationOptions,
       );
 
       expect(mockCreateWalletAttestationJwt).toHaveBeenCalledWith({
@@ -100,7 +100,7 @@ describe("ItWalletProvider", () => {
 
       expect(mockAddSecondsToDate).toHaveBeenCalledWith(
         expect.any(Date),
-        3600 * 24 * 60 * 60
+        3600 * 24 * 60 * 60,
       );
       expect(mockCreateWalletAttestationJwt).toHaveBeenCalledWith({
         clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
@@ -161,7 +161,7 @@ describe("ItWalletProvider", () => {
       expect(mockCreateWalletAttestationJwt).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: "custom-kid-value",
-        })
+        }),
       );
     });
 
@@ -174,7 +174,7 @@ describe("ItWalletProvider", () => {
             alg: "ES256",
             method: "federation",
           }),
-        })
+        }),
       );
     });
 
@@ -183,7 +183,7 @@ describe("ItWalletProvider", () => {
       mockCreateWalletAttestationJwt.mockRejectedValue(error);
 
       await expect(
-        provider.createItWalletAttestationJwt(mockWalletAttestationOptions)
+        provider.createItWalletAttestationJwt(mockWalletAttestationOptions),
       ).rejects.toThrow("JWT creation failed");
     });
   });

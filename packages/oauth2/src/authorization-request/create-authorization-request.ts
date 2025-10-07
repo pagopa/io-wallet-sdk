@@ -74,7 +74,7 @@ export interface CreatePushedAuthorizationRequestOptions {
 }
 
 export async function createPushedAuthorizationRequest(
-  options: CreatePushedAuthorizationRequestOptions
+  options: CreatePushedAuthorizationRequestOptions,
 ): Promise<PushedAuthorizationRequestSigned> {
   // PKCE
   const pkce = await createPkce({
@@ -95,7 +95,7 @@ export async function createPushedAuthorizationRequest(
     state:
       options.state ??
       encodeToBase64Url(
-        await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)
+        await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
       ),
   };
 
@@ -119,7 +119,7 @@ export async function createPushedAuthorizationRequest(
       jti:
         options.jti ??
         encodeToBase64Url(
-          await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)
+          await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
         ),
       ...authorizationRequest,
     },

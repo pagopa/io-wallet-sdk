@@ -70,7 +70,7 @@ describe("createItWalletEntityConfiguration", () => {
     expect(parts).toHaveLength(3);
 
     const [headerB64, payloadB64, signatureB64] = parts;
-    
+
     if (!headerB64 || !payloadB64 || !signatureB64) {
       throw new Error("JWT parts are missing");
     }
