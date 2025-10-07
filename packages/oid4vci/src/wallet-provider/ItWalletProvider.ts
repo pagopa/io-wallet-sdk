@@ -2,6 +2,8 @@ import { ClientAttestationJwtPayload } from "@openid4vc/oauth2";
 import { Openid4vciWalletProvider } from "@openid4vc/openid4vci";
 import { addSecondsToDate } from "@openid4vc/utils";
 
+import { WalletProviderError } from "./errors";
+
 /**
  * @interface WalletAttestationOptions
  * @description Defines the options required to create a wallet attestation JWT.
@@ -76,6 +78,10 @@ export class ItWalletProvider extends Openid4vciWalletProvider {
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
+    if (!options.dpopJwkPublic.kid) {
+      throw new WalletProviderError("The DPoP JWK must have a 'kid' property");
+    }
+
     const walletAttestation = await this.createWalletAttestationJwt({
       clientId: options.dpopJwkPublic.kid,
       confirmation: {
