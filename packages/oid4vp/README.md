@@ -107,7 +107,10 @@ export class AuthorizationRequestParsingError extends Error {
         this.name = 'AuthorizationRequestParsingError'
     }
 }
+```
+ Error that is thrown when the JWT signature is not verified successfully or other generic errors occur during request object parsing
 
+```typescript
 export class Oid4vpParseError extends Error {
     constructor(message : string) {
         super(message);
@@ -115,3 +118,4 @@ export class Oid4vpParseError extends Error {
     }
 }
 ```
+Package level error class which wraps parsing and validation errors

@@ -21,6 +21,13 @@ export interface ParseAuthorizeRequestOptions {
     dpop: RequestDpopOptions
 }
 
+/**
+ * This method verifies a JWT containing a Request Object and returns its
+ * decoded value for further processing
+ * @param options {@link ParseAuthorizeRequestOptions}
+ * @returns An {@link AuthorizationRequestObject} containing the RP required
+ *          credentials
+ */
 export async function parseAuthorizeRequest(options: ParseAuthorizeRequestOptions) : Promise<AuthorizationRequestObject> {
 
     try {

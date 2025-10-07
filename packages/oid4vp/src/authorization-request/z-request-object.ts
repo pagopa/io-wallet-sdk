@@ -1,6 +1,10 @@
 import { zJwtPayload } from '@openid4vc/oauth2'
 import {z} from 'zod'
 
+/**
+ * Zod parser that describes a JWT payload
+ * containing an OID4VP Request Object
+ */
 export const zOpenid4vpAuthorizationRequest = z
   .object({
     response_type: z.literal('vp_token'),
