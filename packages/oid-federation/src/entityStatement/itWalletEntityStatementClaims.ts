@@ -8,27 +8,28 @@ import {
   trustMarkSchema,
 } from "@openid-federation/core";
 import { z } from "zod";
+
 import { itWalletMetadataSchema } from "../metadata/itWalletMetadata";
 
 export const itWalletEntityStatementClaimsSchema = z
   .object({
-    iss: z.string(),
-    sub: z.string(),
-    iat: dateSchema,
-    exp: dateSchema,
-    jwks: jsonWebKeySetSchema,
     authority_hints: z.array(z.string().url()).optional(),
+    constraints: constraintSchema.optional(),
+    crit: z.array(z.string()).optional(),
+    exp: dateSchema,
+    iat: dateSchema,
+    iss: z.string(),
+    jwks: jsonWebKeySetSchema,
     metadata: itWalletMetadataSchema.optional(),
     metadata_policy: z
       .record(z.record(metadataPolicySchema).optional())
       .optional(),
-    constraints: constraintSchema.optional(),
-    crit: z.array(z.string()).optional(),
     metadata_policy_crit: z.array(z.string()).optional(),
-    trust_marks: z.array(trustMarkSchema).optional(),
+    source_endpoint: z.string().url().optional(),
+    sub: z.string(),
     trust_mark_issuers: trustMarkIssuerSchema.optional(),
     trust_mark_owners: trustMarkOwnerSchema.optional(),
-    source_endpoint: z.string().url().optional(),
+    trust_marks: z.array(trustMarkSchema).optional(),
   })
   .passthrough()
   .refine(
