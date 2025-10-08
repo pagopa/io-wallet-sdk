@@ -11,8 +11,14 @@
     "types:check": "tsc --noEmit",
     "build": "pnpm -r build",
     "test": "vitest",
-    "format": "prettier --write .",
-    "code-review": "pnpm types:check && pnpm -r build && pnpm test"
+    "format": "prettier --write \"packages/**/src/**/*.{js,ts}\"",
+    "format:check": "prettier --check \"packages/**/src/**/*.{js,ts}\"",
+    "lint": "eslint --fix \"packages/**/src/**/*.{js,ts}\"",
+    "lint:check": "eslint \"packages/**/src/**/*.{js,ts}\"",
+    "pre-commit": "pnpm format && pnpm lint",
+    "pre-push": "pnpm pre-commit && pnpm types:check && pnpm test",
+    "code-review": "pnpm types:check && pnpm lint:check && pnpm format:check && pnpm -r build && pnpm test",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "PagoPA spa",
@@ -21,6 +27,8 @@
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
     "@pagopa/eslint-config": "^4.0.1",
+    "eslint": "^9.36.0",
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "tsup": "^8.5.0",
     "typescript": "5.6.3",
