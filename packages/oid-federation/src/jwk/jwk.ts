@@ -27,7 +27,6 @@ export const JWK = z.object({
   /** JWK "use" (Public Key Use) Parameter. */
   use: z.string().optional(),
   x: z.string().optional(),
-  y: z.string().optional(),
   /** JWK "x5c" (X.509 Certificate Chain) Parameter. */
   x5c: z.array(z.string()).optional(),
   /** JWK "x5t" (X.509 Certificate SHA-1 Thumbprint) Parameter. */
@@ -36,6 +35,7 @@ export const JWK = z.object({
   "x5t#S256": z.string().optional(),
   /** JWK "x5u" (X.509 URL) Parameter. */
   x5u: z.string().optional(),
+  y: z.string().optional(),
 });
 
 export type JWKS = z.infer<typeof JWKS>;

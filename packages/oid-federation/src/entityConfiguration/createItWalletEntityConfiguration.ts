@@ -1,22 +1,23 @@
 import {
+  EntityConfigurationHeaderOptions,
+  SignCallback,
   createJsonWebToken,
   createJwtSignableInput,
-  EntityConfigurationHeaderOptions,
   entityConfigurationHeaderSchema,
   getUsedJsonWebKey,
-  SignCallback,
 } from "@openid-federation/core";
+
+import { parseWithErrorHandling } from "../utils/validate";
 import {
   ItWalletEntityConfigurationClaimsOptions,
   itWalletEntityConfigurationClaimsSchema,
 } from "./itWalletEntityConfigurationClaims";
-import { parseWithErrorHandling } from "../utils/validate";
 
-export type CreateEntityConfigurationOptions = {
+export interface CreateEntityConfigurationOptions {
   claims: ItWalletEntityConfigurationClaimsOptions;
   header: EntityConfigurationHeaderOptions;
   signJwtCallback: SignCallback;
-};
+}
 
 /**
  *
@@ -26,9 +27,9 @@ export type CreateEntityConfigurationOptions = {
  *
  */
 export const createItWalletEntityConfiguration = async ({
+  claims,
   header,
   signJwtCallback,
-  claims,
 }: CreateEntityConfigurationOptions) => {
   const validatedHeader = parseWithErrorHandling(
     entityConfigurationHeaderSchema,
@@ -45,7 +46,7 @@ export const createItWalletEntityConfiguration = async ({
 
   const jwk = getUsedJsonWebKey(validatedHeader, validatedClaims);
 
-  const signature = await signJwtCallback({ toBeSigned, jwk });
+  const signature = await signJwtCallback({ jwk, toBeSigned });
 
   return createJsonWebToken(header, claims, signature);
 };

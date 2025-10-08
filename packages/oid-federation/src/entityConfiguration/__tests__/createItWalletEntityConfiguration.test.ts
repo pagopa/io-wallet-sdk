@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 import { Base64 } from "js-base64";
+import { describe, expect, it, vi } from "vitest";
+
+import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 
 describe("createItWalletEntityConfiguration", () => {
   const mockHeader = {
@@ -10,56 +11,56 @@ describe("createItWalletEntityConfiguration", () => {
   };
 
   const mockClaims = {
-    iss: "https://wallet.example.com",
-    sub: "https://wallet.example.com",
     exp: 1754321794,
     iat: 1754321794,
+    iss: "https://wallet.example.com",
     jwks: {
       keys: [
         {
-          kty: "EC" as const,
           crv: "P-256",
+          kid: "test-kid",
+          kty: "EC" as const,
           x: "...",
           y: "...",
-          kid: "test-kid",
         },
       ],
     },
     metadata: {
       federation_entity: {
         contacts: ["info@pagopa.it"],
-        tos_uri: "https://io.italia.it/privacy-policy",
         federation_resolve_endpoint: `https://wallet.example.com/resolve`,
         homepage_uri: "https://io.italia.it",
         logo_uri: "https://io.italia.it/assets/img/io-it-logo-blue.svg",
         organization_name: "PagoPa S.p.A.",
         policy_uri: "https://io.italia.it/privacy-policy",
+        tos_uri: "https://io.italia.it/privacy-policy",
       },
       wallet_provider: {
         jwks: {
           keys: [
             {
-              kty: "EC" as const,
               crv: "P-256",
+              kid: "test-kid",
+              kty: "EC" as const,
               x: "...",
               y: "...",
-              kid: "test-kid",
             },
           ],
         },
       },
     },
+    sub: "https://wallet.example.com",
   };
 
-  const mockSignJwtCallback = vi.fn(async ({ toBeSigned, jwk }) => {
+  const mockSignJwtCallback = vi.fn(async ({ jwk, toBeSigned }) => {
     const signatureString = `signed-${toBeSigned}-${jwk.kid}`;
     return new TextEncoder().encode(signatureString);
   });
 
   it("should create a signed entity configuration JWT successfully", async () => {
     const result = await createItWalletEntityConfiguration({
-      header: mockHeader,
       claims: mockClaims,
+      header: mockHeader,
       signJwtCallback: mockSignJwtCallback,
     });
 
@@ -69,6 +70,10 @@ describe("createItWalletEntityConfiguration", () => {
     expect(parts).toHaveLength(3);
 
     const [headerB64, payloadB64, signatureB64] = parts;
+
+    if (!headerB64 || !payloadB64 || !signatureB64) {
+      throw new Error("JWT parts are missing");
+    }
 
     // 2. Decode the header and payload and check their contents.
     const decodedHeader = JSON.parse(Base64.decode(headerB64));
@@ -81,12 +86,13 @@ describe("createItWalletEntityConfiguration", () => {
     // We can't know the exact `toBeSigned` string without duplicating the library's logic,
     // but we can confirm the callback was called once.
     expect(mockSignJwtCallback).toHaveBeenCalledOnce();
-    const callbackArgs = mockSignJwtCallback.mock.calls[0][0];
+
+    const callbackArgs = mockSignJwtCallback.mock.calls.at(0)?.at(0);
     expect(callbackArgs.jwk.kid).toBe("test-kid");
 
     // 4. Check that the signature in the final JWT matches what our callback produced.
     const expectedSignature = new TextDecoder().decode(
-      await mockSignJwtCallback.mock.results[0].value,
+      await mockSignJwtCallback.mock.results.at(0)?.value,
     );
     // The actual signature in the JWT is also Base64Url encoded
     const decodedSignature = new TextDecoder().decode(
@@ -100,8 +106,9 @@ describe("createItWalletEntityConfiguration", () => {
 
     await expect(
       createItWalletEntityConfiguration({
-        header: invalidHeader,
         claims: mockClaims,
+        // @ts-expect-error the header is intentionally invalid for this test
+        header: invalidHeader,
         signJwtCallback: mockSignJwtCallback,
       }),
     ).rejects.toThrow("invalid header claims provided");
@@ -112,8 +119,9 @@ describe("createItWalletEntityConfiguration", () => {
 
     await expect(
       createItWalletEntityConfiguration({
-        header: mockHeader,
+        // @ts-expect-error the claims are intentionally invalid for this test
         claims: invalidClaims,
+        header: mockHeader,
         signJwtCallback: mockSignJwtCallback,
       }),
     ).rejects.toThrow("invalid payload claims provided");
