@@ -36,6 +36,7 @@ describe("Test createTokenDPoP", () => {
       {},
       {
         header: {
+          ...header,
           typ: "dpop+jwt",
         },
         payload: {
@@ -211,6 +212,7 @@ describe("Test createTokenDPoP", () => {
       {},
       {
         header: {
+          ...header,
           typ: "dpop+jwt",
         },
         payload: {
