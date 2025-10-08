@@ -1,2 +1,1 @@
-
-export * from './Oid4vpParsingError'
+export * from "./Oid4vpParsingError";

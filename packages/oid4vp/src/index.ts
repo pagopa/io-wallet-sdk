@@ -1,3 +1,2 @@
-
-export * from './error'
-export * from './authorization-request'
+export * from "./authorization-request";
+export * from "./error";
