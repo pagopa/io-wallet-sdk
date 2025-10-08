@@ -98,7 +98,7 @@ export interface CreateClientAttestationPopJwtOptions {
   clientAttestation: string;
 
   /**
-   * Expiration time of the JWT. If not proided 1 minute will be added to the `issuedAt`
+   * Expiration time of the JWT. If not provided 1 minute will be added to the `issuedAt`
    */
   expiresAt?: Date;
 
