@@ -1,39 +1,24 @@
+import { JsonParseError } from "@openid4vc/utils";
+import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT_TYPES, HEADERS } from "../../constants";
-import { Oauth2ParseError } from "../../error/Oauth2ParseError";
 import {
   FetchPushedAuthorizationRequestOptions,
-  PushedAuthorizationRequestError,
   fetchPushedAuthorizationRequest,
 } from "../fetch-authorization-request";
 
-describe("PushedAuthorizationRequestError", () => {
-  it("should create error with message only", () => {
-    const error = new PushedAuthorizationRequestError("Test error message");
+const mockFetch = vi.fn();
 
-    expect(error.message).toBe("Test error message");
-    expect(error.name).toBe("PushedAuthorizationRequestError");
-    expect(error.statusCode).toBeUndefined();
-    expect(error).toBeInstanceOf(Error);
-  });
-
-  it("should create error with message and status code", () => {
-    const error = new PushedAuthorizationRequestError(
-      "Test error message",
-      400,
-    );
-
-    expect(error.message).toBe("Test error message");
-    expect(error.name).toBe("PushedAuthorizationRequestError");
-    expect(error.statusCode).toBe(400);
-    expect(error).toBeInstanceOf(Error);
-  });
+vi.mock("@openid4vc/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@openid4vc/utils")>();
+  return {
+    ...actual,
+    createFetcher: () => mockFetch,
+  };
 });
 
 describe("fetchPushedAuthorizationRequest", () => {
-  const mockFetch = vi.fn();
-
   const baseOptions: FetchPushedAuthorizationRequestOptions = {
     callbacks: {
       fetch: mockFetch,
@@ -109,21 +94,25 @@ describe("fetchPushedAuthorizationRequest", () => {
   });
 
   describe("HTTP error handling", () => {
-    it("should throw PushedAuthorizationRequestError for 400 status", async () => {
+    it("should throw UnexpectedStatusCodeError for 400 status", async () => {
       const mockResponse = {
+        headers: {
+          get: vi.fn().mockReturnValue("text/plain"),
+        },
         status: 400,
         text: vi.fn().mockResolvedValue("Bad Request: Invalid client_id"),
+        url: "https://auth-server.example.com/par",
       };
       mockFetch.mockResolvedValue(mockResponse);
 
       await expect(
         fetchPushedAuthorizationRequest(baseOptions),
-      ).rejects.toThrow(PushedAuthorizationRequestError);
+      ).rejects.toThrow(UnexpectedStatusCodeError);
 
       await expect(
         fetchPushedAuthorizationRequest(baseOptions),
       ).rejects.toThrow(
-        "Pushed authorization request failed with status 400. Expected 201 Created. Response: Bad Request: Invalid client_id",
+        "message=Http request failed. Expected 201, got 400, url: https://auth-server.example.com/par reason=Bad Request: Invalid client_id statusCode=400",
       );
 
       const error = await fetchPushedAuthorizationRequest(baseOptions).catch(
@@ -132,10 +121,14 @@ describe("fetchPushedAuthorizationRequest", () => {
       expect(error.statusCode).toBe(400);
     });
 
-    it("should throw PushedAuthorizationRequestError for 500 status", async () => {
+    it("should throw UnexpectedStatusCodeError for 500 status", async () => {
       const mockResponse = {
+        headers: {
+          get: vi.fn().mockReturnValue("text/plain"),
+        },
         status: 500,
         text: vi.fn().mockResolvedValue("Internal Server Error"),
+        url: "https://auth-server.example.com/par",
       };
       mockFetch.mockResolvedValue(mockResponse);
 
@@ -143,27 +136,11 @@ describe("fetchPushedAuthorizationRequest", () => {
         (e) => e,
       );
 
-      expect(error).toBeInstanceOf(PushedAuthorizationRequestError);
+      expect(error).toBeInstanceOf(UnexpectedStatusCodeError);
       expect(error.statusCode).toBe(500);
       expect(error.message).toContain(
-        "Pushed authorization request failed with status 500",
+        "message=Http request failed. Expected 201, got 500, url: https://auth-server.example.com/par reason=Internal Server Error statusCode=500",
       );
-    });
-
-    it("should handle error response text extraction failure", async () => {
-      const mockResponse = {
-        status: 404,
-        text: vi.fn().mockRejectedValue(new Error("Failed to read response")),
-      };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const error = await fetchPushedAuthorizationRequest(baseOptions).catch(
-        (e) => e,
-      );
-
-      expect(error).toBeInstanceOf(PushedAuthorizationRequestError);
-      expect(error.message).toContain("Unknown error");
-      expect(error.statusCode).toBe(404);
     });
 
     it("should throw for any non-201 status code", async () => {
@@ -172,8 +149,12 @@ describe("fetchPushedAuthorizationRequest", () => {
       for (const statusCode of statusCodes) {
         mockFetch.mockClear();
         const mockResponse = {
+          headers: {
+            get: vi.fn().mockReturnValue("text/plain"),
+          },
           status: statusCode,
           text: vi.fn().mockResolvedValue(`Status ${statusCode} error`),
+          url: "https://auth-server.example.com/par",
         };
         mockFetch.mockResolvedValue(mockResponse);
 
@@ -181,14 +162,14 @@ describe("fetchPushedAuthorizationRequest", () => {
           (e) => e,
         );
 
-        expect(error).toBeInstanceOf(PushedAuthorizationRequestError);
+        expect(error).toBeInstanceOf(UnexpectedStatusCodeError);
         expect(error.statusCode).toBe(statusCode);
       }
     });
   });
 
   describe("response parsing errors", () => {
-    it("should throw Oauth2ParseError for missing request_uri", async () => {
+    it("should throw JsonParseError for missing request_uri", async () => {
       const mockResponse = {
         json: vi.fn().mockResolvedValue({
           expires_in: 60,
@@ -202,13 +183,13 @@ describe("fetchPushedAuthorizationRequest", () => {
         (e) => e,
       );
 
-      expect(error).toBeInstanceOf(Oauth2ParseError);
+      expect(error).toBeInstanceOf(JsonParseError);
       expect(error.message).toContain(
         "Failed to parse pushed authorization response",
       );
     });
 
-    it("should throw Oauth2ParseError for missing expires_in", async () => {
+    it("should throw JsonParseError for missing expires_in", async () => {
       const mockResponse = {
         json: vi.fn().mockResolvedValue({
           request_uri: "urn:ietf:params:oauth:request_uri:test-uri",
@@ -222,7 +203,7 @@ describe("fetchPushedAuthorizationRequest", () => {
         (e) => e,
       );
 
-      expect(error).toBeInstanceOf(Oauth2ParseError);
+      expect(error).toBeInstanceOf(JsonParseError);
       expect(error.message).toContain(
         "Failed to parse pushed authorization response",
       );
