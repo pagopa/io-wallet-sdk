@@ -1,5 +1,6 @@
-import { ValidationError } from "@openid4vc/utils";
 import type { z } from "zod";
+
+import { ValidationError } from "@openid4vc/utils";
 
 export const parseWithErrorHandling = <Schema extends z.ZodSchema>(
   schema: Schema,

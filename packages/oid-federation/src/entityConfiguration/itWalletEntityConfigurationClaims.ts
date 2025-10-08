@@ -1,4 +1,5 @@
 import type { z } from "zod";
+
 import { itWalletEntityStatementClaimsSchema } from "../entityStatement/itWalletEntityStatementClaims";
 
 export const itWalletEntityConfigurationClaimsSchema =

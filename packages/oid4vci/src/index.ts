@@ -1,2 +1,2 @@
-export * from './wallet-provider'
 export * from './token-dpop'
+export * from "./wallet-provider/ItWalletProvider";
