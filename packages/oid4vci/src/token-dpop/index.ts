@@ -1,1 +1,1 @@
-export * from './createTokenDPoP'
+export * from "./createTokenDPoP";
