@@ -14,7 +14,7 @@ export interface CreateTokenDPoPOptions {
   /**
    * Customizable headers for DPoP signing.
    * As per technical specifications, the key typ will be set to 'dpop+jwt',
-   * overriding any custom value passed. In case the alg and jwk properies
+   * overriding any custom value passed. In case the alg and jwk properties
    * will not be set, the responsibility of doing so is left to the signJwt
    * callback, which may as well override such keys if passed
    */
