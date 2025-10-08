@@ -7,9 +7,7 @@ export interface CreateTokenDPoPOptions {
   /**
    * Object containing callbacks for DPoP generation and signature
    */
-  callbacks: {
-    generateRandom: () => Promise<string>;
-  } & Pick<CallbackContext, "signJwt">;
+  callbacks: Pick<CallbackContext, "signJwt">;
 
   /**
    * Customizable headers for DPoP signing.
@@ -22,14 +20,12 @@ export interface CreateTokenDPoPOptions {
 
   /**
    * Customizable payload for DPoP signing.
-   * In case of a missing jti value, a new one
-   * will be provided by invoking the generateRandom
-   * callback. Any field might be overridden by the signJwt callback
+   * Any field might be overridden by the signJwt callback
    */
   payload: {
     htm: HttpMethod;
     htu: string;
-    jti?: string;
+    jti: string;
   } & Record<string, unknown>;
 
   /**
@@ -50,9 +46,6 @@ export async function createTokenDPoP(options: CreateTokenDPoPOptions) {
       ...options.header,
       typ: "dpop+jwt",
     },
-    payload: {
-      ...options.payload,
-      jti: options.payload.jti ?? (await options.callbacks.generateRandom()),
-    },
+    payload: options.payload,
   });
 }

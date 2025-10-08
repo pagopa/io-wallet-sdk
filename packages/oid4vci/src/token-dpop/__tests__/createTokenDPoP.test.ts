@@ -10,7 +10,6 @@ const callbacks = {
   signJwt: vi.fn(),
 };
 
-// eslint-disable-next-line max-lines-per-function
 describe("Test createTokenDPoP", () => {
   beforeEach(() => {
     callbacks.signJwt.mockClear();
@@ -23,6 +22,7 @@ describe("Test createTokenDPoP", () => {
     const payload = {
       htm: "POST" as const,
       htu: "test://uri.htu",
+      jti: MOCKED_RANDOM,
     };
 
     await createTokenDPoP({
@@ -39,10 +39,7 @@ describe("Test createTokenDPoP", () => {
           ...header,
           typ: "dpop+jwt",
         },
-        payload: {
-          ...payload,
-          jti: MOCKED_RANDOM,
-        },
+        payload,
       },
     );
   });
@@ -62,6 +59,7 @@ describe("Test createTokenDPoP", () => {
       },
       htm: "POST" as const,
       htu: "test://uri.htu",
+      jti: MOCKED_RANDOM,
     };
 
     await createTokenDPoP({
@@ -78,10 +76,7 @@ describe("Test createTokenDPoP", () => {
           ...header,
           typ: "dpop+jwt",
         },
-        payload: {
-          ...payload,
-          jti: MOCKED_RANDOM,
-        },
+        payload,
       },
     );
   });
@@ -94,6 +89,7 @@ describe("Test createTokenDPoP", () => {
     const payload = {
       htm: "POST" as const,
       htu: "test://uri.htu",
+      jti: MOCKED_RANDOM,
     };
 
     await createTokenDPoP({
@@ -110,41 +106,7 @@ describe("Test createTokenDPoP", () => {
           ...header,
           typ: "dpop+jwt",
         },
-        payload: {
-          ...payload,
-          jti: MOCKED_RANDOM,
-        },
-      },
-    );
-  });
-
-  it("should use the default passed jti", async () => {
-    const header = {
-      alg: "ES256",
-    };
-    const payload = {
-      htm: "POST" as const,
-      htu: "test://uri.htu",
-      jti: "I will not be overwritten",
-    };
-
-    await createTokenDPoP({
-      callbacks,
-      header,
-      payload,
-      signer: {} as JwtSigner,
-    });
-
-    expect(callbacks.signJwt).toHaveBeenCalledWith(
-      {},
-      {
-        header: {
-          ...header,
-          typ: "dpop+jwt",
-        },
-        payload: {
-          ...payload,
-        },
+        payload,
       },
     );
   });
@@ -165,6 +127,7 @@ describe("Test createTokenDPoP", () => {
       },
       htm: "POST" as const,
       htu: "test://uri.htu",
+      jti: MOCKED_RANDOM,
     };
 
     await createTokenDPoP({
@@ -181,43 +144,7 @@ describe("Test createTokenDPoP", () => {
           ...header,
           typ: "dpop+jwt",
         },
-        payload: {
-          ...payload,
-          jti: MOCKED_RANDOM,
-        },
-      },
-    );
-  });
-
-  it("should keep the extra values in the payload and not overwrite the jti field", async () => {
-    const header = { alg: "ES256" };
-    const payload = {
-      extra: "This is an extra record",
-      extraObject: {
-        title: "This is an extra object's title",
-      },
-      htm: "POST" as const,
-      htu: "test://uri.htu",
-      jti: "I will not be overwritten",
-    };
-
-    await createTokenDPoP({
-      callbacks,
-      header,
-      payload,
-      signer: {} as JwtSigner,
-    });
-
-    expect(callbacks.signJwt).toHaveBeenCalledWith(
-      {},
-      {
-        header: {
-          ...header,
-          typ: "dpop+jwt",
-        },
-        payload: {
-          ...payload,
-        },
+        payload,
       },
     );
   });
