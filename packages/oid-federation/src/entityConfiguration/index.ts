@@ -1,2 +1,2 @@
-export * from "./itWalletEntityConfigurationClaims";
 export * from "./createItWalletEntityConfiguration";
+export * from "./itWalletEntityConfigurationClaims";
