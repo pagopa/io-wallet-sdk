@@ -148,7 +148,7 @@ export async function createClientAttestationPopJwt(
   const payload = {
     aud: options.authorizationServer,
     exp: dateToSeconds(expiresAt),
-    iat: dateToSeconds(options.issuedAt),
+    iat: dateToSeconds(options.issuedAt ?? new Date()),
     iss: clientAttestation.payload.sub as string,
     jti: encodeToBase64Url(await options.callbacks.generateRandom(32)),
   } satisfies ClientAttestationPopJwtPayload;
