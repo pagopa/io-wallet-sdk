@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT_TYPES, HEADERS } from "../../constants";
 import {
-  FetchPushedAuthorizationRequestOptions,
-  fetchPushedAuthorizationRequest,
-} from "../fetch-authorization-request";
+  fetchPushedAuthorizationResponse,
+  fetchPushedAuthorizationResponseOptions,
+} from "../fetch-authorization-response";
 
 const mockFetch = vi.fn();
 
@@ -18,8 +18,8 @@ vi.mock("@openid4vc/utils", async (importOriginal) => {
   };
 });
 
-describe("fetchPushedAuthorizationRequest", () => {
-  const baseOptions: FetchPushedAuthorizationRequestOptions = {
+describe("fetchPushedAuthorizationResponse", () => {
+  const baseOptions: fetchPushedAuthorizationResponseOptions = {
     callbacks: {
       fetch: mockFetch,
     },
@@ -47,7 +47,7 @@ describe("fetchPushedAuthorizationRequest", () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const result = await fetchPushedAuthorizationRequest(baseOptions);
+      const result = await fetchPushedAuthorizationResponse(baseOptions);
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://auth-server.example.com/par",
@@ -83,7 +83,7 @@ describe("fetchPushedAuthorizationRequest", () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const result = await fetchPushedAuthorizationRequest(baseOptions);
+      const result = await fetchPushedAuthorizationResponse(baseOptions);
 
       expect(result).toEqual({
         additional_property: "should-be-preserved",
@@ -106,16 +106,16 @@ describe("fetchPushedAuthorizationRequest", () => {
       mockFetch.mockResolvedValue(mockResponse);
 
       await expect(
-        fetchPushedAuthorizationRequest(baseOptions),
+        fetchPushedAuthorizationResponse(baseOptions),
       ).rejects.toThrow(UnexpectedStatusCodeError);
 
       await expect(
-        fetchPushedAuthorizationRequest(baseOptions),
+        fetchPushedAuthorizationResponse(baseOptions),
       ).rejects.toThrow(
         "message=Http request failed. Expected 201, got 400, url: https://auth-server.example.com/par reason=Bad Request: Invalid client_id statusCode=400",
       );
 
-      const error = await fetchPushedAuthorizationRequest(baseOptions).catch(
+      const error = await fetchPushedAuthorizationResponse(baseOptions).catch(
         (e) => e,
       );
       expect(error.statusCode).toBe(400);
@@ -132,7 +132,7 @@ describe("fetchPushedAuthorizationRequest", () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const error = await fetchPushedAuthorizationRequest(baseOptions).catch(
+      const error = await fetchPushedAuthorizationResponse(baseOptions).catch(
         (e) => e,
       );
 
@@ -158,7 +158,7 @@ describe("fetchPushedAuthorizationRequest", () => {
         };
         mockFetch.mockResolvedValue(mockResponse);
 
-        const error = await fetchPushedAuthorizationRequest(baseOptions).catch(
+        const error = await fetchPushedAuthorizationResponse(baseOptions).catch(
           (e) => e,
         );
 
@@ -179,7 +179,7 @@ describe("fetchPushedAuthorizationRequest", () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const error = await fetchPushedAuthorizationRequest(baseOptions).catch(
+      const error = await fetchPushedAuthorizationResponse(baseOptions).catch(
         (e) => e,
       );
 
@@ -199,7 +199,7 @@ describe("fetchPushedAuthorizationRequest", () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const error = await fetchPushedAuthorizationRequest(baseOptions).catch(
+      const error = await fetchPushedAuthorizationResponse(baseOptions).catch(
         (e) => e,
       );
 

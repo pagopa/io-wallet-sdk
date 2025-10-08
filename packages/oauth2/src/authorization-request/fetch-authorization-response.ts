@@ -13,9 +13,9 @@ import {
 } from "./z-authorization-request";
 
 /**
- * Configuration options for fetching pushed authorization requests
+ * Configuration options for fetching pushed authorization response
  */
-export interface FetchPushedAuthorizationRequestOptions {
+export interface fetchPushedAuthorizationResponseOptions {
   /**
    * Callback functions for making HTTP requests
    * Allows for custom fetch implementations
@@ -58,8 +58,8 @@ export interface FetchPushedAuthorizationRequestOptions {
  * @throws {UnexpectedStatusCodeError} When the server returns a non-201 status code
  * @throws {JsonParseError} When the response cannot be parsed or is invalid
  */
-export async function fetchPushedAuthorizationRequest(
-  options: FetchPushedAuthorizationRequestOptions,
+export async function fetchPushedAuthorizationResponse(
+  options: fetchPushedAuthorizationResponseOptions,
 ): Promise<PushedAuthorizationResponse> {
   const fetch = createFetcher(options.callbacks.fetch);
   const parResponse = await fetch(options.pushedAuthorizationRequestEndpoint, {
