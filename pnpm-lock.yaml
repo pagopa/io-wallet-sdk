@@ -4,6 +4,27 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@openid-federation/core':
+      specifier: ^0.2.0
+      version: 0.2.0
+    '@openid4vc/oauth2':
+      specifier: 0.3.0-alpha-20250714110838
+      version: 0.3.0-alpha-20250714110838
+    '@openid4vc/openid4vci':
+      specifier: 0.3.0-alpha-20250714110838
+      version: 0.3.0-alpha-20250714110838
+    '@openid4vc/utils':
+      specifier: 0.3.0-alpha-20250714110838
+      version: 0.3.0-alpha-20250714110838
+    js-base64:
+      specifier: ^3.7.8
+      version: 3.7.8
+    zod:
+      specifier: ^3.24.2
+      version: 3.25.76
+
 importers:
 
   .:
@@ -36,50 +57,50 @@ importers:
   packages/oauth2:
     dependencies:
       '@openid4vc/oauth2':
-        specifier: 0.3.0-alpha-20250714110838
+        specifier: 'catalog:'
         version: 0.3.0-alpha-20250714110838
       '@openid4vc/utils':
-        specifier: 0.3.0-alpha-20250714110838
+        specifier: 'catalog:'
         version: 0.3.0-alpha-20250714110838
       '@pagopa/io-wallet-utils':
         specifier: workspace:*
         version: link:../utils
       zod:
-        specifier: ^3.24.2
+        specifier: 'catalog:'
         version: 3.25.76
 
   packages/oid-federation:
     dependencies:
       '@openid-federation/core':
-        specifier: ^0.2.0
+        specifier: 'catalog:'
         version: 0.2.0
       '@openid4vc/utils':
-        specifier: ^0.2.0
-        version: 0.2.0(typescript@5.8.3)
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
       zod:
-        specifier: ^3.24.2
+        specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
       js-base64:
-        specifier: ^3.7.8
+        specifier: 'catalog:'
         version: 3.7.8
 
   packages/oid4vci:
     dependencies:
       '@openid-federation/core':
-        specifier: ^0.2.0
+        specifier: 'catalog:'
         version: 0.2.0
       '@openid4vc/oauth2':
-        specifier: 0.3.0-alpha-20250513122832
-        version: 0.3.0-alpha-20250513122832
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
       '@openid4vc/openid4vci':
-        specifier: 0.3.0-alpha-20250513122832
-        version: 0.3.0-alpha-20250513122832
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
       '@openid4vc/utils':
-        specifier: ^0.2.0
-        version: 0.2.0(typescript@5.8.3)
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
       zod:
-        specifier: ^3.24.2
+        specifier: 'catalog:'
         version: 3.25.76
 
   packages/utils: {}
@@ -403,20 +424,11 @@ packages:
   '@openid-federation/core@0.2.0':
     resolution: {integrity: sha512-6tb9znTNJvFLAhcIp9XhFrgEU3Uxb42+mxQ4Fz/RKWNTEIybeq/b902OZzUm4m80RUXroNW7MU3CJutF6xSNwA==}
 
-  '@openid4vc/oauth2@0.3.0-alpha-20250513122832':
-    resolution: {integrity: sha512-hiTFDm8NNiaOR9Yu1tvJ6pBSj56eDWni5si55oJw6W5ZbHcLZRVk4ejBVb91D5r/zjAFvsgSg2by+OSdSj7F/A==}
-
   '@openid4vc/oauth2@0.3.0-alpha-20250714110838':
     resolution: {integrity: sha512-SR/HP818TCMBcr9Fpi+lS7xIA65AAFxhHsrjmxnxXQjWTBUEx6P4nhZbcw6T65AAuB8I0QzE3zzz+MRAFqunwQ==}
 
-  '@openid4vc/openid4vci@0.3.0-alpha-20250513122832':
-    resolution: {integrity: sha512-lInvFMm0oEH0ys7UbYqNfgVrDY8Bq6nSAkMK77bRcmeqV7YJOzLlLeU16PR3XPjURvIwyXBBiKSknRvwAMBzSg==}
-
-  '@openid4vc/utils@0.2.0':
-    resolution: {integrity: sha512-CvZxy9eH8582Yb/gzc+XPiaQIbC7Y0IT3F14szGS++o6373dUN12KZQzey4hoRrVO92D04vCXyJY9xctw4zgMw==}
-
-  '@openid4vc/utils@0.3.0-alpha-20250513122832':
-    resolution: {integrity: sha512-0QR3rRyc4nXD7Zowh7viR/icmB+0hkgGV4JXV/WpVgS+Vq64MUCtNPyqBVmt0rFcQs8GvsqlRY04OjXbEKd3FQ==}
+  '@openid4vc/openid4vci@0.3.0-alpha-20250714110838':
+    resolution: {integrity: sha512-Q6xCzapjacrmB2Tjk7rNrGsJbjTIVVIKn9ZvFZflfo8Imi18MXDLFmwQAyplwUMWIPy5J1AQ0nMeZNPdpWCTkQ==}
 
   '@openid4vc/utils@0.3.0-alpha-20250714110838':
     resolution: {integrity: sha512-10TCSw/AMtgD4AIUob6kkFg6UdRv5kEYHovLJnfi5MHt4KdxSfSGfu2zc1cxJlKaBEg7su1BKiAT9j9WDmxSrA==}
@@ -1616,14 +1628,6 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
-  valibot@0.42.1:
-    resolution: {integrity: sha512-3keXV29Ar5b//Hqi4MbSdV7lfVp6zuYLZuA9V1PvQUsXqogr+u5lvLPLk3A4f74VUXDnf/JfWMN6sB+koJ/FFw==}
-    peerDependencies:
-      typescript: '>=5'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   vite-node@3.2.4:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
@@ -2074,32 +2078,15 @@ snapshots:
       buffer: 6.0.3
       zod: 3.25.76
 
-  '@openid4vc/oauth2@0.3.0-alpha-20250513122832':
-    dependencies:
-      '@openid4vc/utils': 0.3.0-alpha-20250513122832
-      zod: 3.25.76
-
   '@openid4vc/oauth2@0.3.0-alpha-20250714110838':
     dependencies:
       '@openid4vc/utils': 0.3.0-alpha-20250714110838
       zod: 3.25.76
 
-  '@openid4vc/openid4vci@0.3.0-alpha-20250513122832':
+  '@openid4vc/openid4vci@0.3.0-alpha-20250714110838':
     dependencies:
-      '@openid4vc/oauth2': 0.3.0-alpha-20250513122832
-      '@openid4vc/utils': 0.3.0-alpha-20250513122832
-      zod: 3.25.76
-
-  '@openid4vc/utils@0.2.0(typescript@5.8.3)':
-    dependencies:
-      buffer: 6.0.3
-      valibot: 0.42.1(typescript@5.8.3)
-    transitivePeerDependencies:
-      - typescript
-
-  '@openid4vc/utils@0.3.0-alpha-20250513122832':
-    dependencies:
-      buffer: 6.0.3
+      '@openid4vc/oauth2': 0.3.0-alpha-20250714110838
+      '@openid4vc/utils': 0.3.0-alpha-20250714110838
       zod: 3.25.76
 
   '@openid4vc/utils@0.3.0-alpha-20250714110838':
@@ -3258,10 +3245,6 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
-
-  valibot@0.42.1(typescript@5.8.3):
-    optionalDependencies:
-      typescript: 5.8.3
 
   vite-node@3.2.4:
     dependencies:
