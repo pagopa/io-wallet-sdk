@@ -59,38 +59,9 @@ To set up the repository for local development:
    pnpm run build
    ```
 
-## 🧭 Development Guidelines
+## 🧭 Contribute
 
-This SDK follows a set of common conventions to ensure consistency, maintainability, and interoperability across all packages in the monorepo.
-
-### 📡 Method Requests
-- Each package provides **both options**:
-  - A **complete `fetch` implementation** that performs the request and parses the response.  
-  - **Helper methods** to build request bodies and **exposed response schemas**, allowing consumers to handle network calls manually if preferred.  
-- This gives consumers flexibility to either rely on the SDK’s built-in request flow or integrate the lower-level utilities into their own infrastructure.
-
-### ⚙️ Error Handling
-- **Common errors** shared across packages (e.g., `JsonParseError`, `ValidationError`) are defined in the shared `@io-wallet/utils` package.  
-- **Package-specific errors** should:
-  - Extend a **generic error** for that package (e.g., `Oauth2Error`).
-  - Optionally include **granular errors per method** (e.g., `AuthorizationRequestParsingError`).
-  - Be collected in a single `src/error.ts` file per package.  
-- Each method should include a **global `try/catch` block** and rethrow a generic error (from `@io-wallet/utils`) or a granular error (e.g., `AuthorizationRequestParsingError`) for unhandled exceptions.
-
-### 🔐 Cryptographic Variables
-- Cryptographic values (e.g., `state`, `jti`) must be:
-  - **Randomly generated** using the shared `generateRandom` callback, or  
-  - **Passed externally** by the consumer.  
-
-### 🧩 Dependencies
-- All packages must share the **same version** of common dependencies (e.g., `@openid4vc/oauth2`), managed via **pnpm catalog**.
-
-### 📦 Public Exports
-- Objects from third-party libraries (e.g., `Jwt`, `SignJwtCallback` from `openid4vc`) that are needed by consumers should be **re-exported from `io-wallet-sdk`** to ensure a unified public API surface.
-
-### 📝 Naming Conventions
-- **Object and method names must not include the prefix `ItWallet`.**  
-  Use clear, context-relevant naming instead.
+For internal development conventions and contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 
 ## License
