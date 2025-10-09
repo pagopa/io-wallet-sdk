@@ -103,7 +103,11 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
 
-  packages/utils: {}
+  packages/utils:
+    dependencies:
+      '@openid4vc/utils':
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
 
 packages:
 

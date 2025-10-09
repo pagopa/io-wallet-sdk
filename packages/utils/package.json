@@ -28,5 +28,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
     "test": "vitest"
+  },
+  "dependencies": {
+    "@openid4vc/utils": "catalog:"
   }
 }

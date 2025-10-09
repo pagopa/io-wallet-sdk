@@ -1,5 +1,7 @@
-import { JsonParseError } from "@openid4vc/utils";
-import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
+import {
+  UnexpectedStatusCodeError,
+  ValidationError,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT_TYPES, HEADERS } from "../../constants";
@@ -169,7 +171,7 @@ describe("fetchPushedAuthorizationResponse", () => {
   });
 
   describe("response parsing errors", () => {
-    it("should throw JsonParseError for missing request_uri", async () => {
+    it("should throw ValidationError for missing request_uri", async () => {
       const mockResponse = {
         json: vi.fn().mockResolvedValue({
           expires_in: 60,
@@ -183,13 +185,13 @@ describe("fetchPushedAuthorizationResponse", () => {
         (e) => e,
       );
 
-      expect(error).toBeInstanceOf(JsonParseError);
+      expect(error).toBeInstanceOf(ValidationError);
       expect(error.message).toContain(
         "Failed to parse pushed authorization response",
       );
     });
 
-    it("should throw JsonParseError for missing expires_in", async () => {
+    it("should throw ValidationError for missing expires_in", async () => {
       const mockResponse = {
         json: vi.fn().mockResolvedValue({
           request_uri: "urn:ietf:params:oauth:request_uri:test-uri",
@@ -203,7 +205,7 @@ describe("fetchPushedAuthorizationResponse", () => {
         (e) => e,
       );
 
-      expect(error).toBeInstanceOf(JsonParseError);
+      expect(error).toBeInstanceOf(ValidationError);
       expect(error.message).toContain(
         "Failed to parse pushed authorization response",
       );
