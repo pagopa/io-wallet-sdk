@@ -7,7 +7,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { CONTENT_TYPES, HEADERS } from "../constants";
-import { PushedAuthorizationRequestError } from "../error";
+import { PushedAuthorizationRequestError } from "../errors";
 import {
   PushedAuthorizationRequestSigned,
   PushedAuthorizationResponse,
