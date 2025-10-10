@@ -4,7 +4,6 @@ import {
   ClientAttestationPopJwtPayload,
   Jwk,
   JwtSignerJwk,
-  Oauth2Error,
   decodeJwt,
   verifyJwt,
 } from "@openid4vc/oauth2";
@@ -13,6 +12,8 @@ import {
   dateToSeconds,
   encodeToBase64Url,
 } from "@openid4vc/utils";
+
+import { Oauth2Error } from "./errors";
 
 export interface VerifyClientAttestationPopJwtOptions {
   /**
@@ -125,7 +126,7 @@ export async function createClientAttestationPopJwt(
 
   const jwk = clientAttestation.payload.cnf?.jwk;
   if (!jwk) {
-    throw new Error(
+    throw new Oauth2Error(
       "Client attestation does not contain 'cnf.jwk', cannot create client attestation pop jwt",
     );
   }
