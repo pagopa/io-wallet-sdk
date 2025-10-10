@@ -59,6 +59,11 @@ To set up the repository for local development:
    pnpm run build
    ```
 
+## 🧭 Contribute
+
+For internal development conventions and contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+
 ## License
 
 This project is licensed under the MIT License.
