@@ -12,7 +12,9 @@ export class Oid4vpError extends Error {
 }
 
 /**
- * Error thrown when parsing of authorization requests fails
+ * Error thrown by {@link parseAuthorizeRequest} when the passed
+ * request object has an invalid signature or unexpected errors
+ * are thrown
  */
 export class ParseAuthorizeRequestError extends Oid4vpError {
   constructor(

@@ -1,6 +1,6 @@
 ## @pagopa/io-wallet-oid4vp
 
-This package provides functionalities to manage the **OpenID for Verifiable Presentations (OID4VP)** protocol flow, specifically tailored for the Italian Wallet ecosystem. It simplifies the creation of wallet attestations required during the credential issuance process.
+This package provides functionalities to manage the **OpenID for Verifiable Presentations (OID4VP)** protocol flow, specifically tailored for the Italian Wallet ecosystem, simplifying QEAA credentials issuance and credentials presentations.
 
 ## Installation
 
@@ -101,21 +101,27 @@ This method receives a Request Object in JWT format, verifies the signature and 
 ### Errors
 
 ```typescript
-export class AuthorizationRequestParsingError extends Error {
-    constructor(message: string) {
-        super(message) ;
-        this.name = 'AuthorizationRequestParsingError'
-    }
+export class Oid4vpError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "Oid4vpError";
+  }
 }
 ```
- Error that is thrown when the JWT signature is not verified successfully or other generic errors occur during request object parsing
+Generic package level error class which every other package error should extend.
 
 ```typescript
-export class Oid4vpParseError extends Error {
-    constructor(message : string) {
-        super(message);
-        this.name = 'Oid4vpParseError'
-    }
+export class ParseAuthorizeRequestError extends Oid4vpError {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "ParseAuthorizeRequestError";
+  }
 }
 ```
-Package level error class which wraps parsing and validation errors
+Error thrown by `parseAuthorizeRequest` when the passed request object has an invalid signature or unexpected errors are thrown.
