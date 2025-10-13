@@ -19,7 +19,7 @@ yarn add @pagopa/io-wallet-oid4vp
 ### Verifying a received Request object
 
 ```typescript
-import { parseAuthorizeRequest } from '@pagopa/io-wallet-oid4vci';
+import { parseAuthorizeRequest } from '@pagopa/io-wallet-oid4vp';
 
 //Request Object JWT containing the requested credentials obtained from the RP
 const requestObjectJwt = "ey..." 
