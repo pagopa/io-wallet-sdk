@@ -6,8 +6,7 @@ import {
 } from "@openid4vc/oauth2";
 import { ValidationError } from "@openid4vc/utils";
 
-import { Oid4vpParsingError } from "../error/Oid4vpParsingError";
-import { AuthorizationRequestParsingError } from "./errors";
+import { ParseAuthorizeRequestError } from "../errors";
 import {
   AuthorizationRequestObject,
   zOpenid4vpAuthorizationRequest,
@@ -36,6 +35,9 @@ export interface ParseAuthorizeRequestOptions {
  * @param options {@link ParseAuthorizeRequestOptions}
  * @returns An {@link AuthorizationRequestObject} containing the RP required
  *          credentials
+ * @throws {@link ValidationError} in case there are errors validating the Request Object structure
+ * @throws {@link Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
+ * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid or there are unexpected errors
  */
 export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,
@@ -55,19 +57,18 @@ export async function parseAuthorizeRequest(
     );
 
     if (!verificationResult.verified)
-      throw new AuthorizationRequestParsingError(
+      throw new ParseAuthorizeRequestError(
         "Error verifying Request Object signature",
       );
 
     return decoded.payload;
   } catch (error) {
     if (
-      error instanceof Oauth2JwtParseError ||
-      error instanceof ValidationError
-    ) {
-      throw new Oid4vpParsingError(error.message);
-    }
-    throw new AuthorizationRequestParsingError(
+      error instanceof ValidationError ||
+      error instanceof Oauth2JwtParseError
+    )
+      throw error;
+    throw new ParseAuthorizeRequestError(
       `Unexpected error during Request Object parsing: ${error instanceof Error ? error.message : String(error)}`,
     );
   }

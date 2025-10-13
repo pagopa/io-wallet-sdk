@@ -30,12 +30,12 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@openid4vc/oauth2": "0.3.0-alpha-20250513122832",
-    "@openid4vc/utils": "0.3.0-alpha-20250513122832",
-    "@openid4vc/openid4vp": "0.3.0-alpha-20250513122832",
-    "zod": "^3.24.2"
+    "@openid4vc/oauth2": "catalog:",
+    "@openid4vc/utils": "catalog:",
+    "@openid4vc/openid4vp": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "jose": "^6.1.0"
+    "jose": "catalog:"
   }
 }

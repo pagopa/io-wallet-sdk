@@ -15,9 +15,15 @@ catalogs:
     '@openid4vc/openid4vci':
       specifier: 0.3.0-alpha-20250714110838
       version: 0.3.0-alpha-20250714110838
+    '@openid4vc/openid4vp':
+      specifier: 0.3.0-alpha-20250714110838
+      version: 0.3.0-alpha-20250714110838
     '@openid4vc/utils':
       specifier: 0.3.0-alpha-20250714110838
       version: 0.3.0-alpha-20250714110838
+    jose:
+      specifier: ^6.1.0
+      version: 6.1.0
     js-base64:
       specifier: ^3.7.8
       version: 3.7.8
@@ -102,6 +108,25 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+
+  packages/oid4vp:
+    dependencies:
+      '@openid4vc/oauth2':
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
+      '@openid4vc/openid4vp':
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
+      '@openid4vc/utils':
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      jose:
+        specifier: 'catalog:'
+        version: 6.1.0
 
   packages/utils:
     dependencies:
@@ -433,6 +458,9 @@ packages:
 
   '@openid4vc/openid4vci@0.3.0-alpha-20250714110838':
     resolution: {integrity: sha512-Q6xCzapjacrmB2Tjk7rNrGsJbjTIVVIKn9ZvFZflfo8Imi18MXDLFmwQAyplwUMWIPy5J1AQ0nMeZNPdpWCTkQ==}
+
+  '@openid4vc/openid4vp@0.3.0-alpha-20250714110838':
+    resolution: {integrity: sha512-lWrtQkUky4+CCJPmd8gHzpxxf8wRMZZvmsRoVcTBoq9biTXquCpJSkcGkl0V2OFF9cpxF7jDxOcUrIa/UQ5Crw==}
 
   '@openid4vc/utils@0.3.0-alpha-20250714110838':
     resolution: {integrity: sha512-10TCSw/AMtgD4AIUob6kkFg6UdRv5kEYHovLJnfi5MHt4KdxSfSGfu2zc1cxJlKaBEg7su1BKiAT9j9WDmxSrA==}
@@ -2091,6 +2119,12 @@ snapshots:
       zod: 3.25.76
 
   '@openid4vc/openid4vci@0.3.0-alpha-20250714110838':
+    dependencies:
+      '@openid4vc/oauth2': 0.3.0-alpha-20250714110838
+      '@openid4vc/utils': 0.3.0-alpha-20250714110838
+      zod: 3.25.76
+
+  '@openid4vc/openid4vp@0.3.0-alpha-20250714110838':
     dependencies:
       '@openid4vc/oauth2': 0.3.0-alpha-20250714110838
       '@openid4vc/utils': 0.3.0-alpha-20250714110838

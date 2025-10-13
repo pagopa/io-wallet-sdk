@@ -1,8 +1,12 @@
-import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
+import {
+  CallbackContext,
+  JwtSignerJwk,
+  Oauth2JwtParseError,
+} from "@openid4vc/oauth2";
+import { ValidationError } from "@openid4vc/utils";
 import { describe, expect, it } from "vitest";
 
-import { Oid4vpParsingError } from "../../error";
-import { AuthorizationRequestParsingError } from "../errors";
+import { ParseAuthorizeRequestError } from "../../errors";
 import { parseAuthorizeRequest } from "../parse-authorization-request";
 import { AuthorizationRequestObject } from "../z-request-object";
 const jose = import("jose");
@@ -112,7 +116,7 @@ describe("parseAuthorizationRequest tests", () => {
     expect(actualRequestObject).toEqual(correctRequestObject);
   });
 
-  it("should throw an OidvpParseError for missing mandatory fields", async () => {
+  it("should throw a ValidationError for missing mandatory fields", async () => {
     await expect(
       async () =>
         await parseAuthorizeRequest({
@@ -120,10 +124,10 @@ describe("parseAuthorizationRequest tests", () => {
           dpop: { signer },
           requestObjectJwt: missingMandatoryFieldRequestObjectJwt,
         }),
-    ).rejects.toThrow(Oid4vpParsingError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("should throw an Oid4vpParseError for non conforming structure", async () => {
+  it("should throw a ValidationError for non conforming structure", async () => {
     await expect(
       async () =>
         await parseAuthorizeRequest({
@@ -131,7 +135,7 @@ describe("parseAuthorizationRequest tests", () => {
           dpop: { signer },
           requestObjectJwt: nonConformingRequestObjectJwt,
         }),
-    ).rejects.toThrow(Oid4vpParsingError);
+    ).rejects.toThrow(ValidationError);
   });
 
   it("should parse and verify the request object correctly since expiration is not checked", async () => {
@@ -143,17 +147,17 @@ describe("parseAuthorizationRequest tests", () => {
     expect(actualRequestObject).toEqual(expiredRequestObject);
   });
 
-  it("should throw an Oid4vpParseError because of a malformed jwt", async () => {
+  it("should throw an Oauth2JwtParseError because of a malformed jwt", async () => {
     await expect(async () =>
       parseAuthorizeRequest({
         callbacks,
         dpop: { signer },
         requestObjectJwt: "this is not a JWT",
       }),
-    ).rejects.toThrow(Oid4vpParsingError);
+    ).rejects.toThrow(Oauth2JwtParseError);
   });
 
-  it("should throw an AuthorizationRequestParsingError because of a malformed signature", async () => {
+  it("should throw an ParseAuthroizeRequestError because of a malformed signature", async () => {
     await expect(async () => {
       const [head, payload] = correctRequestObjectJwt.split(".");
       await parseAuthorizeRequest({
@@ -161,10 +165,10 @@ describe("parseAuthorizationRequest tests", () => {
         dpop: { signer },
         requestObjectJwt: `${head}.${payload}.this_is_not_a_signature`,
       });
-    }).rejects.toThrow(AuthorizationRequestParsingError);
+    }).rejects.toThrow(ParseAuthorizeRequestError);
   });
 
-  it("should throw an AuthorizationRequestParsingError because of a missing signature", async () => {
+  it("should throw an ParseAuthorizeRequestError because of a missing signature", async () => {
     await expect(async () => {
       const [head, payload] = correctRequestObjectJwt.split(".");
       await parseAuthorizeRequest({
@@ -172,16 +176,16 @@ describe("parseAuthorizationRequest tests", () => {
         dpop: { signer },
         requestObjectJwt: `${head}.${payload}.`,
       });
-    }).rejects.toThrow(AuthorizationRequestParsingError);
+    }).rejects.toThrow(ParseAuthorizeRequestError);
   });
 
-  it("should throw an AuthorizationRequestParsingError because of a mismatching public key signer", async () => {
+  it("should throw an ParseAuthorizeRequestError because of a mismatching public key signer", async () => {
     await expect(async () => {
       await parseAuthorizeRequest({
         callbacks,
         dpop: { signer: wrongPubKeySigner },
         requestObjectJwt: correctRequestObjectJwt,
       });
-    }).rejects.toThrow(AuthorizationRequestParsingError);
+    }).rejects.toThrow(ParseAuthorizeRequestError);
   });
 });
