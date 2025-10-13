@@ -1,16 +1,16 @@
 {
-  "name": "@pagopa/io-wallet-oauth2",
+  "name": "@pagopa/io-wallet-utils",
   "version": "0.3.0",
   "files": [
     "dist"
   ],
   "license": "Apache-2.0",
   "exports": "./src/index.ts",
-  "homepage": "https://github.com/pagopa/io-wallet-sdk/tree/main/packages/oauth2",
+  "homepage": "https://github.com/pagopa/io-wallet-sdk/tree/main/packages/utils",
   "repository": {
     "type": "git",
     "url": "https://github.com/pagopa/io-wallet-sdk",
-    "directory": "packages/oauth2"
+    "directory": "packages/utils"
   },
   "publishConfig": {
     "main": "./dist/index.js",
@@ -30,9 +30,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@pagopa/io-wallet-utils": "workspace:*",
-    "@openid4vc/oauth2": "catalog:",
-    "@openid4vc/utils": "catalog:",
-    "zod": "catalog:"
+    "@openid4vc/utils": "catalog:"
   }
 }
