@@ -1,4 +1,7 @@
 import { CallbackContext, HttpMethod, JwtSigner } from "@openid4vc/oauth2";
+import { Base64 } from "js-base64";
+
+import { CreateTokenDPoPError } from "../errors";
 
 /**
  * Options for Token Request DPoP generation
@@ -7,7 +10,8 @@ export interface CreateTokenDPoPOptions {
   /**
    * Object containing callbacks for DPoP generation and signature
    */
-  callbacks: Pick<CallbackContext, "signJwt">;
+  callbacks: Partial<Pick<CallbackContext, "generateRandom">> &
+    Pick<CallbackContext, "signJwt">;
 
   /**
    * Customizable headers for DPoP signing.
@@ -25,7 +29,7 @@ export interface CreateTokenDPoPOptions {
   payload: {
     htm: HttpMethod;
     htu: string;
-    jti: string;
+    jti?: string;
   } & Record<string, unknown>;
 
   /**
@@ -36,16 +40,38 @@ export interface CreateTokenDPoPOptions {
 
 /**
  * Creates a signed Token DPoP with the given cryptographic material and data.
- * @param options
+ * @param options {@link CreateTokenDPoPOptions}
  * @returns A Promise that resolves with an object containing the signed DPoP JWT and
  *          its corresponding public JWK
+ * @throws {@link CreateTokenDPoPError} in case neither a default jti nor a generateRandom
+ *         callback have been provided or the signJwt callback throws
  */
 export async function createTokenDPoP(options: CreateTokenDPoPOptions) {
-  return options.callbacks.signJwt(options.signer, {
-    header: {
-      ...options.header,
-      typ: "dpop+jwt",
-    },
-    payload: options.payload,
-  });
+  const jti =
+    options.payload.jti ??
+    (options.callbacks.generateRandom
+      ? Base64.fromUint8Array(await options.callbacks.generateRandom(32), true)
+      : undefined);
+
+  if (!jti) {
+    throw new CreateTokenDPoPError(
+      "Error: neither a default jti nor a generateRandom callback have been provided",
+    );
+  }
+  try {
+    return options.callbacks.signJwt(options.signer, {
+      header: {
+        ...options.header,
+        typ: "dpop+jwt",
+      },
+      payload: {
+        ...options.payload,
+        jti,
+      },
+    });
+  } catch (error) {
+    throw new CreateTokenDPoPError(
+      `Error during jwt signature, details: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }

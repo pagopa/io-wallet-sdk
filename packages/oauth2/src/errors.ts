@@ -23,3 +23,14 @@ export class PushedAuthorizationRequestError extends Oauth2Error {
     this.name = "PushedAuthorizationRequestError";
   }
 }
+
+/**
+ * Error thrown in case {@link createTokenDPoP} is called without neither a custom jti
+ * nor a generateRandom callback or when the signJwt callback throws
+ */
+export class CreateTokenDPoPError extends Oauth2Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CreateTokenDPoPError";
+  }
+}
