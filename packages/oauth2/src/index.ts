@@ -2,10 +2,12 @@ export * from "./authorization-request";
 export * from "./constants";
 export * from "./errors";
 export * from "./pkce";
+export * from "./token-dpop";
 
 export {
   CallbackContext,
   GenerateRandomCallback,
+  HttpMethod,
   Jwk,
   JwtSigner,
   JwtSignerJwk,
