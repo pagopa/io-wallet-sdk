@@ -1,11 +1,15 @@
 name: Publish to NPM
 permissions:
-  contents: read
+  contents: write   # needed so changesets can push release PRs
+  pull-requests: write
 on:
   push:
     branches: 
       - main
-  workflow_dispatch: {}
+  workflow_dispatch:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 jobs:
 
   build:
@@ -30,11 +34,11 @@ jobs:
           node-version-file: ".node-version"
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba #v1.5.3
         with:
           title: "chore(release): new version"
           commit: "chore(release): new version"
@@ -50,6 +54,6 @@ jobs:
 
       - name: Create Github Release
         if: steps.changesets.outputs.published == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 #v2.4.1
         with:
           tag_name: v${{ env.CURRENT_PACKAGE_VERSION }}
