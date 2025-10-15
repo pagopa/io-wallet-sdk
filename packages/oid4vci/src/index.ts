@@ -1,1 +1,2 @@
-export * from "./wallet-provider/ItWalletProvider";
+export * from "./errors";
+export * from "./wallet-provider/WalletProvider";

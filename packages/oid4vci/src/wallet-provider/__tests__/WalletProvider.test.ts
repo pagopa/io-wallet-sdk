@@ -9,10 +9,7 @@ import {
   vi,
 } from "vitest";
 
-import {
-  ItWalletProvider,
-  WalletAttestationOptions,
-} from "../ItWalletProvider";
+import { WalletAttestationOptions, WalletProvider } from "../WalletProvider";
 
 vi.mock("@openid4vc/utils", () => ({
   addSecondsToDate: vi.fn(),
@@ -22,11 +19,11 @@ const mockAddSecondsToDate = addSecondsToDate as MockedFunction<
   typeof addSecondsToDate
 >;
 
-describe("ItWalletProvider", () => {
-  let provider: ItWalletProvider;
+describe("WalletProvider", () => {
+  let provider: WalletProvider;
   let mockOptions: Openid4vciWalletProviderOptions;
   let mockCreateWalletAttestationJwt: MockedFunction<
-    typeof ItWalletProvider.prototype.createWalletAttestationJwt
+    typeof WalletProvider.prototype.createWalletAttestationJwt
   >;
 
   beforeEach(() => {
@@ -34,7 +31,7 @@ describe("ItWalletProvider", () => {
 
     mockOptions = {} as Openid4vciWalletProviderOptions;
 
-    provider = new ItWalletProvider(mockOptions);
+    provider = new WalletProvider(mockOptions);
 
     mockCreateWalletAttestationJwt = vi
       .fn()
@@ -44,7 +41,7 @@ describe("ItWalletProvider", () => {
     mockAddSecondsToDate.mockReturnValue(new Date("2024-12-31T23:59:59Z"));
   });
 
-  describe("createItWalletAttestationJwt", () => {
+  describe("createWalletAttestationJwt", () => {
     let mockWalletAttestationOptions: WalletAttestationOptions;
 
     beforeEach(() => {

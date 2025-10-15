@@ -2,7 +2,7 @@ import { ClientAttestationJwtPayload } from "@openid4vc/oauth2";
 import { Openid4vciWalletProvider } from "@openid4vc/openid4vci";
 import { addSecondsToDate } from "@openid4vc/utils";
 
-import { WalletProviderError } from "./errors";
+import { WalletProviderError } from "../errors";
 
 /**
  * @interface WalletAttestationOptions
@@ -57,12 +57,12 @@ export interface WalletAttestationOptions {
 }
 
 /**
- * @class ItWalletProvider
+ * @class WalletProvider
  * @extends Openid4vciWalletProvider
  * @description An implementation of a wallet provider for the OpenID4VCI protocol, tailored for a specific ecosystem (e.g., the Italian one).
  * It handles the creation of wallet attestations required during the credential issuance flow.
  */
-export class ItWalletProvider extends Openid4vciWalletProvider {
+export class WalletProvider extends Openid4vciWalletProvider {
   /**
    * Creates a wallet attestation JWT.
    *
