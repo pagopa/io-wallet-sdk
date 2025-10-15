@@ -30,8 +30,10 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@openid4vc/oauth2": "^0.2.0",
-    "@openid4vc/utils": "^0.2.0",
-    "zod": "^3.24.2"
+    "@pagopa/io-wallet-utils": "workspace:*",
+    "@openid4vc/oauth2": "catalog:",
+    "@openid4vc/utils": "catalog:",
+    "zod": "catalog:",
+    "js-base64": "catalog:"
   }
 }

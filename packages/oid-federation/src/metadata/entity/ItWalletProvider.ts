@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { JWKS } from "../../jwk";
 
 /**
@@ -8,10 +9,10 @@ import { JWKS } from "../../jwk";
  */
 export const itWalletProviderEntityMetadata = z
   .object({
+    jwks: JWKS.optional(),
+    jwks_uri: z.string().url().optional(),
     // -- 5.2.1 Extensions for JWK Sets in Entity Metadata
     signed_jwks_uri: z.string().url().optional(),
-    jwks_uri: z.string().url().optional(),
-    jwks: JWKS.optional(),
   })
   .passthrough();
 
