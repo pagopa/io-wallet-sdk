@@ -59,6 +59,21 @@ describe("client-attestation-pop", () => {
     ).rejects.toThrow(/cnf\.jwk/);
   });
 
+  it("should throw if client attestation does not contain sub", async () => {
+    const badAttestation = [
+      encodeToBase64Url(JSON.stringify(mockHeader)),
+      encodeToBase64Url(JSON.stringify({ cnf: { jwk: mockJwk } })),
+      "signature",
+    ].join(".");
+    await expect(
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+        clientAttestation: badAttestation,
+      }),
+    ).rejects.toThrow(/sub/);
+  });
+
   it("should verify a valid client attestation pop jwt", async () => {
     const jwt = [
       encodeToBase64Url(JSON.stringify(mockHeader)),

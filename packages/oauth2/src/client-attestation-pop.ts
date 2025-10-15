@@ -109,6 +109,11 @@ export interface CreateClientAttestationPopJwtOptions {
   issuedAt?: Date;
 
   /**
+   * Optional jti to set in the payload. If not provided a random one will be generated
+   */
+  jti?: string;
+
+  /**
    * The signer of jwt. Only jwk signer allowed.
    *
    * If not provided, the signer will be derived based on the
@@ -131,6 +136,13 @@ export async function createClientAttestationPopJwt(
     );
   }
 
+  const sub = clientAttestation.payload.sub as string | undefined;
+  if (!sub) {
+    throw new Oauth2Error(
+      "Client attestation does not contain 'sub', cannot create client attestation pop jwt",
+    );
+  }
+
   const signer = options.signer ?? {
     alg: clientAttestation.header.alg,
     method: "jwk",
@@ -142,16 +154,17 @@ export async function createClientAttestationPopJwt(
     typ: "oauth-client-attestation-pop+jwt",
   } satisfies ClientAttestationPopJwtHeader;
 
-  const expiresAt =
-    options.expiresAt ??
-    addSecondsToDate(options.issuedAt ?? new Date(), 1 * 60);
+  const issuedAt = options.issuedAt ?? new Date();
+  const expiresAt = options.expiresAt ?? addSecondsToDate(issuedAt, 1 * 60);
 
   const payload = {
     aud: options.authorizationServer,
     exp: dateToSeconds(expiresAt),
-    iat: dateToSeconds(options.issuedAt ?? new Date()),
-    iss: clientAttestation.payload.sub as string,
-    jti: encodeToBase64Url(await options.callbacks.generateRandom(32)),
+    iat: dateToSeconds(issuedAt),
+    iss: sub,
+    jti:
+      options.jti ??
+      encodeToBase64Url(await options.callbacks.generateRandom(32)),
   } satisfies ClientAttestationPopJwtPayload;
 
   const { jwt } = await options.callbacks.signJwt(signer, {

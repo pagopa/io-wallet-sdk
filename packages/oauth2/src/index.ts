@@ -1,4 +1,5 @@
 export * from "./authorization-request";
+export * from "./client-attestation-pop";
 export * from "./constants";
 export * from "./errors";
 export * from "./pkce";
