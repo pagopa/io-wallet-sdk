@@ -136,8 +136,8 @@ export async function createClientAttestationPopJwt(
     );
   }
 
-  const sub = clientAttestation.payload.sub ;
-  if (!sub || typeof sub !== 'string') {
+  const sub = clientAttestation.payload.sub;
+  if (!sub || typeof sub !== "string") {
     throw new Oauth2Error(
       "Client attestation does not contain 'sub', cannot create client attestation pop jwt",
     );
