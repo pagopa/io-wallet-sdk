@@ -90,8 +90,10 @@ export interface CreateClientAttestationPopJwtOptions {
 
   /**
    * Callback used for dpop
+   * generateRandom is mandatory if jti is not provided
    */
-  callbacks: Pick<CallbackContext, "generateRandom" | "signJwt">;
+  callbacks: Partial<Pick<CallbackContext, "generateRandom">> &
+    Pick<CallbackContext, "signJwt">;
 
   /**
    * The client attestation to create the Pop for
@@ -156,15 +158,24 @@ export async function createClientAttestationPopJwt(
 
   const issuedAt = options.issuedAt ?? new Date();
   const expiresAt = options.expiresAt ?? addSecondsToDate(issuedAt, 1 * 60);
+  const jti =
+    options.jti ??
+    (options.callbacks.generateRandom
+      ? encodeToBase64Url(await options.callbacks.generateRandom(32))
+      : undefined);
+
+  if (!jti) {
+    throw new Oauth2Error(
+      "Error: neither a default jti nor a generateRandom callback have been provided",
+    );
+  }
 
   const payload = {
     aud: options.authorizationServer,
     exp: dateToSeconds(expiresAt),
     iat: dateToSeconds(issuedAt),
     iss: sub,
-    jti:
-      options.jti ??
-      encodeToBase64Url(await options.callbacks.generateRandom(32)),
+    jti,
   } satisfies ClientAttestationPopJwtPayload;
 
   const { jwt } = await options.callbacks.signJwt(signer, {
