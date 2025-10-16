@@ -75,6 +75,21 @@ describe("client-attestation-pop", () => {
     ).rejects.toThrow(/sub/);
   });
 
+  it("should throw if clientAttestation is malformed", async () => {
+    const badAttestation = [
+      encodeToBase64Url(JSON.stringify(mockHeader)),
+      "asdf",
+      "signature",
+    ].join(".");
+    await expect(
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+        clientAttestation: badAttestation,
+      }),
+    ).rejects.toThrow(Oauth2Error);
+  });
+
   it("should verify a valid client attestation pop jwt", async () => {
     const jwt = [
       encodeToBase64Url(JSON.stringify(mockHeader)),
