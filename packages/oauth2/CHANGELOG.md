@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.4.1
+
+### Patch Changes
+
+- 7356f00: Fix publish public to npm
+- Updated dependencies [7356f00]
+  - @pagopa/io-wallet-utils@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes
