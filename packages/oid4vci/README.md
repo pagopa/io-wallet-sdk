@@ -19,10 +19,10 @@ yarn add @pagopa/io-wallet-oid4vci
 ### Wallet Provider
 
 ```typescript
-import { ItWalletProvider } from '@pagopa/io-wallet-oid4vci';
+import { WalletProvider } from '@pagopa/io-wallet-oid4vci';
 
 // Initialize the provider with required options
-const walletProvider = new ItWalletProvider({
+const walletProvider = new WalletProvider({
   // Openid4vciWalletProviderOptions configuration
   // Add your specific configuration here
 });
@@ -33,7 +33,7 @@ const walletProvider = new ItWalletProvider({
 Create wallet attestations required during the OID4VCI flow:
 
 ```typescript
-import { ItWalletProvider, WalletAttestationOptions } from '@pagopa/io-wallet-oid4vci';
+import { WalletProvider, WalletAttestationOptions } from '@pagopa/io-wallet-oid4vci';
 
 // Create wallet attestation
 const attestationOptions: WalletAttestationOptions = {
@@ -65,4 +65,32 @@ The wallet attestation JWT can then be used in the OID4VCI protocol flow to prov
 
 ## API Reference
 
-`ItWalletProvider`: A class that extends Openid4vciWalletProvider to provide specialized methods for the Italian Wallet ecosystem.
+`WalletProvider`: A class that extends Openid4vciWalletProvider to provide specialized methods for the Italian Wallet ecosystem.
+
+## Errors
+
+```typescript
+export class Oid4vciError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "Oid4vciError";
+  }
+}
+```
+Generic error thrown on Oid4vci operations
+
+Error thrown in case the DPoP key passed to the `WalletProvider.createItWalletAttestationJwt` method doesn't contain a kid
+```typescript
+export class WalletProviderError extends Oid {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "WalletProviderError";
+  }
+}
+```
