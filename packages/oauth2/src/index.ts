@@ -6,10 +6,10 @@ export * from "./token-dpop";
 
 export {
   CallbackContext,
+  HttpMethod,
+  JwtSigner,
   Oauth2JwtParseError,
   RequestDpopOptions,
   decodeJwt,
-  HttpMethod,
-  JwtSigner
 } from "@openid4vc/oauth2";
 export { Fetch } from "@openid4vc/utils";
