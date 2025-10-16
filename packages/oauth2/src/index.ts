@@ -12,7 +12,10 @@ export {
   Jwk,
   JwtSigner,
   JwtSignerJwk,
+  Oauth2JwtParseError,
+  RequestDpopOptions,
   SignJwtCallback,
   VerifyJwtCallback,
+  decodeJwt,
 } from "@openid4vc/oauth2";
 export { Fetch } from "@openid4vc/utils";
