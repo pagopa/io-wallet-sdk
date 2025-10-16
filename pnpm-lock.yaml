@@ -15,9 +15,15 @@ catalogs:
     '@openid4vc/openid4vci':
       specifier: 0.3.0-alpha-20250714110838
       version: 0.3.0-alpha-20250714110838
+    '@openid4vc/openid4vp':
+      specifier: 0.3.0-alpha-20250714110838
+      version: 0.3.0-alpha-20250714110838
     '@openid4vc/utils':
       specifier: 0.3.0-alpha-20250714110838
       version: 0.3.0-alpha-20250714110838
+    jose:
+      specifier: ^6.1.0
+      version: 6.1.0
     js-base64:
       specifier: ^3.7.8
       version: 3.7.8
@@ -105,6 +111,25 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+
+  packages/oid4vp:
+    dependencies:
+      '@openid4vc/oauth2':
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
+      '@openid4vc/openid4vp':
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
+      '@openid4vc/utils':
+        specifier: 'catalog:'
+        version: 0.3.0-alpha-20250714110838
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      jose:
+        specifier: 'catalog:'
+        version: 6.1.0
 
   packages/utils:
     dependencies:
@@ -436,6 +461,9 @@ packages:
 
   '@openid4vc/openid4vci@0.3.0-alpha-20250714110838':
     resolution: {integrity: sha512-Q6xCzapjacrmB2Tjk7rNrGsJbjTIVVIKn9ZvFZflfo8Imi18MXDLFmwQAyplwUMWIPy5J1AQ0nMeZNPdpWCTkQ==}
+
+  '@openid4vc/openid4vp@0.3.0-alpha-20250714110838':
+    resolution: {integrity: sha512-lWrtQkUky4+CCJPmd8gHzpxxf8wRMZZvmsRoVcTBoq9biTXquCpJSkcGkl0V2OFF9cpxF7jDxOcUrIa/UQ5Crw==}
 
   '@openid4vc/utils@0.3.0-alpha-20250714110838':
     resolution: {integrity: sha512-10TCSw/AMtgD4AIUob6kkFg6UdRv5kEYHovLJnfi5MHt4KdxSfSGfu2zc1cxJlKaBEg7su1BKiAT9j9WDmxSrA==}
@@ -1140,6 +1168,9 @@ packages:
 
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
+
+  jose@6.1.0:
+    resolution: {integrity: sha512-TTQJyoEoKcC1lscpVDCSsVgYzUDg/0Bt3WE//WiTPK6uOCQC2KZS4MpugbMWt/zyjkopgZoXhZuCi00gLudfUA==}
 
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
@@ -2096,6 +2127,12 @@ snapshots:
       '@openid4vc/utils': 0.3.0-alpha-20250714110838
       zod: 3.25.76
 
+  '@openid4vc/openid4vp@0.3.0-alpha-20250714110838':
+    dependencies:
+      '@openid4vc/oauth2': 0.3.0-alpha-20250714110838
+      '@openid4vc/utils': 0.3.0-alpha-20250714110838
+      zod: 3.25.76
+
   '@openid4vc/utils@0.3.0-alpha-20250714110838':
     dependencies:
       buffer: 6.0.3
@@ -2814,6 +2851,8 @@ snapshots:
       '@isaacs/cliui': 8.0.2
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
+
+  jose@6.1.0: {}
 
   joycon@3.1.1: {}
 
