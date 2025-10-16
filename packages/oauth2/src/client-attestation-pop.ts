@@ -31,6 +31,9 @@ export interface VerifyClientAttestationPopJwtOptions {
    */
   clientAttestationPopJwt: string;
 
+  /**
+   * The public JWK to verify the client attestation pop jwt.
+   */
   clientAttestationPublicJwk: Jwk;
 
   /**
@@ -50,36 +53,43 @@ export type VerifiedClientAttestationPopJwt = Awaited<
 export async function verifyClientAttestationPopJwt(
   options: VerifyClientAttestationPopJwtOptions,
 ) {
-  const { header, payload } = decodeJwt({
-    jwt: options.clientAttestationPopJwt,
-  });
+  try {
+    const { header, payload } = decodeJwt({
+      jwt: options.clientAttestationPopJwt,
+    });
 
-  if (payload.aud !== options.authorizationServer) {
+    if (payload.aud !== options.authorizationServer) {
+      throw new Oauth2Error(
+        `Client Attestation Pop jwt contains 'aud' value '${payload.aud}', but expected authorization server identifier '${options.authorizationServer}'`,
+      );
+    }
+
+    const { signer } = await verifyJwt({
+      compact: options.clientAttestationPopJwt,
+      errorMessage: "client attestation pop jwt verification failed",
+      expectedNonce: options.expectedNonce,
+      header,
+      now: options.now,
+      payload,
+      signer: {
+        alg: header.alg,
+        method: "jwk",
+        publicJwk: options.clientAttestationPublicJwk,
+      },
+      verifyJwtCallback: options.callbacks.verifyJwt,
+    });
+
+    return {
+      header,
+      payload,
+      signer,
+    };
+  } catch (error) {
+    if (error instanceof Oauth2Error) throw error;
     throw new Oauth2Error(
-      `Client Attestation Pop jwt contains 'aud' value '${payload.aud}', but expected authorization server identifier '${options.authorizationServer}'`,
+      `Error creating client attestation pop jwt : ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-
-  const { signer } = await verifyJwt({
-    compact: options.clientAttestationPopJwt,
-    errorMessage: "client attestation pop jwt verification failed",
-    expectedNonce: options.expectedNonce,
-    header,
-    now: options.now,
-    payload,
-    signer: {
-      alg: header.alg,
-      method: "jwk",
-      publicJwk: options.clientAttestationPublicJwk,
-    },
-    verifyJwtCallback: options.callbacks.verifyJwt,
-  });
-
-  return {
-    header,
-    payload,
-    signer,
-  };
 }
 
 export interface CreateClientAttestationPopJwtOptions {
@@ -127,61 +137,68 @@ export interface CreateClientAttestationPopJwtOptions {
 export async function createClientAttestationPopJwt(
   options: CreateClientAttestationPopJwtOptions,
 ) {
-  const clientAttestation = decodeJwt({
-    jwt: options.clientAttestation,
-  });
+  try {
+    const clientAttestation = decodeJwt({
+      jwt: options.clientAttestation,
+    });
 
-  const jwk = clientAttestation.payload.cnf?.jwk;
-  if (!jwk) {
+    const jwk = clientAttestation.payload.cnf?.jwk;
+    if (!jwk) {
+      throw new Oauth2Error(
+        "Client attestation does not contain 'cnf.jwk', cannot create client attestation pop jwt",
+      );
+    }
+
+    const sub = clientAttestation.payload.sub;
+    if (!sub || typeof sub !== "string") {
+      throw new Oauth2Error(
+        "Client attestation does not contain 'sub', cannot create client attestation pop jwt",
+      );
+    }
+
+    const signer = options.signer ?? {
+      alg: clientAttestation.header.alg,
+      method: "jwk",
+      publicJwk: jwk,
+    };
+
+    const header = {
+      alg: signer.alg,
+      typ: "oauth-client-attestation-pop+jwt",
+    } satisfies ClientAttestationPopJwtHeader;
+
+    const issuedAt = options.issuedAt ?? new Date();
+    const expiresAt = options.expiresAt ?? addSecondsToDate(issuedAt, 1 * 60);
+    const jti =
+      options.jti ??
+      (options.callbacks.generateRandom
+        ? encodeToBase64Url(await options.callbacks.generateRandom(32))
+        : undefined);
+
+    if (!jti) {
+      throw new Oauth2Error(
+        "Error: neither a default jti nor a generateRandom callback have been provided",
+      );
+    }
+
+    const payload = {
+      aud: options.authorizationServer,
+      exp: dateToSeconds(expiresAt),
+      iat: dateToSeconds(issuedAt),
+      iss: sub,
+      jti,
+    } satisfies ClientAttestationPopJwtPayload;
+
+    const { jwt } = await options.callbacks.signJwt(signer, {
+      header,
+      payload,
+    });
+
+    return jwt;
+  } catch (error) {
+    if (error instanceof Oauth2Error) throw error;
     throw new Oauth2Error(
-      "Client attestation does not contain 'cnf.jwk', cannot create client attestation pop jwt",
+      `Error creating client attestation pop jwt : ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-
-  const sub = clientAttestation.payload.sub;
-  if (!sub || typeof sub !== "string") {
-    throw new Oauth2Error(
-      "Client attestation does not contain 'sub', cannot create client attestation pop jwt",
-    );
-  }
-
-  const signer = options.signer ?? {
-    alg: clientAttestation.header.alg,
-    method: "jwk",
-    publicJwk: jwk,
-  };
-
-  const header = {
-    alg: signer.alg,
-    typ: "oauth-client-attestation-pop+jwt",
-  } satisfies ClientAttestationPopJwtHeader;
-
-  const issuedAt = options.issuedAt ?? new Date();
-  const expiresAt = options.expiresAt ?? addSecondsToDate(issuedAt, 1 * 60);
-  const jti =
-    options.jti ??
-    (options.callbacks.generateRandom
-      ? encodeToBase64Url(await options.callbacks.generateRandom(32))
-      : undefined);
-
-  if (!jti) {
-    throw new Oauth2Error(
-      "Error: neither a default jti nor a generateRandom callback have been provided",
-    );
-  }
-
-  const payload = {
-    aud: options.authorizationServer,
-    exp: dateToSeconds(expiresAt),
-    iat: dateToSeconds(issuedAt),
-    iss: sub,
-    jti,
-  } satisfies ClientAttestationPopJwtPayload;
-
-  const { jwt } = await options.callbacks.signJwt(signer, {
-    header,
-    payload,
-  });
-
-  return jwt;
 }

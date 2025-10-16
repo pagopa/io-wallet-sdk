@@ -5,6 +5,7 @@ import {
   createClientAttestationPopJwt,
   verifyClientAttestationPopJwt,
 } from "../client-attestation-pop";
+import { Oauth2Error } from "../errors";
 
 describe("client-attestation-pop", () => {
   const mockJwk = { crv: "P-256", kty: "EC", x: "...", y: "..." };
@@ -107,5 +108,21 @@ describe("client-attestation-pop", () => {
         clientAttestationPublicJwk: mockJwk,
       }),
     ).rejects.toThrow(/aud/);
+  });
+
+  it("should throw if jwt is malformed", async () => {
+    const jwt = [
+      encodeToBase64Url(JSON.stringify(mockHeader)),
+      "asdf",
+      "signature",
+    ].join(".");
+    await expect(
+      verifyClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { verifyJwt: mockVerifyJwt },
+        clientAttestationPopJwt: jwt,
+        clientAttestationPublicJwk: mockJwk,
+      }),
+    ).rejects.toThrow(Oauth2Error);
   });
 });
