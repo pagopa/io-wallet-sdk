@@ -3,7 +3,7 @@ import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CreateTokenDPoPError } from "../../errors";
-import { createTokenDPoP } from "../createTokenDPoP";
+import { createTokenDPoP } from "../create-token-dpop";
 
 const MOCKED_RANDOM = "random_string";
 const B64_MOCKED_RANDOM = Base64.encode(MOCKED_RANDOM, true);
