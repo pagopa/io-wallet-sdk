@@ -25,3 +25,16 @@ export class ParseAuthorizeRequestError extends Oid4vpError {
     this.name = "ParseAuthorizeRequestError";
   }
 }
+
+/**
+ * Error thrown by {@link fetchAuthorizationResponse}
+ */
+export class FetchAuthrorizationResponseError extends Oid4vpError {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "FetchAuthrorizationResponseError";
+  }
+}

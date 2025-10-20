@@ -1,10 +1,12 @@
 import {
+  CONTENT_TYPES,
+  HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT_TYPES, HEADERS } from "../../constants";
+import { HEADERS as OAUTH_HEADERS } from "../../constants";
 import {
   fetchPushedAuthorizationResponse,
   fetchPushedAuthorizationResponseOptions,
@@ -60,8 +62,9 @@ describe("fetchPushedAuthorizationResponse", () => {
           }),
           headers: {
             [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
-            [HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",
-            [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
+            [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION]:
+              "test-wallet-attestation-jwt",
+            [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
               "test-client-attestation-dpop-jwt",
           },
           method: "POST",

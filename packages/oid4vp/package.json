@@ -34,7 +34,8 @@
     "@openid4vc/oauth2": "catalog:",
     "@openid4vc/utils": "catalog:",
     "@openid4vc/openid4vp": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@pagopa/io-wallet-utils": "workspace:"
   },
   "devDependencies": {
     "jose": "catalog:"
