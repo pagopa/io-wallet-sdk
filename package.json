@@ -8,16 +8,16 @@
     "type": "git"
   },
   "scripts": {
-    "types:check": "tsc --noEmit",
+    "types:check": "pnpm build && tsc --noEmit",
     "build": "pnpm -r build",
-    "test": "vitest",
+    "test": "pnpm build && vitest",
     "format": "prettier --write \"packages/**/src/**/*.{js,ts}\"",
     "format:check": "prettier --check \"packages/**/src/**/*.{js,ts}\"",
     "lint": "eslint --fix \"packages/**/src/**/*.{js,ts}\"",
     "lint:check": "eslint \"packages/**/src/**/*.{js,ts}\"",
     "pre-commit": "pnpm format && pnpm lint",
     "pre-push": "pnpm pre-commit && pnpm types:check && pnpm test",
-    "code-review": "pnpm -r build && pnpm types:check && pnpm lint:check && pnpm format:check && pnpm test",
+    "code-review": "pnpm types:check && pnpm lint:check && pnpm format:check && pnpm test",
     "prepare": "husky",
     "release": "pnpm build && pnpm changeset publish --no-git-tag"
   },
