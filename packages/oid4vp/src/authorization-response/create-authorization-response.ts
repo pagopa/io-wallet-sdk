@@ -86,6 +86,8 @@ export async function createAuthorizationResponse(
       ],
     };
 
+    // NOTE: This method sets the state in the Authorization Response
+    //       using the corresponding value in the Request Object
     return createOpenid4vpAuthorizationResponse({
       authorizationRequestPayload: options.requestObject,
       authorizationResponsePayload: {
