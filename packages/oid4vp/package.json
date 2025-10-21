@@ -38,6 +38,7 @@
     "@pagopa/io-wallet-oid-federation" : "workspace:"
   },
   "devDependencies": {
-    "jose": "catalog:"
+    "jose": "catalog:",
+    "js-base64": "catalog:"
   }
 }

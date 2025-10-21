@@ -4,11 +4,7 @@ import {
   VpToken,
   createOpenid4vpAuthorizationResponse,
 } from "@openid4vc/openid4vp";
-import {
-  addSecondsToDate,
-  dateToSeconds,
-  encodeToBase64Url,
-} from "@openid4vc/utils";
+import { addSecondsToDate, dateToSeconds } from "@openid4vc/utils";
 import { ItWalletCredentialVerifierMetadata } from "@pagopa/io-wallet-oid-federation";
 
 import { AuthorizationRequestObject } from "../authorization-request";
@@ -88,7 +84,7 @@ export async function createAuthorizationResponse(
 
     // NOTE: This method sets the state in the Authorization Response
     //       using the corresponding value in the Request Object
-    return createOpenid4vpAuthorizationResponse({
+    return await createOpenid4vpAuthorizationResponse({
       authorizationRequestPayload: options.requestObject,
       authorizationResponsePayload: {
         vp_token: options.vp_token,
@@ -96,10 +92,12 @@ export async function createAuthorizationResponse(
       callbacks: options.callbacks,
       clientMetadata: openid_credential_verifier,
       jarm: {
-        audience: options.client_id,
-        authorizationServer: options.requestObject.client_id,
+        audience: options.requestObject.client_id,
+        authorizationServer: options.client_id,
         encryption: {
-          nonce: encodeToBase64Url(await options.callbacks.generateRandom(32)),
+          nonce: new TextDecoder().decode(
+            await options.callbacks.generateRandom(32),
+          ),
         },
         expiresInSeconds:
           options.exp ?? dateToSeconds(addSecondsToDate(new Date(), 60 * 10)), // default: 10 minutes

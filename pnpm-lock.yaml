@@ -133,6 +133,9 @@ importers:
       jose:
         specifier: 'catalog:'
         version: 6.1.0
+      js-base64:
+        specifier: 'catalog:'
+        version: 3.7.8
 
   packages/utils:
     dependencies:
