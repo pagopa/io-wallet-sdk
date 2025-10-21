@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.4.2
+
+### Patch Changes
+
+- 936caa4: Fix TypeScript type resolution by correcting package.json exports
+- Updated dependencies [936caa4]
+  - @pagopa/io-wallet-utils@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes
