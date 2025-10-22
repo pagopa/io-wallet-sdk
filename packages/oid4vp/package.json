@@ -1,11 +1,21 @@
 {
   "name": "@pagopa/io-wallet-oid4vp",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "files": [
     "dist"
   ],
   "license": "Apache-2.0",
-  "exports": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "homepage": "https://github.com/pagopa/io-wallet-sdk/tree/main/packages/oid4vp",
   "repository": {
     "type": "git",
@@ -13,18 +23,7 @@
     "directory": "packages/oid4vp"
   },
   "publishConfig": {
-    "access": "public",
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "exports": {
-      ".": {
-        "import": "./dist/index.mjs",
-        "require": "./dist/index.js",
-        "types": "./dist/index.d.ts"
-      },
-      "./package.json": "./package.json"
-    }
+    "access": "public"
   },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
