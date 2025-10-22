@@ -44,22 +44,21 @@ const attestationOptions: WalletAttestationOptions = {
     kty: "EC",
     crv: "P-256",
     x: "...",
-    y: "...",
+    y: "..."
   },
   signer: {
     walletProviderJwkPublicKid: "wallet-provider-key-id",
     trustChain: [
       "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9...", // Trust anchor JWT
       // Additional trust chain JWTs
-    ],
+    ]
   },
   walletName: "My Italian Wallet", // Optional
   walletLink: "https://mywalletapp.com", // Optional
-  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Optional, defaults to 60 days
+  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // Optional, defaults to 60 days
 };
 
-const attestationJwt =
-  await walletProvider.createItWalletAttestationJwt(attestationOptions);
+const attestationJwt = await walletProvider.createItWalletAttestationJwt(attestationOptions);
 ```
 
 The wallet attestation JWT can then be used in the OID4VCI protocol flow to prove the wallet's identity and key possession.
