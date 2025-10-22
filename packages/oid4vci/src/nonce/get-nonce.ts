@@ -4,6 +4,7 @@ import {
   UnexpectedStatusCodeError,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
+import * as z from "zod";
 
 import { NonceParseError, NonceRequestError } from "../errors";
 import { NonceResponse, zNonceResponse } from "./z-nonce-response";
@@ -35,29 +36,22 @@ export interface GetNonceOptions {
 export async function getNonce(
   options: GetNonceOptions,
 ): Promise<NonceResponse> {
-  try {
-    const fetch = createFetcher(options.callbacks.fetch);
-    const nonceResponse = fetch(options.nonceUrl, {
-      method: "POST",
-    })
-      .then(hasStatusOrThrow(201, UnexpectedStatusCodeError))
-      .then((res) => res.json());
-
-    const parsedNonceResponse = zNonceResponse.safeParse(nonceResponse);
-    if (!parsedNonceResponse.success) {
-      throw new NonceParseError(
-        `Failed to parse nonce response: ${parsedNonceResponse.error.message}`,
-        parsedNonceResponse.error,
+  const fetch = createFetcher(options.callbacks.fetch);
+  return await fetch(options.nonceUrl, {
+    method: "POST",
+  })
+    .then(hasStatusOrThrow(200, UnexpectedStatusCodeError))
+    .then((res) => res.json())
+    .then(zNonceResponse.parse)
+    .catch((error: unknown) => {
+      if (error instanceof z.ZodError) {
+        throw new NonceParseError(
+          `Failed to parse nonce response: ${error.message}`,
+          error,
+        );
+      }
+      throw new NonceRequestError(
+        `Unexpected error during nonce request: ${error instanceof Error ? error.message : String(error)}`,
       );
-    }
-
-    return parsedNonceResponse.data;
-  } catch (error) {
-    if (error instanceof NonceParseError) {
-      throw error;
-    }
-    throw new NonceRequestError(
-      `Unexpected error during nonce request: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
+    });
 }
