@@ -1,21 +1,12 @@
 import { CallbackContext } from "@openid4vc/oauth2";
+import { createFetcher } from "@openid4vc/utils";
+import {
+  UnexpectedStatusCodeError,
+  hasStatusOrThrow,
+} from "@pagopa/io-wallet-utils";
 
-import { CONTENT_TYPES, HEADERS } from "../constants";
-import { Oauth2ParseError } from "../error/Oauth2ParseError";
+import { NonceParseError, NonceRequestError } from "../errors";
 import { NonceResponse, zNonceResponse } from "./z-nonce-response";
-
-/**
- * Custom error thrown when nonce request operations fail
- */
-export class NonceRequestError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode?: number
-  ) {
-    super(message);
-    this.name = "NonceRequestError";
-  }
-}
 
 /**
  * Configuration options for fetching pushed authorization requests
@@ -41,42 +32,32 @@ export interface GetNonceOptions {
  * @throws {PushedAuthorizationRequestError} When the server returns a non-201 status code
  * @throws {PushedAuthorizationResponseParseError} When the response cannot be parsed or is invalid
  */
-export async function fetchPushedAuthorizationRequest(
-  options: GetNonceOptions
+export async function getNonce(
+  options: GetNonceOptions,
 ): Promise<NonceResponse> {
   try {
-    const nonceResponse = await options.callbacks.fetch(options.nonceUrl, {
+    const fetch = createFetcher(options.callbacks.fetch);
+    const nonceResponse = fetch(options.nonceUrl, {
       method: "POST",
-    });
+    })
+      .then(hasStatusOrThrow(201, UnexpectedStatusCodeError))
+      .then((res) => res.json());
 
-    if (nonceResponse.status !== 201) {
-      const errorText = await nonceResponse.text().catch(() => "Unknown error");
-      throw new NonceRequestError(
-        `Nonce request failed with status ${nonceResponse.status}. Expected 201 Created. Response: ${errorText}`,
-        nonceResponse.status
-      );
-    }
-
-    const nonceResponseJson = await nonceResponse.json();
-
-    const parsedNonceResponse = zNonceResponse.safeParse(nonceResponseJson);
+    const parsedNonceResponse = zNonceResponse.safeParse(nonceResponse);
     if (!parsedNonceResponse.success) {
-      throw new Oauth2ParseError(
+      throw new NonceParseError(
         `Failed to parse nonce response: ${parsedNonceResponse.error.message}`,
-        parsedNonceResponse.error
+        parsedNonceResponse.error,
       );
     }
 
     return parsedNonceResponse.data;
   } catch (error) {
-    if (
-      error instanceof NonceRequestError ||
-      error instanceof Oauth2ParseError
-    ) {
+    if (error instanceof NonceParseError) {
       throw error;
     }
     throw new NonceRequestError(
-      `Unexpected error during nonce request: ${error instanceof Error ? error.message : String(error)}`
+      `Unexpected error during nonce request: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
