@@ -1,9 +1,10 @@
-import { encodeToBase64Url } from "@openid4vc/utils";
 import {
   AuthorizationServerMetadata,
   CallbackContext,
   RequestDpopOptions,
 } from "@openid4vc/oauth2";
+import { encodeToBase64Url } from "@openid4vc/utils";
+
 import { createPkce } from "../pkce";
 import {
   AuthorizationRequest,
@@ -15,46 +16,31 @@ const RANDOM_BYTES_SIZE = 32;
 
 export interface CreatePushedAuthorizationRequestOptions {
   /**
+   * It MUST be set to the identifier of the Credential Issuer.
+   */
+  audience: string;
+
+  /**
+   * Allows clients to specify their fine-grained authorization requirements using the expressiveness of JSON data structures
+   */
+  authorization_details: AuthorizationRequest["authorization_details"];
+
+  /**
    * Callback context mostly for crypto related functionality
    */
-  callbacks: Pick<CallbackContext, "hash" | "generateRandom" | "signJwt">;
-
-  codeChallengeMethodsSupported: AuthorizationServerMetadata["code_challenge_methods_supported"];
+  callbacks: Pick<CallbackContext, "generateRandom" | "hash" | "signJwt">;
 
   /**
    * MUST be set to the thumbprint of the jwk value in the cnf parameter inside the Wallet Attestation.
    */
   clientId: string;
 
-  /**
-   * It MUST be set to the identifier of the Credential Issuer.
-   */
-  audience: string;
+  codeChallengeMethodsSupported: AuthorizationServerMetadata["code_challenge_methods_supported"];
 
   /**
-   * Scope to request for the authorization request
+   * DPoP options
    */
-  scope: string;
-
-  /**
-   * It MUST be one of the supported values (response_modes_supported) provided in the metadata of the Credential Issuer.
-   */
-  responseMode: string;
-
-  /**
-   * Redirect uri to include in the authorization request
-   */
-  redirectUri: string;
-
-  /**
-   * Allows clients to specify their fine-grained authorization requirements using the expressiveness of JSON data structures
-   */
-  authorization_details: Record<string, unknown>[];
-
-  /**
-   * state parameter to use for PAR. If not provided a value will generated automatically
-   */
-  state?: string;
+  dpop: RequestDpopOptions;
 
   /**
    * jti parameter to use for PAR. If not provided a value will generated automatically
@@ -67,9 +53,24 @@ export interface CreatePushedAuthorizationRequestOptions {
   pkceCodeVerifier?: string;
 
   /**
-   * DPoP options
+   * Redirect uri to include in the authorization request
    */
-  dpop: RequestDpopOptions;
+  redirectUri: string;
+
+  /**
+   * It MUST be one of the supported values (response_modes_supported) provided in the metadata of the Credential Issuer.
+   */
+  responseMode: string;
+
+  /**
+   * Scope to request for the authorization request
+   */
+  scope: string;
+
+  /**
+   * state parameter to use for PAR. If not provided a value will generated automatically
+   */
+  state?: string;
 }
 
 export async function createPushedAuthorizationRequest(
@@ -83,19 +84,19 @@ export async function createPushedAuthorizationRequest(
   });
 
   const authorizationRequest: AuthorizationRequest = {
-    response_type: "code",
+    authorization_details: options.authorization_details,
+    client_id: options.clientId,
+    code_challenge: pkce.codeChallenge,
+    code_challenge_method: pkce.codeChallengeMethod,
+    redirect_uri: options.redirectUri,
     response_mode: options.responseMode,
+    response_type: "code",
+    scope: options.scope,
     state:
       options.state ??
       encodeToBase64Url(
         await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
       ),
-    client_id: options.clientId,
-    redirect_uri: options.redirectUri,
-    scope: options.scope,
-    authorization_details: options.authorization_details,
-    code_challenge: pkce.codeChallenge,
-    code_challenge_method: pkce.codeChallengeMethod,
   };
 
   const { dpop } = options;

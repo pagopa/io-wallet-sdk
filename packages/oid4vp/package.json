@@ -1,0 +1,41 @@
+{
+  "name": "@pagopa/io-wallet-oid4vp",
+  "version": "0.4.2",
+  "files": [
+    "dist"
+  ],
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "homepage": "https://github.com/pagopa/io-wallet-sdk/tree/main/packages/oid4vp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pagopa/io-wallet-sdk",
+    "directory": "packages/oid4vp"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@openid4vc/oauth2": "catalog:",
+    "@openid4vc/utils": "catalog:",
+    "@openid4vc/openid4vp": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "jose": "catalog:"
+  }
+}

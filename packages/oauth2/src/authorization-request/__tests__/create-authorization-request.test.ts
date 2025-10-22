@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { PkceCodeChallengeMethod, createPkce } from "../../pkce";
 import {
-  createPushedAuthorizationRequest,
   CreatePushedAuthorizationRequestOptions,
+  createPushedAuthorizationRequest,
 } from "../create-authorization-request";
-import { createPkce } from "../../pkce";
 
 vi.mock("../../pkce");
 vi.mock("@openid4vc/utils", () => ({
@@ -14,40 +15,40 @@ const mockCreatePkce = vi.mocked(createPkce);
 
 describe("createPushedAuthorizationRequest", () => {
   const mockCallbacks = {
-    hash: vi.fn(),
     generateRandom: vi.fn(),
+    hash: vi.fn(),
     signJwt: vi.fn(),
   };
 
   const mockSigner = {
-    method: "jwk" as const,
     alg: "ES256",
+    method: "jwk" as const,
     publicJwk: {
+      crv: "P-256",
       kid: "test-kid",
       kty: "EC",
-      crv: "P-256",
       x: "test-x",
       y: "test-y",
     },
   };
 
   const baseOptions: CreatePushedAuthorizationRequestOptions = {
-    callbacks: mockCallbacks,
-    codeChallengeMethodsSupported: ["S256"],
-    clientId: "test-client-id",
     audience: "https://issuer.example.com",
-    scope: "openid",
-    responseMode: "form_post",
-    redirectUri: "https://client.example.com/callback",
     authorization_details: [
       {
-        type: "openid_credential",
         credential_configuration_id: "test-config",
+        type: "openid_credential",
       },
     ],
+    callbacks: mockCallbacks,
+    clientId: "test-client-id",
+    codeChallengeMethodsSupported: ["S256"],
     dpop: {
       signer: mockSigner,
     },
+    redirectUri: "https://client.example.com/callback",
+    responseMode: "form_post",
+    scope: "openid",
   };
 
   beforeEach(() => {
@@ -57,9 +58,9 @@ describe("createPushedAuthorizationRequest", () => {
     );
     mockCallbacks.signJwt.mockResolvedValue({ jwt: "test-jwt-token" });
     mockCreatePkce.mockResolvedValue({
-      codeVerifier: "test-code-verifier",
       codeChallenge: "test-code-challenge",
-      codeChallengeMethod: "S256" as any,
+      codeChallengeMethod: PkceCodeChallengeMethod.S256,
+      codeVerifier: "test-code-verifier",
     });
   });
 
@@ -80,24 +81,24 @@ describe("createPushedAuthorizationRequest", () => {
       },
       payload: expect.objectContaining({
         aud: "https://issuer.example.com",
+        authorization_details: [
+          {
+            credential_configuration_id: "test-config",
+            type: "openid_credential",
+          },
+        ],
+        client_id: "test-client-id",
+        code_challenge: "test-code-challenge",
+        code_challenge_method: "S256",
         exp: expect.any(Number),
         iat: expect.any(Number),
         iss: "test-kid",
-        response_type: "code",
-        response_mode: "form_post",
-        state: "base64url_1,2,3,4",
-        client_id: "test-client-id",
-        redirect_uri: "https://client.example.com/callback",
-        scope: "openid",
-        authorization_details: [
-          {
-            type: "openid_credential",
-            credential_configuration_id: "test-config",
-          },
-        ],
-        code_challenge: "test-code-challenge",
-        code_challenge_method: "S256",
         jti: "base64url_1,2,3,4",
+        redirect_uri: "https://client.example.com/callback",
+        response_mode: "form_post",
+        response_type: "code",
+        scope: "openid",
+        state: "base64url_1,2,3,4",
       }),
     });
 
@@ -134,20 +135,20 @@ describe("createPushedAuthorizationRequest", () => {
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
       header: expect.any(Object),
       payload: expect.objectContaining({
-        iat: expectedIat,
         exp: expectedExp,
+        iat: expectedIat,
       }),
     });
   });
 
   it("should use signer kid as issuer in JWT payload", async () => {
     const customSigner = {
-      method: "jwk" as const,
       alg: "ES256",
+      method: "jwk" as const,
       publicJwk: {
+        crv: "P-256",
         kid: "custom-signer-kid",
         kty: "EC",
-        crv: "P-256",
         x: "custom-x",
         y: "custom-y",
       },
@@ -178,8 +179,8 @@ describe("createPushedAuthorizationRequest", () => {
 
     const optionsWithStateAndJti = {
       ...baseOptions,
-      state: customState,
       jti: customJti,
+      state: customState,
     };
 
     await createPushedAuthorizationRequest(optionsWithStateAndJti);
@@ -187,8 +188,8 @@ describe("createPushedAuthorizationRequest", () => {
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
       header: expect.any(Object),
       payload: expect.objectContaining({
-        state: customState,
         jti: customJti,
+        state: customState,
       }),
     });
   });

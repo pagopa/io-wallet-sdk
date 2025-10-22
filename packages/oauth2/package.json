@@ -1,11 +1,21 @@
 {
   "name": "@pagopa/io-wallet-oauth2",
-  "version": "0.3.0",
+  "version": "0.4.2",
   "files": [
     "dist"
   ],
   "license": "Apache-2.0",
-  "exports": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "homepage": "https://github.com/pagopa/io-wallet-sdk/tree/main/packages/oauth2",
   "repository": {
     "type": "git",
@@ -13,25 +23,17 @@
     "directory": "packages/oauth2"
   },
   "publishConfig": {
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "exports": {
-      ".": {
-        "import": "./dist/index.mjs",
-        "require": "./dist/index.js",
-        "types": "./dist/index.d.ts"
-      },
-      "./package.json": "./package.json"
-    }
+    "access": "public"
   },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
     "test": "vitest"
   },
   "dependencies": {
-    "@openid4vc/oauth2": "^0.2.0",
-    "@openid4vc/utils": "^0.2.0",
-    "zod": "^3.24.2"
+    "@pagopa/io-wallet-utils": "workspace:*",
+    "@openid4vc/oauth2": "catalog:",
+    "@openid4vc/utils": "catalog:",
+    "zod": "catalog:",
+    "js-base64": "catalog:"
   }
 }

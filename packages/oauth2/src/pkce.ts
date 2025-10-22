@@ -16,20 +16,20 @@ export interface CreatePkceOptions {
    * Also allows string values so it can be directly passed from the
    * 'code_challenge_methods_supported' metadata parameter
    */
-  allowedCodeChallengeMethods?: Array<string | PkceCodeChallengeMethod>;
+  allowedCodeChallengeMethods?: (PkceCodeChallengeMethod | string)[];
+
+  callbacks: Pick<CallbackContext, "generateRandom" | "hash">;
 
   /**
    * Code verifier to use. If not provided a value will be generated.
    */
   codeVerifier?: string;
-
-  callbacks: Pick<CallbackContext, "hash" | "generateRandom">;
 }
 
 export interface CreatePkceReturn {
-  codeVerifier: string;
   codeChallenge: string;
   codeChallengeMethod: PkceCodeChallengeMethod;
+  codeVerifier: string;
 }
 
 export async function createPkce(
@@ -56,26 +56,26 @@ export async function createPkce(
     options.codeVerifier ??
     encodeToBase64Url(await options.callbacks.generateRandom(64));
   return {
-    codeVerifier,
     codeChallenge: await calculateCodeChallenge({
       codeChallengeMethod,
       codeVerifier,
       hashCallback: options.callbacks.hash,
     }),
     codeChallengeMethod,
+    codeVerifier,
   };
 }
 
 export interface VerifyPkceOptions {
-  /**
-   * secure random code verifier
-   */
-  codeVerifier: string;
+  callbacks: Pick<CallbackContext, "hash">;
 
   codeChallenge: string;
   codeChallengeMethod: PkceCodeChallengeMethod;
 
-  callbacks: Pick<CallbackContext, "hash">;
+  /**
+   * secure random code verifier
+   */
+  codeVerifier: string;
 }
 
 export async function verifyPkce(options: VerifyPkceOptions) {
@@ -93,8 +93,8 @@ export async function verifyPkce(options: VerifyPkceOptions) {
 }
 
 async function calculateCodeChallenge(options: {
-  codeVerifier: string;
   codeChallengeMethod: PkceCodeChallengeMethod;
+  codeVerifier: string;
   hashCallback: HashCallback;
 }) {
   if (options.codeChallengeMethod === PkceCodeChallengeMethod.Plain) {

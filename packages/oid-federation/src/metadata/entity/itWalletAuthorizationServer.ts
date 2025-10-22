@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { JWKS } from "../../jwk";
 
 /**
@@ -8,19 +9,6 @@ import { JWKS } from "../../jwk";
  */
 export const itWalletAuthorizationServerMetadata = z
   .object({
-    issuer: z.string().url(),
-    pushed_authorization_request_endpoint: z.string().url(),
-    authorization_endpoint: z.string().url(),
-    token_endpoint: z.string().url(),
-    client_registration_types_supported: z.array(
-      z.union([z.literal("automatic"), z.literal("explicit")]),
-    ),
-    code_challenge_methods_supported: z
-      .array(z.string())
-      .refine((arr) => arr.includes("S256"), {
-        message:
-          "The code_challenge_methods_supported array MUST include 'S256'.",
-      }),
     acr_values_supported: z.array(
       z.union([
         z.literal("https://trust-registry.eid-wallet.example.it/loa/low"),
@@ -30,7 +18,27 @@ export const itWalletAuthorizationServerMetadata = z
         z.literal("https://trust-registry.eid-wallet.example.it/loa/high"),
       ]),
     ),
-    scopes_supported: z.array(z.string()),
+    authorization_endpoint: z.string().url(),
+    authorization_signing_alg_values_supported: z.array(z.string()),
+    client_registration_types_supported: z.array(
+      z.union([z.literal("automatic"), z.literal("explicit")]),
+    ),
+    code_challenge_methods_supported: z
+      .array(z.string())
+      .refine((arr) => arr.includes("S256"), {
+        message:
+          "The code_challenge_methods_supported array MUST include 'S256'.",
+      }),
+    grant_types_supported: z
+      .array(z.string())
+      .refine((arr) => arr.includes("authorization_code"), {
+        message:
+          "The grant_types_supported array MUST include 'authorization_code'.",
+      }),
+    issuer: z.string().url(),
+    jwks: JWKS,
+    pushed_authorization_request_endpoint: z.string().url(),
+    request_object_signing_alg_values_supported: z.array(z.string()),
     response_modes_supported: z.array(
       z.union([z.literal("query"), z.literal("form_post.jwt")]),
     ),
@@ -39,13 +47,8 @@ export const itWalletAuthorizationServerMetadata = z
       .refine((arr) => arr.includes("code"), {
         message: "The response_types_supported array MUST include 'code'.",
       }),
-    authorization_signing_alg_values_supported: z.array(z.string()),
-    grant_types_supported: z
-      .array(z.string())
-      .refine((arr) => arr.includes("authorization_code"), {
-        message:
-          "The grant_types_supported array MUST include 'authorization_code'.",
-      }),
+    scopes_supported: z.array(z.string()),
+    token_endpoint: z.string().url(),
     token_endpoint_auth_methods_supported: z
       .array(z.string())
       .refine((arr) => arr.includes("attest_jwt_client_auth"), {
@@ -53,8 +56,6 @@ export const itWalletAuthorizationServerMetadata = z
           "The token_endpoint_auth_methods_supported array MUST include 'attest_jwt_client_auth'.",
       }),
     token_endpoint_auth_signing_alg_values_supported: z.array(z.string()),
-    request_object_signing_alg_values_supported: z.array(z.string()),
-    jwks: JWKS,
   })
   .passthrough();
 
