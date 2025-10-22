@@ -1,6 +1,6 @@
 import { CallbackContext } from "@openid4vc/oauth2";
 
-import { AccessTokenRequest } from "../z-token";
+import { AccessTokenRequest } from "./z-token";
 
 export interface RetrieveAuthorizationCodeAccessTokenOptions {
   /**
