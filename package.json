@@ -10,6 +10,7 @@
   "scripts": {
     "types:check": "pnpm build && tsc --noEmit",
     "build": "pnpm -r build",
+    "clean": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist",
     "test": "pnpm build && vitest",
     "format": "prettier --write \"packages/**/src/**/*.{js,ts}\"",
     "format:check": "prettier --check \"packages/**/src/**/*.{js,ts}\"",
