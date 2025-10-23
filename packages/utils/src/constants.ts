@@ -14,4 +14,5 @@ export const HEADERS = {
   CONTENT_TYPE: "Content-Type",
   OAUTH_CLIENT_ATTESTATION: "OAuth-Client-Attestation",
   OAUTH_CLIENT_ATTESTATION_POP: "OAuth-Client-Attestation-PoP",
+  DPOP: "DPoP",
 } as const;
