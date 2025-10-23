@@ -1,8 +1,8 @@
 import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
-
-import { CredentialRequest, zCredentialRequest } from "./z-credential";
-import { Oid4vciError } from "../errors";
 import { parseWithErrorHandling } from "@openid4vc/utils";
+
+import { Oid4vciError } from "../errors";
+import { CredentialRequest, zCredentialRequest } from "./z-credential";
 
 export interface CredentialRequestOptions {
   /**
