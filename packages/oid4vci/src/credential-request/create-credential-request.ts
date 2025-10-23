@@ -1,24 +1,29 @@
 import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
-import { parseWithErrorHandling } from "@openid4vc/utils";
+import { dateToSeconds, parseWithErrorHandling } from "@openid4vc/utils";
 
 import { Oid4vciError } from "../errors";
 import { CredentialRequest, zCredentialRequest } from "./z-credential";
 
 export interface CredentialRequestOptions {
   /**
-   * Identifier of the Credential Issuer.
-   */
-  audience: string;
-
-  /**
-   * Callbacks to use for signing prood
+   * Callbacks to use for signing proof
    */
   callbacks: Pick<CallbackContext, "signJwt">;
+
+  /**
+   * Client identifier of the OAuth2 Client making the Credential Request.
+   */
+  clientId: string;
 
   /**
    * This MUST be set with one of the value obtained in the credential_identifiers claim of the Token Response.
    */
   credential_identifier: string;
+
+  /**
+   * Identifier of the Credential Issuer, for ex: https://issuer.example.com.
+   */
+  issuerIdentifier: string;
 
   nonce: string;
 
@@ -45,9 +50,9 @@ export const createCredentialRequest = async (
         typ: "openid4vci-proof+jwt",
       },
       payload: {
-        aud: options.audience,
-        iat: Math.floor(Date.now() / 1000),
-        iss: options.audience, //?
+        aud: options.issuerIdentifier,
+        iat: dateToSeconds(new Date()),
+        iss: options.clientId,
         nonce: options.nonce,
       },
     });
