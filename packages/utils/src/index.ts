@@ -1,4 +1,10 @@
 export * from "./errors";
 export * from "./fetcher";
 
-export { JsonParseError, ValidationError } from "@openid4vc/utils";
+export {
+  JsonParseError,
+  ValidationError,
+  dateToSeconds,
+  decodeUtf8String,
+  encodeToBase64Url,
+} from "@openid4vc/utils";
