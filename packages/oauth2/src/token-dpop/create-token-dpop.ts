@@ -5,6 +5,7 @@ import {
   JwtSignerJwk,
 } from "@openid4vc/oauth2";
 import {
+  ValidationError,
   dateToSeconds,
   decodeUtf8String,
   encodeToBase64Url,
@@ -73,34 +74,38 @@ export interface CreateTokenDPoPOptions {
  *         callback have been provided or the signJwt callback throws
  */
 export async function createTokenDPoP(options: CreateTokenDPoPOptions) {
-  // Calculate access token hash
-  const ath = options.accessToken
-    ? encodeToBase64Url(
-        await options.callbacks.hash(
-          decodeUtf8String(options.accessToken),
-          HashAlgorithm.Sha256,
-        ),
-      )
-    : undefined;
-
-  const jti =
-    options.jti ??
-    (options.callbacks.generateRandom
-      ? Base64.fromUint8Array(await options.callbacks.generateRandom(32), true)
-      : undefined);
-
-  if (!jti) {
-    throw new CreateTokenDPoPError(
-      "Error: neither a default jti nor a generateRandom callback have been provided",
-    );
-  }
-
-  const header = parseWithErrorHandling(zDpopJwtHeader, {
-    alg: options.signer.alg,
-    jwk: options.signer.publicJwk,
-    typ: "dpop+jwt",
-  } satisfies DpopJwtHeader);
   try {
+    // Calculate access token hash
+    const ath = options.accessToken
+      ? encodeToBase64Url(
+          await options.callbacks.hash(
+            decodeUtf8String(options.accessToken),
+            HashAlgorithm.Sha256,
+          ),
+        )
+      : undefined;
+
+    const jti =
+      options.jti ??
+      (options.callbacks.generateRandom
+        ? Base64.fromUint8Array(
+            await options.callbacks.generateRandom(32),
+            true,
+          )
+        : undefined);
+
+    if (!jti) {
+      throw new CreateTokenDPoPError(
+        "Error: neither a default jti nor a generateRandom callback have been provided",
+      );
+    }
+
+    const header = parseWithErrorHandling(zDpopJwtHeader, {
+      alg: options.signer.alg,
+      jwk: options.signer.publicJwk,
+      typ: "dpop+jwt",
+    } satisfies DpopJwtHeader);
+
     const payload = parseWithErrorHandling(zDpopJwtPayload, {
       ath,
       htm: options.tokenRequest.method,
@@ -114,6 +119,12 @@ export async function createTokenDPoP(options: CreateTokenDPoPOptions) {
       payload,
     });
   } catch (error) {
+    if (
+      error instanceof CreateTokenDPoPError ||
+      error instanceof ValidationError
+    ) {
+      throw error;
+    }
     throw new CreateTokenDPoPError(
       `Error during jwt signature, details: ${error instanceof Error ? error.message : String(error)}`,
     );
