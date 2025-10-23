@@ -47,6 +47,15 @@ export interface FetchCredentialResponseOptions {
   walletAttestation: string;
 }
 
+/**
+ * Fetches a credential response from the credential endpoint
+ *
+ * @param options - Options for fetching the credential response
+ * @returns The credential response
+ * @throws FetchCredentialResponseError if an unexpected error occurs during the fetch
+ * @throws UnexpectedStatusCodeError if the response status code is not 200
+ * @throws ValidationError if the response cannot be parsed as a valid credential response
+ */
 export async function fetchTokenResponse(
   options: FetchCredentialResponseOptions,
 ): Promise<CredentialResponse> {
@@ -65,19 +74,17 @@ export async function fetchTokenResponse(
 
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(credentialResponse);
 
-    const credentialResponseJson = await credentialResponse.json();
-
-    const parsedCredentialResponse = zCredentialResponse.safeParse(
-      credentialResponseJson,
+    const parsed = zCredentialResponse.safeParse(
+      await credentialResponse.json(),
     );
-    if (!parsedCredentialResponse.success) {
+    if (!parsed.success) {
       throw new ValidationError(
         `Failed to parse credential response`,
-        parsedCredentialResponse.error,
+        parsed.error,
       );
     }
 
-    return parsedCredentialResponse.data;
+    return parsed.data;
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
