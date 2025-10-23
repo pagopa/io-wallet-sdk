@@ -28,8 +28,6 @@ export interface CreateTokenDPoPOptions {
   /**
    * The access token to which the dpop jwt should be bound. Required
    * when the dpop will be sent along with an access token.
-   *
-   * If provided, the `hashCallback` parameter also needs to be provided
    */
   accessToken?: string;
 
