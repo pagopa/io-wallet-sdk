@@ -1,6 +1,6 @@
 {
   "name": "@pagopa/io-wallet-oid4vp",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "files": [
     "dist"
   ],
@@ -34,7 +34,7 @@
     "@openid4vc/utils": "catalog:",
     "@openid4vc/openid4vp": "catalog:",
     "zod": "catalog:",
-    "@pagopa/io-wallet-oid-federation" : "workspace:"
+    "@pagopa/io-wallet-oid-federation": "workspace:"
   },
   "devDependencies": {
     "jose": "catalog:",

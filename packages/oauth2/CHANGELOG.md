@@ -1,5 +1,15 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.5.0
+
+### Minor Changes
+
+- 6331820: Create dpop with access token
+
+### Patch Changes
+
+- @pagopa/io-wallet-utils@0.5.0
+
 ## 0.4.2
 
 ### Patch Changes
