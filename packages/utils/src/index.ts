@@ -6,5 +6,6 @@ export {
   ValidationError,
   addSecondsToDate,
   dateToSeconds,
+  decodeUtf8String,
   encodeToBase64Url,
 } from "@openid4vc/utils";
