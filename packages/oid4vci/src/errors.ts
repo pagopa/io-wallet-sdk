@@ -25,3 +25,16 @@ export class WalletProviderError extends Oid4vciError {
     this.name = "WalletProviderError";
   }
 }
+
+/**
+ * Error thrown when an unexpected error occurs during nonce request.
+ */
+export class NonceRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "NonceRequestError";
+  }
+}
