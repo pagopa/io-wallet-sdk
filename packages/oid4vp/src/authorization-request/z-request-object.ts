@@ -16,7 +16,7 @@ export const zOpenid4vpAuthorizationRequest = z
     response_type: z.literal("vp_token"),
     response_uri: z.string().url().optional(),
     scope: z.string().optional(),
-    state: z.string().optional(),
+    state: z.string(),
     wallet_nonce: z.string().optional(),
   })
   .passthrough()
