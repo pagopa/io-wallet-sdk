@@ -1,5 +1,9 @@
 import { CallbackContext } from "@openid4vc/oauth2";
-import { ValidationError, createFetcher } from "@openid4vc/utils";
+import {
+  createFetcher,
+  parseWithErrorHandling,
+  ValidationError,
+} from "@openid4vc/utils";
 import {
   UnexpectedStatusCodeError,
   hasStatusOrThrow,
@@ -70,18 +74,11 @@ export async function fetchTokenResponse(
 
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(tokenResponse);
 
-    const tokenResponseJson = await tokenResponse.json();
-
-    const parsedTokenResponse =
-      zAccessTokenResponse.safeParse(tokenResponseJson);
-    if (!parsedTokenResponse.success) {
-      throw new ValidationError(
-        `Failed to parse token response`,
-        parsedTokenResponse.error,
-      );
-    }
-
-    return parsedTokenResponse.data;
+    return parseWithErrorHandling(
+      zAccessTokenResponse,
+      await tokenResponse.json(),
+      "Failed to parse token response",
+    );
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
