@@ -8,6 +8,7 @@ export * from "./token-dpop";
 export {
   type CallbackContext,
   type GenerateRandomCallback,
+  HashAlgorithm,
   type HttpMethod,
   type Jwk,
   type JwtSigner,
