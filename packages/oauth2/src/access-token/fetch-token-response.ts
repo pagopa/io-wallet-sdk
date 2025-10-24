@@ -1,8 +1,8 @@
 import { CallbackContext } from "@openid4vc/oauth2";
 import {
+  ValidationError,
   createFetcher,
   parseWithErrorHandling,
-  ValidationError,
 } from "@openid4vc/utils";
 import {
   UnexpectedStatusCodeError,
