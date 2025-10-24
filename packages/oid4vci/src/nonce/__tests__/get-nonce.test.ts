@@ -1,6 +1,7 @@
+import { ValidationError } from "@openid4vc/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { NonceParseError, NonceRequestError } from "../../errors";
+import { NonceRequestError } from "../../errors";
 import { GetNonceOptions, getNonce } from "../get-nonce";
 
 const mockFetch = vi.fn();
@@ -53,14 +54,14 @@ describe("getNonce", () => {
     await expect(getNonce(baseOptions)).rejects.toThrow(NonceRequestError);
   });
 
-  it("should throw NonceParseError when response has invalid structure", async () => {
+  it("should throw ValidationError when response has invalid structure", async () => {
     const mockResponse = {
       json: vi.fn().mockResolvedValue({ invalid: "data" }),
       status: 200,
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    await expect(getNonce(baseOptions)).rejects.toThrow(NonceParseError);
+    await expect(getNonce(baseOptions)).rejects.toThrow(ValidationError);
   });
 
   it("should throw NonceRequestError when a network error occurs", async () => {
