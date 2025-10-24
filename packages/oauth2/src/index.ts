@@ -1,3 +1,4 @@
+export * from "./access-token";
 export * from "./authorization-request";
 export * from "./client-attestation-pop";
 export * from "./constants";

@@ -34,3 +34,16 @@ export class CreateTokenDPoPError extends Oauth2Error {
     this.name = "CreateTokenDPoPError";
   }
 }
+
+/**
+ * Custom error thrown when pushed authorization request operations fail
+ */
+export class FetchTokenResponseError extends Oauth2Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "fetchTokenResponseError";
+  }
+}
