@@ -1,12 +1,12 @@
 import {
   EntityConfigurationHeaderOptions,
-  SignCallback,
   createJsonWebToken,
   createJwtSignableInput,
   entityConfigurationHeaderSchema,
-  getUsedJsonWebKey,
 } from "@openid-federation/core";
 
+import { getUsedJsonWebKey } from "../jsonWeb/getUsedJsonWebKey";
+import { SignCallback } from "../utils";
 import { parseWithErrorHandling } from "../utils/validate";
 import {
   ItWalletEntityConfigurationClaimsOptions,
