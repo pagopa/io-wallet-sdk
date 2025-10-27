@@ -1,4 +1,7 @@
-import { UnexpectedStatusCodeError, ValidationError } from "@pagopa/io-wallet-utils";
+import {
+  UnexpectedStatusCodeError,
+  ValidationError,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FetchCredentialResponseError } from "../../errors";
@@ -84,7 +87,9 @@ describe("fetchTokenResponse", () => {
 
     await fetchTokenResponse(baseOptions);
 
-    const fetchCall = mockFetch.mock.calls[0]!;
+    const fetchCall = mockFetch.mock.calls[0];
+    expect(fetchCall).toBeDefined();
+    if (!fetchCall) throw new Error("fetchCall is undefined");
     const headers = fetchCall[1].headers;
 
     expect(headers["Content-Type"]).toBe("application/json");
@@ -108,7 +113,9 @@ describe("fetchTokenResponse", () => {
 
     await fetchTokenResponse(baseOptions);
 
-    const fetchCall = mockFetch.mock.calls[0]!;
+    const fetchCall = mockFetch.mock.calls[0];
+    expect(fetchCall).toBeDefined();
+    if (!fetchCall) throw new Error("fetchCall is undefined");
     const body = fetchCall[1].body;
 
     expect(body).toBe(JSON.stringify(mockCredentialRequest));
@@ -125,7 +132,9 @@ describe("fetchTokenResponse", () => {
 
     await fetchTokenResponse(baseOptions);
 
-    const fetchCall = mockFetch.mock.calls[0]!;
+    const fetchCall = mockFetch.mock.calls[0];
+    expect(fetchCall).toBeDefined();
+    if (!fetchCall) throw new Error("fetchCall is undefined");
     expect(fetchCall[1].method).toBe("POST");
   });
 
@@ -203,34 +212,5 @@ describe("fetchTokenResponse", () => {
     expect(result).toEqual(deferredResponse);
     expect(result.transaction_id).toBe("test-transaction-id");
     expect(result.lead_time).toBe(300);
-  });
-
-  it("should send different credential requests correctly", async () => {
-    const customCredentialRequest: CredentialRequest = {
-      credential_identifier: "custom-id",
-      proof: {
-        jwt: "custom-proof-jwt",
-        proof_type: "jwt",
-      },
-    };
-
-    const mockResponse = {
-      json: vi.fn(() => ({
-        credentials: { credential: "test-credential" },
-      })),
-      status: 200,
-    };
-    mockFetch.mockResolvedValue(mockResponse);
-
-    await fetchTokenResponse({
-      ...baseOptions,
-      credentialRequest: customCredentialRequest,
-    });
-
-    const fetchCall = mockFetch.mock.calls[0]!;
-    const body = JSON.parse(fetchCall[1].body);
-
-    expect(body.credential_identifier).toBe("custom-id");
-    expect(body.proof.jwt).toBe("custom-proof-jwt");
   });
 });

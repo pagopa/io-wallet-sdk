@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Oid4vciError } from "../../errors";
 import {
-  createCredentialRequest,
   CredentialRequestOptions,
+  createCredentialRequest,
 } from "../create-credential-request";
 
 const mockCallbacks = {
@@ -74,7 +74,9 @@ describe("createCredentialRequest", () => {
     await createCredentialRequest(baseOptions);
     const afterTimestamp = Math.floor(Date.now() / 1000);
 
-    const signJwtCall = mockCallbacks.signJwt.mock.calls[0]!;
+    const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
+    expect(signJwtCall).toBeDefined();
+    if (!signJwtCall) throw new Error("signJwtCall is undefined");
     const iat = signJwtCall[1].payload.iat;
 
     expect(iat).toBeGreaterThanOrEqual(beforeTimestamp);
@@ -118,7 +120,9 @@ describe("createCredentialRequest", () => {
 
     await createCredentialRequest(customOptions);
 
-    const signJwtCall = mockCallbacks.signJwt.mock.calls[0]!;
+    const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
+    expect(signJwtCall).toBeDefined();
+    if (!signJwtCall) throw new Error("signJwtCall is undefined");
     expect(signJwtCall[1].payload.nonce).toBe(customNonce);
   });
 
@@ -131,7 +135,9 @@ describe("createCredentialRequest", () => {
 
     await createCredentialRequest(customOptions);
 
-    const signJwtCall = mockCallbacks.signJwt.mock.calls[0]!;
+    const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
+    expect(signJwtCall).toBeDefined();
+    if (!signJwtCall) throw new Error("signJwtCall is undefined");
     expect(signJwtCall[1].payload.aud).toBe(customIssuer);
   });
 
@@ -144,7 +150,9 @@ describe("createCredentialRequest", () => {
 
     await createCredentialRequest(customOptions);
 
-    const signJwtCall = mockCallbacks.signJwt.mock.calls[0]!;
+    const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
+    expect(signJwtCall).toBeDefined();
+    if (!signJwtCall) throw new Error("signJwtCall is undefined");
     expect(signJwtCall[1].payload.iss).toBe(customClientId);
   });
 });

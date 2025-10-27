@@ -75,11 +75,10 @@ export async function fetchTokenResponse(
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(credentialResponse);
 
     return parseWithErrorHandling(
-      zCredentialResponse, 
+      zCredentialResponse,
       credentialResponse.json(),
-    `Failed to parse credential response`
+      `Failed to parse credential response`,
     );
-
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
