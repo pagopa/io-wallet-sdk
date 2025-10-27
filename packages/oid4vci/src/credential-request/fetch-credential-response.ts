@@ -1,5 +1,5 @@
 import { CallbackContext } from "@openid4vc/oauth2";
-import { createFetcher } from "@openid4vc/utils";
+import { createFetcher, parseWithErrorHandling } from "@openid4vc/utils";
 import {
   CONTENT_TYPES,
   HEADERS,
@@ -74,17 +74,12 @@ export async function fetchTokenResponse(
 
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(credentialResponse);
 
-    const parsed = zCredentialResponse.safeParse(
-      await credentialResponse.json(),
+    return parseWithErrorHandling(
+      zCredentialResponse, 
+      credentialResponse.json(),
+    `Failed to parse credential response`
     );
-    if (!parsed.success) {
-      throw new ValidationError(
-        `Failed to parse credential response`,
-        parsed.error,
-      );
-    }
 
-    return parsed.data;
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
