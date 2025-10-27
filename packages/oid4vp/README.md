@@ -50,6 +50,67 @@ const parsedRequestObject = await parseAuthorizeRequest({
 });
 ```
 
+### Generating an Authorization Response
+
+```typescript
+import { createAuthorizationResponse, AuthorizationRequestObject } from '@pagopa/io-wallet-oid4vp';
+import { ItWalletCredentialVerifierMetadata } from "@pagopa/io-wallet-oid-federation";
+
+//Obtain the RP's metadata
+const rpMetadata : ItWalletCredentialVerifierMetadata = {
+  ...
+}
+
+//Obtain a decoded Request Object from, e.g., parseAuthorizeRequest invocation
+const requestObject: AuthorizationRequestObject = {
+  ...
+}
+
+//Obtain the signer
+const signer = {
+    method : 'jwk',
+    publicJwk : {/*... jwk details*/},
+    alg : 'ES256'
+}
+
+//Obtain the vp_token
+const vp_token = {
+  ... //VP token containing the attributes to disclose
+}
+
+//Prepare the callbacks
+const callbacks = {
+    encryptJwe : async (jweEncryptor, data) => {
+        const result = encrypt(data, jweEncryptor)
+        return {
+            verified : result,
+            encryptionJwk : jweEncryptor
+        }
+    },
+    fetch : async (input, init) => {
+      ...//Fetch implementation
+    },
+    generateRandom : async (number) => new Uint8Array(number),
+    signJwt : async (jwtSigner, {header, payload}) => {
+      const str = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(body))}`
+      const sig = signJwt(jwtSigner, str)
+      return `${str}.${sig}`
+    }
+}
+
+//Create the response
+
+const resp = createAuthorizationResponse({
+  callbacks,
+  client_id : "JWK Thumbprint",
+  requestObject,
+  rpMetadata,
+  signer,
+  vp_token
+})
+
+```
+
 ## API Reference
 
 ### AuthorizationRequestObject type and Zod parser
@@ -98,6 +159,57 @@ export async function parseAuthorizeRequest(options: ParseAuthorizeRequestOption
 ```
 This method receives a Request Object in JWT format, verifies the signature and returns the decoded Request Object.
 
+### createAuthorizationResponse
+```typescript
+export interface CreateAuthorizationResponseOptions {
+  /**
+   * Callbacks for authorization response generation
+   */
+  callbacks: Pick<
+    CallbackContext,
+    "encryptJwe" | "fetch" | "generateRandom" | "signJwt"
+  >;
+
+  /**
+   * Thumbprint of the JWK in the cnf Wallet Attestation
+   */
+  client_id: string;
+
+  /**
+   * Optional expiration of the Authorization Response JWT, defaults to 10 minutes
+   */
+  exp?: number;
+
+  /**
+   * Presentation's Request Object
+   */
+  requestObject: AuthorizationRequestObject;
+
+  /**
+   * OpenID Federation Relying Party metadata
+   */
+  rpMetadata: ItWalletCredentialVerifierMetadata;
+
+  /**
+   * Signer created from the Wallet Instance's private key
+   */
+  signer: JwtSigner;
+
+  /**
+   * Array containing the vp_tokens of the credentials
+   * to present
+   */
+  vp_token: VpToken;
+}
+
+export async function createAuthorizationResponse(
+  options: CreateAuthorizationResponseOptions,
+) {
+  ...
+}
+```
+This method receives the RequestObject, its resolved VP Tokens and other necessary cryptographic and configuration data and returns a signed Authorization Response
+
 ### Errors
 
 ```typescript
@@ -125,3 +237,16 @@ export class ParseAuthorizeRequestError extends Oid4vpError {
 }
 ```
 Error thrown by `parseAuthorizeRequest` when the passed request object has an invalid signature or unexpected errors are thrown.
+
+```typescript
+export class CreateAuthorizationResponseError extends Oid4vpError {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "CreateAuthorizationResponseError";
+  }
+}
+```
+Error thrown by `createAuthorizationResponse` in case there are unexpected errors.

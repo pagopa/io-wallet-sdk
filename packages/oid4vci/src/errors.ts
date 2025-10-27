@@ -27,6 +27,19 @@ export class WalletProviderError extends Oid4vciError {
 }
 
 /**
+ * Error thrown when an unexpected error occurs during nonce request.
+ */
+export class NonceRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "NonceRequestError";
+  }
+}
+
+/*
  * Error thrown in case the DPoP key passed to the
  * {@link WalletProvider.createItWalletAttestationJwt} method
  * doesn't contain a kid
