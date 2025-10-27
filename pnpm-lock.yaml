@@ -108,6 +108,9 @@ importers:
       '@openid4vc/utils':
         specifier: 'catalog:'
         version: 0.3.0-alpha-20250714110838
+      '@pagopa/io-wallet-utils':
+        specifier: workspace:*
+        version: link:../utils
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -123,6 +126,9 @@ importers:
       '@openid4vc/utils':
         specifier: 'catalog:'
         version: 0.3.0-alpha-20250714110838
+      '@pagopa/io-wallet-oid-federation':
+        specifier: 'workspace:'
+        version: link:../oid-federation
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -130,6 +136,9 @@ importers:
       jose:
         specifier: 'catalog:'
         version: 6.1.0
+      js-base64:
+        specifier: 'catalog:'
+        version: 3.7.8
 
   packages/utils:
     dependencies:

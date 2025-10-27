@@ -4,6 +4,7 @@ export * from "./fetcher";
 export {
   JsonParseError,
   ValidationError,
+  addSecondsToDate,
   dateToSeconds,
   decodeUtf8String,
   encodeToBase64Url,

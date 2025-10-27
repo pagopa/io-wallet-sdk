@@ -25,3 +25,17 @@ export class ParseAuthorizeRequestError extends Oid4vpError {
     this.name = "ParseAuthorizeRequestError";
   }
 }
+
+/**
+ * Error thrown by {@link createAuthorizationResponse} in case there
+ * are unexpected errors.
+ */
+export class CreateAuthorizationResponseError extends Oid4vpError {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "CreateAuthorizationResponseError";
+  }
+}
