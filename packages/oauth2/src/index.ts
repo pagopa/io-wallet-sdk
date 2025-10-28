@@ -1,3 +1,4 @@
+export * from "./access-token";
 export * from "./authorization-request";
 export * from "./client-attestation-pop";
 export * from "./constants";
@@ -9,6 +10,7 @@ export * from "./token-dpop";
 export {
   CallbackContext,
   GenerateRandomCallback,
+  HashAlgorithm,
   HttpMethod,
   Jwk,
   JwtSigner,
