@@ -49,27 +49,41 @@ export const getJwtFromFormPost = async <T>(
   decodedJwt: Omit<DecodeJwtResult<undefined, z.ZodSchema<T>>, "signature">;
   jwt: string;
 }> => {
-  const formPostRegex = /<input[^>]*name="response"[^>]*value="([^"]*)"/i;
+  const inputRegex = /<input[^<>]*>/gi
+  const nameRegex = /name="response"/gi
+  const valueRegex = /value="([^"]*)"/gi
   const lineExpressionRegex = /\r\n|\n\r|\n|\r|\s+/g;
 
-  const match = formPostRegex.exec(options.formData);
-  if (match && match[1]) {
-    const responseJwt = match[1];
+  let match = inputRegex.exec(options.formData)
+  while (match) {
+    let matchName = nameRegex.exec(match[0])
+    while (matchName) {
+      let matchValue =valueRegex.exec(match[0])
+      while (matchValue && matchValue[1]) {
 
-    if (responseJwt) {
-      const jwt = responseJwt.replace(lineExpressionRegex, "");
-      const decodedJwt = decodeJwt({
-        jwt,
-        payloadSchema: options.schema,
-      });
-      return {
-        decodedJwt: {
-          header: decodedJwt.header,
-          payload: decodedJwt.payload,
-        },
-        jwt,
-      };
+        const responseJwt = matchValue[1];
+
+        if (responseJwt) {
+          const jwt = responseJwt.replace(lineExpressionRegex, "");
+          const decodedJwt = decodeJwt({
+            jwt,
+            payloadSchema: options.schema,
+          });
+          return {
+            decodedJwt: {
+              header: decodedJwt.header,
+              payload: decodedJwt.payload,
+            },
+            jwt,
+          };
+        }
+
+        matchValue = valueRegex.exec(match[0])
+      }
+      matchName = nameRegex.exec(match[0])
     }
+
+    match = inputRegex.exec(options.formData)
   }
 
   throw new Oauth2Error(
