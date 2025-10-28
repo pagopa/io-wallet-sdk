@@ -49,18 +49,17 @@ export const getJwtFromFormPost = async <T>(
   decodedJwt: Omit<DecodeJwtResult<undefined, z.ZodSchema<T>>, "signature">;
   jwt: string;
 }> => {
-  const inputRegex = /<input[^<>]*>/gi
-  const nameRegex = /name="response"/gi
-  const valueRegex = /value="([^"]*)"/gi
+  const inputRegex = /<input[^<>]*>/gi;
+  const nameRegex = /name="response"/gi;
+  const valueRegex = /value="([^"]*)"/gi;
   const lineExpressionRegex = /\r\n|\n\r|\n|\r|\s+/g;
 
-  let match = inputRegex.exec(options.formData)
+  let match = inputRegex.exec(options.formData);
   while (match) {
-    let matchName = nameRegex.exec(match[0])
+    let matchName = nameRegex.exec(match[0]);
     while (matchName) {
-      let matchValue =valueRegex.exec(match[0])
+      let matchValue = valueRegex.exec(match[0]);
       while (matchValue && matchValue[1]) {
-
         const responseJwt = matchValue[1];
 
         if (responseJwt) {
@@ -78,12 +77,12 @@ export const getJwtFromFormPost = async <T>(
           };
         }
 
-        matchValue = valueRegex.exec(match[0])
+        matchValue = valueRegex.exec(match[0]);
       }
-      matchName = nameRegex.exec(match[0])
+      matchName = nameRegex.exec(match[0]);
     }
 
-    match = inputRegex.exec(options.formData)
+    match = inputRegex.exec(options.formData);
   }
 
   throw new Oauth2Error(
