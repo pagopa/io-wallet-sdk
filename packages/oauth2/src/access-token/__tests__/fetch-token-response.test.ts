@@ -69,7 +69,8 @@ describe("fetchTokenResponse - successful requests", () => {
         }),
         headers: {
           [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
-          [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",
+          [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION]:
+            "test-wallet-attestation-jwt",
           [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
             "test-client-attestation-dpop-jwt",
         },
