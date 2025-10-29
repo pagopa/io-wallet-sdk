@@ -86,7 +86,7 @@ export async function fetchAuthorizationResponse(
     ) {
       throw error;
     }
-    throw new FetchAuthrorizationResponseError(
+    throw new FetchAuthorizationResponseError(
       `Unexpected error during pushed authorization request: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
