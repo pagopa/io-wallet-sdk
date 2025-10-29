@@ -1,8 +1,7 @@
 import { parseWithErrorHandling } from "@openid4vc/utils";
 import z from "zod";
 
-import { JWK } from "../jwk";
-import { jsonWebKeySchema } from "../metadata";
+import { jsonWebKeySchema, jsonWebKeySetSchema } from "../jwk/jwk";
 
 export const getUsedJsonWebKey = (
   header: Record<string, unknown>,
@@ -20,9 +19,7 @@ export const getUsedJsonWebKey = (
   const validatedClaims = parseWithErrorHandling(
     z
       .object({
-        jwks: z.object({
-          keys: z.array(jsonWebKeySchema),
-        }),
+        jwks: jsonWebKeySetSchema,
       })
       .passthrough(),
     claims,
@@ -42,7 +39,7 @@ export const getUsedJsonWebKey = (
 
   // Fix a @openid-federation bug where x5c is expected to be an array
   const { x5c, ...jwkWithoutX5c } = key;
-  const jwk = JWK.parse({
+  const jwk = jsonWebKeySchema.parse({
     ...jwkWithoutX5c,
     x5c: [...(x5c ?? [])],
   });

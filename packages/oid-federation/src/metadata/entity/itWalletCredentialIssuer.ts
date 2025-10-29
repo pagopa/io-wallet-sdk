@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { JWKS } from "../../jwk";
+import { jsonWebKeySetSchema } from "../../jwk";
 
 /**
  *
@@ -57,7 +57,7 @@ export const itWalletCredentialIssuerMetadata = z
       .refine((arr) => arr.includes("vouch"), {
         message: "The evidence_supported array MUST include 'vouch'.",
       }),
-    jwks: JWKS,
+    jwks: jsonWebKeySetSchema,
     nonce_endpoint: z.string().url(),
     notification_endpoint: z.string().url(),
     revocation_endpoint: z.string().url(),

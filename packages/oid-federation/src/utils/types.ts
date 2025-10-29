@@ -1,6 +1,6 @@
-import { JWK } from "../jwk";
+import { JsonWebKey } from "../jwk";
 
 export type SignCallback = (options: {
-  jwk: JWK;
+  jwk: JsonWebKey;
   toBeSigned: Uint8Array;
 }) => Promise<Uint8Array>;

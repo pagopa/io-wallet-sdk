@@ -8,7 +8,7 @@ import {
 } from "@openid-federation/core";
 import { z } from "zod";
 
-import { jsonWebKeySchema } from "../metadata";
+import { jsonWebKeySetSchema } from "../jwk/jwk";
 import { itWalletMetadataSchema } from "../metadata/itWalletMetadata";
 
 export const itWalletEntityStatementClaimsSchema = z
@@ -19,9 +19,7 @@ export const itWalletEntityStatementClaimsSchema = z
     exp: dateSchema,
     iat: dateSchema,
     iss: z.string(),
-    jwks: z.object({
-      keys: z.array(jsonWebKeySchema),
-    }),
+    jwks: jsonWebKeySetSchema,
     metadata: itWalletMetadataSchema.optional(),
     metadata_policy: z
       .record(z.record(metadataPolicySchema).optional())
