@@ -55,7 +55,7 @@ export type SendAuthorizationResponseAndExtractCodeOptions =
  *
  * @param options {@link CompleteAuthorizationOptions}
  * @returns An object containing the fetched JWT and its decoding. The JWT contains the access code
- *          for necessary for access token issuance
+ *          necessary for access token issuance
  */
 export async function completeAuthorization(
   options: CompleteAuthorizationOptions,
