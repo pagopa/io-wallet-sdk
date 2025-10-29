@@ -42,7 +42,7 @@ describe("fetchTokenResponse", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should successfully fetch and parse credential response", async () => {
