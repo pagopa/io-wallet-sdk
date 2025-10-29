@@ -97,34 +97,6 @@ console.log(entityConfigurationJwt);
 // This JWT can now be served at `https://issuer.example.it/.well-known/openid-federation`
 ```
 
-### Parsing and Validating an Entity Configuration
-
-After fetching an entity's configuration and decoding the JWT payload, you can use the exported Zod schemas to parse and validate its contents. The parseWithErrorHandling utility simplifies this process by providing clear error messages upon validation failure.
-
-```javascript
-import {
-  itWalletEntityConfigurationClaimsSchema,
-  parseWithErrorHandling,
-} from "@pagopa/io-wallet-oid-federation";
-
-// Assume `federationResponsePayload` is the decoded payload of an Entity Configuration JWT
-const federationResponsePayload = {
-  /* ... decoded claims ... */
-};
-
-try {
-  const federationEntity = parseWithErrorHandling(
-    itWalletEntityConfigurationClaimsSchema,
-    federationResponsePayload,
-    "invalid Federation Entity provided",
-  );
-
-  console.log("Validation successful:", federationEntity);
-} catch (error) {
-  console.error("Validation failed:", error.message);
-}
-```
-
 ## API Reference
 
 ### Functions
@@ -135,14 +107,6 @@ try {
     - `options.claims`: Entity configuration claims (issuer, subject, metadata, etc.)
     - `options.signJwtCallback`: Callback function to sign the JWT
   - **Returns**: A signed JWT string
-
-- **`parseWithErrorHandling(schema, data, message?)`**: Parses data against a Zod schema and throws a formatted ValidationError on failure.
-  - **Parameters**:
-    - `schema`: A Zod schema to validate against
-    - `data`: The data to validate
-    - `message`: Optional custom error message
-  - **Returns**: Validated and parsed data
-  - **Throws**: ValidationError with detailed error messages
 
 ### Types
 

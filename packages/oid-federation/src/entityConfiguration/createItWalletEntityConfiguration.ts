@@ -4,10 +4,10 @@ import {
   createJwtSignableInput,
   entityConfigurationHeaderSchema,
 } from "@openid-federation/core";
+import { parseWithErrorHandling } from "@openid4vc/utils";
 
 import { getUsedJsonWebKey } from "../jsonWeb/getUsedJsonWebKey";
 import { SignCallback } from "../utils";
-import { parseWithErrorHandling } from "../utils/validate";
 import {
   ItWalletEntityConfigurationClaimsOptions,
   itWalletEntityConfigurationClaimsSchema,
