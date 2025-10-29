@@ -11,7 +11,7 @@ import {
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
-import { FetchAuthrorizationResponseError } from "../errors";
+import { FetchAuthorizationResponseError } from "../errors";
 import {
   Oid4vpAuthorizationResponseResult,
   zOid4vpAuthorizationResponseResult,
