@@ -23,7 +23,7 @@ describe("getNonce", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should successfully fetch and parse nonce response", async () => {

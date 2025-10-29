@@ -35,6 +35,12 @@
     "@openid4vc/oauth2": "catalog:",
     "@openid4vc/openid4vci": "catalog:",
     "@openid4vc/utils": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@pagopa/io-wallet-oauth2" : "workspace:*",
+    "@pagopa/io-wallet-oid4vp" : "workspace:*",
+    "@pagopa/io-wallet-utils" : "workspace:*"
+  },
+  "devDependencies": {
+    "js-base64": "catalog:"
   }
 }

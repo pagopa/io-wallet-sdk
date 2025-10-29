@@ -27,7 +27,7 @@ describe("WalletProvider", () => {
   >;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
 
     mockOptions = {} as Openid4vciWalletProviderOptions;
 
