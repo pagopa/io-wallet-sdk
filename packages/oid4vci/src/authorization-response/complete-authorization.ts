@@ -129,7 +129,7 @@ export async function sendAuthorizationResponseAndExtractCode(
       throw error;
     }
     throw new Oid4vciError(
-      `Unexpected error during pushed authorization request: ${error instanceof Error ? error.message : String(error)}`,
+      `Unexpected error sending the authorization response and retrieving the acces code: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }

@@ -45,7 +45,7 @@ export interface FetchAuthorizationResponseOptions {
  *
  * @param options {@link FetchAuthorizationResponseOptions}
  * @returns Promise that resolves to the parsed {@link Oid4vpAuthorizationResponseResult}
- * @throws {UnexpectedStatusCodeError} When the server returns a non-201 status code
+ * @throws {UnexpectedStatusCodeError} When the server returns a non-200 status code
  * @throws {ValidationError} When the response cannot be parsed or is invalid
  */
 export async function fetchAuthorizationResponse(
@@ -67,7 +67,7 @@ export async function fetchAuthorizationResponse(
     );
 
     await hasStatusOrThrow(
-      201,
+      200,
       UnexpectedStatusCodeError,
     )(authorizationResponseResult);
 
@@ -87,7 +87,7 @@ export async function fetchAuthorizationResponse(
       throw error;
     }
     throw new FetchAuthorizationResponseError(
-      `Unexpected error during pushed authorization request: ${error instanceof Error ? error.message : String(error)}`,
+      `Unexpected error sending authorization response: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }

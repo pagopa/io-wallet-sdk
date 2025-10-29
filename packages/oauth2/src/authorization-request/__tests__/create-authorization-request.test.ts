@@ -52,7 +52,7 @@ describe("createPushedAuthorizationRequest", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
     mockCallbacks.generateRandom.mockResolvedValue(
       new Uint8Array([1, 2, 3, 4]),
     );

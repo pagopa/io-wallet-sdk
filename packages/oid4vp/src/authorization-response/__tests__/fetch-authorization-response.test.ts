@@ -22,7 +22,7 @@ vi.mock("@openid4vc/utils", async (importOriginal) => {
 
 describe("fetchAuthorizationResponseTests", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should send the authorization response and obtain the response_uri", async () => {
@@ -30,7 +30,7 @@ describe("fetchAuthorizationResponseTests", () => {
       json: vi.fn().mockResolvedValue({
         redirect_uri: MOCK_REDIRECT_URI,
       }),
-      status: 201,
+      status: 200,
     };
     mockFetch.mockResolvedValue(mockResponse);
 
@@ -70,7 +70,7 @@ describe("fetchAuthorizationResponseTests", () => {
   it("should throw FetchAuthorizationResponseError in case the response json is malformed", async () => {
     const mockResponse = {
       json: vi.fn().mockRejectedValue("Mock JSON parsing error"),
-      status: 201,
+      status: 200,
     };
     mockFetch.mockResolvedValue(mockResponse);
 
@@ -88,7 +88,7 @@ describe("fetchAuthorizationResponseTests", () => {
   it("should throw ValidationError in case the response json is missing the redirect_uri field", async () => {
     const mockResponse = {
       json: vi.fn().mockResolvedValue({}),
-      status: 201,
+      status: 200,
     };
     mockFetch.mockResolvedValue(mockResponse);
 

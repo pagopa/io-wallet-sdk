@@ -37,7 +37,7 @@ describe("fetchPushedAuthorizationResponse", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("successful requests", () => {

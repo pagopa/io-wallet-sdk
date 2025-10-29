@@ -59,7 +59,7 @@ describe("completeAuthorization tests", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should successfully fetch and parse the authorization result", async () => {
@@ -260,7 +260,7 @@ describe("sendAuthorizationResponseAndExtractCode tests", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should send the authorization response and obtain the code successfully", async () => {
@@ -268,7 +268,7 @@ describe("sendAuthorizationResponseAndExtractCode tests", () => {
       json: vi.fn().mockResolvedValue({
         redirect_uri: MOCK_REDIRECT_URI,
       }),
-      status: 201,
+      status: 200,
     };
     mockFetch.mockResolvedValueOnce(firstMockResponse);
     const secondMockResponse = {
@@ -307,7 +307,7 @@ describe("sendAuthorizationResponseAndExtractCode tests", () => {
   it("should wrap FetchAuthorizationResponseError in an Oid4vciError", async () => {
     const firstMockResponse = {
       json: vi.fn().mockRejectedValue("MOCK JSON PARSE ERROR"),
-      status: 201,
+      status: 200,
     };
     mockFetch.mockResolvedValueOnce(firstMockResponse);
 
