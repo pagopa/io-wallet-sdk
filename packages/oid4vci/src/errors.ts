@@ -39,10 +39,8 @@ export class NonceRequestError extends Error {
   }
 }
 
-/*
- * Error thrown in case the DPoP key passed to the
- * {@link WalletProvider.createItWalletAttestationJwt} method
- * doesn't contain a kid
+/**
+ * Error thrown when an unexpected error occurs during credential response fetching.
  */
 export class FetchCredentialResponseError extends Oid4vciError {
   constructor(
