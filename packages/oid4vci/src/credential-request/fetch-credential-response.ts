@@ -56,7 +56,7 @@ export interface FetchCredentialResponseOptions {
  * @throws UnexpectedStatusCodeError if the response status code is not 200
  * @throws ValidationError if the response cannot be parsed as a valid credential response
  */
-export async function fetchTokenResponse(
+export async function fetchCredentialResponse(
   options: FetchCredentialResponseOptions,
 ): Promise<CredentialResponse> {
   try {

@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FetchCredentialResponseError } from "../../errors";
 import {
   FetchCredentialResponseOptions,
-  fetchTokenResponse,
+  fetchCredentialResponse,
 } from "../fetch-credential-response";
 import { CredentialRequest } from "../z-credential";
 
@@ -21,7 +21,7 @@ vi.mock("@openid4vc/utils", async (importOriginal) => {
   };
 });
 
-describe("fetchTokenResponse", () => {
+describe("fetchCredentialResponse", () => {
   const mockCredentialRequest: CredentialRequest = {
     credential_identifier: "test-credential-id",
     proof: {
@@ -58,7 +58,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    const result = await fetchTokenResponse(baseOptions);
+    const result = await fetchCredentialResponse(baseOptions);
 
     expect(result).toEqual(credentialResponseData);
     expect(mockFetch).toHaveBeenCalledWith(
@@ -85,7 +85,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    await fetchTokenResponse(baseOptions);
+    await fetchCredentialResponse(baseOptions);
 
     const fetchCall = mockFetch.mock.calls[0];
     expect(fetchCall).toBeDefined();
@@ -111,7 +111,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    await fetchTokenResponse(baseOptions);
+    await fetchCredentialResponse(baseOptions);
 
     const fetchCall = mockFetch.mock.calls[0];
     expect(fetchCall).toBeDefined();
@@ -130,7 +130,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    await fetchTokenResponse(baseOptions);
+    await fetchCredentialResponse(baseOptions);
 
     const fetchCall = mockFetch.mock.calls[0];
     expect(fetchCall).toBeDefined();
@@ -149,7 +149,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    await expect(fetchTokenResponse(baseOptions)).rejects.toThrow(
+    await expect(fetchCredentialResponse(baseOptions)).rejects.toThrow(
       UnexpectedStatusCodeError,
     );
   });
@@ -161,7 +161,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    await expect(fetchTokenResponse(baseOptions)).rejects.toThrow(
+    await expect(fetchCredentialResponse(baseOptions)).rejects.toThrow(
       ValidationError,
     );
   });
@@ -169,10 +169,10 @@ describe("fetchTokenResponse", () => {
   it("should throw FetchCredentialResponseError when a network error occurs", async () => {
     mockFetch.mockRejectedValue(new Error("Network error"));
 
-    await expect(fetchTokenResponse(baseOptions)).rejects.toThrow(
+    await expect(fetchCredentialResponse(baseOptions)).rejects.toThrow(
       FetchCredentialResponseError,
     );
-    await expect(fetchTokenResponse(baseOptions)).rejects.toThrow(
+    await expect(fetchCredentialResponse(baseOptions)).rejects.toThrow(
       "Unexpected error during credential response: Network error",
     );
   });
@@ -187,7 +187,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    await fetchTokenResponse({
+    await fetchCredentialResponse({
       ...baseOptions,
       credentialEndpoint: customEndpoint,
     });
@@ -207,7 +207,7 @@ describe("fetchTokenResponse", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    const result = await fetchTokenResponse(baseOptions);
+    const result = await fetchCredentialResponse(baseOptions);
 
     expect(result).toEqual(deferredResponse);
     expect(result.transaction_id).toBe("test-transaction-id");

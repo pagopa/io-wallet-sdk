@@ -25,6 +25,9 @@ export interface CredentialRequestOptions {
    */
   issuerIdentifier: string;
 
+  /**
+   * A nonce value previously requested to associate a Client session with the Credential Request.
+   */
   nonce: string;
 
   /**
