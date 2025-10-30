@@ -8,4 +8,5 @@ export {
   dateToSeconds,
   decodeUtf8String,
   encodeToBase64Url,
+  parseWithErrorHandling,
 } from "@openid4vc/utils";

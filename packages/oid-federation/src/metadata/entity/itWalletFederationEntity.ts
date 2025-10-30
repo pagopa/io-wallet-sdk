@@ -1,12 +1,7 @@
-import {
-  federationEntityMetadata,
-  jsonWebKeySchema,
-} from "@openid-federation/core";
+import { federationEntityMetadata } from "@openid-federation/core";
 import { z } from "zod";
 
-const jsonWebKeySchemaRefined = jsonWebKeySchema.extend({
-  x5c: z.array(z.string()).optional(),
-});
+import { jsonWebKeySetSchema } from "../../jwk/jwk";
 
 /**
  *
@@ -15,11 +10,7 @@ const jsonWebKeySchemaRefined = jsonWebKeySchema.extend({
  */
 export const itWalletFederationEntityMetadata = federationEntityMetadata.schema
   .extend({
-    jwks: z
-      .object({
-        keys: z.array(jsonWebKeySchemaRefined),
-      })
-      .optional(),
+    jwks: jsonWebKeySetSchema.optional(),
     tos_uri: z.string().url().optional(),
   })
   .passthrough();

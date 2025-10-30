@@ -35,27 +35,33 @@ The primary function of this package is `createItWalletEntityConfiguration`. It 
 Here is an example of how to create an Entity Configuration for a Credential Issuer:
 
 ```javascript
-import { createItWalletEntityConfiguration } from "@pagopa/io-wallet-oid-federation";
-import { JWK, SignCallback } from "@openid-federation/core";
+import {
+  createItWalletEntityConfiguration,
+  SignCallback,
+} from "@pagopa/io-wallet-oid-federation";
 
-// Define your entity's base URL and JWKS repository
+// Define your entity's base URL and public JWK
 const baseURL = "https://issuer.example.it";
-const jwksRepository = {
-  /* your JWKS implementation */
+const publicJwk = {
+  kty: "EC",
+  crv: "P-256",
+  x: "...",
+  y: "...",
+  kid: "key-1",
 };
-const jwk = jwksRepository.get();
 
 // Define a signing callback that uses your private key
 const signJwtCallback: SignCallback = async ({ toBeSigned, jwk }) => {
-  // Your signing logic here.
-  ...
+  // Your signing logic here using the jwk parameter
+  // Return the signature as Uint8Array
+  // ...
 };
 
 // Create the Entity Configuration JWT
 const entityConfigurationJwt = await createItWalletEntityConfiguration({
   header: {
     alg: "ES256",
-    kid: jwk.public.kid,
+    kid: publicJwk.kid,
     typ: "entity-statement+jwt",
   },
   claims: {
@@ -64,7 +70,7 @@ const entityConfigurationJwt = await createItWalletEntityConfiguration({
     exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
     iat: Math.floor(Date.now() / 1000),
     jwks: {
-      keys: [jwk.public],
+      keys: [publicJwk],
     },
     authority_hints: [`${baseURL}/trust_anchor`],
     metadata: {
@@ -91,63 +97,60 @@ console.log(entityConfigurationJwt);
 // This JWT can now be served at `https://issuer.example.it/.well-known/openid-federation`
 ```
 
-### Parsing and Validating an Entity Configuration
-
-After fetching an entity's configuration and decoding the JWT payload, you can use the exported Zod schemas to parse and validate its contents. The parseWithErrorHandling utility simplifies this process by providing clear error messages upon validation failure.
-
-```javascript
-import {
-  itWalletEntityConfigurationClaimsSchema,
-  parseWithErrorHandling,
-} from "@pagopa/io-wallet-oid-federation";
-
-// Assume `federationResponsePayload` is the decoded payload of an Entity Configuration JWT
-const federationResponsePayload = {
-  /* ... decoded claims ... */
-};
-
-try {
-  const federationEntity = parseWithErrorHandling(
-    itWalletEntityConfigurationClaimsSchema,
-    federationResponsePayload,
-    "invalid Federation Entity provided",
-  );
-
-  console.log("Validation successful:", federationEntity);
-} catch (error) {
-  console.error("Validation failed:", error.message);
-}
-```
-
 ## API Reference
 
 ### Functions
 
-`createItWalletEntityConfiguration(options)`: Creates and signs an Entity Configuration JWT.
+- **`createItWalletEntityConfiguration(options)`**: Creates and signs an Entity Configuration JWT.
+  - **Parameters**:
+    - `options.header`: JWT header with algorithm, key id, and type
+    - `options.claims`: Entity configuration claims (issuer, subject, metadata, etc.)
+    - `options.signJwtCallback`: Callback function to sign the JWT
+  - **Returns**: A signed JWT string
 
-`parseWithErrorHandling(schema, data, message)`: Parses data against a Zod schema and throws a formatted ValidationError on failure.
+### Types
+
+- **`SignCallback`**: Function type for signing JWT tokens
+  ```typescript
+  type SignCallback = (options: {
+    jwk: JsonWebKey;
+    toBeSigned: Uint8Array;
+  }) => Promise<Uint8Array>;
+  ```
+
+- **`JsonWebKey`**: Type for JSON Web Key objects
+
+- **`ItWalletEntityConfigurationClaimsOptions`**: Input type for entity configuration claims
+
+- **`ItWalletEntityConfigurationClaims`**: Output type for entity configuration claims
+
+- **`ItWalletEntityStatementClaimsOptions`**: Input type for entity statement claims
+
+- **`ItWalletEntityStatementClaims`**: Output type for entity statement claims
 
 ### Zod Schemas
 
 This package exports a comprehensive set of Zod schemas to validate all parts of the federation artifacts.
 
-- JWK Schemas:
-  - `JWK`: Validates a single JSON Web Key.
+#### JWK Schemas:
+- **`jsonWebKeySchema`**: Validates a single JSON Web Key (includes support for x5c certificate chain)
 
-  - `JWKS`: Validates a JSON Web Key Set.
+- **`jsonWebKeySetSchema`**: Validates a JSON Web Key Set
 
-- Metadata Schemas:
-  - `itWalletFederationEntityMetadata`: For `federation_entity` metadata.
+#### Metadata Schemas:
+- **`itWalletFederationEntityMetadata`**: For `federation_entity` metadata
 
-  - `itWalletProviderEntityMetadata`: For `wallet_provider` metadata.
+- **`itWalletProviderEntityMetadata`**: For `wallet_provider` metadata
 
-  - `itWalletCredentialIssuerMetadata`: For `openid_credential_issuer` metadata.
+- **`itWalletCredentialIssuerMetadata`**: For `openid_credential_issuer` metadata
 
-  - `itWalletCredentialVerifierMetadata`: For `openid_credential_verifier` metadata.
+- **`itWalletCredentialVerifierMetadata`**: For `openid_credential_verifier` metadata
 
-  - `itWalletAuthorizationServerMetadata`: For `oauth_authorization_server` metadata.
+- **`itWalletAuthorizationServerMetadata`**: For `oauth_authorization_server` metadata
 
-- Claims Schemas:
-  - `itWalletEntityStatementClaimsSchema`: Validates the claims within an Entity Statement.
+- **`itWalletMetadataSchema`**: Combined metadata schema for all entity types
 
-  - `itWalletEntityConfigurationClaimsSchema`: Validates the claims for an Entity Configuration (where iss must equal sub).
+#### Claims Schemas:
+- **`itWalletEntityStatementClaimsSchema`**: Validates the claims within an Entity Statement
+
+- **`itWalletEntityConfigurationClaimsSchema`**: Validates the claims for an Entity Configuration (where iss must equal sub)
