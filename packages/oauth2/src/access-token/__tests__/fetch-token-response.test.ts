@@ -2,9 +2,9 @@ import {
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
+import { CONTENT_TYPES, HEADERS } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT_TYPES, HEADERS } from "../../constants";
 import { FetchTokenResponseError } from "../../errors";
 import {
   FetchTokenResponseOptions,
