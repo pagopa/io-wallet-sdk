@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-oid-federation
 
+## 0.5.0
+
+### Patch Changes
+
+- 8ecf5ec: Add x5c support to JWK schema and refactor getUsedJsonWebKey
+
 ## 0.4.2
 
 ### Patch Changes
