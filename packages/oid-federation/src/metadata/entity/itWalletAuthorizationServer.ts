@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { JWKS } from "../../jwk";
+import { jsonWebKeySetSchema } from "../../jwk";
 
 /**
  *
@@ -36,7 +36,7 @@ export const itWalletAuthorizationServerMetadata = z
           "The grant_types_supported array MUST include 'authorization_code'.",
       }),
     issuer: z.string().url(),
-    jwks: JWKS,
+    jwks: jsonWebKeySetSchema,
     pushed_authorization_request_endpoint: z.string().url(),
     request_object_signing_alg_values_supported: z.array(z.string()),
     response_modes_supported: z.array(

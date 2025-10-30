@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.5.0
+
+### Patch Changes
+
+- b08028e: Add type modifier to type-only exports in oauth2 package
+- Updated dependencies [8ecf5ec]
+  - @pagopa/io-wallet-oid-federation@0.5.0
+
 ## 0.4.2
 
 ### Patch Changes
