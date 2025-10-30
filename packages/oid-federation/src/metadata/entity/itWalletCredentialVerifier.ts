@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { JWKS } from "../../jwk";
+import { jsonWebKeySetSchema } from "../../jwk";
 
 /**
  *
@@ -18,7 +18,7 @@ export const itWalletCredentialVerifierMetadata = z
     client_id: z.string().url(),
     client_name: z.string(),
     erasure_endpoint: z.string().url().optional(),
-    jwks: JWKS,
+    jwks: jsonWebKeySetSchema,
     request_uris: z.array(z.string().url()),
     response_uris: z.array(z.string().url()),
     vp_formats: z.record(

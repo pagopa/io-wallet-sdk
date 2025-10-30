@@ -1,7 +1,6 @@
 import {
   constraintSchema,
   dateSchema,
-  jsonWebKeySetSchema,
   metadataPolicySchema,
   trustMarkIssuerSchema,
   trustMarkOwnerSchema,
@@ -9,6 +8,7 @@ import {
 } from "@openid-federation/core";
 import { z } from "zod";
 
+import { jsonWebKeySetSchema } from "../jwk/jwk";
 import { itWalletMetadataSchema } from "../metadata/itWalletMetadata";
 
 export const itWalletEntityStatementClaimsSchema = z
