@@ -20,4 +20,3 @@ export {
   type VerifyJwtCallback,
   decodeJwt,
 } from "@openid4vc/oauth2";
-export { type Fetch } from "@openid4vc/utils";

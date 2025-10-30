@@ -2,6 +2,7 @@ export * from "./errors";
 export * from "./fetcher";
 
 export {
+  type Fetch,
   JsonParseError,
   ValidationError,
   addSecondsToDate,
