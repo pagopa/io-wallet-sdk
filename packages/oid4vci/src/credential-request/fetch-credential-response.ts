@@ -21,11 +21,6 @@ export interface FetchCredentialResponseOptions {
    */
   callbacks: Pick<CallbackContext, "fetch">;
   /**
-   * The client attestation Demonstration of Proof-of-Possession (DPoP) token
-   * Used for OAuth-Client-Attestation-PoP header to prove possession of the client key
-   */
-  clientAttestationDPoP: string;
-  /**
    * The credential endpoint URL
    */
   credentialEndpoint: string;
@@ -41,14 +36,13 @@ export interface FetchCredentialResponseOptions {
   dPoP: string;
 
   /**
-   * The wallet attestation JWT that proves the client's identity and capabilities
-   * Used for OAuth-Client-Attestation header
+   * Access token to authorize the credential request for DPoP mechanism
    */
-  walletAttestation: string;
+  accessToken: string;
 }
 
 /**
- * Fetches a credential response from the credential endpoint
+ * Fetches a credential response from the credential endpoint.
  *
  * @param options - Options for fetching the credential response
  * @returns The credential response
@@ -66,8 +60,7 @@ export async function fetchCredentialResponse(
       headers: {
         [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
         [HEADERS.DPOP]: options.dPoP,
-        [HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
-        [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]: options.clientAttestationDPoP,
+        [HEADERS.AUTHORIZATION]: `DPoP ${options.accessToken}`
       },
       method: "POST",
     });

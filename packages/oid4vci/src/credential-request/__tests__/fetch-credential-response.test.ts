@@ -34,11 +34,10 @@ describe("fetchCredentialResponse", () => {
     callbacks: {
       fetch: mockFetch,
     },
-    clientAttestationDPoP: "test-client-attestation-dpop-jwt",
     credentialEndpoint: "https://issuer.example.com/credential",
     credentialRequest: mockCredentialRequest,
     dPoP: "test-dpop-jwt",
-    walletAttestation: "test-wallet-attestation-jwt",
+    accessToken: "test-access-token",
   };
 
   beforeEach(() => {
@@ -68,8 +67,7 @@ describe("fetchCredentialResponse", () => {
         headers: {
           "Content-Type": "application/json",
           DPoP: "test-dpop-jwt",
-          "OAuth-Client-Attestation": "test-wallet-attestation-jwt",
-          "OAuth-Client-Attestation-PoP": "test-client-attestation-dpop-jwt",
+          Authorization: "DPoP test-access-token",
         },
         method: "POST",
       },
@@ -94,11 +92,8 @@ describe("fetchCredentialResponse", () => {
 
     expect(headers["Content-Type"]).toBe("application/json");
     expect(headers.DPoP).toBe("test-dpop-jwt");
-    expect(headers["OAuth-Client-Attestation"]).toBe(
-      "test-wallet-attestation-jwt",
-    );
-    expect(headers["OAuth-Client-Attestation-PoP"]).toBe(
-      "test-client-attestation-dpop-jwt",
+    expect(headers["Authorization"]).toBe(
+      "DPoP test-access-token",
     );
   });
 
