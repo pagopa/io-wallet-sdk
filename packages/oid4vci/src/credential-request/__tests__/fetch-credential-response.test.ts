@@ -31,13 +31,13 @@ describe("fetchCredentialResponse", () => {
   };
 
   const baseOptions: FetchCredentialResponseOptions = {
+    accessToken: "test-access-token",
     callbacks: {
       fetch: mockFetch,
     },
     credentialEndpoint: "https://issuer.example.com/credential",
     credentialRequest: mockCredentialRequest,
     dPoP: "test-dpop-jwt",
-    accessToken: "test-access-token",
   };
 
   beforeEach(() => {
@@ -65,9 +65,9 @@ describe("fetchCredentialResponse", () => {
       {
         body: JSON.stringify(mockCredentialRequest),
         headers: {
+          Authorization: "DPoP test-access-token",
           "Content-Type": "application/json",
           DPoP: "test-dpop-jwt",
-          Authorization: "DPoP test-access-token",
         },
         method: "POST",
       },
@@ -92,9 +92,7 @@ describe("fetchCredentialResponse", () => {
 
     expect(headers["Content-Type"]).toBe("application/json");
     expect(headers.DPoP).toBe("test-dpop-jwt");
-    expect(headers["Authorization"]).toBe(
-      "DPoP test-access-token",
-    );
+    expect(headers["Authorization"]).toBe("DPoP test-access-token");
   });
 
   it("should send credential request as JSON in request body", async () => {

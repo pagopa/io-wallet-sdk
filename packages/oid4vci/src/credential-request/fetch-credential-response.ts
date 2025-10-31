@@ -17,9 +17,14 @@ import {
 
 export interface FetchCredentialResponseOptions {
   /**
+   * Access token to authorize the credential request for DPoP mechanism
+   */
+  accessToken: string;
+  /**
    * Callbacks to use for requesting access token
    */
   callbacks: Pick<CallbackContext, "fetch">;
+
   /**
    * The credential endpoint URL
    */
@@ -34,11 +39,6 @@ export interface FetchCredentialResponseOptions {
    * DPoP proof with addition of ath claim
    */
   dPoP: string;
-
-  /**
-   * Access token to authorize the credential request for DPoP mechanism
-   */
-  accessToken: string;
 }
 
 /**
@@ -58,9 +58,9 @@ export async function fetchCredentialResponse(
     const credentialResponse = await fetch(options.credentialEndpoint, {
       body: JSON.stringify(options.credentialRequest),
       headers: {
+        [HEADERS.AUTHORIZATION]: `DPoP ${options.accessToken}`,
         [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
         [HEADERS.DPOP]: options.dPoP,
-        [HEADERS.AUTHORIZATION]: `DPoP ${options.accessToken}`
       },
       method: "POST",
     });
