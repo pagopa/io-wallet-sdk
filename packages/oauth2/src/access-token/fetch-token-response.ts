@@ -5,11 +5,12 @@ import {
   parseWithErrorHandling,
 } from "@openid4vc/utils";
 import {
+  CONTENT_TYPES,
+  HEADERS,
   UnexpectedStatusCodeError,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
-import { CONTENT_TYPES, HEADERS } from "../constants";
 import { FetchTokenResponseError } from "../errors";
 import {
   AccessTokenRequest,

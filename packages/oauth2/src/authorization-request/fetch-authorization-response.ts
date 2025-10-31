@@ -5,8 +5,8 @@ import {
   ValidationError,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
+import { CONTENT_TYPES, HEADERS } from "@pagopa/io-wallet-utils";
 
-import { CONTENT_TYPES, HEADERS } from "../constants";
 import { PushedAuthorizationRequestError } from "../errors";
 import {
   PushedAuthorizationRequestSigned,
