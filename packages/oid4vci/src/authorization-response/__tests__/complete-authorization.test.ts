@@ -1,3 +1,4 @@
+import { VerifyJwtCallback } from "@openid4vc/oauth2";
 import {
   UnexpectedStatusCodeError,
   ValidationError,
@@ -14,6 +15,7 @@ import {
 } from "../complete-authorization";
 
 const mockFetch = vi.fn();
+const mockVerifyJwt = vi.fn();
 
 vi.mock("@openid4vc/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@openid4vc/utils")>();
@@ -53,9 +55,7 @@ describe("completeAuthorization tests", () => {
     callbacks: {
       fetch: mockFetch,
     },
-    iss: TEST_ISSUER,
     response_uri: TEST_RESPONSE_URI,
-    state: TEST_STATE,
   };
 
   beforeEach(() => {
@@ -99,6 +99,7 @@ describe("completeAuthorization tests", () => {
           iss: TEST_ISSUER,
           state: TEST_STATE,
         },
+        signature: "SIGNATURE",
       },
       jwt: mockedResponseJwt,
     });
@@ -208,44 +209,6 @@ describe("completeAuthorization tests", () => {
       ValidationError,
     );
   });
-
-  it("should throw an Oid4vciError in case the passed iss does not match", async () => {
-    const mockResponse = {
-      status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          buildResponseFormPostJWT(
-            { code: TEST_CODE, iss: "WRONG_ISSUER", state: TEST_STATE },
-            true,
-          ),
-        ),
-    };
-    mockFetch.mockResolvedValue(mockResponse);
-
-    await expect(completeAuthorization(baseOptions)).rejects.toThrowError(
-      Oid4vciError,
-    );
-  });
-
-  it("should throw an Oid4vciError in case the passed state does not match", async () => {
-    const mockResponse = {
-      status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          buildResponseFormPostJWT(
-            { code: TEST_CODE, iss: TEST_ISSUER, state: "WRONG_STATE" },
-            true,
-          ),
-        ),
-    };
-    mockFetch.mockResolvedValue(mockResponse);
-
-    await expect(completeAuthorization(baseOptions)).rejects.toThrowError(
-      Oid4vciError,
-    );
-  });
 });
 
 describe("sendAuthorizationResponseAndExtractCode tests", () => {
@@ -253,10 +216,25 @@ describe("sendAuthorizationResponseAndExtractCode tests", () => {
     authorizationResponseJarm: MOCK_JARM,
     callbacks: {
       fetch: mockFetch,
+      verifyJwt: mockVerifyJwt,
     },
     iss: TEST_ISSUER,
     presentationResponseUri: MOCK_RESPONSE_URI,
+    signer: {
+      alg: "ES256",
+      method: "jwk",
+      publicJwk: {
+        kty: "EC",
+      },
+    },
     state: TEST_STATE,
+  };
+
+  const mockVerifyJwtResult: Awaited<ReturnType<VerifyJwtCallback>> = {
+    signerJwk: {
+      kty: "EC",
+    },
+    verified: true,
   };
 
   beforeEach(() => {
@@ -284,23 +262,14 @@ describe("sendAuthorizationResponseAndExtractCode tests", () => {
     };
     mockFetch.mockResolvedValueOnce(secondMockResponse);
 
+    mockVerifyJwt.mockResolvedValue(mockVerifyJwtResult);
+
     const result = await sendAuthorizationResponseAndExtractCode(baseOptions);
 
     expect(result).toEqual({
-      decodedJwt: {
-        header: {
-          alg: "ES256",
-        },
-        payload: {
-          code: TEST_CODE,
-          iss: TEST_ISSUER,
-          state: TEST_STATE,
-        },
-      },
-      jwt: payloadToJwt(
-        { code: TEST_CODE, iss: TEST_ISSUER, state: TEST_STATE },
-        true,
-      ),
+      code: TEST_CODE,
+      iss: TEST_ISSUER,
+      state: TEST_STATE,
     });
   });
 
@@ -310,6 +279,8 @@ describe("sendAuthorizationResponseAndExtractCode tests", () => {
       status: 200,
     };
     mockFetch.mockResolvedValueOnce(firstMockResponse);
+
+    mockVerifyJwt.mockResolvedValue(mockVerifyJwtResult);
 
     const promisedResult = sendAuthorizationResponseAndExtractCode(baseOptions);
     await expect(promisedResult).rejects.toThrow(Oid4vciError);

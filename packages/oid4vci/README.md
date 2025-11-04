@@ -63,9 +63,171 @@ const attestationJwt = await walletProvider.createItWalletAttestationJwt(attesta
 
 The wallet attestation JWT can then be used in the OID4VCI protocol flow to prove the wallet's identity and key possession.
 
+### `completeAuthorization`
+
+```typescript
+import { CompleteAuthorizationOptions, completeAuthorization } from "@pagopa/io-wallet-oid4ci"
+
+//Obtain a response uri from an OID4VP authorization flow
+const response_uri = "https://response.example.com"
+
+//Build the parameters
+const options : CompleteAuthorizationOptions = {
+  fetch,
+  response_uri
+}
+
+/**
+ * Result is in the following form:
+ * {
+ *    jwt : "ey...",
+ *    decodedJwt : {
+ *      header : {
+ *        alg : "ES256",
+ *        ...
+ *      },
+ *      payload : {
+ *        iss : "https://iss.example.com",
+ *        state : "EXAMPLE_STATE",
+ *        code : "ACCESS_CODE"
+ *      },
+ *      signature : "..."
+ *    }
+ * }
+ */
+const result = await completeAuthorization(options)
+```
+
+### `verifyAuthorizationResponse`
+
+```typescript
+import {verifyAuthorizationResponse, VerifyAuthorizationResponseOptions} from "@pagopa/io-wallet-oid4vci"
+
+// Obtain an authorizationResponse
+const response = {
+  code : "TEST_CODE",
+  iss : "http://iss.example.com",
+  state : "TEST_STATE"
+}
+
+//Retrieve the expected issuer and state sent at the start of the authorization flow
+const EXPECTED_ISS = "http://iss.example.com"
+const EXPECTED_STATE = "TEST_STATE"
+
+//Check if they are correct
+verifyAuthorizationResponse({
+  authorizationResponse : response,
+  iss : EXPECTED_ISS,
+  state: EXPECTED_STATE
+} satisfies VerifyAuthorizationResponseOptions)
+```
+
+### `verifyAuthorizationResponseFormPostJWT`
+
+```typescript
+import {verifyAuthorizationResponseFormPostJWT, VerifyAuthorizationResponseFormPostJWTOptions} from "@pagopa/io-wallet-oid4vci"
+import { JwtSignerJwk } from "@pagopa/io-wallet-oauth2"
+
+// Obtain a decoded jwt cotaining the authoization response...
+const decodedJwt = {
+  header : {
+    alg : "ES256",
+    ...
+  },
+  payload :{
+    code : "TEST_CODE",
+    iss : "http://iss.example.com",
+    state : "TEST_STATE"
+  },
+  signature : "..."
+}
+
+//...and its compact form
+const jwt = "ey..."
+
+//Retrieve the signer's public key and build the corrsponing Signer object
+const signer : JwtSignerJwk = {
+  mehtod: "jwk",
+  alg : "ES256",
+  publicJwk : {
+    kty : "EC",
+    ...
+  }
+}
+
+//Retrieve the expected issuer and state sent at the start of the authorization flow
+const EXPECTED_ISS = "http://iss.example.com"
+const EXPECTED_STATE = "TEST_STATE"
+
+//Check the iss and state fields match the expected values and verify jwt signature
+verifyAuthorizationResponseFormPostJWT({
+  authorizationResponseCompact : jwt,
+  authorizationResponseDecoded : decodedJwt,
+  callbacks : {
+    verifyJwt : (signer, {header, payload, compact}) => {
+      ... //Signature verification
+    }
+  }
+  iss : EXPECTED_ISS,
+  signer,
+  state: EXPECTED_STATE
+} satisfies VerifyAuthorizationResponseFormPostJWTOptions)
+```
+
+### `sendAuthorizationResponseAndExtractCode`
+
+```typescript
+import {sendAuthorizationResponseAndExtractCode, SendAuthorizationResponseAndExtractCodeOptions} from "@pagopa/io-wallet-oid4vci"
+
+//Retrieve the necessary parameters
+const baseOptions: SendAuthorizationResponseAndExtractCodeOptions = {
+  //Signature JARM
+  authorizationResponseJarm: "...",
+  callbacks: {
+    fetch,
+    verifyJwt: (signer, {header, payload, compact}) => {
+      ... //verify signature
+    },
+  },
+  //Issuance session's credential issuer
+  iss: "http://iss.example.com",
+  presentationResponseUri: "http://response.oidvp.example.com",
+  //Retrieve the form_post.jwt response's corresponsing public key and create its corresponding signer
+  signer: {
+    alg: "ES256",
+    method: "jwk",
+    publicJwk: {
+      kty: "EC",
+    },
+  },
+  //The authorization state
+  state: "TEST_STATE",
+};
+
+//Obtain the authorization code
+
+const {code, iss, state} = await sendAuthorizationResponseAndExtractCode(options)
+```
+
 ## API Reference
 
 `WalletProvider`: A class that extends Openid4vciWalletProvider to provide specialized methods for the Italian Wallet ecosystem.
+
+
+`completeAuthorization` : Method that completes the `form_post.jwt` based authorization process for credentials issuance following the ITWallet
+                          specification by retrieving the form from the provided uri, extracting and parsing the contained JWT and verifying the
+                          `iss` and `state` fields match the authorization session's expected values.
+
+
+`verifyAuthorizationResponse` : Utility that verifies if the returned Authorization Response's 
+                                                      `iss` and `state` field match the Authorization Session ones
+
+`verifyAuthorizationResponseFormPostJWT` : Wrapper of `verifyAuthorizationResponse` that verifies the signature of the JWT containing
+                                           the authorization response and extracts the Authorization Response payload
+
+`sendAuthorizationResponseAndExtractCode` : Convenience method that combines `completeAuthorization`, 
+                                            oid4vp package's `fetchAuthorizationResponse` and `verifyAuthorizationResponseFormPostJWT` 
+                                            to retrieve the access code starting from the authorization response and the response uri
 
 ## Errors
 

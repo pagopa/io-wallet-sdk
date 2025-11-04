@@ -3,6 +3,9 @@ import z from "zod";
 
 import { Oauth2Error } from "./errors";
 
+/**
+ * Options for extracting and decoding the JWT from a form_post.jwt response
+ */
 export interface GetJwtFromFormPostOptions<T> {
   /**
    * Raw HTML containing the autosubmitted form with the jwt response
@@ -46,7 +49,7 @@ export interface GetJwtFromFormPostOptions<T> {
 export const getJwtFromFormPost = async <T>(
   options: GetJwtFromFormPostOptions<T>,
 ): Promise<{
-  decodedJwt: Omit<DecodeJwtResult<undefined, z.ZodSchema<T>>, "signature">;
+  decodedJwt: DecodeJwtResult<undefined, z.ZodSchema<T>>;
   jwt: string;
 }> => {
   const inputRegex = /<input[^<>]*>/gi;
@@ -69,10 +72,7 @@ export const getJwtFromFormPost = async <T>(
             payloadSchema: options.schema,
           });
           return {
-            decodedJwt: {
-              header: decodedJwt.header,
-              payload: decodedJwt.payload,
-            },
+            decodedJwt,
             jwt,
           };
         }

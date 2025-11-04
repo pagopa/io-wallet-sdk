@@ -11,36 +11,33 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { Oid4vciError } from "../errors";
-import { zAccessCode } from "./z-access-code";
+import {
+  VerifyAuthorizationResponseFormPostJWTOptions,
+  verifyAuthorizationResponseFormPostJWT,
+} from "./verify-authorization-response";
+import { AuthorizationResponse, zAuthorizationResponse } from "./z-access-code";
 
 export interface CompleteAuthorizationOptions {
   callbacks: Pick<CallbackContext, "fetch">;
-
-  /**
-   * The issuer the Wallet Instance started the
-   * authorization flow (either via PAR or directly) with
-   */
-  iss: string;
 
   /**
    * The response_uri returned by the server after a successful
    * OID4VP Authorization Response is sent
    */
   response_uri: string;
-
-  /**
-   * The state sent by the Wallet Instance at the start
-   * of the authorization flow (either via PAR or directly)
-   */
-  state: string;
 }
 
 /**
- * Combination of {@link CompleteAuthorizationOptions} and
- * {@link FetchAuthorizationResponseOptions}
+ * Combination of {@link CompleteAuthorizationOptions},
+ * {@link FetchAuthorizationResponseOptions} and
+ * {@link VerifyAuthorizationResponseFormPostJWTOptions}
  */
 export type SendAuthorizationResponseAndExtractCodeOptions =
   FetchAuthorizationResponseOptions &
+    Omit<
+      VerifyAuthorizationResponseFormPostJWTOptions,
+      "authorizationResponseCompact" | "authorizationResponseDecoded"
+    > &
     Omit<CompleteAuthorizationOptions, "response_uri">;
 
 /**
@@ -59,7 +56,7 @@ export type SendAuthorizationResponseAndExtractCodeOptions =
  */
 export async function completeAuthorization(
   options: CompleteAuthorizationOptions,
-): ReturnType<typeof getJwtFromFormPost<typeof zAccessCode>> {
+): ReturnType<typeof getJwtFromFormPost<typeof zAuthorizationResponse>> {
   try {
     const fetch = createFetcher(options.callbacks.fetch);
     const authorizationResponseResult = await fetch(options.response_uri);
@@ -69,24 +66,10 @@ export async function completeAuthorization(
       UnexpectedStatusCodeError,
     )(authorizationResponseResult);
 
-    const result = await getJwtFromFormPost({
+    return await getJwtFromFormPost({
       formData: await authorizationResponseResult.text(),
-      schema: zAccessCode,
+      schema: zAuthorizationResponse,
     });
-    const {
-      decodedJwt: { payload: accessCode },
-    } = result;
-
-    if (accessCode.iss !== options.iss)
-      throw new Oid4vciError(
-        `Response result iss doesn't match passed counterpart. Expected: ${options.iss}, Got: ${accessCode.iss}`,
-      );
-    if (accessCode.state !== options.state)
-      throw new Oid4vciError(
-        `Response result state doesn't match passed counterpart. Expected: ${options.state}, Got: ${accessCode.state}`,
-      );
-
-    return result;
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
@@ -102,8 +85,8 @@ export async function completeAuthorization(
 }
 
 /**
- * Convenience method that combines {@link completeAuthorization} and
- * oid4vp package's {@link fetchAuthorizationResponse} to retrieve the
+ * Convenience method that combines {@link completeAuthorization},
+ * oid4vp package's {@link fetchAuthorizationResponse} and {@link verifyAuthorizationResponseFormPostJWT} to retrieve the
  * access code starting from the authorization response and the response uri
  *
  * @param options {@link SendAuthorizationResponseAndExtractCodeOptions}
@@ -112,13 +95,24 @@ export async function completeAuthorization(
  */
 export async function sendAuthorizationResponseAndExtractCode(
   options: SendAuthorizationResponseAndExtractCodeOptions,
-): ReturnType<typeof getJwtFromFormPost<typeof zAccessCode>> {
+): Promise<AuthorizationResponse> {
   try {
     const authorizationResult = await fetchAuthorizationResponse(options);
 
-    return completeAuthorization({
+    const jwtAndPayload = await completeAuthorization({
       ...options,
       response_uri: authorizationResult.redirect_uri,
+    });
+
+    return verifyAuthorizationResponseFormPostJWT({
+      authorizationResponseCompact: jwtAndPayload.jwt,
+      authorizationResponseDecoded: jwtAndPayload.decodedJwt,
+      callbacks: {
+        verifyJwt: options.callbacks.verifyJwt,
+      },
+      iss: options.iss,
+      signer: options.signer,
+      state: options.state,
     });
   } catch (error) {
     if (

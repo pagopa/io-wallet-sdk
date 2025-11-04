@@ -1,9 +1,9 @@
 import z from "zod";
 
-export const zAccessCode = z.object({
+export const zAuthorizationResponse = z.object({
   code: z.string(),
   iss: z.string(),
   state: z.string(),
 });
 
-export type AccessCode = z.infer<typeof zAccessCode>;
+export type AuthorizationResponse = z.infer<typeof zAuthorizationResponse>;
