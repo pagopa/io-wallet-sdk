@@ -1,7 +1,10 @@
 import { CallbackContext, JwtSignerJwk, decodeJwt } from "@openid4vc/oauth2";
 
 import { Oid4vciError } from "../errors";
-import { AuthorizationResponse, zAuthorizationResponse } from "./z-access-code";
+import {
+  AuthorizationResponse,
+  zAuthorizationResponse,
+} from "./z-authorization-response";
 
 export interface VerifyAuthorizationResponseOptions {
   /**

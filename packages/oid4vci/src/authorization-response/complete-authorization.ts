@@ -15,7 +15,10 @@ import {
   VerifyAuthorizationResponseFormPostJWTOptions,
   verifyAuthorizationResponseFormPostJWT,
 } from "./verify-authorization-response";
-import { AuthorizationResponse, zAuthorizationResponse } from "./z-access-code";
+import {
+  AuthorizationResponse,
+  zAuthorizationResponse,
+} from "./z-authorization-response";
 
 export interface CompleteAuthorizationOptions {
   callbacks: Pick<CallbackContext, "fetch">;

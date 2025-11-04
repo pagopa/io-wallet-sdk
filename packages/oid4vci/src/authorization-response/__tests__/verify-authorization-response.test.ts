@@ -9,7 +9,7 @@ import {
   verifyAuthorizationResponse,
   verifyAuthorizationResponseFormPostJWT,
 } from "../verify-authorization-response";
-import { AuthorizationResponse } from "../z-access-code";
+import { AuthorizationResponse } from "../z-authorization-response";
 
 const TEST_ISSUER = "test_issuer";
 const WRONG_ISSUER = "wrong_issuer";
