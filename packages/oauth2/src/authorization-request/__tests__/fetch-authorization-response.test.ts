@@ -55,7 +55,7 @@ describe("fetchPushedAuthorizationResponse", () => {
         "https://auth-server.example.com/par",
         {
           body: new URLSearchParams({
-            clientId: "test-client-id",
+            client_id: "test-client-id",
             request: "test-jwt-request-token",
           }),
           headers: {
