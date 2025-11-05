@@ -1,5 +1,17 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.5.0
+
+### Minor Changes
+
+- a673538: Add access token request and response handling with DPoP support
+- 6331820: Create dpop with access token
+
+### Patch Changes
+
+- b08028e: Add type modifier to type-only exports in oauth2 package
+  - @pagopa/io-wallet-utils@0.5.0
+
 ## 0.4.2
 
 ### Patch Changes

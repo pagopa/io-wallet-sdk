@@ -3,8 +3,8 @@ export * from "./authorization-response";
 export * from "./errors";
 
 export {
-  CreateOpenid4vpAuthorizationResponseOptions,
-  CreateOpenid4vpAuthorizationResponseResult,
-  VpToken,
+  type CreateOpenid4vpAuthorizationResponseOptions,
+  type CreateOpenid4vpAuthorizationResponseResult,
+  type VpToken,
   createOpenid4vpAuthorizationResponse,
 } from "@openid4vc/openid4vp";

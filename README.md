@@ -8,7 +8,7 @@ The project is structured as a monorepo using `pnpm` and is designed to be envir
 
 ## Key Features
 
-- **Full IT-Wallet Compliance**: Implements the specific profiles and flows required by the official [IT Wallet specifications](https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/).
+- **Full IT-Wallet Compliance**: Implements the specific profiles and flows required by the official [IT Wallet specifications](https://italia.github.io/eid-wallet-it-docs/releases/1.0.2/en/), currently 1.0.2 version.
 - **Modern & Secure**: Built with TypeScript and includes support for modern OAuth 2.0 extensions like `PAR`, `DPoP`, and `PKCE`.
 - **Modular Architecture**: The core logic is split into scoped packages, so you only use what you need.
 - **Crypto Agnostic**: Does not impose a specific cryptographic library.

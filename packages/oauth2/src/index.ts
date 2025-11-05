@@ -8,17 +8,16 @@ export * from "./pkce";
 export * from "./token-dpop";
 
 export {
-  CallbackContext,
-  GenerateRandomCallback,
+  type CallbackContext,
+  type GenerateRandomCallback,
   HashAlgorithm,
-  HttpMethod,
-  Jwk,
-  JwtSigner,
-  JwtSignerJwk,
+  type HttpMethod,
+  type Jwk,
+  type JwtSigner,
+  type JwtSignerJwk,
   Oauth2JwtParseError,
-  RequestDpopOptions,
-  SignJwtCallback,
-  VerifyJwtCallback,
+  type RequestDpopOptions,
+  type SignJwtCallback,
+  type VerifyJwtCallback,
   decodeJwt,
 } from "@openid4vc/oauth2";
-export { Fetch } from "@openid4vc/utils";
