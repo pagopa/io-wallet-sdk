@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-oid4vci
 
+## 0.5.1
+
+### Patch Changes
+
+- @pagopa/io-wallet-utils@0.5.1
+
 ## 0.5.0
 
 ### Patch Changes
