@@ -69,7 +69,7 @@ export async function fetchPushedAuthorizationResponse(
       options.pushedAuthorizationRequestEndpoint,
       {
         body: new URLSearchParams({
-          clientId: options.pushedAuthorizationRequestSigned.client_id,
+          client_id: options.pushedAuthorizationRequestSigned.client_id,
           request: options.pushedAuthorizationRequestSigned.request,
         }),
         headers: {
