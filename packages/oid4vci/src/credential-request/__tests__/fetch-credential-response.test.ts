@@ -203,7 +203,5 @@ describe("fetchCredentialResponse", () => {
     const result = await fetchCredentialResponse(baseOptions);
 
     expect(result).toEqual(deferredResponse);
-    expect(result.transaction_id).toBe("test-transaction-id");
-    expect(result.lead_time).toBe(300);
   });
 });
