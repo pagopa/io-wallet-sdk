@@ -12,4 +12,7 @@ export const CONTENT_TYPES = {
 export const HEADERS = {
   AUTHORIZATION: "Authorization",
   CONTENT_TYPE: "Content-Type",
+  DPOP: "DPoP",
+  OAUTH_CLIENT_ATTESTATION: "OAuth-Client-Attestation",
+  OAUTH_CLIENT_ATTESTATION_POP: "OAuth-Client-Attestation-PoP",
 } as const;

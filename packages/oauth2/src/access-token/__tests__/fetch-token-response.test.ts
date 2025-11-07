@@ -6,7 +6,6 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HEADERS as OAUTH_HEADERS } from "../../constants";
 import { FetchTokenResponseError } from "../../errors";
 import {
   FetchTokenResponseOptions,
@@ -69,9 +68,8 @@ describe("fetchTokenResponse - successful requests", () => {
         }),
         headers: {
           [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
-          [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION]:
-            "test-wallet-attestation-jwt",
-          [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
+          [HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",
+          [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
             "test-client-attestation-dpop-jwt",
         },
         method: "POST",

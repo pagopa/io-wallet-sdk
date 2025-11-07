@@ -8,7 +8,6 @@ import {
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
-import { HEADERS as OAUTH_HEADERS } from "../constants";
 import { PushedAuthorizationRequestError } from "../errors";
 import {
   PushedAuthorizationRequestSigned,
@@ -76,9 +75,8 @@ export async function fetchPushedAuthorizationResponse(
         }),
         headers: {
           [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
-          [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
-          [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
-            options.clientAttestationDPoP,
+          [HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
+          [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]: options.clientAttestationDPoP,
         },
         method: "POST",
       },

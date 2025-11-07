@@ -6,12 +6,11 @@ import {
 } from "@openid4vc/utils";
 import {
   CONTENT_TYPES,
+  HEADERS,
   UnexpectedStatusCodeError,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
-import { HEADERS } from "@pagopa/io-wallet-utils";
 
-import { HEADERS as OAUTH_HEADERS } from "../constants";
 import { FetchTokenResponseError } from "../errors";
 import {
   AccessTokenRequest,
@@ -68,9 +67,8 @@ export async function fetchTokenResponse(
       body: toURLSearchParams(options.accessTokenRequest),
       headers: {
         [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
-        [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
-        [OAUTH_HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
-          options.clientAttestationDPoP,
+        [HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
+        [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]: options.clientAttestationDPoP,
       },
       method: "POST",
     });

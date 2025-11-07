@@ -38,3 +38,16 @@ export class NonceRequestError extends Error {
     this.name = "NonceRequestError";
   }
 }
+
+/**
+ * Error thrown when an unexpected error occurs during credential response fetching.
+ */
+export class FetchCredentialResponseError extends Oid4vciError {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "FetchCredentialResponseError";
+  }
+}
