@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.6.0
+
+### Patch Changes
+
+- Updated dependencies [b2a7475]
+  - @pagopa/io-wallet-utils@0.6.0
+  - @pagopa/io-wallet-oid-federation@0.6.0
+
 ## 0.5.1
 
 ### Patch Changes
