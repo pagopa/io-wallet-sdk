@@ -2,6 +2,7 @@ export * from "./access-token";
 export * from "./authorization-request";
 export * from "./client-attestation-pop";
 export * from "./errors";
+export * from "./jarm-form-post-jwt";
 export * from "./pkce";
 export * from "./token-dpop";
 

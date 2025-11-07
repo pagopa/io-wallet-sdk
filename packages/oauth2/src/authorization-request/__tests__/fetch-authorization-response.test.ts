@@ -1,8 +1,9 @@
 import {
+  CONTENT_TYPES,
+  HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
-import { CONTENT_TYPES, HEADERS } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -35,7 +36,7 @@ describe("fetchPushedAuthorizationResponse", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("successful requests", () => {

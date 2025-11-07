@@ -23,7 +23,7 @@ const mockSigner = {
 };
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
   mockCallbacks.generateRandom.mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
   mockCallbacks.signJwt.mockResolvedValue("test-dpop-jwt");
   mockCallbacks.hash.mockResolvedValue(new Uint8Array([5, 6, 7, 8]));
