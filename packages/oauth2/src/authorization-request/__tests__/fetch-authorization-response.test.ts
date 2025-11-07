@@ -1,10 +1,11 @@
 import {
+  CONTENT_TYPES,
+  HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT_TYPES, HEADERS } from "../../constants";
 import {
   fetchPushedAuthorizationResponse,
   fetchPushedAuthorizationResponseOptions,
@@ -35,7 +36,7 @@ describe("fetchPushedAuthorizationResponse", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("successful requests", () => {
@@ -55,7 +56,7 @@ describe("fetchPushedAuthorizationResponse", () => {
         "https://auth-server.example.com/par",
         {
           body: new URLSearchParams({
-            clientId: "test-client-id",
+            client_id: "test-client-id",
             request: "test-jwt-request-token",
           }),
           headers: {

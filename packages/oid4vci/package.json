@@ -1,6 +1,6 @@
 {
   "name": "@pagopa/io-wallet-oid4vci",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "files": [
     "dist"
   ],
@@ -35,6 +35,11 @@
     "@openid4vc/oauth2": "catalog:",
     "@openid4vc/openid4vci": "catalog:",
     "@openid4vc/utils": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@pagopa/io-wallet-oauth2": "workspace:*",
+    "@pagopa/io-wallet-oid4vp": "workspace:*"
+  },
+  "devDependencies": {
+    "js-base64": "catalog:"
   }
 }

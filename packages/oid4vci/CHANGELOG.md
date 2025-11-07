@@ -1,5 +1,24 @@
 # @pagopa/io-wallet-oid4vci
 
+## 0.6.0
+
+### Minor Changes
+
+- b2a7475: Add credential request implementation
+
+### Patch Changes
+
+- Updated dependencies [b2a7475]
+  - @pagopa/io-wallet-oauth2@0.6.0
+  - @pagopa/io-wallet-utils@0.6.0
+  - @pagopa/io-wallet-oid4vp@0.6.0
+
+## 0.5.1
+
+### Patch Changes
+
+- @pagopa/io-wallet-utils@0.5.1
+
 ## 0.5.0
 
 ### Patch Changes

@@ -1,10 +1,11 @@
 import {
+  CONTENT_TYPES,
+  HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT_TYPES, HEADERS } from "../../constants";
 import { FetchTokenResponseError } from "../../errors";
 import {
   FetchTokenResponseOptions,
@@ -40,7 +41,7 @@ const baseOptions: FetchTokenResponseOptions = {
 
 describe("fetchTokenResponse - successful requests", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should successfully fetch access token response", async () => {
@@ -137,7 +138,7 @@ describe("fetchTokenResponse - successful requests", () => {
 
 describe("fetchTokenResponse - HTTP error handling", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should throw UnexpectedStatusCodeError for 400 status", async () => {
@@ -203,7 +204,7 @@ describe("fetchTokenResponse - HTTP error handling", () => {
 
 describe("fetchTokenResponse - validation error handling", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should throw ValidationError when access_token is missing", async () => {
@@ -252,7 +253,7 @@ describe("fetchTokenResponse - validation error handling", () => {
 
 describe("fetchTokenResponse - unexpected error handling", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should throw FetchTokenResponseError for network errors", async () => {
