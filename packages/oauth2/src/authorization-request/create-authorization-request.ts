@@ -9,6 +9,7 @@ import { createPkce } from "../pkce";
 import {
   AuthorizationRequest,
   PushedAuthorizationRequestSigned,
+  zAuthorizationRequest,
 } from "./z-authorization-request";
 
 const JWT_EXPIRY_SECONDS = 3600; // 1 hour
@@ -23,7 +24,7 @@ export interface CreatePushedAuthorizationRequestOptions {
   /**
    * Allows clients to specify their fine-grained authorization requirements using the expressiveness of JSON data structures
    */
-  authorization_details: AuthorizationRequest["authorization_details"];
+  authorization_details?: AuthorizationRequest["authorization_details"];
 
   /**
    * Callback context mostly for crypto related functionality
@@ -65,7 +66,7 @@ export interface CreatePushedAuthorizationRequestOptions {
   /**
    * Scope to request for the authorization request
    */
-  scope: string;
+  scope?: string;
 
   /**
    * state parameter to use for PAR. If not provided a value will generated automatically
@@ -83,7 +84,7 @@ export async function createPushedAuthorizationRequest(
     codeVerifier: options.pkceCodeVerifier,
   });
 
-  const authorizationRequest: AuthorizationRequest = {
+  const authorizationRequest = zAuthorizationRequest.parse({
     authorization_details: options.authorization_details,
     client_id: options.clientId,
     code_challenge: pkce.codeChallenge,
@@ -97,7 +98,7 @@ export async function createPushedAuthorizationRequest(
       encodeToBase64Url(
         await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
       ),
-  };
+  });
 
   const { dpop } = options;
   if (!dpop.signer.alg || !dpop.signer.publicJwk?.kid) {
