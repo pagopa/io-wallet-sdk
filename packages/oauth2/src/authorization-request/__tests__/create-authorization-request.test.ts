@@ -192,7 +192,7 @@ describe("createPushedAuthorizationRequest", () => {
     });
   });
 
-  it("should throw error with no authorization_details and no scope)", async () => {
+  it("should throw error with no authorization_details and no scope", async () => {
     const optionsWithoutScope = {
       ...baseOptions,
       authorization_details: undefined,
