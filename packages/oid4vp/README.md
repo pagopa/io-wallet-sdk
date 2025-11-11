@@ -115,7 +115,7 @@ const resp = createAuthorizationResponse({
 
 ### AuthorizationRequestObject type and Zod parser
 ```typescript
-export const zOpenid4vpAuthorizationRequest = z
+export const zOpenid4vpAuthorizationRequestPayload = z
   .object({
     response_type: z.literal('vp_token'),
     client_id: z.string(),
@@ -131,7 +131,7 @@ export const zOpenid4vpAuthorizationRequest = z
   })
   .passthrough().and(zJwtPayload)
 
-export type AuthorizationRequestObject = z.infer<typeof zOpenid4vpAuthorizationRequest>
+export type AuthorizationRequestObject = z.infer<typeof zOpenid4vpAuthorizationRequestPayload>
 ```
 
 ### parseAuthorizeRequest

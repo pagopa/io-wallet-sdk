@@ -5,7 +5,7 @@ import { z } from "zod";
  * Zod parser that describes a JWT payload
  * containing an OID4VP Request Object
  */
-export const zOpenid4vpAuthorizationRequest = z
+export const zOpenid4vpAuthorizationRequestPayload = z
   .object({
     client_id: z.string(),
     dcql_query: z.record(z.string(), z.any()).optional(),
@@ -23,5 +23,15 @@ export const zOpenid4vpAuthorizationRequest = z
   .and(zJwtPayload);
 
 export type AuthorizationRequestObject = z.infer<
-  typeof zOpenid4vpAuthorizationRequest
+  typeof zOpenid4vpAuthorizationRequestPayload
 >;
+
+export const zOpenid4vpAuthorizationRequestHeader = z
+  .object({
+    alg: z.string(),
+    kid: z.string().optional(),
+    trust_chain: z.array(z.string()).nonempty().optional(),
+    typ: z.literal("oauth-authz-req+jwt"),
+    x5c: z.array(z.string()).optional(),
+  })
+  .passthrough();

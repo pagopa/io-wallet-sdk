@@ -9,7 +9,8 @@ import { ValidationError } from "@openid4vc/utils";
 import { ParseAuthorizeRequestError } from "../errors";
 import {
   AuthorizationRequestObject,
-  zOpenid4vpAuthorizationRequest,
+  zOpenid4vpAuthorizationRequestHeader,
+  zOpenid4vpAuthorizationRequestPayload,
 } from "./z-request-object";
 
 export interface ParseAuthorizeRequestOptions {
@@ -44,8 +45,9 @@ export async function parseAuthorizeRequest(
 ): Promise<AuthorizationRequestObject> {
   try {
     const decoded = decodeJwt({
+      headerSchema: zOpenid4vpAuthorizationRequestHeader,
       jwt: options.requestObjectJwt,
-      payloadSchema: zOpenid4vpAuthorizationRequest,
+      payloadSchema: zOpenid4vpAuthorizationRequestPayload,
     });
     const verificationResult = await options.callbacks.verifyJwt(
       options.dpop.signer,
