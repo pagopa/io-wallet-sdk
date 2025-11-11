@@ -2,12 +2,14 @@ import z from "zod";
 
 export const zAuthorizationRequest = z
   .object({
-    authorization_details: z.array(
-      z.object({
-        credential_configuration_id: z.string(),
-        type: z.literal("openid_credential"),
-      }),
-    ),
+    authorization_details: z
+      .array(
+        z.object({
+          credential_configuration_id: z.string(),
+          type: z.literal("openid_credential"),
+        }),
+      )
+      .optional(),
     client_id: z.string(),
     code_challenge: z.string(),
     code_challenge_method: z.string(),
@@ -15,10 +17,18 @@ export const zAuthorizationRequest = z
     redirect_uri: z.string().url().optional(),
     response_mode: z.string(),
     response_type: z.string(),
-    scope: z.string(),
+    scope: z.string().optional(),
     state: z.string(),
   })
-  .passthrough();
+  .passthrough()
+  .refine(
+    (data) =>
+      data.authorization_details !== undefined || data.scope !== undefined,
+    {
+      message: "Either 'authorization_details' or 'scope' must be provided.",
+      path: ["authorization_details"],
+    },
+  );
 export type AuthorizationRequest = z.infer<typeof zAuthorizationRequest>;
 
 export const zPushedAuthorizationRequestSigned = z

@@ -13,44 +13,43 @@ vi.mock("@openid4vc/utils", () => ({
 
 const mockCreatePkce = vi.mocked(createPkce);
 
+const mockSigner = {
+  alg: "ES256",
+  method: "jwk" as const,
+  publicJwk: {
+    crv: "P-256",
+    kid: "test-kid",
+    kty: "EC",
+    x: "test-x",
+    y: "test-y",
+  },
+};
+
+const mockCallbacks = {
+  generateRandom: vi.fn(),
+  hash: vi.fn(),
+  signJwt: vi.fn(),
+};
+
+const baseOptions: CreatePushedAuthorizationRequestOptions = {
+  audience: "https://issuer.example.com",
+  authorization_details: [
+    {
+      credential_configuration_id: "test-config",
+      type: "openid_credential",
+    },
+  ],
+  callbacks: mockCallbacks,
+  clientId: "test-client-id",
+  codeChallengeMethodsSupported: ["S256"],
+  dpop: {
+    signer: mockSigner,
+  },
+  redirectUri: "https://client.example.com/callback",
+  responseMode: "form_post",
+};
+
 describe("createPushedAuthorizationRequest", () => {
-  const mockCallbacks = {
-    generateRandom: vi.fn(),
-    hash: vi.fn(),
-    signJwt: vi.fn(),
-  };
-
-  const mockSigner = {
-    alg: "ES256",
-    method: "jwk" as const,
-    publicJwk: {
-      crv: "P-256",
-      kid: "test-kid",
-      kty: "EC",
-      x: "test-x",
-      y: "test-y",
-    },
-  };
-
-  const baseOptions: CreatePushedAuthorizationRequestOptions = {
-    audience: "https://issuer.example.com",
-    authorization_details: [
-      {
-        credential_configuration_id: "test-config",
-        type: "openid_credential",
-      },
-    ],
-    callbacks: mockCallbacks,
-    clientId: "test-client-id",
-    codeChallengeMethodsSupported: ["S256"],
-    dpop: {
-      signer: mockSigner,
-    },
-    redirectUri: "https://client.example.com/callback",
-    responseMode: "form_post",
-    scope: "openid",
-  };
-
   beforeEach(() => {
     vi.restoreAllMocks();
     mockCallbacks.generateRandom.mockResolvedValue(
@@ -97,7 +96,6 @@ describe("createPushedAuthorizationRequest", () => {
         redirect_uri: "https://client.example.com/callback",
         response_mode: "form_post",
         response_type: "code",
-        scope: "openid",
         state: "base64url_1,2,3,4",
       }),
     });
@@ -191,6 +189,43 @@ describe("createPushedAuthorizationRequest", () => {
         jti: customJti,
         state: customState,
       }),
+    });
+  });
+
+  it("should throw error with no authorization_details and no scope", async () => {
+    const optionsWithoutScope = {
+      ...baseOptions,
+      authorization_details: undefined,
+      scope: undefined,
+    };
+
+    await expect(
+      createPushedAuthorizationRequest(optionsWithoutScope),
+    ).rejects.toThrow(Error);
+  });
+
+  it("should create request with only scope (no authorization_details)", async () => {
+    const optionsWithoutAuthDetails = {
+      ...baseOptions,
+      authorization_details: undefined,
+      scope: "openid profile",
+    };
+
+    const result = await createPushedAuthorizationRequest(
+      optionsWithoutAuthDetails,
+    );
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({
+        authorization_details: undefined,
+        scope: "openid profile",
+      }),
+    });
+
+    expect(result).toEqual({
+      client_id: "test-client-id",
+      request: "test-jwt-token",
     });
   });
 });
