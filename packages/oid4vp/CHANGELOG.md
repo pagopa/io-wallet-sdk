@@ -1,5 +1,14 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.6.1
+
+### Patch Changes
+
+- aaae8bb: Add OAuth authorization request JWT header validation
+- Updated dependencies [cead548]
+  - @pagopa/io-wallet-oid-federation@0.6.1
+  - @pagopa/io-wallet-utils@0.6.1
+
 ## 0.6.0
 
 ### Patch Changes
