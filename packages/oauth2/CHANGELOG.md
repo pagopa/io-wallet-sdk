@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.6.1
+
+### Patch Changes
+
+- b2fc74d: fix: Make authorization_details and scope optional with validation
+  - @pagopa/io-wallet-utils@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes

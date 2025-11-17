@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-oid-federation
 
+## 0.6.1
+
+### Patch Changes
+
+- cead548: Remove iss/sub equality validation in Entity Configuration
+
 ## 0.6.0
 
 ## 0.5.1
