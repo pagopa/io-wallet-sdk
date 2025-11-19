@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.6.2
+
+### Patch Changes
+
+- e0af6dc: Export JWE encryption types from oauth2 package
+  - @pagopa/io-wallet-utils@0.6.2
+
 ## 0.6.1
 
 ### Patch Changes
