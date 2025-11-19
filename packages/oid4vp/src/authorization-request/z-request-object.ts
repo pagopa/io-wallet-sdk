@@ -1,5 +1,28 @@
-import { zJwtPayload } from "@openid4vc/oauth2";
+import { zJwk, zJwtPayload } from "@openid4vc/oauth2";
 import { z } from "zod";
+
+export const zVpFormatsSupported = z.record(
+  z.string(),
+  z
+    .object({
+      alg_values_supported: z.optional(z.array(z.string())),
+    })
+    .passthrough(),
+);
+
+export type VpFormatsSupported = z.infer<typeof zVpFormatsSupported>;
+
+export const zClientMetadata = z
+  .object({
+    client_name: z.string().optional(),
+    encrypted_response_enc_values_supported: z.array(z.string()).optional(),
+    jwks: z.object({ keys: z.array(zJwk) }).passthrough(),
+    logo_uri: z.string().url().optional(),
+    vp_formats_supported: zVpFormatsSupported,
+  })
+  .passthrough();
+
+export type ClientMetadata = z.infer<typeof zClientMetadata>;
 
 /**
  * Zod parser that describes a JWT payload
@@ -8,6 +31,7 @@ import { z } from "zod";
 export const zOpenid4vpAuthorizationRequestPayload = z
   .object({
     client_id: z.string(),
+    client_metadata: zClientMetadata.optional(),
     dcql_query: z.record(z.string(), z.any()).optional(),
     nonce: z.string(),
     request_uri: z.string().url().optional(),
@@ -17,6 +41,19 @@ export const zOpenid4vpAuthorizationRequestPayload = z
     response_uri: z.string().url().optional(),
     scope: z.string().optional(),
     state: z.string(),
+
+    /** Currently not supported in createOpenid4vpAuthorizationResponse
+     * 
+    transaction_data: z
+      .array(
+        z.object({
+          credential_ids: z.array(z.string()).nonempty(),
+          type: z.string(),
+        }),
+      )
+      .optional(),
+      */
+    transaction_data_hashes_alg: z.array(z.string()).optional(),
     wallet_nonce: z.string().optional(),
   })
   .passthrough()
