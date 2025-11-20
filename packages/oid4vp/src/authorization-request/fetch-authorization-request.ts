@@ -1,5 +1,8 @@
-import type { CallbackContext, RequestDpopOptions } from "@openid4vc/oauth2";
-
+import {
+  type CallbackContext,
+  Oauth2JwtParseError,
+  type RequestDpopOptions,
+} from "@openid4vc/oauth2";
 import { ValidationError, createFetcher } from "@openid4vc/utils";
 
 import type { AuthorizationRequestObject } from "./z-request-object";
@@ -59,6 +62,7 @@ export interface FetchAuthorizationRequestResult {
  * @throws {Oid4vpError} When required query parameters are missing or URL is invalid
  * @throws {ValidationError} When the request object cannot be parsed or is invalid
  * @throws {ParseAuthorizeRequestError} When JWT verification fails
+ * @throws {Oauth2JwtParseError} When the request object JWT is malformed
  */
 export async function fetchAuthorizationRequest(
   options: FetchAuthorizationRequestOptions,
@@ -111,7 +115,11 @@ export async function fetchAuthorizationRequest(
       searchParams: url.searchParams,
     };
   } catch (error) {
-    if (error instanceof Oid4vpError || error instanceof ValidationError) {
+    if (
+      error instanceof Oid4vpError ||
+      error instanceof ValidationError ||
+      error instanceof Oauth2JwtParseError
+    ) {
       throw error;
     }
     throw new Oid4vpError(
