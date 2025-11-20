@@ -115,10 +115,34 @@ const resp = createAuthorizationResponse({
 
 ### AuthorizationRequestObject type and Zod parser
 ```typescript
+export const zVpFormatsSupported = z.record(
+  z.string(),
+  z
+    .object({
+      alg_values_supported: z.optional(z.array(z.string())),
+    })
+    .passthrough(),
+);
+
+export type VpFormatsSupported = z.infer<typeof zVpFormatsSupported>;
+
+export const zClientMetadata = z
+  .object({
+    client_name: z.string().optional(),
+    encrypted_response_enc_values_supported: z.array(z.string()).optional(),
+    jwks: z.object({ keys: z.array(zJwk) }).passthrough(),
+    logo_uri: z.string().url().optional(),
+    vp_formats_supported: zVpFormatsSupported,
+  })
+  .passthrough();
+
+export type ClientMetadata = z.infer<typeof zClientMetadata>;
+
 export const zOpenid4vpAuthorizationRequestPayload = z
   .object({
     response_type: z.literal('vp_token'),
     client_id: z.string(),
+    client_metadata: zClientMetadata.optional(),
     response_uri: z.string().url().optional(),
     request_uri: z.string().url().optional(),
     request_uri_method: z.optional(z.string()),
@@ -128,6 +152,7 @@ export const zOpenid4vpAuthorizationRequestPayload = z
     scope: z.string().optional(),
     dcql_query: z.record(z.string(), z.any()).optional(),
     state: z.string().optional(),
+    transaction_data_hashes_alg: z.array(z.string()).optional(),
   })
   .passthrough().and(zJwtPayload)
 
