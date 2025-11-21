@@ -67,7 +67,10 @@ describe("fetchAuthorizationRequest", () => {
       dpop: mockDpop,
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(expect.any(URL), { method: "GET" });
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://request.com",
+      expect.objectContaining({ method: "GET" }),
+    );
     expect(parseAuthorizeRequest).toHaveBeenCalledWith({
       callbacks: mockCallbacks,
       dpop: mockDpop,
@@ -101,7 +104,10 @@ describe("fetchAuthorizationRequest", () => {
       dpop: mockDpop,
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(expect.any(URL), { method: "POST" });
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://request.com",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 
   it("should throw error if fetch fails", async () => {

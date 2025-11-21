@@ -88,7 +88,7 @@ export async function fetchAuthorizationRequest(
 
     // Fetch the request object JWT
     const fetch = createFetcher(options.callbacks.fetch);
-    const response = await fetch(url, {
+    const response = await fetch(requestUri, {
       method,
     });
 
