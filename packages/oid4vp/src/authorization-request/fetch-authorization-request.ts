@@ -29,23 +29,32 @@ export interface FetchAuthorizationRequestOptions {
   dpop: RequestDpopOptions;
 }
 
+export interface ParsedQrCode {
+  /**
+   * The `client_id` from the authorization URL
+   */
+  clientId: string;
+  /**
+   * The `request_uri` from the authorization URL
+   */
+  requestUri: string;
+  /**
+   * The `request_uri_method` from the authorization URL (GET or POST)
+   */
+  requestUriMethod: "GET" | "POST";
+}
+
 export interface FetchAuthorizationRequestResult {
   /**
-   * The base URI of the authorization request
+   * The parsed QR code data
+   * Includes `clientId`, `requestUri` and `requestUriMethod`
    */
-  baseUri: string;
-  /**
-   * The path of the authorization request
-   */
-  path: string;
+  parsedQrCode: ParsedQrCode;
+
   /**
    * The parsed authorization request object
    */
   requestObject: AuthorizationRequestObject;
-  /**
-   * The query parameters of the authorization request
-   */
-  searchParams: URLSearchParams;
 }
 
 /**
@@ -109,10 +118,12 @@ export async function fetchAuthorizationRequest(
     });
 
     return {
-      baseUri: url.origin,
-      path: url.pathname,
+      parsedQrCode: {
+        clientId,
+        requestUri,
+        requestUriMethod: method,
+      },
       requestObject,
-      searchParams: url.searchParams,
     };
   } catch (error) {
     if (

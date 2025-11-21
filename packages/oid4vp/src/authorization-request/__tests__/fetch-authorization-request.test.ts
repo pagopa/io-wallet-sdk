@@ -77,10 +77,12 @@ describe("fetchAuthorizationRequest", () => {
       requestObjectJwt,
     });
     expect(result).toEqual({
-      baseUri: "https://example.com",
-      path: "/",
+      parsedQrCode: {
+        clientId: "123",
+        requestUri: "https://request.com",
+        requestUriMethod: "GET",
+      },
       requestObject: parsedRequestObject,
-      searchParams: expect.any(URLSearchParams),
     });
   });
 
