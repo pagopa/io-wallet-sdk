@@ -1,5 +1,17 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.7.0
+
+### Minor Changes
+
+- f6d86e5: feat(oid4vp): [WLEO-652] add fetchAuthorizationRequest utility
+
+### Patch Changes
+
+- b84d8c2: Align Request Object with IT specs 1.3.0
+  - @pagopa/io-wallet-oid-federation@0.7.0
+  - @pagopa/io-wallet-utils@0.7.0
+
 ## 0.6.2
 
 ### Patch Changes
