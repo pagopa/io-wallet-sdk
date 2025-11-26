@@ -1,5 +1,15 @@
 # @pagopa/io-wallet-oid4vci
 
+## 0.7.0
+
+### Patch Changes
+
+- Updated dependencies [f6d86e5]
+- Updated dependencies [b84d8c2]
+  - @pagopa/io-wallet-oid4vp@0.7.0
+  - @pagopa/io-wallet-oauth2@0.7.0
+  - @pagopa/io-wallet-utils@0.7.0
+
 ## 0.6.2
 
 ### Patch Changes
