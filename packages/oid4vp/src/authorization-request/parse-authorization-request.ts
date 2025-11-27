@@ -109,26 +109,22 @@ async function extractRpMetadataFromTrustChain(
 
 function findKeyByKid(jwks: Jwk[], kid: string | undefined): Jwk {
   if (kid) {
-      const issuerPublicKey = jwks.find(
-        (key: Jwk) => key.kid === kid,
-      );
+    const issuerPublicKey = jwks.find((key: Jwk) => key.kid === kid);
 
-      if (!issuerPublicKey) {
-        throw new ParseAuthorizeRequestError(
-          `No key found matching kid: ${kid}`,
-        );
-      }
-
-      return issuerPublicKey;
+    if (!issuerPublicKey) {
+      throw new ParseAuthorizeRequestError(`No key found matching kid: ${kid}`);
     }
 
-    // Fallback: use first key if no kid in header
-    if (jwks.length > 0) {
-      return jwks[0] as Jwk;
-    }
+    return issuerPublicKey;
+  }
 
-    throw new ParseAuthorizeRequestError("jwks.keys is empty");
-} 
+  // Fallback: use first key if no kid in header
+  if (jwks.length > 0) {
+    return jwks[0] as Jwk;
+  }
+
+  throw new ParseAuthorizeRequestError("jwks.keys is empty");
+}
 
 /**
  * Retrieves the public key for verifying the Request Object JWT signature

@@ -1,8 +1,4 @@
-import {
-  type CallbackContext,
-  Oauth2JwtParseError,
-  type RequestDpopOptions,
-} from "@openid4vc/oauth2";
+import { type CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { ValidationError, createFetcher } from "@openid4vc/utils";
 
 import type { AuthorizationRequestObject } from "./z-request-object";
@@ -22,11 +18,6 @@ export interface FetchAuthorizationRequestOptions {
    * Allows for custom fetch and verifyJwt implementations
    */
   callbacks: Pick<CallbackContext, "fetch" | "verifyJwt">;
-
-  /**
-   * DPoP options for JWT verification
-   */
-  dpop: RequestDpopOptions;
 }
 
 export interface ParsedQrCode {
@@ -113,7 +104,6 @@ export async function fetchAuthorizationRequest(
     // Parse and verify the request object
     const requestObject = await parseAuthorizeRequest({
       callbacks: options.callbacks,
-      dpop: options.dpop,
       requestObjectJwt,
     });
 
