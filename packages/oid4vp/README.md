@@ -18,20 +18,28 @@ yarn add @pagopa/io-wallet-oid4vp
 
 ### Verifying a received Request object
 
+The `parseAuthorizeRequest` function verifies a JWT containing a Request Object and determines the correct public key for signature verification based on the IT Wallet specifications.
+
+#### Public Key Resolution Priority
+
+The function follows this priority order to determine which public key to use for JWT verification:
+
+1. **`x509_hash#` prefix in `client_id`** - Uses `client_metadata.jwks` from the request object
+2. **`openid_federation#` prefix or no prefix in `client_id`** (default method) - Extracts RP metadata from the `trust_chain` array in the JWT header
+
+**Important**: 
+- When the `client_id` uses the `openid_federation#` prefix or has no prefix, the `trust_chain` MUST be present in the JWT header
+- Any `client_metadata` present in the request object MUST be ignored when using `openid_federation#` prefix
+- The RP metadata is automatically extracted from the first JWT in the `trust_chain` array
+
 ```typescript
 import { parseAuthorizeRequest } from '@pagopa/io-wallet-oid4vp';
+import { ItWalletCredentialVerifierMetadata } from '@pagopa/io-wallet-oid-federation';
 
-//Request Object JWT containing the requested credentials obtained from the RP
+// Request Object JWT containing the requested credentials obtained from the RP
 const requestObjectJwt = "ey..." 
 
-//Obtain the signer
-const signer = {
-    method : 'jwk',
-    publicJwk : {/*... jwk details*/},
-    alg : 'ES256'
-}
-
-//Prepare the callbacks
+// Prepare the callbacks
 const callbacks = {
     verifyJwt : async (signer, {header, payload, compact}) => {
         const result = //signature verification
@@ -42,12 +50,44 @@ const callbacks = {
     }
 }
 
-//Decode, verify and return the Request Object
+// Decode, verify and return the Request Object
+// The RP metadata is automatically extracted from the trust_chain in the JWT header
+// when client_id has openid_federation# prefix or no prefix
+const parsedRequestObject = await parseAuthorizeRequest({
+    requestObjectJwt,
+    callbacks
+});
+```
+
+#### Specific Scenarios
+
+##### Scenario 1: x509_hash# prefix - Using client_metadata
+
+When the `client_id` uses the `x509_hash#` prefix, the public key is obtained from the `client_metadata.jwks` field in the Request Object:
+
+```typescript
+// Request Object with:
+// - client_id = "x509_hash#abc123..."
+// - client_metadata containing jwks
 const parsedRequestObject = await parseAuthorizeRequest({
     requestObjectJwt,
     callbacks,
-    dpop : {signer}
 });
+```
+
+##### Scenario 2: openid_federation# prefix - Using Trust Chain
+
+When the `client_id` uses the `openid_federation#` prefix, the RP metadata is automatically extracted from the `trust_chain` array in the JWT header. Any `client_metadata` in the Request Object is ignored:
+
+```typescript
+// Request Object with:
+// - client_id = "openid_federation#https://rp.example.org"
+// - header.trust_chain = ["<RP Entity Configuration JWT>", ...]
+const parsedRequestObject = await parseAuthorizeRequest({
+    requestObjectJwt,
+    callbacks,
+});
+// RP metadata is automatically extracted from trust_chain[0]
 ```
 
 ### Generating an Authorization Response
