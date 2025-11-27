@@ -31,10 +31,10 @@ enum ClientIdPrefix {
  * @returns The prefix type (x509_hash, openid_federation, or none)
  */
 function extractClientIdPrefix(clientId: string): ClientIdPrefix {
-  if (clientId.startsWith("x509_hash#")) {
+  if (clientId.startsWith("x509_hash:")) {
     return ClientIdPrefix.X509_HASH;
   }
-  if (clientId.startsWith("openid_federation#")) {
+  if (clientId.startsWith("openid_federation:")) {
     return ClientIdPrefix.OPENID_FEDERATION;
   }
   return ClientIdPrefix.NONE;

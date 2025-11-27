@@ -16,7 +16,7 @@ const publicKey = {
 };
 
 const correctRequestObject: AuthorizationRequestObject = {
-  client_id: "x509_hash#test-client-id",
+  client_id: "x509_hash:test-client-id",
   client_metadata: {
     jwks: {
       keys: [publicKey],
@@ -30,7 +30,7 @@ const correctRequestObject: AuthorizationRequestObject = {
   dcql_query: {},
   exp: new Date("2035-09-15").getTime(),
   iat: new Date("2025-09-15").getTime(),
-  iss: "x509_hash#test-client-id",
+  iss: "x509_hash:test-client-id",
   nonce: "test_nonce",
   request_uri: "uri://request.example.com",
   request_uri_method: "POST",
