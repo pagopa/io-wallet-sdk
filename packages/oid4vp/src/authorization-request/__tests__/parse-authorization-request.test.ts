@@ -1,8 +1,4 @@
-import {
-  CallbackContext,
-  JwtSignerJwk,
-  Oauth2JwtParseError,
-} from "@openid4vc/oauth2";
+import { CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { ValidationError } from "@openid4vc/utils";
 import { describe, expect, it } from "vitest";
 
@@ -12,37 +8,29 @@ import { AuthorizationRequestObject } from "../z-request-object";
 const jose = import("jose");
 
 const publicKey = {
+  alg: "ES256",
   crv: "P-256",
   kty: "EC",
-  x: "40_OgyA0fjgLpbL1hkU12rJSJ27zPEm6FJET4cBO4UA",
-  y: "bUGcZDIlShZrlUjx58mVZ-Hxu2IPddEq1QSEb8BjaQo",
-};
-
-const wrongPublicKey = {
-  crv: "P-256",
-  kty: "EC",
-  x: "VJ23NtKusfLrtx1a2CMsieJJ8PiI_olk6RgLEN7xuEU",
-  y: "NU5kLnG73gcamaSd4rilxgNRiz5WmO-EE0zCKe0hG8c",
-};
-
-const wrongPubKeySigner: JwtSignerJwk = {
-  alg: "ES256",
-  method: "jwk",
-  publicJwk: wrongPublicKey,
-};
-
-const signer: JwtSignerJwk = {
-  alg: "ES256",
-  method: "jwk",
-  publicJwk: publicKey,
+  x: "KNNlYniur1Lqz71meugVtO8Up39X-arb-xw0cLsx1xc",
+  y: "PwXAe1n1PqrfXRkN_gdF7_QJ7ec1Yo26gCNRbNUKrEQ",
 };
 
 const correctRequestObject: AuthorizationRequestObject = {
-  client_id: "test-client-id",
+  client_id: "x509_hash#test-client-id",
+  client_metadata: {
+    jwks: {
+      keys: [publicKey],
+    },
+    vp_formats_supported: {
+      jwt_vp_json: {
+        alg_values_supported: ["ES256"],
+      },
+    },
+  },
   dcql_query: {},
   exp: new Date("2035-09-15").getTime(),
   iat: new Date("2025-09-15").getTime(),
-  iss: "test-client-id",
+  iss: "x509_hash#test-client-id",
   nonce: "test_nonce",
   request_uri: "uri://request.example.com",
   request_uri_method: "POST",
@@ -57,7 +45,7 @@ const correctRequestObject: AuthorizationRequestObject = {
  * JWT with correct header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
  */
 const correctRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.isnK4zjF1SWw02fHoTxGji--1spFDmISJRUNnpaPhbBZbYxFxDrd69gfJHx1bNXP5pMRcE5-c-0dtbo3tZoXXw";
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2gjdGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJLTk5sWW5pdXIxTHF6NzFtZXVnVnRPOFVwMzlYLWFyYi14dzBjTHN4MXhjIiwieSI6IlB3WEFlMW4xUHFyZlhSa05fZ2RGN19RSjdlYzFZbzI2Z0NOUmJOVUtyRVEiLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2In1dfSwidnBfZm9ybWF0c19zdXBwb3J0ZWQiOnsiand0X3ZwX2pzb24iOnsiYWxnX3ZhbHVlc19zdXBwb3J0ZWQiOlsiRVMyNTYiXX19fSwicmVzcG9uc2VfdXJpIjoidXJpOi8vcmVzcG9uc2UuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaSI6InVyaTovL3JlcXVlc3QuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaV9tZXRob2QiOiJQT1NUIiwicmVzcG9uc2VfbW9kZSI6ImRpcmVjdF9wb3N0Lmp3dCIsIm5vbmNlIjoidGVzdF9ub25jZSIsIndhbGxldF9ub25jZSI6IlRlc3Qgd2FsbGV0IG5vbmNlIiwic2NvcGUiOiJ0ZXN0X3ByZXNlbnRhdGlvbl9zY29wZSIsInN0YXRlIjoidGVzdF9zdGF0ZSIsImRjcWxfcXVlcnkiOnt9LCJpc3MiOiJ4NTA5X2hhc2gjdGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.dgsesQ8MU4cdDF9XBjdXToOLyGZ42bhE_AaKE3Zf7sy87HVBzIb4Qn9l5unwWbeTATtXscFdRRjwdw7ZGA-BlQ";
 
 /**
  * The missingMandatoryFieldRequestObjectJwt is obtained by signing the missingMandatoryFieldRequestObject defined below
@@ -90,7 +78,13 @@ const expiredRequestObject = {
  * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
  */
 const expiredRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MTc1Nzk4MDgwMDAwMH0.8H9UNt-LJZnhG2PfNNuf9IZ5ldmhME5Bqii2dEzE-mQqRWELCP8O7W5ZNpPNit55PUpsUemQYoOgqPCPHBgS3A";
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2gjdGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJLTk5sWW5pdXIxTHF6NzFtZXVnVnRPOFVwMzlYLWFyYi14dzBjTHN4MXhjIiwieSI6IlB3WEFlMW4xUHFyZlhSa05fZ2RGN19RSjdlYzFZbzI2Z0NOUmJOVUtyRVEiLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2In1dfSwidnBfZm9ybWF0c19zdXBwb3J0ZWQiOnsiand0X3ZwX2pzb24iOnsiYWxnX3ZhbHVlc19zdXBwb3J0ZWQiOlsiRVMyNTYiXX19fSwicmVzcG9uc2VfdXJpIjoidXJpOi8vcmVzcG9uc2UuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaSI6InVyaTovL3JlcXVlc3QuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaV9tZXRob2QiOiJQT1NUIiwicmVzcG9uc2VfbW9kZSI6ImRpcmVjdF9wb3N0Lmp3dCIsIm5vbmNlIjoidGVzdF9ub25jZSIsIndhbGxldF9ub25jZSI6IlRlc3Qgd2FsbGV0IG5vbmNlIiwic2NvcGUiOiJ0ZXN0X3ByZXNlbnRhdGlvbl9zY29wZSIsInN0YXRlIjoidGVzdF9zdGF0ZSIsImRjcWxfcXVlcnkiOnt9LCJpc3MiOiJ4NTA5X2hhc2gjdGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MTc1Nzk4MDgwMDAwMH0.aKGEjOQlOXNgKI3Uoexj6LpNuljLpCG4FhRB7ny1LCM6eZNgi0ynvOjw-t3smktAVQO9cEGpuSrKxcZhjLLltg";
+
+/**
+ * JWT signed with a different key (signature doesn't match the public key in the payload)
+ */
+const wrongSignedRequestObjectJwt =
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2gjdGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJLTk5sWW5pdXIxTHF6NzFtZXVnVnRPOFVwMzlYLWFyYi14dzBjTHN4MXhjIiwieSI6IlB3WEFlMW4xUHFyZlhSa05fZ2RGN19RSjdlYzFZbzI2Z0NOUmJOVUtyRVEiLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2In1dfSwidnBfZm9ybWF0c19zdXBwb3J0ZWQiOnsiand0X3ZwX2pzb24iOnsiYWxnX3ZhbHVlc19zdXBwb3J0ZWQiOlsiRVMyNTYiXX19fSwicmVzcG9uc2VfdXJpIjoidXJpOi8vcmVzcG9uc2UuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaSI6InVyaTovL3JlcXVlc3QuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaV9tZXRob2QiOiJQT1NUIiwicmVzcG9uc2VfbW9kZSI6ImRpcmVjdF9wb3N0Lmp3dCIsIm5vbmNlIjoidGVzdF9ub25jZSIsIndhbGxldF9ub25jZSI6IlRlc3Qgd2FsbGV0IG5vbmNlIiwic2NvcGUiOiJ0ZXN0X3ByZXNlbnRhdGlvbl9zY29wZSIsInN0YXRlIjoidGVzdF9zdGF0ZSIsImRjcWxfcXVlcnkiOnt9LCJpc3MiOiJ4NTA5X2hhc2gjdGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.p8kt3WZ-vd-AgkZG7HkuqplxGfrFISq6Eb7kHlnqkID-q90HreduLenpM7fV2o8BH6Uzx1MS3Ueo_DroK5KgGA";
 
 /**
  * JWT with invalid header typ field: {"alg":"ES256","typ":"jwt"}
@@ -124,7 +118,6 @@ describe("parseAuthorizationRequest tests", () => {
   it("should parse and verify the request object correctly", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
       callbacks,
-      dpop: { signer },
       requestObjectJwt: correctRequestObjectJwt,
     });
     expect(actualRequestObject).toEqual(correctRequestObject);
@@ -135,7 +128,6 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
-          dpop: { signer },
           requestObjectJwt: missingMandatoryFieldRequestObjectJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -146,7 +138,6 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
-          dpop: { signer },
           requestObjectJwt: nonConformingRequestObjectJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -155,7 +146,6 @@ describe("parseAuthorizationRequest tests", () => {
   it("should parse and verify the request object correctly since expiration is not checked", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
       callbacks,
-      dpop: { signer },
       requestObjectJwt: expiredRequestObjectJwt,
     });
     expect(actualRequestObject).toEqual(expiredRequestObject);
@@ -165,7 +155,6 @@ describe("parseAuthorizationRequest tests", () => {
     await expect(async () =>
       parseAuthorizeRequest({
         callbacks,
-        dpop: { signer },
         requestObjectJwt: "this is not a JWT",
       }),
     ).rejects.toThrow(Oauth2JwtParseError);
@@ -176,7 +165,6 @@ describe("parseAuthorizationRequest tests", () => {
       const [head, payload] = correctRequestObjectJwt.split(".");
       await parseAuthorizeRequest({
         callbacks,
-        dpop: { signer },
         requestObjectJwt: `${head}.${payload}.this_is_not_a_signature`,
       });
     }).rejects.toThrow(ParseAuthorizeRequestError);
@@ -187,7 +175,6 @@ describe("parseAuthorizationRequest tests", () => {
       const [head, payload] = correctRequestObjectJwt.split(".");
       await parseAuthorizeRequest({
         callbacks,
-        dpop: { signer },
         requestObjectJwt: `${head}.${payload}.`,
       });
     }).rejects.toThrow(ParseAuthorizeRequestError);
@@ -197,8 +184,7 @@ describe("parseAuthorizationRequest tests", () => {
     await expect(async () => {
       await parseAuthorizeRequest({
         callbacks,
-        dpop: { signer: wrongPubKeySigner },
-        requestObjectJwt: correctRequestObjectJwt,
+        requestObjectJwt: wrongSignedRequestObjectJwt,
       });
     }).rejects.toThrow(ParseAuthorizeRequestError);
   });
@@ -208,7 +194,6 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
-          dpop: { signer },
           requestObjectJwt: invalidHeaderTypJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -223,7 +208,6 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
-          dpop: { signer },
           requestObjectJwt: missingAlgJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -238,7 +222,6 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
-          dpop: { signer },
           requestObjectJwt: jwtWithEmptyTrustChain,
         }),
     ).rejects.toThrow(ValidationError);

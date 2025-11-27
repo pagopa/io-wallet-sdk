@@ -1,5 +1,3 @@
-import type { RequestDpopOptions } from "@openid4vc/oauth2";
-
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthorizationRequestObject } from "../z-request-object";
@@ -17,9 +15,6 @@ describe("fetchAuthorizationRequest", () => {
     fetch: mockFetch,
     verifyJwt: mockVerifyJwt,
   };
-  const mockDpop = {
-    jwt: "mock-dpop-jwt",
-  } as unknown as RequestDpopOptions;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -31,7 +26,6 @@ describe("fetchAuthorizationRequest", () => {
         authorizeRequestUrl:
           "https://example.com?request_uri=https://request.com",
         callbacks: mockCallbacks,
-        dpop: mockDpop,
       }),
     ).rejects.toThrow(Oid4vpError);
   });
@@ -41,7 +35,6 @@ describe("fetchAuthorizationRequest", () => {
       fetchAuthorizationRequest({
         authorizeRequestUrl: "https://example.com?client_id=client-123",
         callbacks: mockCallbacks,
-        dpop: mockDpop,
       }),
     ).rejects.toThrow(Oid4vpError);
   });
@@ -64,7 +57,6 @@ describe("fetchAuthorizationRequest", () => {
     const result = await fetchAuthorizationRequest({
       authorizeRequestUrl,
       callbacks: mockCallbacks,
-      dpop: mockDpop,
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -73,7 +65,6 @@ describe("fetchAuthorizationRequest", () => {
     );
     expect(parseAuthorizeRequest).toHaveBeenCalledWith({
       callbacks: mockCallbacks,
-      dpop: mockDpop,
       requestObjectJwt,
     });
     expect(result).toEqual({
@@ -103,7 +94,6 @@ describe("fetchAuthorizationRequest", () => {
     await fetchAuthorizationRequest({
       authorizeRequestUrl,
       callbacks: mockCallbacks,
-      dpop: mockDpop,
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -126,7 +116,6 @@ describe("fetchAuthorizationRequest", () => {
       fetchAuthorizationRequest({
         authorizeRequestUrl,
         callbacks: mockCallbacks,
-        dpop: mockDpop,
       }),
     ).rejects.toThrow(Oid4vpError);
   });
@@ -148,7 +137,6 @@ describe("fetchAuthorizationRequest", () => {
       fetchAuthorizationRequest({
         authorizeRequestUrl,
         callbacks: mockCallbacks,
-        dpop: mockDpop,
       }),
     ).rejects.toThrow(error);
   });
@@ -163,7 +151,6 @@ describe("fetchAuthorizationRequest", () => {
       fetchAuthorizationRequest({
         authorizeRequestUrl,
         callbacks: mockCallbacks,
-        dpop: mockDpop,
       }),
     ).rejects.toThrow(Oid4vpError);
   });
