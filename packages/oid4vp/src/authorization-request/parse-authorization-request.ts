@@ -1,12 +1,10 @@
 import {
   CallbackContext,
-  Jwk,
+  JwtSigner,
   Oauth2JwtParseError,
   decodeJwt,
 } from "@openid4vc/oauth2";
 import { ValidationError } from "@openid4vc/utils";
-import { ItWalletCredentialVerifierMetadata } from "@pagopa/io-wallet-oid-federation";
-import { z } from "zod";
 
 import { ParseAuthorizeRequestError } from "../errors";
 import {
@@ -41,97 +39,11 @@ function extractClientIdPrefix(clientId: string): ClientIdPrefix {
 }
 
 /**
- * Extracts RP metadata from the OpenID Federation trust chain
- * @param trustChain - Array of JWT strings representing the trust chain
- * @returns The RP metadata extracted from the trust chain
- * @throws {ParseAuthorizeRequestError} When trust chain is invalid or metadata cannot be extracted
- */
-async function extractRpMetadataFromTrustChain(
-  trustChain: string[],
-): Promise<ItWalletCredentialVerifierMetadata> {
-  try {
-    // The first JWT in the trust chain contains the RP's entity configuration
-    // which includes the openid_credential_verifier metadata
-    const rpEntityConfigurationJwt = trustChain[0];
-
-    if (!rpEntityConfigurationJwt) {
-      throw new ParseAuthorizeRequestError(
-        "Trust chain is empty, cannot extract RP metadata",
-      );
-    }
-
-    // Decode the entity configuration JWT (we don't need to verify it here,
-    // as the trust chain verification should be done separately)
-    const decoded = decodeJwt({
-      headerSchema: z.object({}).passthrough(),
-      jwt: rpEntityConfigurationJwt,
-      payloadSchema: z
-        .object({
-          metadata: z
-            .object({
-              openid_credential_verifier: z.any(),
-            })
-            .passthrough(),
-        })
-        .passthrough(),
-    });
-
-    const rpMetadata = decoded.payload.metadata?.openid_credential_verifier;
-
-    if (!rpMetadata) {
-      throw new ParseAuthorizeRequestError(
-        "No openid_credential_verifier metadata found in trust chain",
-      );
-    }
-
-    // Validate the metadata structure
-    // Note: we use a minimal validation here, full validation should be done by the caller
-    if (
-      !rpMetadata.jwks ||
-      !rpMetadata.jwks.keys ||
-      !Array.isArray(rpMetadata.jwks.keys)
-    ) {
-      throw new ParseAuthorizeRequestError(
-        "Invalid openid_credential_verifier metadata: missing or invalid jwks",
-      );
-    }
-
-    return rpMetadata as ItWalletCredentialVerifierMetadata;
-  } catch (error) {
-    if (error instanceof ParseAuthorizeRequestError) {
-      throw error;
-    }
-    throw new ParseAuthorizeRequestError(
-      `Failed to extract RP metadata from trust chain: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-}
-
-function findKeyByKid(jwks: Jwk[], kid: string | undefined): Jwk {
-  if (kid) {
-    const issuerPublicKey = jwks.find((key: Jwk) => key.kid === kid);
-
-    if (!issuerPublicKey) {
-      throw new ParseAuthorizeRequestError(`No key found matching kid: ${kid}`);
-    }
-
-    return issuerPublicKey;
-  }
-
-  // Fallback: use first key if no kid in header
-  if (jwks.length > 0) {
-    return jwks[0] as Jwk;
-  }
-
-  throw new ParseAuthorizeRequestError("jwks.keys is empty");
-}
-
-/**
  * Retrieves the public key for verifying the Request Object JWT signature
  * according to IT Wallet specifications.
  *
  * Priority order:
- * 1. If client_id has x509_hash prefix: use client_metadata.jwks
+ * 1. If client_id has x509_hash prefix: use x5c certificate chain from header
  * 2. If client_id has openid_federation prefix or no prefix: extract metadata from trust_chain in header
  *
  * @param options - Parse options containing decoded JWT
@@ -141,24 +53,28 @@ function findKeyByKid(jwks: Jwk[], kid: string | undefined): Jwk {
 async function getPublicKeyForVerification(options: {
   header: Openid4vpAuthorizationRequestHeader;
   payload: AuthorizationRequestObject;
-}): Promise<Jwk> {
+}): Promise<JwtSigner> {
   const { header, payload } = options;
 
   const clientIdPrefix = extractClientIdPrefix(payload.client_id);
 
-  // Priority 1: x509_hash prefix - use client_metadata
+  // Priority 1: x509_hash prefix - use x5c certificate chain from header
   if (clientIdPrefix === ClientIdPrefix.X509_HASH) {
-    if (!payload.client_metadata?.jwks?.keys) {
+    if (!header.x5c || header.x5c.length === 0) {
       throw new ParseAuthorizeRequestError(
-        "client_id uses x509_hash prefix but client_metadata.jwks is missing",
+        "x5c is required in JWT header for x509_hash client_id",
       );
     }
 
-    return findKeyByKid(payload.client_metadata.jwks.keys, header.kid);
+    return {
+      alg: header.alg,
+      kid: header.kid,
+      method: "x5c" as const,
+      x5c: header.x5c,
+    };
   }
 
   // Priority 2: openid_federation prefix or no prefix - extract from trust_chain
-  // Note: client_metadata MUST be ignored when openid_federation prefix is present
   if (
     clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION ||
     clientIdPrefix === ClientIdPrefix.NONE
@@ -169,17 +85,18 @@ async function getPublicKeyForVerification(options: {
       );
     }
 
-    const rpMetadata = await extractRpMetadataFromTrustChain(
-      header.trust_chain,
-    );
-
-    if (!rpMetadata.jwks?.keys) {
+    if (!header.kid) {
       throw new ParseAuthorizeRequestError(
-        "No jwks found in RP metadata from trust chain",
+        "kid is required in JWT header for openid_federation client_id or no prefix",
       );
     }
 
-    return findKeyByKid(rpMetadata.jwks?.keys, header.kid);
+    return {
+      alg: header.alg,
+      kid: header.kid,
+      method: "federation" as const,
+      trustChain: header.trust_chain,
+    };
   }
 
   throw new ParseAuthorizeRequestError(
@@ -204,7 +121,7 @@ export interface ParseAuthorizeRequestOptions {
  * decoded value for further processing.
  *
  * The public key for signature verification is obtained according to IT Wallet specifications:
- * 1. If client_id has x509_hash prefix: use client_metadata.jwks
+ * 1. If client_id has x509_hash prefix: use x5c certificate chain from header
  * 2. If client_id has openid_federation prefix or no prefix: extract from header.trust_chain
  *
  * @param options {@link ParseAuthorizeRequestOptions}
@@ -223,22 +140,10 @@ export async function parseAuthorizeRequest(
       payloadSchema: zOpenid4vpAuthorizationRequestPayload,
     });
 
-    const publicKey = await getPublicKeyForVerification({
+    const signer = await getPublicKeyForVerification({
       header: decoded.header,
       payload: decoded.payload,
     });
-
-    if (!publicKey.alg) {
-      throw new ParseAuthorizeRequestError(
-        "Public key must contain an 'alg' field for verification",
-      );
-    }
-
-    const signer = {
-      alg: publicKey.alg,
-      method: "jwk" as const,
-      publicJwk: publicKey,
-    };
 
     const verificationResult = await options.callbacks.verifyJwt(signer, {
       compact: options.requestObjectJwt,
