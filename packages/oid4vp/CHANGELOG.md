@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.7.1
+
+### Patch Changes
+
+- 5d2e6df: Implement client_id prefix extraction and enhance Request object handling
+  - @pagopa/io-wallet-oid-federation@0.7.1
+  - @pagopa/io-wallet-utils@0.7.1
+
 ## 0.7.0
 
 ### Minor Changes
