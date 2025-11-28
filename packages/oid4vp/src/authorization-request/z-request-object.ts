@@ -72,3 +72,7 @@ export const zOpenid4vpAuthorizationRequestHeader = z
     x5c: z.array(z.string()).optional(),
   })
   .passthrough();
+
+export type Openid4vpAuthorizationRequestHeader = z.infer<
+  typeof zOpenid4vpAuthorizationRequestHeader
+>;
