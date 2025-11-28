@@ -24,7 +24,7 @@ The `parseAuthorizeRequest` function verifies a JWT containing a Request Object 
 
 The function follows this priority order to determine which public key to use for JWT verification:
 
-1. **`x509_hash#` prefix in `client_id`** - Uses `client_metadata.jwks` from the request object
+1. **`x509_hash#` prefix in `client_id`** - Uses `x5c` certificate chain from header
 2. **`openid_federation#` prefix or no prefix in `client_id`** (default method) - Extracts RP metadata from the `trust_chain` array in the JWT header
 
 **Important**: 
@@ -68,7 +68,7 @@ When the `client_id` uses the `x509_hash#` prefix, the public key is obtained fr
 ```typescript
 // Request Object with:
 // - client_id = "x509_hash#abc123..."
-// - client_metadata containing jwks
+// - x5c included jwt
 const parsedRequestObject = await parseAuthorizeRequest({
     requestObjectJwt,
     callbacks,
