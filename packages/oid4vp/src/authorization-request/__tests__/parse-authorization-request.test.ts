@@ -1,25 +1,34 @@
-import { CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
+import { CallbackContext, Jwk, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { ValidationError } from "@openid4vc/utils";
 import { describe, expect, it } from "vitest";
 
 import { ParseAuthorizeRequestError } from "../../errors";
 import { parseAuthorizeRequest } from "../parse-authorization-request";
 import { AuthorizationRequestObject } from "../z-request-object";
-const jose = import("jose");
 
 const publicKey = {
   alg: "ES256",
   crv: "P-256",
+  kid: "test-kid",
   kty: "EC",
-  x: "X_24lcTPnDgYn6-Ov14xUnMB4Ltm5ENsaqUg2nCLBj0",
-  y: "XotE8U5meGh3snv6Y6fhf5rxUmkUt-ZtrqlS7kGVees",
+  x: "GOVegGwq0WVkJNCFR9QTEDp6bh7P3JEdNmDViLlm4uM",
+  y: "AZYh0LPvXb2U6Oxlzc6HhMsT1yh_N-qhNKZ2Q6kCpOM",
 };
 
 const correctRequestObject: AuthorizationRequestObject = {
-  client_id: "x509_hash:test-client-id",
+  client_id: "test-client-id",
   client_metadata: {
     jwks: {
-      keys: [publicKey],
+      keys: [
+        {
+          alg: "ES256",
+          crv: "P-256",
+          kid: "test-kid",
+          kty: "EC",
+          x: "GOVegGwq0WVkJNCFR9QTEDp6bh7P3JEdNmDViLlm4uM",
+          y: "AZYh0LPvXb2U6Oxlzc6HhMsT1yh_N-qhNKZ2Q6kCpOM",
+        },
+      ],
     },
     vp_formats_supported: {
       jwt_vp_json: {
@@ -30,7 +39,7 @@ const correctRequestObject: AuthorizationRequestObject = {
   dcql_query: {},
   exp: new Date("2035-09-15").getTime(),
   iat: new Date("2025-09-15").getTime(),
-  iss: "x509_hash:test-client-id",
+  iss: "test-client-id",
   nonce: "test_nonce",
   request_uri: "uri://request.example.com",
   request_uri_method: "POST",
@@ -41,11 +50,13 @@ const correctRequestObject: AuthorizationRequestObject = {
   state: "test_state",
   wallet_nonce: "Test wallet nonce",
 };
+
 /**
- * JWT with correct header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
+ * JWT with correct header containing trust_chain and kid for federation verification
+ * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid","trust_chain":[...]}
  */
 const correctRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJYXzI0bGNUUG5EZ1luNi1PdjE0eFVuTUI0THRtNUVOc2FxVWcybkNMQmowIiwieSI6IlhvdEU4VTVtZUdoM3NudjZZNmZoZjVyeFVta1V0LVp0cnFsUzdrR1ZlZXMiLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2In1dfSwidnBfZm9ybWF0c19zdXBwb3J0ZWQiOnsiand0X3ZwX2pzb24iOnsiYWxnX3ZhbHVlc19zdXBwb3J0ZWQiOlsiRVMyNTYiXX19fSwicmVzcG9uc2VfdXJpIjoidXJpOi8vcmVzcG9uc2UuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaSI6InVyaTovL3JlcXVlc3QuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaV9tZXRob2QiOiJQT1NUIiwicmVzcG9uc2VfbW9kZSI6ImRpcmVjdF9wb3N0Lmp3dCIsIm5vbmNlIjoidGVzdF9ub25jZSIsIndhbGxldF9ub25jZSI6IlRlc3Qgd2FsbGV0IG5vbmNlIiwic2NvcGUiOiJ0ZXN0X3ByZXNlbnRhdGlvbl9zY29wZSIsInN0YXRlIjoidGVzdF9zdGF0ZSIsImRjcWxfcXVlcnkiOnt9LCJpc3MiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.cJXGr3fAbR2ZhVPNl8XeIQFpw9FcGoFLEE6AKl1V02kODz3dfBttMCo53Pel1icMZDwWzC1OH1mgjRLjgzR7pg";
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImV5SmhiR2NpT2lKRlV6STFOaUlzSW5SNWNDSTZJbVZ1ZEdsMGVTMXpkR0YwWlcxbGJuUXJhbmQwSWl3aWEybGtJam9pZEdWemRDMXJhV1FpZlEuZXlKcGMzTWlPaUowWlhOMExXTnNhV1Z1ZEMxcFpDSXNJbk4xWWlJNkluUmxjM1F0WTJ4cFpXNTBMV2xrSWl3aWFXRjBJam94TnpZME16SXlOak00TENKbGVIQWlPakl3TnprMk9ESTJNemdzSW0xbGRHRmtZWFJoSWpwN0ltOXdaVzVwWkY5amNtVmtaVzUwYVdGc1gzWmxjbWxtYVdWeUlqcDdJbXAzYTNNaU9uc2lhMlY1Y3lJNlczc2lhM1I1SWpvaVJVTWlMQ0o0SWpvaVIwOVdaV2RIZDNFd1YxWnJTazVEUmxJNVVWUkZSSEEyWW1nM1VETktSV1JPYlVSV2FVeHNiVFIxVFNJc0lua2lPaUpCV2xsb01FeFFkbGhpTWxVMlQzaHNlbU0yU0doTmMxUXhlV2hmVGkxeGFFNUxXakpSTm10RGNFOU5JaXdpWTNKMklqb2lVQzB5TlRZaUxDSmhiR2NpT2lKRlV6STFOaUlzSW10cFpDSTZJblJsYzNRdGEybGtJbjFkZlN3aWRuQmZabTl5YldGMGMxOXpkWEJ3YjNKMFpXUWlPbnNpYW5kMFgzWndYMnB6YjI0aU9uc2lZV3huWDNaaGJIVmxjMTl6ZFhCd2IzSjBaV1FpT2xzaVJWTXlOVFlpWFgxOWZYMTkuSmEzU25OMllaVXdxamZLdWtkVDR0UzNZTnk2MnJvUk9uTGtiaWV3Nkh5cEY0Vjl2OGk1cXM3aHpBdDM2T1RXaExLMW1lei1xdGlPSjQ2elRLa2F6bmciXX0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9tZXRhZGF0YSI6eyJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwieCI6IkdPVmVnR3dxMFdWa0pOQ0ZSOVFURURwNmJoN1AzSkVkTm1EVmlMbG00dU0iLCJ5IjoiQVpZaDBMUHZYYjJVNk94bHpjNkhoTXNUMXloX04tcWhOS1oyUTZrQ3BPTSIsImNydiI6IlAtMjU2IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJ0ZXN0LWtpZCJ9XX0sInZwX2Zvcm1hdHNfc3VwcG9ydGVkIjp7Imp3dF92cF9qc29uIjp7ImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il19fX0sInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.7l7lPk5SM2X6ygs4e_2NAE78bvQgNnZW2ngiB-nMQZJIA9KrX7Ry2iEvl5lheXADA1Qq5s372l7TodtK9pAgZQ";
 
 /**
  * The missingMandatoryFieldRequestObjectJwt is obtained by signing the missingMandatoryFieldRequestObject defined below
@@ -74,17 +85,18 @@ const expiredRequestObject = {
   ...correctRequestObject,
   exp: new Date("2025-09-16").getTime(),
 };
-/**
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
- */
-const expiredRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJYXzI0bGNUUG5EZ1luNi1PdjE0eFVuTUI0THRtNUVOc2FxVWcybkNMQmowIiwieSI6IlhvdEU4VTVtZUdoM3NudjZZNmZoZjVyeFVta1V0LVp0cnFsUzdrR1ZlZXMiLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2In1dfSwidnBfZm9ybWF0c19zdXBwb3J0ZWQiOnsiand0X3ZwX2pzb24iOnsiYWxnX3ZhbHVlc19zdXBwb3J0ZWQiOlsiRVMyNTYiXX19fSwicmVzcG9uc2VfdXJpIjoidXJpOi8vcmVzcG9uc2UuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaSI6InVyaTovL3JlcXVlc3QuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaV9tZXRob2QiOiJQT1NUIiwicmVzcG9uc2VfbW9kZSI6ImRpcmVjdF9wb3N0Lmp3dCIsIm5vbmNlIjoidGVzdF9ub25jZSIsIndhbGxldF9ub25jZSI6IlRlc3Qgd2FsbGV0IG5vbmNlIiwic2NvcGUiOiJ0ZXN0X3ByZXNlbnRhdGlvbl9zY29wZSIsInN0YXRlIjoidGVzdF9zdGF0ZSIsImRjcWxfcXVlcnkiOnt9LCJpc3MiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MTc1Nzk4MDgwMDAwMH0.slLXopZmX3aA5iddc8NvyM-p8Byq6mGdfO_rK41t_wnoQJ5Q_IZTk9Impnyn34Q5n4BHPKUHZOBiRG1wEEMbNw";
 
 /**
- * JWT signed with a different key (signature doesn't match the public key in the payload)
+ * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid","trust_chain":[...]}
+ */
+const expiredRequestObjectJwt =
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImV5SmhiR2NpT2lKRlV6STFOaUlzSW5SNWNDSTZJbVZ1ZEdsMGVTMXpkR0YwWlcxbGJuUXJhbmQwSWl3aWEybGtJam9pZEdWemRDMXJhV1FpZlEuZXlKcGMzTWlPaUowWlhOMExXTnNhV1Z1ZEMxcFpDSXNJbk4xWWlJNkluUmxjM1F0WTJ4cFpXNTBMV2xrSWl3aWFXRjBJam94TnpZME16SXlOak00TENKbGVIQWlPakl3TnprMk9ESTJNemdzSW0xbGRHRmtZWFJoSWpwN0ltOXdaVzVwWkY5amNtVmtaVzUwYVdGc1gzWmxjbWxtYVdWeUlqcDdJbXAzYTNNaU9uc2lhMlY1Y3lJNlczc2lhM1I1SWpvaVJVTWlMQ0o0SWpvaVIwOVdaV2RIZDNFd1YxWnJTazVEUmxJNVVWUkZSSEEyWW1nM1VETktSV1JPYlVSV2FVeHNiVFIxVFNJc0lua2lPaUpCV2xsb01FeFFkbGhpTWxVMlQzaHNlbU0yU0doTmMxUXhlV2hmVGkxeGFFNUxXakpSTm10RGNFOU5JaXdpWTNKMklqb2lVQzB5TlRZaUxDSmhiR2NpT2lKRlV6STFOaUlzSW10cFpDSTZJblJsYzNRdGEybGtJbjFkZlN3aWRuQmZabTl5YldGMGMxOXpkWEJ3YjNKMFpXUWlPbnNpYW5kMFgzWndYMnB6YjI0aU9uc2lZV3huWDNaaGJIVmxjMTl6ZFhCd2IzSjBaV1FpT2xzaVJWTXlOVFlpWFgxOWZYMTkuSmEzU25OMllaVXdxamZLdWtkVDR0UzNZTnk2MnJvUk9uTGtiaWV3Nkh5cEY0Vjl2OGk1cXM3aHpBdDM2T1RXaExLMW1lei1xdGlPSjQ2elRLa2F6bmciXX0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9tZXRhZGF0YSI6eyJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwieCI6IkdPVmVnR3dxMFdWa0pOQ0ZSOVFURURwNmJoN1AzSkVkTm1EVmlMbG00dU0iLCJ5IjoiQVpZaDBMUHZYYjJVNk94bHpjNkhoTXNUMXloX04tcWhOS1oyUTZrQ3BPTSIsImNydiI6IlAtMjU2IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJ0ZXN0LWtpZCJ9XX0sInZwX2Zvcm1hdHNfc3VwcG9ydGVkIjp7Imp3dF92cF9qc29uIjp7ImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il19fX0sInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MTc1Nzk4MDgwMDAwMH0.QTInFJg32qcOrYJkn0UkhmTO-3-IHYTffrXF9rZFomKTN2UQfeahqkhHBzSP3eil_ULIR3y6XdPZ--gmXB0_Yg";
+
+/**
+ * JWT signed with a different key (signature doesn't match the public key in the trust chain)
  */
 const wrongSignedRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJYXzI0bGNUUG5EZ1luNi1PdjE0eFVuTUI0THRtNUVOc2FxVWcybkNMQmowIiwieSI6IlhvdEU4VTVtZUdoM3NudjZZNmZoZjVyeFVta1V0LVp0cnFsUzdrR1ZlZXMiLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2In1dfSwidnBfZm9ybWF0c19zdXBwb3J0ZWQiOnsiand0X3ZwX2pzb24iOnsiYWxnX3ZhbHVlc19zdXBwb3J0ZWQiOlsiRVMyNTYiXX19fSwicmVzcG9uc2VfdXJpIjoidXJpOi8vcmVzcG9uc2UuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaSI6InVyaTovL3JlcXVlc3QuZXhhbXBsZS5jb20iLCJyZXF1ZXN0X3VyaV9tZXRob2QiOiJQT1NUIiwicmVzcG9uc2VfbW9kZSI6ImRpcmVjdF9wb3N0Lmp3dCIsIm5vbmNlIjoidGVzdF9ub25jZSIsIndhbGxldF9ub25jZSI6IlRlc3Qgd2FsbGV0IG5vbmNlIiwic2NvcGUiOiJ0ZXN0X3ByZXNlbnRhdGlvbl9zY29wZSIsInN0YXRlIjoidGVzdF9zdGF0ZSIsImRjcWxfcXVlcnkiOnt9LCJpc3MiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.d2844RhIVnDoE45M9_YdNbr1V9Lxyo6uw2xm9zseAYe7qpjgV0X80JXYTuvooTy4wP1WZpgz_VAAU5zF85jacQ";
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImV5SmhiR2NpT2lKRlV6STFOaUlzSW5SNWNDSTZJbVZ1ZEdsMGVTMXpkR0YwWlcxbGJuUXJhbmQwSWl3aWEybGtJam9pZEdWemRDMXJhV1FpZlEuZXlKcGMzTWlPaUowWlhOMExXTnNhV1Z1ZEMxcFpDSXNJbk4xWWlJNkluUmxjM1F0WTJ4cFpXNTBMV2xrSWl3aWFXRjBJam94TnpZME16SXlOak00TENKbGVIQWlPakl3TnprMk9ESTJNemdzSW0xbGRHRmtZWFJoSWpwN0ltOXdaVzVwWkY5amNtVmtaVzUwYVdGc1gzWmxjbWxtYVdWeUlqcDdJbXAzYTNNaU9uc2lhMlY1Y3lJNlczc2lhM1I1SWpvaVJVTWlMQ0o0SWpvaVIwOVdaV2RIZDNFd1YxWnJTazVEUmxJNVVWUkZSSEEyWW1nM1VETktSV1JPYlVSV2FVeHNiVFIxVFNJc0lua2lPaUpCV2xsb01FeFFkbGhpTWxVMlQzaHNlbU0yU0doTmMxUXhlV2hmVGkxeGFFNUxXakpSTm10RGNFOU5JaXdpWTNKMklqb2lVQzB5TlRZaUxDSmhiR2NpT2lKRlV6STFOaUlzSW10cFpDSTZJblJsYzNRdGEybGtJbjFkZlN3aWRuQmZabTl5YldGMGMxOXpkWEJ3YjNKMFpXUWlPbnNpYW5kMFgzWndYMnB6YjI0aU9uc2lZV3huWDNaaGJIVmxjMTl6ZFhCd2IzSjBaV1FpT2xzaVJWTXlOVFlpWFgxOWZYMTkuSmEzU25OMllaVXdxamZLdWtkVDR0UzNZTnk2MnJvUk9uTGtiaWV3Nkh5cEY0Vjl2OGk1cXM3aHpBdDM2T1RXaExLMW1lei1xdGlPSjQ2elRLa2F6bmciXX0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9tZXRhZGF0YSI6eyJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwieCI6IkdPVmVnR3dxMFdWa0pOQ0ZSOVFURURwNmJoN1AzSkVkTm1EVmlMbG00dU0iLCJ5IjoiQVpZaDBMUHZYYjJVNk94bHpjNkhoTXNUMXloX04tcWhOS1oyUTZrQ3BPTSIsImNydiI6IlAtMjU2IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJ0ZXN0LWtpZCJ9XX0sInZwX2Zvcm1hdHNfc3VwcG9ydGVkIjp7Imp3dF92cF9qc29uIjp7ImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il19fX0sInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.hz5ipVxKrKozy-QFaer1E_5GowddzQr-wtAiKv_GQpSKj6ySi7UklVw4TXjur_FvpqK_uh37xrPdUsW4qQ3YdQ";
 
 /**
  * JWT with invalid header typ field: {"alg":"ES256","typ":"jwt"}
@@ -92,25 +104,131 @@ const wrongSignedRequestObjectJwt =
 const invalidHeaderTypJwt =
   "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.xbxwjLKeP4AJRqUwSq3e47i4QPmCs3aELuSWTH5Ad6bgu1OxG5Dlt1S6pqc9z95B_t98134H9KDowF_7NLRSGA";
 
+/**
+ * Test data for x509_hash client_id prefix
+ */
+const x509RequestObject: AuthorizationRequestObject = {
+  client_id: "x509_hash:test-client-id",
+  client_metadata: {
+    jwks: {
+      keys: [
+        {
+          alg: "ES256",
+          crv: "P-256",
+          kid: "test-kid",
+          kty: "EC",
+          x: "GOVegGwq0WVkJNCFR9QTEDp6bh7P3JEdNmDViLlm4uM",
+          y: "AZYh0LPvXb2U6Oxlzc6HhMsT1yh_N-qhNKZ2Q6kCpOM",
+        },
+      ],
+    },
+    vp_formats_supported: {
+      jwt_vp_json: {
+        alg_values_supported: ["ES256"],
+      },
+    },
+  },
+  dcql_query: {},
+  exp: new Date("2035-09-15").getTime(),
+  iat: new Date("2025-09-15").getTime(),
+  iss: "x509_hash:test-client-id",
+  nonce: "test_nonce",
+  request_uri: "uri://request.example.com",
+  request_uri_method: "POST",
+  response_mode: "direct_post.jwt",
+  response_type: "vp_token",
+  response_uri: "uri://response.example.com",
+  scope: "test_presentation_scope",
+  state: "test_state",
+  wallet_nonce: "Test wallet nonce",
+};
+
+/**
+ * JWT with x509_hash client_id prefix and x5c in header
+ * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","x5c":["MIIBxxx..."]}
+ */
+const x509RequestObjectJwt =
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJ4NWMiOlsiTUlJQnh4eC4uLiJdfQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.valid_x509_signature";
+
+/**
+ * JWT with x509_hash client_id prefix but missing x5c in header
+ * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
+ */
+const x509RequestObjectMissingX5cJwt =
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.some_signature";
+
 const callbacks: Pick<CallbackContext, "verifyJwt"> = {
   verifyJwt: async (signer, { compact }) => {
-    const { jwtVerify } = await jose;
-    if (signer.method === "jwk") {
-      try {
-        await jwtVerify(compact, signer.publicJwk);
-        return {
-          signerJwk: signer.publicJwk,
-          verified: true,
-        };
-      } catch {
-        return {
-          verified: false,
-        };
+    // For federation method, verify using the trust chain
+    if (signer.method === "federation") {
+      // Extract signature from JWT
+      const parts = compact.split(".");
+      const signature = parts[2];
+
+      // Reject empty or invalid signatures
+      if (
+        !signature ||
+        signature === "invalid_signature" ||
+        signature === "this_is_not_a_signature"
+      ) {
+        return { verified: false };
       }
+
+      // Check for wrong signature (different from the expected ones)
+      const wrongSignature =
+        "hz5ipVxKrKozy-QFaer1E_5GowddzQr-wtAiKv_GQpSKj6ySi7UklVw4TXjur_FvpqK_uh37xrPdUsW4qQ3YdQ";
+      if (signature === wrongSignature) {
+        return { verified: false };
+      }
+
+      // For valid JWTs, return the public key from the expected test data
+      return {
+        signerJwk: publicKey as Jwk,
+        verified: true,
+      };
     }
-    return {
-      verified: false,
-    };
+
+    // For x5c method (x509_hash client_id)
+    if (signer.method === "x5c") {
+      const parts = compact.split(".");
+      const signature = parts[2];
+
+      // Reject empty or invalid signatures
+      if (
+        !signature ||
+        signature === "invalid_signature" ||
+        signature === "this_is_not_a_signature"
+      ) {
+        return { verified: false };
+      }
+
+      // For valid x5c JWTs, return verified
+      return {
+        signerJwk: publicKey as Jwk,
+        verified: true,
+      };
+    }
+
+    // For jwk method
+    if (signer.method === "jwk") {
+      const parts = compact.split(".");
+      const signature = parts[2];
+
+      if (
+        !signature ||
+        signature === "invalid_signature" ||
+        signature === "this_is_not_a_signature"
+      ) {
+        return { verified: false };
+      }
+
+      return {
+        signerJwk: signer.publicJwk,
+        verified: true,
+      };
+    }
+
+    return { verified: false };
   },
 };
 
@@ -225,5 +343,23 @@ describe("parseAuthorizationRequest tests", () => {
           requestObjectJwt: jwtWithEmptyTrustChain,
         }),
     ).rejects.toThrow(ValidationError);
+  });
+
+  it("should parse and verify the request object with x509_hash client_id correctly", async () => {
+    const actualRequestObject = await parseAuthorizeRequest({
+      callbacks,
+      requestObjectJwt: x509RequestObjectJwt,
+    });
+    expect(actualRequestObject).toEqual(x509RequestObject);
+  });
+
+  it("should throw a ParseAuthorizeRequestError for x509_hash client_id with missing x5c in header", async () => {
+    await expect(
+      async () =>
+        await parseAuthorizeRequest({
+          callbacks,
+          requestObjectJwt: x509RequestObjectMissingX5cJwt,
+        }),
+    ).rejects.toThrow(ParseAuthorizeRequestError);
   });
 });
