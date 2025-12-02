@@ -36,6 +36,7 @@ const baseOptions: FetchTokenResponseOptions = {
     fetch: mockFetch,
   },
   clientAttestationDPoP: "test-client-attestation-dpop-jwt",
+  dPoP: "test-dpop-proof-jwt",
   walletAttestation: "test-wallet-attestation-jwt",
 };
 
@@ -68,6 +69,7 @@ describe("fetchTokenResponse - successful requests", () => {
         }),
         headers: {
           [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+          [HEADERS.DPOP]: "test-dpop-proof-jwt",
           [HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",
           [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
             "test-client-attestation-dpop-jwt",

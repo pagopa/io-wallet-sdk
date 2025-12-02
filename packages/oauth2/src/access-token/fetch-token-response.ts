@@ -42,6 +42,11 @@ export interface FetchTokenResponseOptions {
   clientAttestationDPoP: string;
 
   /**
+   * DPoP proof for the token request
+   */
+  dPoP: string;
+
+  /**
    * The wallet attestation JWT that proves the client's identity and capabilities
    * Used for OAuth-Client-Attestation header
    */
@@ -67,6 +72,7 @@ export async function fetchTokenResponse(
       body: toURLSearchParams(options.accessTokenRequest),
       headers: {
         [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+        [HEADERS.DPOP]: options.dPoP,
         [HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
         [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]: options.clientAttestationDPoP,
       },
