@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.7.2
+
+### Patch Changes
+
+- 8d383be: Improve error messaging and enhance module exports
+  - @pagopa/io-wallet-oid-federation@0.7.2
+  - @pagopa/io-wallet-utils@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes
