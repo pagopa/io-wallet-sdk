@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.7.2
+
+### Patch Changes
+
+- 1f00123: Add dPoP support to FetchTokenResponseOptions
+  - @pagopa/io-wallet-utils@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes
