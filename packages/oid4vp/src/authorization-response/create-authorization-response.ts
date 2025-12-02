@@ -107,7 +107,7 @@ export async function createAuthorizationResponse(
     });
   } catch (error) {
     throw new CreateAuthorizationResponseError(
-      `Unexpected error during Request Object parsing: ${error instanceof Error ? error.message : String(error)}`,
+      `Unexpected error during authorization response creation parsing: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
