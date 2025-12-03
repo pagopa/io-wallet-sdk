@@ -58,10 +58,10 @@ export interface CreateAuthorizationResponseOptions {
 
 /**
  * Creates a signed and encrypted authorization response for OpenID4VP presentation.
- * 
+ *
  * This function generates a JARM (JWT Secured Authorization Response Mode) response
  * containing the VP tokens from the wallet to the verifier.
- * 
+ *
  * @param options - Configuration for creating the authorization response
  * @param options.callbacks - Cryptographic callbacks for JWT operations
  * @param options.client_id - Thumbprint of the JWK in the cnf Wallet Attestation
@@ -70,9 +70,9 @@ export interface CreateAuthorizationResponseOptions {
  * @param options.rpMetadata - OpenID Federation Relying Party metadata
  * @param options.signer - Optional signer for JWT signing. If omitted, response won't be signed
  * @param options.vp_token - Array of VP tokens to include in the response
- * 
+ *
  * @returns A signed and/or encrypted authorization response
- * 
+ *
  * @throws {CreateAuthorizationResponseError} If response generation, encryption, or signing fails
  */
 export async function createAuthorizationResponse(
