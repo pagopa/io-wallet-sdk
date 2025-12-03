@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.7.3
+
+### Patch Changes
+
+- a979b82: Make signer optional in CreateAuthorizationResponseOptions
+  - @pagopa/io-wallet-oid-federation@0.7.3
+  - @pagopa/io-wallet-utils@0.7.3
+
 ## 0.7.2
 
 ### Patch Changes
