@@ -45,8 +45,9 @@ export interface CreateAuthorizationResponseOptions {
 
   /**
    * Signer created from the Wallet Instance's private key
+   * If not provided, the authorization payload won't be signed
    */
-  signer: JwtSigner;
+  signer?: JwtSigner;
 
   /**
    * Array containing the vp_tokens of the credentials
@@ -56,13 +57,23 @@ export interface CreateAuthorizationResponseOptions {
 }
 
 /**
- * This method receives the RequestObject, its resolved VP Tokens and other necessary cryptographic and configuration data
- * and returns a signed and encrypted Presentation Response
- * @param options {@link CreateAuthorizationResponseOptions}
- * @returns An {@link CreateOpenid4vpAuthorizationResponseResult} representing
- *          the encrypted and signed Presentation Response to the corresponding {@link AuthorizationRequestObject}
- * @throws An {@link CreateAuthorizationResponseError} in case of unexpected errors during response generation,
- *         encryption, or signing
+ * Creates a signed and encrypted authorization response for OpenID4VP presentation.
+ *
+ * This function generates a JARM (JWT Secured Authorization Response Mode) response
+ * containing the VP tokens from the wallet to the verifier.
+ *
+ * @param options - Configuration for creating the authorization response
+ * @param options.callbacks - Cryptographic callbacks for JWT operations
+ * @param options.client_id - Thumbprint of the JWK in the cnf Wallet Attestation
+ * @param options.exp - Optional JWT expiration time in seconds (default: 10 minutes)
+ * @param options.requestObject - The authorization request object to respond to
+ * @param options.rpMetadata - OpenID Federation Relying Party metadata
+ * @param options.signer - Optional signer for JWT signing. If omitted, response won't be signed
+ * @param options.vp_token - Array of VP tokens to include in the response
+ *
+ * @returns A signed and/or encrypted authorization response
+ *
+ * @throws {CreateAuthorizationResponseError} If response generation, encryption, or signing fails
  */
 export async function createAuthorizationResponse(
   options: CreateAuthorizationResponseOptions,
