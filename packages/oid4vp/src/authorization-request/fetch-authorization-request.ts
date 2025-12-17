@@ -1,10 +1,11 @@
 import { type CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { ValidationError, createFetcher } from "@openid4vc/utils";
 
-import type { AuthorizationRequestObject } from "./z-request-object";
-
 import { Oid4vpError } from "../errors";
-import { parseAuthorizeRequest } from "./parse-authorization-request";
+import {
+  type ParsedAuthorizeRequestResult,
+  parseAuthorizeRequest,
+} from "./parse-authorization-request";
 
 export interface FetchAuthorizationRequestOptions {
   /**
@@ -37,15 +38,15 @@ export interface ParsedQrCode {
 
 export interface FetchAuthorizationRequestResult {
   /**
+   * The parsed authorization request
+   */
+  parsedAuthorizeRequest: ParsedAuthorizeRequestResult;
+
+  /**
    * The parsed QR code data
    * Includes `clientId`, `requestUri` and `requestUriMethod`
    */
   parsedQrCode: ParsedQrCode;
-
-  /**
-   * The parsed authorization request object
-   */
-  requestObject: AuthorizationRequestObject;
 }
 
 /**
@@ -102,18 +103,18 @@ export async function fetchAuthorizationRequest(
     const requestObjectJwt = await response.text();
 
     // Parse and verify the request object
-    const requestObject = await parseAuthorizeRequest({
+    const parsedAuthorizeRequest = await parseAuthorizeRequest({
       callbacks: options.callbacks,
       requestObjectJwt,
     });
 
     return {
+      parsedAuthorizeRequest,
       parsedQrCode: {
         clientId,
         requestUri,
         requestUriMethod: method,
       },
-      requestObject,
     };
   } catch (error) {
     if (
