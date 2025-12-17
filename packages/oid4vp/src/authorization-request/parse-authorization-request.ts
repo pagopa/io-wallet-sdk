@@ -116,6 +116,17 @@ export interface ParseAuthorizeRequestOptions {
   requestObjectJwt: string;
 }
 
+export interface ParsedAuthorizeRequestResult {
+  /**
+   * The JWT header of the authorization request object.
+   */
+  header: Openid4vpAuthorizationRequestHeader;
+  /**
+   * The parsed authorization request object.
+   */
+  payload: AuthorizationRequestObject;
+}
+
 /**
  * This method verifies a JWT containing a Request Object and returns its
  * decoded value for further processing.
@@ -125,14 +136,14 @@ export interface ParseAuthorizeRequestOptions {
  * 2. If client_id has openid_federation prefix or no prefix: extract from header.trust_chain
  *
  * @param options {@link ParseAuthorizeRequestOptions}
- * @returns An {@link AuthorizationRequestObject} containing the RP required credentials
+ * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
  * @throws {@link ValidationError} in case there are errors validating the Request Object structure
  * @throws {@link Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
  * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid or there are unexpected errors
  */
 export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,
-): Promise<AuthorizationRequestObject> {
+): Promise<ParsedAuthorizeRequestResult> {
   try {
     const decoded = decodeJwt({
       headerSchema: zOpenid4vpAuthorizationRequestHeader,
@@ -156,7 +167,10 @@ export async function parseAuthorizeRequest(
         "Error verifying Request Object signature",
       );
 
-    return decoded.payload;
+    return {
+      header: decoded.header,
+      payload: decoded.payload,
+    };
   } catch (error) {
     if (
       error instanceof ValidationError ||

@@ -238,7 +238,11 @@ describe("parseAuthorizationRequest tests", () => {
       callbacks,
       requestObjectJwt: correctRequestObjectJwt,
     });
-    expect(actualRequestObject).toEqual(correctRequestObject);
+    expect(actualRequestObject.payload).toEqual(correctRequestObject);
+    expect(actualRequestObject.header.typ).toBe("oauth-authz-req+jwt");
+    expect(actualRequestObject.header.alg).toBeDefined();
+    expect(actualRequestObject.header.trust_chain).toBeDefined();
+    expect(actualRequestObject.header.kid).toBeDefined();
   });
 
   it("should throw a ValidationError for missing mandatory fields", async () => {
@@ -266,7 +270,11 @@ describe("parseAuthorizationRequest tests", () => {
       callbacks,
       requestObjectJwt: expiredRequestObjectJwt,
     });
-    expect(actualRequestObject).toEqual(expiredRequestObject);
+    expect(actualRequestObject.payload).toEqual(expiredRequestObject);
+    expect(actualRequestObject.header.typ).toBe("oauth-authz-req+jwt");
+    expect(actualRequestObject.header.alg).toBeDefined();
+    expect(actualRequestObject.header.trust_chain).toBeDefined();
+    expect(actualRequestObject.header.kid).toBeDefined();
   });
 
   it("should throw an Oauth2JwtParseError because of a malformed jwt", async () => {
@@ -350,7 +358,8 @@ describe("parseAuthorizationRequest tests", () => {
       callbacks,
       requestObjectJwt: x509RequestObjectJwt,
     });
-    expect(actualRequestObject).toEqual(x509RequestObject);
+    expect(actualRequestObject.payload).toEqual(x509RequestObject);
+    expect(actualRequestObject.header.x5c).toBeDefined();
   });
 
   it("should throw a ParseAuthorizeRequestError for x509_hash client_id with missing x5c in header", async () => {
