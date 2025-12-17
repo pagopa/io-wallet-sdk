@@ -1,7 +1,4 @@
-import {
-  UnexpectedStatusCodeError,
-  ValidationError,
-} from "@pagopa/io-wallet-utils";
+import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fetchAuthorizationResponse } from "../fetch-authorization-response";
@@ -85,7 +82,7 @@ describe("fetchAuthorizationResponseTests", () => {
     ).rejects.toThrow(/Mock JSON parsing error/);
   });
 
-  it("should throw ValidationError in case the response json is missing the redirect_uri field", async () => {
+  it("should not throw ValidationError in case the response json is missing the redirect_uri field", async () => {
     const mockResponse = {
       json: vi.fn().mockResolvedValue({}),
       status: 200,
@@ -100,6 +97,6 @@ describe("fetchAuthorizationResponseTests", () => {
         },
         presentationResponseUri: MOCK_RESPONSE_URI,
       }),
-    ).rejects.toThrow(ValidationError);
+    ).resolves.toEqual({});
   });
 });
