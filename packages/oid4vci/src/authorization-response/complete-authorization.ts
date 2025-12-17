@@ -102,6 +102,12 @@ export async function sendAuthorizationResponseAndExtractCode(
   try {
     const authorizationResult = await fetchAuthorizationResponse(options);
 
+    if (!authorizationResult.redirect_uri) {
+      throw new Oid4vciError(
+        "The authorization response did not contain a redirect_uri",
+      );
+    }
+
     const jwtAndPayload = await completeAuthorization({
       ...options,
       response_uri: authorizationResult.redirect_uri,
