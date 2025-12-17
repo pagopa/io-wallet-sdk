@@ -136,7 +136,7 @@ export interface ParsedAuthorizeRequestResult {
  * 2. If client_id has openid_federation prefix or no prefix: extract from header.trust_chain
  *
  * @param options {@link ParseAuthorizeRequestOptions}
- * @returns An {@link AuthorizationRequestObject} containing the RP required credentials and {@link Openid4vpAuthorizationRequestHeader} with JWT header
+ * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
  * @throws {@link ValidationError} in case there are errors validating the Request Object structure
  * @throws {@link Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
  * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid or there are unexpected errors
