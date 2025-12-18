@@ -75,12 +75,19 @@ jobs:
           registry-url: "https://registry.npmjs.org/"
           node-version-file: ".node-version"
 
+      - name: Install npm 11
+        run: npm install -g npm@11
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm build
+
       - name: Publish to npm
         id: publish
-        run: pnpm --filter @pagopa/io-wallet-oauth2 publish --access public --no-git-checks
+        run: npm publish --access public
+        working-directory: packages/oauth2
         env:
           NPM_CONFIG_PROVENANCE: true
 
