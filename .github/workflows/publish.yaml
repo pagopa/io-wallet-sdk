@@ -81,6 +81,8 @@ jobs:
       - name: Publish to npm
         id: publish
         run: pnpm release
+        env:
+          NPM_CONFIG_PROVENANCE: true
 
       - name: Get current package version
         id: get_version
