@@ -80,7 +80,7 @@ jobs:
 
       - name: Publish to npm
         id: publish
-        run: pnpm release
+        run: pnpm --filter @pagopa/io-wallet-oauth2 publish --access public --no-git-checks
         env:
           NPM_CONFIG_PROVENANCE: true
 
