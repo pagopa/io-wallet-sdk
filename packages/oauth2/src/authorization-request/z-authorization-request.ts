@@ -37,15 +37,15 @@ export const zPushedAuthorizationRequestSigned = z
      * MUST be set to the thumbprint of the jwk value in the cnf parameter inside the Wallet Attestation.
      */
     client_id: z.string(),
-    /*
-     * It MUST be a signed JWT. The private key corresponding to the public one in the cnf parameter inside the Wallet Attestation MUST be used for signing the Request Object.
-     */
-    request: z.string(),
-
     /**
      * Code verifier for PKCE. If not provided in CreatePushedAuthorizationRequestOptions, SDK will generate one.
      */
     pkceCodeVerifier: z.string(),
+
+    /*
+     * It MUST be a signed JWT. The private key corresponding to the public one in the cnf parameter inside the Wallet Attestation MUST be used for signing the Request Object.
+     */
+    request: z.string(),
   })
   .passthrough();
 export type PushedAuthorizationRequestSigned = z.infer<
