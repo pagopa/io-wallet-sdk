@@ -21,7 +21,7 @@
     "pre-push": "pnpm pre-commit && pnpm types:check && pnpm test",
     "code-review": "pnpm types:check && pnpm lint:check && pnpm format:check && pnpm test",
     "prepare": "husky",
-    "release": "pnpm build && pnpm changeset publish --no-git-tag --provenance"
+    "release": "pnpm build && pnpm changeset publish --no-git-tag"
   },
   "keywords": [],
   "author": "PagoPA spa",
