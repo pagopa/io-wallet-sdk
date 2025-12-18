@@ -1,5 +1,14 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.7.4
+
+### Patch Changes
+
+- 8c40305: Expose jwt header in parseAuthorizeRequest
+- 1a692a8: fix redirect_uri schema to be optional
+  - @pagopa/io-wallet-oid-federation@0.7.4
+  - @pagopa/io-wallet-utils@0.7.4
+
 ## 0.7.3
 
 ### Patch Changes

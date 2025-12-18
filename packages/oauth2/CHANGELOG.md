@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.7.4
+
+### Patch Changes
+
+- f448bc5: Add pkceCodeVerifier to createPushedAuthorizationRequest response
+  - @pagopa/io-wallet-utils@0.7.4
+
 ## 0.7.3
 
 ### Patch Changes
