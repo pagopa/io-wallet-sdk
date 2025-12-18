@@ -128,6 +128,7 @@ export async function createPushedAuthorizationRequest(
 
   return {
     client_id: options.clientId,
+    pkceCodeVerifier: pkce.codeVerifier,
     request: requestJwt.jwt,
   };
 }

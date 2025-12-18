@@ -30,6 +30,7 @@ describe("fetchPushedAuthorizationResponse", () => {
     pushedAuthorizationRequestEndpoint: "https://auth-server.example.com/par",
     pushedAuthorizationRequestSigned: {
       client_id: "test-client-id",
+      pkceCodeVerifier: "test-pkce-code-verifier",
       request: "test-jwt-request-token",
     },
     walletAttestation: "test-wallet-attestation-jwt",
