@@ -87,7 +87,6 @@ jobs:
       - name: Publish to npm
         id: publish
         run: npm publish --access public
-        working-directory: packages/oauth2
         env:
           NPM_CONFIG_PROVENANCE: true
 
