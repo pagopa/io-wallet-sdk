@@ -1,5 +1,6 @@
 name: Publish to NPM
 permissions:
+  id-token: write  # Required for OIDC
   contents: write   # needed so changesets can push release PRs
   pull-requests: write
 on:
