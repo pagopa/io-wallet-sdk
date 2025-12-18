@@ -103,6 +103,7 @@ describe("createPushedAuthorizationRequest", () => {
     expect(result).toEqual({
       client_id: "test-client-id",
       request: "test-jwt-token",
+      pkceCodeVerifier: "test-code-verifier",
     });
   });
 
@@ -226,6 +227,7 @@ describe("createPushedAuthorizationRequest", () => {
     expect(result).toEqual({
       client_id: "test-client-id",
       request: "test-jwt-token",
+      pkceCodeVerifier: "test-code-verifier",
     });
   });
 });
