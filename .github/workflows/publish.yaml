@@ -48,7 +48,6 @@ jobs:
           version: pnpm changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
       - name: Get current package version
         id: get_version
