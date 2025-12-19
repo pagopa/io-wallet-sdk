@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.7.5
+
+### Patch Changes
+
+- @pagopa/io-wallet-oid-federation@0.7.5
+- @pagopa/io-wallet-utils@0.7.5
+
 ## 0.7.4
 
 ### Patch Changes
