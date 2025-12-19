@@ -1,5 +1,14 @@
 # @pagopa/io-wallet-oid4vci
 
+## 0.7.5
+
+### Patch Changes
+
+- 4accd7d: Update credential response handling to support array format for credentials
+  - @pagopa/io-wallet-oauth2@0.7.5
+  - @pagopa/io-wallet-oid4vp@0.7.5
+  - @pagopa/io-wallet-utils@0.7.5
+
 ## 0.7.4
 
 ### Patch Changes
