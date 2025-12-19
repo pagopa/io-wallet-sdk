@@ -79,7 +79,7 @@ jobs:
       # pnpm not support yet npm trusted publishing
       # It will fix that when pnpm will support trusted publishing
       - name: Install npm 11
-        run: npm install -g npm@11
+        run: npm install -g npm@github:npm/cli#6d1db8724b1d0e5457a87bb31e62e43d566348ce # v11.7.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -92,21 +92,7 @@ jobs:
       # It will fix that when pnpm will support trusted publishing
       - name: Publish to npm
         id: publish
-        run: |
-          failed=""
-          for dir in packages/*/; do
-            if [ -f "$dir/package.json" ]; then
-              echo "Publishing $dir"
-              if ! npm publish "$dir" --access public; then
-                echo "::warning::Failed to publish $dir"
-                failed="$failed $dir"
-              fi
-            fi
-          done
-          if [ -n "$failed" ]; then
-            echo "::error::Failed to publish:$failed"
-            exit 1
-          fi
+        run: pnpm changeset publish --no-git-tag
         env:
           NPM_CONFIG_PROVENANCE: true
 
