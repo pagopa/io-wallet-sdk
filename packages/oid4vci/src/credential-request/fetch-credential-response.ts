@@ -67,9 +67,11 @@ export async function fetchCredentialResponse(
 
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(credentialResponse);
 
+    const credentialResponseJson = await credentialResponse.json();
+
     return parseWithErrorHandling(
       zCredentialResponse,
-      credentialResponse.json(),
+      credentialResponseJson,
       `Failed to parse credential response`,
     );
   } catch (error) {
