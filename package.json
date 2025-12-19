@@ -7,6 +7,9 @@
     "url": "https://github.com/pagopa/io-wallet-sdk",
     "type": "git"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "types:check": "pnpm build && tsc --noEmit",
     "build": "pnpm -r build",
