@@ -46,9 +46,11 @@ describe("fetchCredentialResponse", () => {
 
   it("should successfully fetch and parse credential response", async () => {
     const credentialResponseData = {
-      credentials: {
-        credential: "test-credential-data",
-      },
+      credentials: [
+        {
+          credential: "test-credential-data",
+        },
+      ],
     };
 
     const mockResponse = {
@@ -77,7 +79,7 @@ describe("fetchCredentialResponse", () => {
   it("should include all required headers in the request", async () => {
     const mockResponse = {
       json: vi.fn(() => ({
-        credentials: { credential: "test-credential" },
+        credentials: [{ credential: "test-credential" }],
       })),
       status: 200,
     };
@@ -98,7 +100,7 @@ describe("fetchCredentialResponse", () => {
   it("should send credential request as JSON in request body", async () => {
     const mockResponse = {
       json: vi.fn(() => ({
-        credentials: { credential: "test-credential" },
+        credentials: [{ credential: "test-credential" }],
       })),
       status: 200,
     };
@@ -117,7 +119,7 @@ describe("fetchCredentialResponse", () => {
   it("should use POST method for the request", async () => {
     const mockResponse = {
       json: vi.fn(() => ({
-        credentials: { credential: "test-credential" },
+        credentials: [{ credential: "test-credential" }],
       })),
       status: 200,
     };
@@ -174,7 +176,7 @@ describe("fetchCredentialResponse", () => {
     const customEndpoint = "https://custom-issuer.example.org/cred";
     const mockResponse = {
       json: vi.fn(() => ({
-        credentials: { credential: "test-credential" },
+        credentials: [{ credential: "test-credential" }],
       })),
       status: 200,
     };
