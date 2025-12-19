@@ -86,7 +86,7 @@ jobs:
 
       - name: Publish to npm
         id: publish
-        run: npm publish --access public
+        run: npm publish --workspaces --access public
         env:
           NPM_CONFIG_PROVENANCE: true
 
