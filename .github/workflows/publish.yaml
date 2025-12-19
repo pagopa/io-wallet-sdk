@@ -75,6 +75,9 @@ jobs:
           registry-url: "https://registry.npmjs.org/"
           node-version-file: ".node-version"
 
+      # We force to publish with npm 11 because we are using npm trusted publishing and node version using npm older
+      # pnpm not support yet npm trusted publishing
+      # It will fix that when pnpm will support trusted publishing
       - name: Install npm 11
         run: npm install -g npm@11
 
@@ -84,9 +87,26 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      # Publish each package individually instead of using npm workspaces
+      # because pnpm install doesn't create npm-compatible workspace symlinks
+      # It will fix that when pnpm will support trusted publishing
       - name: Publish to npm
         id: publish
-        run: npm publish --workspaces --access public
+        run: |
+          failed=""
+          for dir in packages/*/; do
+            if [ -f "$dir/package.json" ]; then
+              echo "Publishing $dir"
+              if ! npm publish "$dir" --access public; then
+                echo "::warning::Failed to publish $dir"
+                failed="$failed $dir"
+              fi
+            fi
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::Failed to publish:$failed"
+            exit 1
+          fi
         env:
           NPM_CONFIG_PROVENANCE: true
 
