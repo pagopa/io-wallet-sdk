@@ -56,14 +56,15 @@ export const zCredentialRequest = z
 
 export type CredentialRequest = z.infer<typeof zCredentialRequest>;
 
-const CredentialsSchema = z.object({
-  credential: z
-    .string()
-    .min(1, "credential must not be empty")
-    .describe(
-      "REQUIRED. Contains the issued Digital Credential. Depending on format, may be raw JWT or base64url-encoded CBOR structure.",
-    ),
-});
+const CredentialsSchema = z.array(
+  z.object({
+    credential: z
+      .string()
+      .describe(
+        "REQUIRED. Contains the issued Digital Credential. Depending on format, may be raw JWT or base64url-encoded CBOR structure.",
+      ),
+  }),
+);
 
 export const zCredentialResponse = z
   .object({
