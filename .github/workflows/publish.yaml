@@ -79,7 +79,7 @@ jobs:
       # pnpm not support yet npm trusted publishing
       # It will fix that when pnpm will support trusted publishing
       - name: Install npm 11
-        run: npm install -g npm@11
+        run: npm install -g npm@11.7.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
