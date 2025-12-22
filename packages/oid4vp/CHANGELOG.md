@@ -1,5 +1,14 @@
 # @pagopa/io-wallet-oid4vp
 
+## 0.7.6
+
+### Patch Changes
+
+- c5c5737: Fix NPM publish workflow
+- Updated dependencies [c5c5737]
+  - @pagopa/io-wallet-oid-federation@0.7.6
+  - @pagopa/io-wallet-utils@0.7.6
+
 ## 0.7.5
 
 ### Patch Changes

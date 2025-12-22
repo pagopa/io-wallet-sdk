@@ -1,6 +1,6 @@
 {
   "name": "@pagopa/io-wallet-utils",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "files": [
     "dist"
   ],
