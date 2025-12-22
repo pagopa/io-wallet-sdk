@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oauth2
 
+## 0.7.6
+
+### Patch Changes
+
+- c5c5737: Fix NPM publish workflow
+- Updated dependencies [c5c5737]
+  - @pagopa/io-wallet-utils@0.7.6
+
 ## 0.7.5
 
 ### Patch Changes
