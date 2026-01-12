@@ -46,3 +46,41 @@ export class UnexpectedStatusCodeError extends Error {
     this.statusCode = statusCode;
   }
 }
+
+/**
+ * An error subclass thrown when an unsupported Italian Wallet specification version is requested.
+ *
+ * This error is thrown when:
+ * - A feature or method is called with a version that it doesn't support
+ * - An invalid version identifier is provided
+ *
+ * @example
+ * throw new ItWalletSpecsVersionError(
+ *   'createCredentialRequest',
+ *   '2.0.0',
+ *   ['1.0.2', '1.3.3']
+ * );
+ * // Error: Feature "createCredentialRequest" does not support version 2.0.0.
+ * // Supported versions: 1.0.2, 1.3.3
+ */
+export class ItWalletSpecsVersionError extends Error {
+  public readonly code = "IT_WALLET_SPECS_VERSION_ERROR";
+
+  constructor(
+    public readonly feature: string,
+    public readonly requestedVersion: string,
+    public readonly supportedVersions: readonly string[],
+  ) {
+    super(
+      `Feature "${feature}" does not support version ${requestedVersion}.\n` +
+        `Supported versions: ${supportedVersions.join(", ")}`,
+    );
+    this.name = "ItWalletSpecsVersionError";
+
+    // Maintain proper stack trace for V8 engines (Node.js, Chrome)
+    const ErrorConstructor = Error as any;
+    if (typeof ErrorConstructor.captureStackTrace === "function") {
+      ErrorConstructor.captureStackTrace(this, ItWalletSpecsVersionError);
+    }
+  }
+}
