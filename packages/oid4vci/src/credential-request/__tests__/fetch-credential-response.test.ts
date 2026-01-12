@@ -1,15 +1,15 @@
 import {
+  IoWalletSdkConfig,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { FetchCredentialResponseOptionsV1_0_2 } from "../fetch-credential-response";
+import type { CredentialRequestV1_0_2 } from "../v1.0.2/z-credential";
+
 import { FetchCredentialResponseError } from "../../errors";
-import {
-  FetchCredentialResponseOptions,
-  fetchCredentialResponse,
-} from "../fetch-credential-response";
-import { CredentialRequest } from "../z-credential";
+import { fetchCredentialResponse } from "../fetch-credential-response";
 
 const mockFetch = vi.fn();
 
@@ -22,7 +22,9 @@ vi.mock("@openid4vc/utils", async (importOriginal) => {
 });
 
 describe("fetchCredentialResponse", () => {
-  const mockCredentialRequest: CredentialRequest = {
+  const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.0.2" });
+
+  const mockCredentialRequest: CredentialRequestV1_0_2 = {
     credential_identifier: "test-credential-id",
     proof: {
       jwt: "test-proof-jwt",
@@ -30,15 +32,16 @@ describe("fetchCredentialResponse", () => {
     },
   };
 
-  const baseOptions: FetchCredentialResponseOptions = {
+  const baseOptions = {
     accessToken: "test-access-token",
     callbacks: {
       fetch: mockFetch,
     },
+    config,
     credentialEndpoint: "https://issuer.example.com/credential",
     credentialRequest: mockCredentialRequest,
     dPoP: "test-dpop-jwt",
-  };
+  } as FetchCredentialResponseOptionsV1_0_2;
 
   beforeEach(() => {
     vi.restoreAllMocks();

@@ -12,4 +12,6 @@
 
 export { createCredentialRequest } from "./create-credential-request";
 export type { CredentialRequestOptionsV1_0_2 } from "./create-credential-request";
+export { fetchCredentialResponse } from "./fetch-credential-response";
+export type { FetchCredentialResponseOptionsV1_0_2 } from "./fetch-credential-response";
 export * from "./z-credential";
