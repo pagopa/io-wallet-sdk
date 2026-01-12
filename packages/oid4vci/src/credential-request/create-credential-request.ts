@@ -1,75 +1,98 @@
-import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
-import { dateToSeconds, parseWithErrorHandling } from "@openid4vc/utils";
+import { ItWalletSpecsVersionError } from "@pagopa/io-wallet-utils";
 
-import { Oid4vciError } from "../errors";
-import { CredentialRequest, zCredentialRequest } from "./z-credential";
+import type {
+  CredentialRequest,
+  CredentialRequestOptions,
+  CredentialRequestOptionsV1_0_2,
+  CredentialRequestOptionsV1_3_3,
+} from "./types";
+import type { CredentialRequestV1_0_2 } from "./v1.0.2/z-credential";
+import type { CredentialRequestV1_3_3 } from "./v1.3.3/z-credential";
 
-export interface CredentialRequestOptions {
-  /**
-   * Callbacks to use for signing proof
-   */
-  callbacks: Pick<CallbackContext, "signJwt">;
-
-  /**
-   * Client identifier of the OAuth2 Client making the Credential Request.
-   */
-  clientId: string;
-
-  /**
-   * This MUST be set with one of the value obtained in the credential_identifiers claim of the Token Response.
-   */
-  credential_identifier: string;
-
-  /**
-   * Identifier of the Credential Issuer, for ex: https://issuer.example.com.
-   */
-  issuerIdentifier: string;
-
-  /**
-   * A nonce value previously requested to associate a Client session with the Credential Request.
-   */
-  nonce: string;
-
-  /**
-   * The signer of the credential PoP JWT.
-   */
-  signer: JwtSignerJwk;
-}
+import * as v1_0_2 from "./v1.0.2/create-credential-request";
+import * as v1_3_3 from "./v1.3.3/create-credential-request";
 
 /**
- * Create a Credential Request.
- * @param options - Options to create the Credential Request
- * @returns The created Credential Request
+ * Creates a credential request according to the configured Italian Wallet specification version.
+ *
+ * Version Differences:
+ * - v1.0.2: Returns singular `proof` object with explicit `proof_type` field
+ * - v1.3.3: Returns plural `proofs` object with JWT array (batch support) and requires key attestation
+ *
+ * @param options - Request options including version config
+ * @returns Version-specific credential request object
+ * @throws {ItWalletSpecsVersionError} When version is not supported or keyAttestation is used with wrong version
+ *
+ * @example v1.0.2 - Basic credential request
+ * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: '1.0.2' });
+ * const request = await createCredentialRequest({
+ *   config,
+ *   callbacks: { signJwt: mySignJwtCallback },
+ *   clientId: "my-client-id",
+ *   credential_identifier: "UniversityDegree",
+ *   issuerIdentifier: "https://issuer.example.com",
+ *   nonce: "c_nonce_value",
+ *   signer: myJwtSigner
+ * });
+ * // Returns: { credential_identifier: "...", proof: { jwt: "...", proof_type: "jwt" } }
+ *
+ * @example v1.3.3 - Credential request with key attestation
+ * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: '1.3.3' });
+ * const request = await createCredentialRequest({
+ *   config,
+ *   callbacks: { signJwt: mySignJwtCallback },
+ *   clientId: "my-client-id",
+ *   credential_identifier: "education_degree_unibo_2017_l31_informatica",
+ *   issuerIdentifier: "https://issuer.example.com",
+ *   keyAttestation: 'eyJ...', // Required for v1.3.3
+ *   nonce: "c_nonce_value",
+ *   signer: myJwtSigner
+ * });
+ * // Returns: { credential_identifier: "...", proofs: { jwt: ["..."] } }
  */
-export const createCredentialRequest = async (
-  options: CredentialRequestOptions,
-): Promise<CredentialRequest> => {
-  try {
-    const { signJwt } = options.callbacks;
-    const proofJwt = await signJwt(options.signer, {
-      header: {
-        alg: options.signer.alg,
-        jwk: options.signer.publicJwk,
-        typ: "openid4vci-proof+jwt",
-      },
-      payload: {
-        aud: options.issuerIdentifier,
-        iat: dateToSeconds(new Date()),
-        iss: options.clientId,
-        nonce: options.nonce,
-      },
-    });
 
-    return parseWithErrorHandling(zCredentialRequest, {
-      credential_identifier: options.credential_identifier,
-      proof: {
-        jwt: proofJwt.jwt,
-        proof_type: "jwt",
-      },
-    } satisfies CredentialRequest);
-  } catch (error) {
-    throw new Oid4vciError(
-      `Unexpected error during create credential request: ${error instanceof Error ? error.message : String(error)}`,
-    );
+// Function overload for v1.0.2
+export function createCredentialRequest(
+  options: CredentialRequestOptionsV1_0_2,
+): Promise<CredentialRequestV1_0_2>;
+
+// Function overload for v1.3.3
+export function createCredentialRequest(
+  options: CredentialRequestOptionsV1_3_3,
+): Promise<CredentialRequestV1_3_3>;
+
+// Implementation signature (not callable by users)
+export async function createCredentialRequest(
+  options: CredentialRequestOptions,
+): Promise<CredentialRequest> {
+  const { config } = options;
+
+  switch (config.itWalletSpecsVersion) {
+    case "1.0.2": {
+      // Validate that keyAttestation is NOT provided for v1.0.2
+      if ("keyAttestation" in options) {
+        throw new ItWalletSpecsVersionError(
+          "keyAttestation parameter",
+          "1.0.2",
+          ["1.3.3"],
+        );
+      }
+      return v1_0_2.createCredentialRequest(
+        options as CredentialRequestOptionsV1_0_2,
+      );
+    }
+    case "1.3.3": {
+      return v1_3_3.createCredentialRequest(
+        options as CredentialRequestOptionsV1_3_3,
+      );
+    }
+    default: {
+      // Exhaustiveness check - ensures all versions are handled
+      throw new ItWalletSpecsVersionError(
+        "createCredentialRequest",
+        (config as { itWalletSpecsVersion: string }).itWalletSpecsVersion,
+        ["1.0.2", "1.3.3"],
+      );
+    }
   }
-};
+}

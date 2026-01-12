@@ -1,0 +1,53 @@
+import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
+import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
+
+import type { CredentialRequestV1_0_2 } from "./v1.0.2/z-credential";
+import type { CredentialRequestV1_3_3 } from "./v1.3.3/z-credential";
+
+/**
+ * Base options shared across all credential request versions
+ */
+export interface BaseCredentialRequestOptions {
+  callbacks: Pick<CallbackContext, "signJwt">;
+  clientId: string;
+  credential_identifier: string;
+  issuerIdentifier: string;
+  nonce: string;
+  signer: JwtSignerJwk;
+}
+
+/**
+ * Options for creating a credential request with v1.0.2
+ * Does NOT include keyAttestation parameter
+ */
+export interface CredentialRequestOptionsV1_0_2
+  extends BaseCredentialRequestOptions {
+  config: { itWalletSpecsVersion: "1.0.2" } & IoWalletSdkConfig;
+  // keyAttestation is NOT accepted in v1.0.2
+}
+
+/**
+ * Options for creating a credential request with v1.3.3
+ * Requires keyAttestation parameter
+ */
+export interface CredentialRequestOptionsV1_3_3
+  extends BaseCredentialRequestOptions {
+  config: { itWalletSpecsVersion: "1.3.3" } & IoWalletSdkConfig;
+  keyAttestation: string; // Required in v1.3.3
+}
+
+/**
+ * Union type for credential request options
+ * Used by the version router
+ */
+export type CredentialRequestOptions =
+  | CredentialRequestOptionsV1_0_2
+  | CredentialRequestOptionsV1_3_3;
+
+/**
+ * Union type for credential request return values
+ * TypeScript will narrow this based on the config version
+ */
+export type CredentialRequest =
+  | CredentialRequestV1_0_2
+  | CredentialRequestV1_3_3;

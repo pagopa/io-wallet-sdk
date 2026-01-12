@@ -78,7 +78,9 @@ export class ItWalletSpecsVersionError extends Error {
     this.name = "ItWalletSpecsVersionError";
 
     // Maintain proper stack trace for V8 engines (Node.js, Chrome)
-    const ErrorConstructor = Error as any;
+    const ErrorConstructor = Error as {
+      captureStackTrace?: (target: object, constructor: unknown) => void;
+    };
     if (typeof ErrorConstructor.captureStackTrace === "function") {
       ErrorConstructor.captureStackTrace(this, ItWalletSpecsVersionError);
     }
