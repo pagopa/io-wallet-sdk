@@ -5,7 +5,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { FetchCredentialResponseOptionsV1_0_2 } from "../fetch-credential-response";
+import type { FetchCredentialResponseOptions } from "../fetch-credential-response";
 import type { CredentialRequestV1_0_2 } from "../v1.0.2/z-credential";
 
 import { FetchCredentialResponseError } from "../../errors";
@@ -41,7 +41,7 @@ describe("fetchCredentialResponse", () => {
     credentialEndpoint: "https://issuer.example.com/credential",
     credentialRequest: mockCredentialRequest,
     dPoP: "test-dpop-jwt",
-  } as FetchCredentialResponseOptionsV1_0_2;
+  } as FetchCredentialResponseOptions;
 
   beforeEach(() => {
     vi.restoreAllMocks();

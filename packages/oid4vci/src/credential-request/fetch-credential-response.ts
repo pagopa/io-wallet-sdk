@@ -1,138 +1,81 @@
 import { CallbackContext } from "@openid4vc/oauth2";
+import { createFetcher, parseWithErrorHandling } from "@openid4vc/utils";
 import {
-  IoWalletSdkConfig,
-  ItWalletSpecsVersionError,
+  CONTENT_TYPES,
+  HEADERS,
+  UnexpectedStatusCodeError,
+  ValidationError,
+  hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
-import type {
-  CredentialRequestV1_0_2,
-  CredentialResponseV1_0_2,
-} from "./v1.0.2/z-credential";
-import type {
-  CredentialRequestV1_3_3,
-  CredentialResponseV1_3_3,
-} from "./v1.3.3/z-credential";
+import type { CredentialRequestV1_0_2 } from "./v1.0.2";
+import type { CredentialRequestV1_3_3 } from "./v1.3.3";
 
-import * as v1_0_2 from "./v1.0.2/fetch-credential-response";
-import * as v1_3_3 from "./v1.3.3/fetch-credential-response";
+import { FetchCredentialResponseError } from "../errors";
+import { CredentialResponse, zCredentialResponse } from "./z-credential";
 
 /**
- * Base options shared across all credential response fetch versions
+ * Options for fetching credential response
+ * Accepts credential requests from any supported version
  */
-interface BaseFetchCredentialResponseOptions {
+export interface FetchCredentialResponseOptions {
   accessToken: string;
   callbacks: Pick<CallbackContext, "fetch">;
   credentialEndpoint: string;
+  /**
+   * Credential request object (supports both v1.0.2 and v1.3.3 formats)
+   */
+  credentialRequest: CredentialRequestV1_0_2 | CredentialRequestV1_3_3;
   dPoP: string;
 }
 
 /**
- * Options for fetching credential response with v1.0.2
- */
-export interface FetchCredentialResponseOptionsV1_0_2
-  extends BaseFetchCredentialResponseOptions {
-  config: { itWalletSpecsVersion: "1.0.2" } & IoWalletSdkConfig;
-  credentialRequest: CredentialRequestV1_0_2;
-}
-
-/**
- * Options for fetching credential response with v1.3.3
- */
-export interface FetchCredentialResponseOptionsV1_3_3
-  extends BaseFetchCredentialResponseOptions {
-  config: { itWalletSpecsVersion: "1.3.3" } & IoWalletSdkConfig;
-  credentialRequest: CredentialRequestV1_3_3;
-}
-
-/**
- * Union type for credential response fetch options
- */
-export type FetchCredentialResponseOptions =
-  | FetchCredentialResponseOptionsV1_0_2
-  | FetchCredentialResponseOptionsV1_3_3;
-
-/**
- * Union type for credential response return values
- */
-export type CredentialResponse =
-  | CredentialResponseV1_0_2
-  | CredentialResponseV1_3_3;
-
-/**
- * Fetches a credential response from the issuer according to the configured
- * Italian Wallet specification version.
+ * Fetch a credential response from the credential endpoint
  *
- * Version Differences:
- * - v1.0.2: Single credential response
- * - v1.3.3: Supports batch credential responses (multiple credentials per request)
+ * Supports both v1.0.2 and v1.3.3 credential request formats.
+ * The response format is version-agnostic.
  *
- * @param options - Configuration including endpoint, request, auth tokens, and version
- * @returns Version-specific credential response object
- * @throws {ItWalletSpecsVersionError} When version is not supported
- * @throws {FetchCredentialResponseError} When network or unexpected errors occur
- * @throws {UnexpectedStatusCodeError} When issuer returns non-200 status
- * @throws {ValidationError} When response doesn't match expected schema
- *
- * @example v1.0.2 - Basic credential fetch
- * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: '1.0.2' });
- * const credentialRequest = await createCredentialRequest({ config, ... });
- * const response = await fetchCredentialResponse({
- *   config,
- *   callbacks: { fetch: myFetchCallback },
- *   credentialEndpoint: "https://issuer.example.com/credential",
- *   credentialRequest,
- *   accessToken: "access_token_value",
- *   dPoP: "dpop_jwt_value"
- * });
- *
- * @example v1.3.3 - Batch credential fetch
- * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: '1.3.3' });
- * const credentialRequest = await createCredentialRequest({ config, ... });
- * const response = await fetchCredentialResponse({
- *   config,
- *   callbacks: { fetch: myFetchCallback },
- *   credentialEndpoint: "https://issuer.example.com/credential",
- *   credentialRequest,
- *   accessToken: "access_token_value",
- *   dPoP: "dpop_jwt_value"
- * });
- * // Response may contain multiple credentials if batch proofs were provided
+ * @param options - Configuration for credential fetch
+ * @returns Parsed credential response
+ * @throws {UnexpectedStatusCodeError} If HTTP status is not 200
+ * @throws {ValidationError} If response validation fails
+ * @throws {FetchCredentialResponseError} For unexpected errors
  */
-
-// Function overload for v1.0.2
-export function fetchCredentialResponse(
-  options: FetchCredentialResponseOptionsV1_0_2,
-): Promise<CredentialResponseV1_0_2>;
-
-// Function overload for v1.3.3
-export function fetchCredentialResponse(
-  options: FetchCredentialResponseOptionsV1_3_3,
-): Promise<CredentialResponseV1_3_3>;
-
-// Implementation signature (not callable by users)
 export async function fetchCredentialResponse(
   options: FetchCredentialResponseOptions,
 ): Promise<CredentialResponse> {
-  const { config } = options;
+  try {
+    const fetch = createFetcher(options.callbacks.fetch);
+    const credentialResponse = await fetch(options.credentialEndpoint, {
+      body: JSON.stringify(options.credentialRequest),
+      headers: {
+        [HEADERS.AUTHORIZATION]: `DPoP ${options.accessToken}`,
+        [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
+        [HEADERS.DPOP]: options.dPoP,
+      },
+      method: "POST",
+    });
 
-  switch (config.itWalletSpecsVersion) {
-    case "1.0.2": {
-      return v1_0_2.fetchCredentialResponse(
-        options as FetchCredentialResponseOptionsV1_0_2,
-      );
+    await hasStatusOrThrow(200, UnexpectedStatusCodeError)(credentialResponse);
+
+    const credentialResponseJson = await credentialResponse.json();
+
+    return parseWithErrorHandling(
+      zCredentialResponse,
+      credentialResponseJson,
+      `Failed to parse credential response`,
+    );
+  } catch (error) {
+    if (
+      error instanceof UnexpectedStatusCodeError ||
+      error instanceof ValidationError
+    ) {
+      throw error;
     }
-    case "1.3.3": {
-      return v1_3_3.fetchCredentialResponse(
-        options as FetchCredentialResponseOptionsV1_3_3,
-      );
-    }
-    default: {
-      // Exhaustiveness check - ensures all versions are handled
-      throw new ItWalletSpecsVersionError(
-        "fetchCredentialResponse",
-        (config as { itWalletSpecsVersion: string }).itWalletSpecsVersion,
-        ["1.0.2", "1.3.3"],
-      );
-    }
+    throw new FetchCredentialResponseError(
+      `Unexpected error during credential response: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
 }
