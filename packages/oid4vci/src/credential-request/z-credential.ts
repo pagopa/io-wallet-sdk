@@ -1,100 +1,72 @@
+import type { ItWalletSpecsVersion } from "@pagopa/io-wallet-utils";
+
 import { z } from "zod";
 
-// Proof object schema
-const ProofSchema = z.object({
-  jwt: z.string().min(1, "JWT must not be empty"),
-  proof_type: z.literal("jwt"), // MUST be "jwt"
-});
+import {
+  type CredentialRequestV1_0_2,
+  zCredentialRequestV1_0_2,
+} from "./v1.0.2";
+import {
+  type CredentialRequestV1_3_3,
+  zCredentialRequestV1_3_3,
+} from "./v1.3.3";
 
-export const zCredentialRequest = z
-  .object({
-    credential_configuration_id: z
-      .string()
-      .optional()
-      .describe(
-        "REQUIRED if credential_identifiers param is absent. MUST NOT be used otherwise.",
-      ),
+/**
+ * Schema registry mapping versions to their credential request schemas
+ */
+export interface CredentialRequestSchemaRegistry {
+  "1.0.2": typeof zCredentialRequestV1_0_2;
+  "1.3.3": typeof zCredentialRequestV1_3_3;
+}
 
-    credential_identifier: z
-      .string()
-      .optional()
-      .describe(
-        "REQUIRED when Authorization Details of type openid_credential was returned. MUST NOT be used if credential_configuration_id is present.",
-      ),
+/**
+ * Conditional type: Get the credential request type for a specific version
+ */
+export type CredentialRequestForVersion<V extends ItWalletSpecsVersion> =
+  V extends "1.0.2"
+    ? CredentialRequestV1_0_2
+    : V extends "1.3.3"
+      ? CredentialRequestV1_3_3
+      : never;
 
-    proof: ProofSchema.describe(
-      "REQUIRED. Proof of possession of key material (must contain proof_type=jwt and a jwt).",
-    ),
+/**
+ * Get the appropriate credential request schema for a version
+ *
+ * @param version - IT Wallet specification version
+ * @returns Zod schema for the specified version
+ */
+export function getCredentialRequestSchema<V extends ItWalletSpecsVersion>(
+  version: V,
+): CredentialRequestSchemaRegistry[V] {
+  const schemas: CredentialRequestSchemaRegistry = {
+    "1.0.2": zCredentialRequestV1_0_2,
+    "1.3.3": zCredentialRequestV1_3_3,
+  };
+  return schemas[version];
+}
 
-    transaction_id: z
-      .string()
-      .optional()
-      .describe(
-        "REQUIRED only in case of deferred flow. MUST NOT be present in immediate flow.",
-      ),
-  })
-  .superRefine((data, ctx) => {
-    // Exclusive OR between credential_identifier and credential_configuration_id
-    if (data.credential_identifier && data.credential_configuration_id) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "credential_identifier and credential_configuration_id MUST NOT be used together",
-        path: ["credential_identifier"],
-      });
-    }
-
-    if (!data.credential_identifier && !data.credential_configuration_id) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "One of credential_identifier or credential_configuration_id MUST be present",
-        path: ["credential_identifier"],
-      });
-    }
-  });
-
-export type CredentialRequest = z.infer<typeof zCredentialRequest>;
-
-const CredentialsSchema = z.array(
-  z.object({
-    credential: z
-      .string()
-      .describe(
-        "REQUIRED. Contains the issued Digital Credential. Depending on format, may be raw JWT or base64url-encoded CBOR structure.",
-      ),
-  }),
-);
-
+/**
+ * Credential Response schema (version-agnostic)
+ * The response format is the same across v1.0.2 and v1.3.3
+ */
 export const zCredentialResponse = z
   .object({
-    credentials: CredentialsSchema.optional().describe(
-      "REQUIRED if lead_time and transaction_id are not present. MUST NOT be present otherwise.",
-    ),
-
-    lead_time: z
-      .number()
-      .int()
-      .positive()
-      .optional()
-      .describe(
-        "REQUIRED if credentials is not present. MUST NOT be present otherwise.",
-      ),
-
-    notification_id: z
-      .string()
-      .optional()
-      .describe("OPTIONAL. MUST NOT be present if credentials is not present."),
-
-    transaction_id: z
-      .string()
-      .optional()
-      .describe(
-        "REQUIRED if credentials is not present. MUST NOT be present otherwise.",
-      ),
+    credentials: z
+      .array(
+        z.object({
+          credential: z
+            .string()
+            .describe(
+              "REQUIRED. Contains the issued Digital Credential. Depending on format, may be raw JWT or base64url-encoded CBOR structure.",
+            ),
+        }),
+      )
+      .optional(),
+    lead_time: z.number().int().positive().optional(),
+    notification_id: z.string().optional(),
+    transaction_id: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    // Enforce XOR: credentials vs (lead_time + transaction_id)
     if (data.credentials && (data.lead_time || data.transaction_id)) {
       ctx.addIssue({
         code: "custom",
@@ -113,7 +85,6 @@ export const zCredentialResponse = z
       });
     }
 
-    // notification_id must only exist if credentials is present
     if (!data.credentials && data.notification_id) {
       ctx.addIssue({
         code: "custom",
