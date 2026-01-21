@@ -1,8 +1,8 @@
+import { jsonWebKeySchema } from "@openid-federation/core";
 import { parseWithErrorHandling } from "@openid4vc/utils";
 import z from "zod";
 
 import { jsonWebKeySetSchema } from "../jwk/jwk";
-import { jsonWebKeySchema } from "@openid-federation/core";
 
 export const getUsedJsonWebKey = (
   header: Record<string, unknown>,
