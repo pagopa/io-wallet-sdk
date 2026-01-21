@@ -2,7 +2,7 @@ packages:
   - packages/**
 
 catalog:
-  "@openid-federation/core": ^0.2.0
+  "@openid-federation/core": ^0.2.1
   "@openid4vc/oauth2": 0.3.0-alpha-20250714110838
   "@openid4vc/utils": 0.3.0-alpha-20250714110838
   "@openid4vc/openid4vci": 0.3.0-alpha-20250714110838

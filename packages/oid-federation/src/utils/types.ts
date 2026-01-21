@@ -1,4 +1,4 @@
-import { JsonWebKey } from "../jwk";
+import { JsonWebKey } from "@openid-federation/core";
 
 export type SignCallback = (options: {
   jwk: JsonWebKey;
