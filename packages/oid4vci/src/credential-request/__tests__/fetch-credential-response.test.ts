@@ -7,7 +7,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { FetchCredentialResponseOptions } from "../fetch-credential-response";
-import type { CredentialRequestV1_0_2 } from "../v1.0.2/z-credential";
+import type { CredentialRequestV1_0 } from "../v1.0/z-credential";
 
 import { FetchCredentialResponseError } from "../../errors";
 import { fetchCredentialResponse } from "../fetch-credential-response";
@@ -23,9 +23,11 @@ vi.mock("@openid4vc/utils", async (importOriginal) => {
 });
 
 describe("fetchCredentialResponse", () => {
-  const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
+  const config = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  });
 
-  const mockCredentialRequest: CredentialRequestV1_0_2 = {
+  const mockCredentialRequest: CredentialRequestV1_0 = {
     credential_identifier: "test-credential-id",
     proof: {
       jwt: "test-proof-jwt",

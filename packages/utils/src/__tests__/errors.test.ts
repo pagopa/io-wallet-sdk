@@ -100,9 +100,7 @@ describe("ItWalletSpecsVersionError", () => {
         [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3, "2.0.0"],
       );
 
-      expect(error.message).toContain(
-        "Supported versions: V1_0, V1_3, 2.0.0",
-      );
+      expect(error.message).toContain("Supported versions: V1_0, V1_3, 2.0.0");
     });
 
     it("should include feature name in message", () => {
@@ -146,7 +144,10 @@ describe("ItWalletSpecsVersionError", () => {
         if (error instanceof ItWalletSpecsVersionError) {
           expect(error.feature).toBe("createCredentialRequest");
           expect(error.requestedVersion).toBe("2.0.0");
-          expect(error.supportedVersions).toEqual([ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3]);
+          expect(error.supportedVersions).toEqual([
+            ItWalletSpecsVersion.V1_0,
+            ItWalletSpecsVersion.V1_3,
+          ]);
           expect(error.code).toBe("IT_WALLET_SPECS_VERSION_ERROR");
         } else {
           throw new Error("Expected ItWalletSpecsVersionError");

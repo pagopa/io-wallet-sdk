@@ -17,7 +17,7 @@ const ProofSchema = z.object({
  * - Explicit `proof_type` field (always "jwt")
  * - Single credential per request (no batch support)
  */
-export const zCredentialRequestV1_0_2 = z
+export const zCredentialRequestV1_0 = z
   .object({
     credential_configuration_id: z
       .string()
@@ -65,4 +65,4 @@ export const zCredentialRequestV1_0_2 = z
     }
   });
 
-export type CredentialRequestV1_0_2 = z.infer<typeof zCredentialRequestV1_0_2>;
+export type CredentialRequestV1_0 = z.infer<typeof zCredentialRequestV1_0>;

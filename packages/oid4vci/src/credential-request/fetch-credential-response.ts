@@ -8,8 +8,8 @@ import {
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
-import type { CredentialRequestV1_0_2 } from "./v1.0.2";
-import type { CredentialRequestV1_3_3 } from "./v1.3.3";
+import type { CredentialRequestV1_0 } from "./v1.0";
+import type { CredentialRequestV1_3 } from "./v1.3";
 
 import { FetchCredentialResponseError } from "../errors";
 import { CredentialResponse, zCredentialResponse } from "./z-credential";
@@ -25,7 +25,7 @@ export interface FetchCredentialResponseOptions {
   /**
    * Credential request object (supports both v1.0.2 and v1.3.3 formats)
    */
-  credentialRequest: CredentialRequestV1_0_2 | CredentialRequestV1_3_3;
+  credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
   dPoP: string;
 }
 

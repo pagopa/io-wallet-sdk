@@ -6,14 +6,14 @@ import {
 import type {
   CredentialRequest,
   CredentialRequestOptions,
-  CredentialRequestOptionsV1_0_2,
-  CredentialRequestOptionsV1_3_3,
+  CredentialRequestOptionsV1_0,
+  CredentialRequestOptionsV1_3,
 } from "./types";
-import type { CredentialRequestV1_0_2 } from "./v1.0.2/z-credential";
-import type { CredentialRequestV1_3_3 } from "./v1.3.3/z-credential";
+import type { CredentialRequestV1_0 } from "./v1.0/z-credential";
+import type { CredentialRequestV1_3 } from "./v1.3/z-credential";
 
-import * as v1_0_2 from "./v1.0.2/create-credential-request";
-import * as v1_3_3 from "./v1.3.3/create-credential-request";
+import * as V1_0 from "./v1.0/create-credential-request";
+import * as V1_3 from "./v1.3/create-credential-request";
 
 /**
  * Creates a credential request according to the configured Italian Wallet specification version.
@@ -56,13 +56,13 @@ import * as v1_3_3 from "./v1.3.3/create-credential-request";
 
 // Function overload for v1.0.2
 export function createCredentialRequest(
-  options: CredentialRequestOptionsV1_0_2,
-): Promise<CredentialRequestV1_0_2>;
+  options: CredentialRequestOptionsV1_0,
+): Promise<CredentialRequestV1_0>;
 
 // Function overload for v1.3.3
 export function createCredentialRequest(
-  options: CredentialRequestOptionsV1_3_3,
-): Promise<CredentialRequestV1_3_3>;
+  options: CredentialRequestOptionsV1_3,
+): Promise<CredentialRequestV1_3>;
 
 // Implementation signature (not callable by users)
 export async function createCredentialRequest(
@@ -80,13 +80,13 @@ export async function createCredentialRequest(
           [ItWalletSpecsVersion.V1_3],
         );
       }
-      return v1_0_2.createCredentialRequest(
-        options as CredentialRequestOptionsV1_0_2,
+      return V1_0.createCredentialRequest(
+        options as CredentialRequestOptionsV1_0,
       );
     }
     case ItWalletSpecsVersion.V1_3: {
-      return v1_3_3.createCredentialRequest(
-        options as CredentialRequestOptionsV1_3_3,
+      return V1_3.createCredentialRequest(
+        options as CredentialRequestOptionsV1_3,
       );
     }
     default: {

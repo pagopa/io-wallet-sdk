@@ -4,8 +4,8 @@ import {
   ItWalletSpecsVersion,
 } from "@pagopa/io-wallet-utils";
 
-import type { CredentialRequestV1_0_2 } from "./v1.0.2/z-credential";
-import type { CredentialRequestV1_3_3 } from "./v1.3.3/z-credential";
+import type { CredentialRequestV1_0 } from "./v1.0/z-credential";
+import type { CredentialRequestV1_3 } from "./v1.3/z-credential";
 
 /**
  * Base options shared across all credential request versions
@@ -23,9 +23,11 @@ export interface BaseCredentialRequestOptions {
  * Options for creating a credential request with v1.0.2
  * Does NOT include keyAttestation parameter
  */
-export interface CredentialRequestOptionsV1_0_2
+export interface CredentialRequestOptionsV1_0
   extends BaseCredentialRequestOptions {
-  config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 } & IoWalletSdkConfig;
+  config: {
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0;
+  } & IoWalletSdkConfig;
   // keyAttestation is NOT accepted in v1.0.2
 }
 
@@ -33,9 +35,11 @@ export interface CredentialRequestOptionsV1_0_2
  * Options for creating a credential request with v1.3.3
  * Requires keyAttestation parameter
  */
-export interface CredentialRequestOptionsV1_3_3
+export interface CredentialRequestOptionsV1_3
   extends BaseCredentialRequestOptions {
-  config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 } & IoWalletSdkConfig;
+  config: {
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3;
+  } & IoWalletSdkConfig;
   keyAttestation: string; // Required in v1.3.3
 }
 
@@ -44,13 +48,11 @@ export interface CredentialRequestOptionsV1_3_3
  * Used by the version router
  */
 export type CredentialRequestOptions =
-  | CredentialRequestOptionsV1_0_2
-  | CredentialRequestOptionsV1_3_3;
+  | CredentialRequestOptionsV1_0
+  | CredentialRequestOptionsV1_3;
 
 /**
  * Union type for credential request return values
  * TypeScript will narrow this based on the config version
  */
-export type CredentialRequest =
-  | CredentialRequestV1_0_2
-  | CredentialRequestV1_3_3;
+export type CredentialRequest = CredentialRequestV1_0 | CredentialRequestV1_3;

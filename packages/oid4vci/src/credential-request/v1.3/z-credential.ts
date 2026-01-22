@@ -20,7 +20,7 @@ const ProofsSchema = z.object({
  * - JWT is an array (supports batch issuance)
  * - JWT header includes `key_attestation` field
  */
-export const zCredentialRequestV1_3_3 = z
+export const zCredentialRequestV1_3 = z
   .object({
     credential_configuration_id: z
       .string()
@@ -68,4 +68,4 @@ export const zCredentialRequestV1_3_3 = z
     }
   });
 
-export type CredentialRequestV1_3_3 = z.infer<typeof zCredentialRequestV1_3_3>;
+export type CredentialRequestV1_3 = z.infer<typeof zCredentialRequestV1_3>;

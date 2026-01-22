@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Oid4vciError } from "../../../errors";
 import {
-  CredentialRequestOptionsV1_0_2,
+  CredentialRequestOptionsV1_0,
   createCredentialRequest,
 } from "../create-credential-request";
 
@@ -23,7 +23,7 @@ const mockSigner = {
 };
 
 describe("createCredentialRequest v1.0.2", () => {
-  const baseOptions: CredentialRequestOptionsV1_0_2 = {
+  const baseOptions: CredentialRequestOptionsV1_0 = {
     callbacks: mockCallbacks,
     clientId: "test-client-id",
     credential_identifier: "test-credential-identifier",

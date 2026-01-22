@@ -1,4 +1,4 @@
-import { CredentialRequestV1_3_3 } from "../z-credential";
+import { CredentialRequestV1_3 } from "../z-credential";
 
 /**
  * Mock JWT signer for testing v1.3.3
@@ -24,7 +24,7 @@ export const sampleKeyAttestation =
 /**
  * Sample credential request for v1.3.3 (single credential)
  */
-export const sampleCredentialRequestV1_3_3: CredentialRequestV1_3_3 = {
+export const sampleCredentialRequestV1_3: CredentialRequestV1_3 = {
   credential_identifier: "education_degree_unibo_2017_l31_informatica",
   proofs: {
     jwt: [
@@ -36,7 +36,7 @@ export const sampleCredentialRequestV1_3_3: CredentialRequestV1_3_3 = {
 /**
  * Sample credential request for v1.3.3 (batch - multiple credentials)
  */
-export const sampleBatchCredentialRequestV1_3_3: CredentialRequestV1_3_3 = {
+export const sampleBatchCredentialRequestV1_3: CredentialRequestV1_3 = {
   credential_identifier: "batch_credentials",
   proofs: {
     jwt: [
@@ -50,7 +50,7 @@ export const sampleBatchCredentialRequestV1_3_3: CredentialRequestV1_3_3 = {
 /**
  * Sample credential response for v1.3.3 (single credential)
  */
-export const sampleCredentialResponseV1_3_3 = {
+export const sampleCredentialResponseV1_3 = {
   credentials: [
     {
       credential:
@@ -62,7 +62,7 @@ export const sampleCredentialResponseV1_3_3 = {
 /**
  * Sample credential response for v1.3.3 (batch - multiple credentials)
  */
-export const sampleBatchCredentialResponseV1_3_3 = {
+export const sampleBatchCredentialResponseV1_3 = {
   credentials: [
     {
       credential:
@@ -82,7 +82,7 @@ export const sampleBatchCredentialResponseV1_3_3 = {
 /**
  * Sample deferred credential response for v1.3.3
  */
-export const sampleDeferredCredentialResponseV1_3_3 = {
+export const sampleDeferredCredentialResponseV1_3 = {
   lead_time: 86400,
   transaction_id: "txn_v1.3.3_123456789",
 };

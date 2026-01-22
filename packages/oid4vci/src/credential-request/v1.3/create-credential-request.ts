@@ -6,33 +6,35 @@ import {
 } from "@openid4vc/utils";
 
 import { Oid4vciError } from "../../errors";
-import {
-  CredentialRequestV1_0_2,
-  zCredentialRequestV1_0_2,
-} from "./z-credential";
+import { CredentialRequestV1_3, zCredentialRequestV1_3 } from "./z-credential";
 
 /**
- * Options for creating a credential request in IT-Wallet v1.0.2
+ * Options for creating a credential request in IT-Wallet v1.3.3
  */
-export interface CredentialRequestOptionsV1_0_2 {
+export interface CredentialRequestOptionsV1_3 {
   callbacks: Pick<CallbackContext, "signJwt">;
   clientId: string;
   credential_identifier: string;
   issuerIdentifier: string;
+  /**
+   * Wallet Unit Attestation (key attestation JWT)
+   * REQUIRED in v1.3.3 - included in JWT proof header
+   */
+  keyAttestation: string;
   nonce: string;
   signer: JwtSignerJwk;
 }
 
 /**
- * Create a Credential Request for IT-Wallet v1.0.2
+ * Create a Credential Request for IT-Wallet v1.3.3
  *
- * Version 1.0.2 specifics:
- * - Returns singular `proof` object with explicit `proof_type` field
- * - JWT header does NOT include `key_attestation`
- * - Single credential per request (no batch support)
+ * Version 1.3.3 specifics:
+ * - Returns plural `proofs` object with JWT array (batch support)
+ * - proof_type field removed (implicit from structure)
+ * - JWT header includes `key_attestation` field (Wallet Unit Attestation)
  *
- * @param options - Request options
- * @returns Credential request for v1.0.2
+ * @param options - Request options including keyAttestation
+ * @returns Credential request for v1.3.3
  * @throws {ValidationError} When credential request validation fails
  * @throws {Oid4vciError} For other unexpected errors
  *
@@ -42,14 +44,15 @@ export interface CredentialRequestOptionsV1_0_2 {
  *   clientId: "my-client-id",
  *   credential_identifier: "UniversityDegree",
  *   issuerIdentifier: "https://issuer.example.com",
+ *   keyAttestation: "eyJ...", // Required in v1.3.3
  *   nonce: "c_nonce_value",
  *   signer: myJwtSigner
  * });
- * // Returns: { credential_identifier: "...", proof: { jwt: "...", proof_type: "jwt" } }
+ * // Returns: { credential_identifier: "...", proofs: { jwt: ["..."] } }
  */
 export const createCredentialRequest = async (
-  options: CredentialRequestOptionsV1_0_2,
-): Promise<CredentialRequestV1_0_2> => {
+  options: CredentialRequestOptionsV1_3,
+): Promise<CredentialRequestV1_3> => {
   try {
     const { signJwt } = options.callbacks;
 
@@ -57,6 +60,7 @@ export const createCredentialRequest = async (
       header: {
         alg: options.signer.alg,
         jwk: options.signer.publicJwk,
+        key_attestation: options.keyAttestation,
         typ: "openid4vci-proof+jwt",
       },
       payload: {
@@ -67,20 +71,17 @@ export const createCredentialRequest = async (
       },
     });
 
-    return parseWithErrorHandling(zCredentialRequestV1_0_2, {
+    return parseWithErrorHandling(zCredentialRequestV1_3, {
       credential_identifier: options.credential_identifier,
-      proof: {
-        jwt: proofJwt.jwt,
-        proof_type: "jwt",
+      proofs: {
+        jwt: [proofJwt.jwt], // Array for batch support
       },
-    } satisfies CredentialRequestV1_0_2);
+    } satisfies CredentialRequestV1_3);
   } catch (error) {
-    // Re-throw validation errors with full context for debugging
     if (error instanceof ValidationError) {
       throw error;
     }
 
-    // Only wrap unexpected errors
     throw new Oid4vciError(
       `Unexpected error during create credential request: ${error instanceof Error ? error.message : String(error)}`,
     );

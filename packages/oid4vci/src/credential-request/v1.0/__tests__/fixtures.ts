@@ -1,4 +1,4 @@
-import { CredentialRequestV1_0_2 } from "../z-credential";
+import { CredentialRequestV1_0 } from "../z-credential";
 
 /**
  * Mock JWT signer for testing v1.0.2
@@ -18,7 +18,7 @@ export const mockSigner = {
 /**
  * Sample credential request for v1.0.2
  */
-export const sampleCredentialRequestV1_0_2: CredentialRequestV1_0_2 = {
+export const sampleCredentialRequestV1_0: CredentialRequestV1_0 = {
   credential_identifier: "UniversityDegree",
   proof: {
     jwt: "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9wZW5pZDR2Y2ktcHJvb2Yrand0In0.eyJhdWQiOiJodHRwczovL2lzc3Vlci5leGFtcGxlLmNvbSIsImlhdCI6MTcwMDAwMDAwMCwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJub25jZSI6InRlc3Qtbm9uY2UifQ.signature",
@@ -29,7 +29,7 @@ export const sampleCredentialRequestV1_0_2: CredentialRequestV1_0_2 = {
 /**
  * Sample credential response for v1.0.2 (immediate flow)
  */
-export const sampleCredentialResponseV1_0_2 = {
+export const sampleCredentialResponseV1_0 = {
   credentials: [
     {
       credential:
@@ -41,7 +41,7 @@ export const sampleCredentialResponseV1_0_2 = {
 /**
  * Sample credential response for v1.0.2 (deferred flow)
  */
-export const sampleDeferredCredentialResponseV1_0_2 = {
+export const sampleDeferredCredentialResponseV1_0 = {
   lead_time: 86400,
   transaction_id: "txn_123456789",
 };

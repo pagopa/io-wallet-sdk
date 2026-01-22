@@ -6,8 +6,8 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
-  CredentialRequestOptionsV1_0_2,
-  CredentialRequestOptionsV1_3_3,
+  CredentialRequestOptionsV1_0,
+  CredentialRequestOptionsV1_3,
 } from "../types";
 
 import { createCredentialRequest } from "../create-credential-request";
@@ -39,7 +39,9 @@ describe("createCredentialRequest Version Router", () => {
 
   describe("v1.0.2 routing", () => {
     it("should route to v1.0.2 implementation when configured", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+      });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -49,7 +51,7 @@ describe("createCredentialRequest Version Router", () => {
         issuerIdentifier: "https://issuer.example.com",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_0_2);
+      } as CredentialRequestOptionsV1_0);
 
       // v1.0.2 returns singular `proof` object
       expect(result).toHaveProperty("proof");
@@ -58,7 +60,9 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("should NOT include key_attestation in JWT header for v1.0.2", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+      });
 
       await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -68,7 +72,7 @@ describe("createCredentialRequest Version Router", () => {
         issuerIdentifier: "https://issuer.example.com",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_0_2);
+      } as CredentialRequestOptionsV1_0);
 
       const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
       expect(signJwtCall).toBeDefined();
@@ -78,12 +82,14 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("should throw error when keyAttestation provided with v1.0.2", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+      });
 
       // TypeScript prevents this, but test runtime behavior
       type InvalidOptions = {
         keyAttestation: string;
-      } & CredentialRequestOptionsV1_0_2;
+      } & CredentialRequestOptionsV1_0;
 
       await expect(
         createCredentialRequest({
@@ -115,7 +121,9 @@ describe("createCredentialRequest Version Router", () => {
 
   describe("v1.3.3 routing", () => {
     it("should route to v1.3.3 implementation when configured", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+      });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -126,7 +134,7 @@ describe("createCredentialRequest Version Router", () => {
         keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_3_3);
+      } as CredentialRequestOptionsV1_3);
 
       // v1.3.3 returns plural `proofs` object with JWT array
       expect(result).toHaveProperty("proofs");
@@ -135,7 +143,9 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("should include key_attestation in JWT header for v1.3.3", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+      });
       const keyAttestation = "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig";
 
       await createCredentialRequest({
@@ -147,7 +157,7 @@ describe("createCredentialRequest Version Router", () => {
         keyAttestation,
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_3_3);
+      } as CredentialRequestOptionsV1_3);
 
       const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
       expect(signJwtCall).toBeDefined();
@@ -161,8 +171,10 @@ describe("createCredentialRequest Version Router", () => {
   });
 
   describe("Version-specific return types", () => {
-    it("v1.0.2 returns CredentialRequestV1_0_2 type", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
+    it("v1.0.2 returns CredentialRequestV1_0 type", async () => {
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+      });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -172,9 +184,9 @@ describe("createCredentialRequest Version Router", () => {
         issuerIdentifier: "https://issuer.example.com",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_0_2);
+      } as CredentialRequestOptionsV1_0);
 
-      // Type narrowing - TypeScript should infer this as CredentialRequestV1_0_2
+      // Type narrowing - TypeScript should infer this as CredentialRequestV1_0
       expect("proof" in result).toBe(true);
       if ("proof" in result) {
         expect(result.proof.proof_type).toBe("jwt");
@@ -182,8 +194,10 @@ describe("createCredentialRequest Version Router", () => {
       }
     });
 
-    it("v1.3.3 returns CredentialRequestV1_3_3 type", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
+    it("v1.3.3 returns CredentialRequestV1_3 type", async () => {
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+      });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -194,9 +208,9 @@ describe("createCredentialRequest Version Router", () => {
         keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_3_3);
+      } as CredentialRequestOptionsV1_3);
 
-      // Type narrowing - TypeScript should infer this as CredentialRequestV1_3_3
+      // Type narrowing - TypeScript should infer this as CredentialRequestV1_3
       expect("proofs" in result).toBe(true);
       if ("proofs" in result) {
         expect(Array.isArray(result.proofs.jwt)).toBe(true);
@@ -256,7 +270,9 @@ describe("createCredentialRequest Version Router", () => {
 
   describe("Parameter validation across versions", () => {
     it("v1.0.2 works with all required params (no keyAttestation)", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+      });
 
       await expect(
         createCredentialRequest({
@@ -267,12 +283,14 @@ describe("createCredentialRequest Version Router", () => {
           issuerIdentifier: "https://issuer.example.com",
           nonce: "test-nonce",
           signer: mockSigner,
-        } as CredentialRequestOptionsV1_0_2),
+        } as CredentialRequestOptionsV1_0),
       ).resolves.toBeDefined();
     });
 
     it("v1.3.3 requires keyAttestation parameter", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+      });
 
       await expect(
         createCredentialRequest({
@@ -284,7 +302,7 @@ describe("createCredentialRequest Version Router", () => {
           keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig", // Required
           nonce: "test-nonce",
           signer: mockSigner,
-        } as CredentialRequestOptionsV1_3_3),
+        } as CredentialRequestOptionsV1_3),
       ).resolves.toBeDefined();
     });
   });
