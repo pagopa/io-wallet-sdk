@@ -1,4 +1,4 @@
-import type { ItWalletSpecsVersion } from "@pagopa/io-wallet-utils";
+import { ItWalletSpecsVersion } from "@pagopa/io-wallet-utils";
 
 import { z } from "zod";
 
@@ -15,17 +15,17 @@ import {
  * Schema registry mapping versions to their credential request schemas
  */
 export interface CredentialRequestSchemaRegistry {
-  "1.0.2": typeof zCredentialRequestV1_0_2;
-  "1.3.3": typeof zCredentialRequestV1_3_3;
+  [ItWalletSpecsVersion.V1_0]: typeof zCredentialRequestV1_0_2;
+  [ItWalletSpecsVersion.V1_3]: typeof zCredentialRequestV1_3_3;
 }
 
 /**
  * Conditional type: Get the credential request type for a specific version
  */
 export type CredentialRequestForVersion<V extends ItWalletSpecsVersion> =
-  V extends "1.0.2"
+  V extends ItWalletSpecsVersion.V1_0
     ? CredentialRequestV1_0_2
-    : V extends "1.3.3"
+    : V extends ItWalletSpecsVersion.V1_3
       ? CredentialRequestV1_3_3
       : never;
 
@@ -39,8 +39,8 @@ export function getCredentialRequestSchema<V extends ItWalletSpecsVersion>(
   version: V,
 ): CredentialRequestSchemaRegistry[V] {
   const schemas: CredentialRequestSchemaRegistry = {
-    "1.0.2": zCredentialRequestV1_0_2,
-    "1.3.3": zCredentialRequestV1_3_3,
+    [ItWalletSpecsVersion.V1_0]: zCredentialRequestV1_0_2,
+    [ItWalletSpecsVersion.V1_3]: zCredentialRequestV1_3_3,
   };
   return schemas[version];
 }

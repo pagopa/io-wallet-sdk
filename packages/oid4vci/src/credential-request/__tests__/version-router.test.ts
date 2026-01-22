@@ -1,5 +1,6 @@
 import {
   IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -38,7 +39,7 @@ describe("createCredentialRequest Version Router", () => {
 
   describe("v1.0.2 routing", () => {
     it("should route to v1.0.2 implementation when configured", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.0.2" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -57,7 +58,7 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("should NOT include key_attestation in JWT header for v1.0.2", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.0.2" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
 
       await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -77,7 +78,7 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("should throw error when keyAttestation provided with v1.0.2", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.0.2" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
 
       // TypeScript prevents this, but test runtime behavior
       type InvalidOptions = {
@@ -114,7 +115,7 @@ describe("createCredentialRequest Version Router", () => {
 
   describe("v1.3.3 routing", () => {
     it("should route to v1.3.3 implementation when configured", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.3.3" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -134,7 +135,7 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("should include key_attestation in JWT header for v1.3.3", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.3.3" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
       const keyAttestation = "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig";
 
       await createCredentialRequest({
@@ -161,7 +162,7 @@ describe("createCredentialRequest Version Router", () => {
 
   describe("Version-specific return types", () => {
     it("v1.0.2 returns CredentialRequestV1_0_2 type", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.0.2" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -182,7 +183,7 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("v1.3.3 returns CredentialRequestV1_3_3 type", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.3.3" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
 
       const result = await createCredentialRequest({
         callbacks: mockCallbacks,
@@ -244,8 +245,8 @@ describe("createCredentialRequest Version Router", () => {
         throw new Error("Expected error to be thrown");
       } catch (error) {
         if (error instanceof ItWalletSpecsVersionError) {
-          expect(error.supportedVersions).toContain("1.0.2");
-          expect(error.supportedVersions).toContain("1.3.3");
+          expect(error.supportedVersions).toContain(ItWalletSpecsVersion.V1_0);
+          expect(error.supportedVersions).toContain(ItWalletSpecsVersion.V1_3);
         } else {
           throw error;
         }
@@ -255,7 +256,7 @@ describe("createCredentialRequest Version Router", () => {
 
   describe("Parameter validation across versions", () => {
     it("v1.0.2 works with all required params (no keyAttestation)", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.0.2" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
 
       await expect(
         createCredentialRequest({
@@ -271,7 +272,7 @@ describe("createCredentialRequest Version Router", () => {
     });
 
     it("v1.3.3 requires keyAttestation parameter", async () => {
-      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.3.3" });
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
 
       await expect(
         createCredentialRequest({

@@ -1,4 +1,7 @@
-import { ItWalletSpecsVersionError } from "@pagopa/io-wallet-utils";
+import {
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
+} from "@pagopa/io-wallet-utils";
 
 import type {
   CredentialRequest,
@@ -24,7 +27,7 @@ import * as v1_3_3 from "./v1.3.3/create-credential-request";
  * @throws {ItWalletSpecsVersionError} When version is not supported or keyAttestation is used with wrong version
  *
  * @example v1.0.2 - Basic credential request
- * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: '1.0.2' });
+ * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
  * const request = await createCredentialRequest({
  *   config,
  *   callbacks: { signJwt: mySignJwtCallback },
@@ -37,7 +40,7 @@ import * as v1_3_3 from "./v1.3.3/create-credential-request";
  * // Returns: { credential_identifier: "...", proof: { jwt: "...", proof_type: "jwt" } }
  *
  * @example v1.3.3 - Credential request with key attestation
- * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: '1.3.3' });
+ * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
  * const request = await createCredentialRequest({
  *   config,
  *   callbacks: { signJwt: mySignJwtCallback },
@@ -68,20 +71,20 @@ export async function createCredentialRequest(
   const { config } = options;
 
   switch (config.itWalletSpecsVersion) {
-    case "1.0.2": {
+    case ItWalletSpecsVersion.V1_0: {
       // Validate that keyAttestation is NOT provided for v1.0.2
       if ("keyAttestation" in options) {
         throw new ItWalletSpecsVersionError(
           "keyAttestation parameter",
-          "1.0.2",
-          ["1.3.3"],
+          ItWalletSpecsVersion.V1_0,
+          [ItWalletSpecsVersion.V1_3],
         );
       }
       return v1_0_2.createCredentialRequest(
         options as CredentialRequestOptionsV1_0_2,
       );
     }
-    case "1.3.3": {
+    case ItWalletSpecsVersion.V1_3: {
       return v1_3_3.createCredentialRequest(
         options as CredentialRequestOptionsV1_3_3,
       );
@@ -91,7 +94,7 @@ export async function createCredentialRequest(
       throw new ItWalletSpecsVersionError(
         "createCredentialRequest",
         (config as { itWalletSpecsVersion: string }).itWalletSpecsVersion,
-        ["1.0.2", "1.3.3"],
+        [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
       );
     }
   }

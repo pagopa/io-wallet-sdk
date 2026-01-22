@@ -58,10 +58,10 @@ export class UnexpectedStatusCodeError extends Error {
  * throw new ItWalletSpecsVersionError(
  *   'createCredentialRequest',
  *   '2.0.0',
- *   ['1.0.2', '1.3.3']
+ *   [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3]
  * );
  * // Error: Feature "createCredentialRequest" does not support version 2.0.0.
- * // Supported versions: 1.0.2, 1.3.3
+ * // Supported versions: V1_0, V1_3
  */
 export class ItWalletSpecsVersionError extends Error {
   public readonly code = "IT_WALLET_SPECS_VERSION_ERROR";

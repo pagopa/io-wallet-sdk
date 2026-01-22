@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ItWalletSpecsVersion } from "../config";
 import {
   ItWalletSpecsVersionError,
   UnexpectedStatusCodeError,
@@ -11,12 +12,12 @@ describe("ItWalletSpecsVersionError", () => {
       const error = new ItWalletSpecsVersionError(
         "createCredentialRequest",
         "2.0.0",
-        ["1.0.2", "1.3.3"],
+        [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
       );
 
       expect(error.message).toBe(
         'Feature "createCredentialRequest" does not support version 2.0.0.\n' +
-          "Supported versions: 1.0.2, 1.3.3",
+          "Supported versions: V1_0, V1_3",
       );
     });
 
@@ -86,21 +87,21 @@ describe("ItWalletSpecsVersionError", () => {
       const error = new ItWalletSpecsVersionError(
         "fetchCredentialResponse",
         "1.0.0",
-        ["1.3.3"],
+        [ItWalletSpecsVersion.V1_3],
       );
 
-      expect(error.message).toContain("Supported versions: 1.3.3");
+      expect(error.message).toContain("Supported versions: V1_3");
     });
 
     it("should format message with multiple supported versions", () => {
       const error = new ItWalletSpecsVersionError(
         "fetchCredentialResponse",
         "1.0.0",
-        ["1.0.2", "1.3.3", "2.0.0"],
+        [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3, "2.0.0"],
       );
 
       expect(error.message).toContain(
-        "Supported versions: 1.0.2, 1.3.3, 2.0.0",
+        "Supported versions: V1_0, V1_3, 2.0.0",
       );
     });
 
@@ -139,13 +140,13 @@ describe("ItWalletSpecsVersionError", () => {
         throw new ItWalletSpecsVersionError(
           "createCredentialRequest",
           "2.0.0",
-          ["1.0.2", "1.3.3"],
+          [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
         );
       } catch (error) {
         if (error instanceof ItWalletSpecsVersionError) {
           expect(error.feature).toBe("createCredentialRequest");
           expect(error.requestedVersion).toBe("2.0.0");
-          expect(error.supportedVersions).toEqual(["1.0.2", "1.3.3"]);
+          expect(error.supportedVersions).toEqual([ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3]);
           expect(error.code).toBe("IT_WALLET_SPECS_VERSION_ERROR");
         } else {
           throw new Error("Expected ItWalletSpecsVersionError");

@@ -1,5 +1,6 @@
 import {
   IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
@@ -22,7 +23,7 @@ vi.mock("@openid4vc/utils", async (importOriginal) => {
 });
 
 describe("fetchCredentialResponse", () => {
-  const config = new IoWalletSdkConfig({ itWalletSpecsVersion: "1.0.2" });
+  const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
 
   const mockCredentialRequest: CredentialRequestV1_0_2 = {
     credential_identifier: "test-credential-id",
