@@ -1,42 +1,4 @@
-import { ItWalletSpecsVersion } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
-
-import { type CredentialRequestV1_0, zCredentialRequestV1_0 } from "./v1.0";
-import { type CredentialRequestV1_3, zCredentialRequestV1_3 } from "./v1.3";
-
-/**
- * Schema registry mapping versions to their credential request schemas
- */
-export interface CredentialRequestSchemaRegistry {
-  [ItWalletSpecsVersion.V1_0]: typeof zCredentialRequestV1_0;
-  [ItWalletSpecsVersion.V1_3]: typeof zCredentialRequestV1_3;
-}
-
-/**
- * Conditional type: Get the credential request type for a specific version
- */
-export type CredentialRequestForVersion<V extends ItWalletSpecsVersion> =
-  V extends ItWalletSpecsVersion.V1_0
-    ? CredentialRequestV1_0
-    : V extends ItWalletSpecsVersion.V1_3
-      ? CredentialRequestV1_3
-      : never;
-
-/**
- * Get the appropriate credential request schema for a version
- *
- * @param version - IT Wallet specification version
- * @returns Zod schema for the specified version
- */
-export function getCredentialRequestSchema<V extends ItWalletSpecsVersion>(
-  version: V,
-): CredentialRequestSchemaRegistry[V] {
-  const schemas: CredentialRequestSchemaRegistry = {
-    [ItWalletSpecsVersion.V1_0]: zCredentialRequestV1_0,
-    [ItWalletSpecsVersion.V1_3]: zCredentialRequestV1_3,
-  };
-  return schemas[version];
-}
 
 /**
  * Credential Response schema (version-agnostic)
