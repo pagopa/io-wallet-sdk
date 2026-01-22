@@ -22,7 +22,7 @@ const mockSigner = {
   },
 };
 
-describe("createCredentialRequest v1.3.3", () => {
+describe("createCredentialRequest v1.3", () => {
   const baseOptions: CredentialRequestOptionsV1_3 = {
     callbacks: mockCallbacks,
     clientId: "test-client-id",
@@ -70,7 +70,7 @@ describe("createCredentialRequest v1.3.3", () => {
     );
   });
 
-  it("should NOT include proof_type field (implicit in v1.3.3)", async () => {
+  it("should NOT include proof_type field (implicit in v1.3)", async () => {
     const result = await createCredentialRequest(baseOptions);
 
     // @ts-expect-error - proof_type should not exist
@@ -84,7 +84,7 @@ describe("createCredentialRequest v1.3.3", () => {
       header: {
         alg: "ES256",
         jwk: mockSigner.publicJwk,
-        key_attestation: "eyJhbGciOiJFUzI1NiJ9.test-key-attestation.signature", // NEW in v1.3.3
+        key_attestation: "eyJhbGciOiJFUzI1NiJ9.test-key-attestation.signature", // NEW in v1.3
         typ: "openid4vci-proof+jwt",
       },
       payload: {

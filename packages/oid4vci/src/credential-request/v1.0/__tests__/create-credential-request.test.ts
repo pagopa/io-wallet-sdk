@@ -22,7 +22,7 @@ const mockSigner = {
   },
 };
 
-describe("createCredentialRequest v1.0.2", () => {
+describe("createCredentialRequest v1.0", () => {
   const baseOptions: CredentialRequestOptionsV1_0 = {
     callbacks: mockCallbacks,
     clientId: "test-client-id",
@@ -73,7 +73,7 @@ describe("createCredentialRequest v1.0.2", () => {
         alg: "ES256",
         jwk: mockSigner.publicJwk,
         typ: "openid4vci-proof+jwt",
-        // key_attestation should NOT be present in v1.0.2
+        // key_attestation should NOT be present in v1.0
       },
       payload: {
         aud: "https://issuer.example.com",

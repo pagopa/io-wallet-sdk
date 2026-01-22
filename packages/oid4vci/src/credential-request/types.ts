@@ -20,7 +20,7 @@ export interface BaseCredentialRequestOptions {
 }
 
 /**
- * Options for creating a credential request with v1.0.2
+ * Options for creating a credential request with v1.0
  * Does NOT include keyAttestation parameter
  */
 export interface CredentialRequestOptionsV1_0
@@ -28,11 +28,11 @@ export interface CredentialRequestOptionsV1_0
   config: {
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_0;
   } & IoWalletSdkConfig;
-  // keyAttestation is NOT accepted in v1.0.2
+  // keyAttestation is NOT accepted in v1.0
 }
 
 /**
- * Options for creating a credential request with v1.3.3
+ * Options for creating a credential request with v1.3
  * Requires keyAttestation parameter
  */
 export interface CredentialRequestOptionsV1_3
@@ -40,7 +40,7 @@ export interface CredentialRequestOptionsV1_3
   config: {
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_3;
   } & IoWalletSdkConfig;
-  keyAttestation: string; // Required in v1.3.3
+  keyAttestation: string; // Required in v1.3
 }
 
 /**

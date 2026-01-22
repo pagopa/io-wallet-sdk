@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Proof object schema for v1.0.2
+ * Proof object schema for v1.0
  * Contains a JWT and explicit proof_type field
  */
 const ProofSchema = z.object({
@@ -10,7 +10,7 @@ const ProofSchema = z.object({
 });
 
 /**
- * Credential request schema for IT-Wallet v1.0.2
+ * Credential request schema for IT-Wallet v1.0
  *
  * Key characteristics:
  * - Uses singular `proof` object

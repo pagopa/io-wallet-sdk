@@ -4,14 +4,14 @@ import { IoWalletSdkConfig, ItWalletSpecsVersion } from "../config";
 
 describe("IoWalletSdkConfig", () => {
   describe("constructor", () => {
-    it("should create config with v1.0.2", () => {
+    it("should create config with v1.0", () => {
       const config = new IoWalletSdkConfig({
         itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
       });
       expect(config.itWalletSpecsVersion).toBe(ItWalletSpecsVersion.V1_0);
     });
 
-    it("should create config with v1.3.3", () => {
+    it("should create config with v1.3", () => {
       const config = new IoWalletSdkConfig({
         itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
       });
@@ -20,28 +20,28 @@ describe("IoWalletSdkConfig", () => {
   });
 
   describe("isVersion", () => {
-    it("should return true when version matches for v1.0.2", () => {
+    it("should return true when version matches for v1.0", () => {
       const config = new IoWalletSdkConfig({
         itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
       });
       expect(config.isVersion(ItWalletSpecsVersion.V1_0)).toBe(true);
     });
 
-    it("should return false when version does not match for v1.0.2", () => {
+    it("should return false when version does not match for v1.0", () => {
       const config = new IoWalletSdkConfig({
         itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
       });
       expect(config.isVersion(ItWalletSpecsVersion.V1_3)).toBe(false);
     });
 
-    it("should return true when version matches for v1.3.3", () => {
+    it("should return true when version matches for v1.3", () => {
       const config = new IoWalletSdkConfig({
         itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
       });
       expect(config.isVersion(ItWalletSpecsVersion.V1_3)).toBe(true);
     });
 
-    it("should return false when version does not match for v1.3.3", () => {
+    it("should return false when version does not match for v1.3", () => {
       const config = new IoWalletSdkConfig({
         itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
       });

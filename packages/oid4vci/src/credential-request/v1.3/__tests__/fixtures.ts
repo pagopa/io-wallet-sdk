@@ -1,14 +1,14 @@
 import { CredentialRequestV1_3 } from "../z-credential";
 
 /**
- * Mock JWT signer for testing v1.3.3
+ * Mock JWT signer for testing v1.3
  */
 export const mockSigner = {
   alg: "ES256" as const,
   method: "jwk" as const,
   publicJwk: {
     crv: "P-256",
-    kid: "test-kid-v1.3.3",
+    kid: "test-kid-v1.3",
     kty: "EC",
     x: "test-x-value",
     y: "test-y-value",
@@ -22,7 +22,7 @@ export const sampleKeyAttestation =
   "eyJhbGciOiJFUzI1NiIsInR5cCI6ImtleS1hdHRlc3RhdGlvbitqd3QifQ.eyJpc3MiOiJ3YWxsZXQtcHJvdmlkZXIiLCJzdWIiOiJ3YWxsZXQtaW5zdGFuY2UtaWQiLCJpYXQiOjE3MDAwMDAwMDB9.signature";
 
 /**
- * Sample credential request for v1.3.3 (single credential)
+ * Sample credential request for v1.3 (single credential)
  */
 export const sampleCredentialRequestV1_3: CredentialRequestV1_3 = {
   credential_identifier: "education_degree_unibo_2017_l31_informatica",
@@ -34,7 +34,7 @@ export const sampleCredentialRequestV1_3: CredentialRequestV1_3 = {
 };
 
 /**
- * Sample credential request for v1.3.3 (batch - multiple credentials)
+ * Sample credential request for v1.3 (batch - multiple credentials)
  */
 export const sampleBatchCredentialRequestV1_3: CredentialRequestV1_3 = {
   credential_identifier: "batch_credentials",
@@ -48,7 +48,7 @@ export const sampleBatchCredentialRequestV1_3: CredentialRequestV1_3 = {
 };
 
 /**
- * Sample credential response for v1.3.3 (single credential)
+ * Sample credential response for v1.3 (single credential)
  */
 export const sampleCredentialResponseV1_3 = {
   credentials: [
@@ -60,7 +60,7 @@ export const sampleCredentialResponseV1_3 = {
 };
 
 /**
- * Sample credential response for v1.3.3 (batch - multiple credentials)
+ * Sample credential response for v1.3 (batch - multiple credentials)
  */
 export const sampleBatchCredentialResponseV1_3 = {
   credentials: [
@@ -80,9 +80,9 @@ export const sampleBatchCredentialResponseV1_3 = {
 };
 
 /**
- * Sample deferred credential response for v1.3.3
+ * Sample deferred credential response for v1.3
  */
 export const sampleDeferredCredentialResponseV1_3 = {
   lead_time: 86400,
-  transaction_id: "txn_v1.3.3_123456789",
+  transaction_id: "txn_v1.3_123456789",
 };

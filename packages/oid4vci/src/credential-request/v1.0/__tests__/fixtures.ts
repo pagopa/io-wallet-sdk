@@ -1,14 +1,14 @@
 import { CredentialRequestV1_0 } from "../z-credential";
 
 /**
- * Mock JWT signer for testing v1.0.2
+ * Mock JWT signer for testing v1.0
  */
 export const mockSigner = {
   alg: "ES256" as const,
   method: "jwk" as const,
   publicJwk: {
     crv: "P-256",
-    kid: "test-kid-v1.0.2",
+    kid: "test-kid-v1.0",
     kty: "EC",
     x: "test-x-value",
     y: "test-y-value",
@@ -16,7 +16,7 @@ export const mockSigner = {
 };
 
 /**
- * Sample credential request for v1.0.2
+ * Sample credential request for v1.0
  */
 export const sampleCredentialRequestV1_0: CredentialRequestV1_0 = {
   credential_identifier: "UniversityDegree",
@@ -27,7 +27,7 @@ export const sampleCredentialRequestV1_0: CredentialRequestV1_0 = {
 };
 
 /**
- * Sample credential response for v1.0.2 (immediate flow)
+ * Sample credential response for v1.0 (immediate flow)
  */
 export const sampleCredentialResponseV1_0 = {
   credentials: [
@@ -39,7 +39,7 @@ export const sampleCredentialResponseV1_0 = {
 };
 
 /**
- * Sample credential response for v1.0.2 (deferred flow)
+ * Sample credential response for v1.0 (deferred flow)
  */
 export const sampleDeferredCredentialResponseV1_0 = {
   lead_time: 86400,

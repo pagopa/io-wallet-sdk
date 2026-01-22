@@ -23,7 +23,7 @@ export interface FetchCredentialResponseOptions {
   callbacks: Pick<CallbackContext, "fetch">;
   credentialEndpoint: string;
   /**
-   * Credential request object (supports both v1.0.2 and v1.3.3 formats)
+   * Credential request object (supports both v1.0 and v1.3 formats)
    */
   credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
   dPoP: string;
@@ -32,7 +32,7 @@ export interface FetchCredentialResponseOptions {
 /**
  * Fetch a credential response from the credential endpoint
  *
- * Supports both v1.0.2 and v1.3.3 credential request formats.
+ * Supports both v1.0 and v1.3 credential request formats.
  * The response format is version-agnostic.
  *
  * @param options - Configuration for credential fetch

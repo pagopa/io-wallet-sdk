@@ -9,7 +9,7 @@ import { Oid4vciError } from "../../errors";
 import { CredentialRequestV1_3, zCredentialRequestV1_3 } from "./z-credential";
 
 /**
- * Options for creating a credential request in IT-Wallet v1.3.3
+ * Options for creating a credential request in IT-Wallet v1.3
  */
 export interface CredentialRequestOptionsV1_3 {
   callbacks: Pick<CallbackContext, "signJwt">;
@@ -18,7 +18,7 @@ export interface CredentialRequestOptionsV1_3 {
   issuerIdentifier: string;
   /**
    * Wallet Unit Attestation (key attestation JWT)
-   * REQUIRED in v1.3.3 - included in JWT proof header
+   * REQUIRED in v1.3 - included in JWT proof header
    */
   keyAttestation: string;
   nonce: string;
@@ -26,7 +26,7 @@ export interface CredentialRequestOptionsV1_3 {
 }
 
 /**
- * Create a Credential Request for IT-Wallet v1.3.3
+ * Create a Credential Request for IT-Wallet v1.3
  *
  * Version 1.3.3 specifics:
  * - Returns plural `proofs` object with JWT array (batch support)
@@ -34,7 +34,7 @@ export interface CredentialRequestOptionsV1_3 {
  * - JWT header includes `key_attestation` field (Wallet Unit Attestation)
  *
  * @param options - Request options including keyAttestation
- * @returns Credential request for v1.3.3
+ * @returns Credential request for v1.3
  * @throws {ValidationError} When credential request validation fails
  * @throws {Oid4vciError} For other unexpected errors
  *
@@ -44,7 +44,7 @@ export interface CredentialRequestOptionsV1_3 {
  *   clientId: "my-client-id",
  *   credential_identifier: "UniversityDegree",
  *   issuerIdentifier: "https://issuer.example.com",
- *   keyAttestation: "eyJ...", // Required in v1.3.3
+ *   keyAttestation: "eyJ...", // Required in v1.3
  *   nonce: "c_nonce_value",
  *   signer: myJwtSigner
  * });

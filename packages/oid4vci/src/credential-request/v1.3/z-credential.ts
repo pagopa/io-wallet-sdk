@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Proofs object schema for v1.3.3
+ * Proofs object schema for v1.3
  * Contains an array of JWTs (supports batch issuance)
  * proof_type is implicit (determined by the property name)
  */
@@ -12,9 +12,9 @@ const ProofsSchema = z.object({
 });
 
 /**
- * Credential request schema for IT-Wallet v1.3.3
+ * Credential request schema for IT-Wallet v1.3
  *
- * Key changes from v1.0.2:
+ * Key changes from v1.0:
  * - Uses plural `proofs` object (not `proof`)
  * - proof_type field removed (implicit from structure)
  * - JWT is an array (supports batch issuance)

@@ -40,7 +40,7 @@ export function getCredentialRequestSchema<V extends ItWalletSpecsVersion>(
 
 /**
  * Credential Response schema (version-agnostic)
- * The response format is the same across v1.0.2 and v1.3.3
+ * The response format is the same across v1.0 and v1.3
  */
 export const zCredentialResponse = z
   .object({

@@ -9,7 +9,7 @@ import { Oid4vciError } from "../../errors";
 import { CredentialRequestV1_0, zCredentialRequestV1_0 } from "./z-credential";
 
 /**
- * Options for creating a credential request in IT-Wallet v1.0.2
+ * Options for creating a credential request in IT-Wallet v1.0
  */
 export interface CredentialRequestOptionsV1_0 {
   callbacks: Pick<CallbackContext, "signJwt">;
@@ -21,7 +21,7 @@ export interface CredentialRequestOptionsV1_0 {
 }
 
 /**
- * Create a Credential Request for IT-Wallet v1.0.2
+ * Create a Credential Request for IT-Wallet v1.0
  *
  * Version 1.0.2 specifics:
  * - Returns singular `proof` object with explicit `proof_type` field
@@ -29,7 +29,7 @@ export interface CredentialRequestOptionsV1_0 {
  * - Single credential per request (no batch support)
  *
  * @param options - Request options
- * @returns Credential request for v1.0.2
+ * @returns Credential request for v1.0
  * @throws {ValidationError} When credential request validation fails
  * @throws {Oid4vciError} For other unexpected errors
  *
