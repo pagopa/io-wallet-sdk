@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-oid-federation
 
+## 0.7.7
+
+### Patch Changes
+
+- 77ee405: Update import paths and bump @openid-federation/core version
+
 ## 0.7.6
 
 ### Patch Changes
