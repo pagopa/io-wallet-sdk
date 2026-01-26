@@ -51,7 +51,7 @@ This approach gives consumers full flexibility — they can either use the built
 
 ---
 
-## � Multi-Version Support
+## Multi-Version Support
 The SDK supports multiple versions of the Italian Wallet specifications simultaneously. Follow these guidelines when implementing version-specific features:
 
 ### Directory Structure
