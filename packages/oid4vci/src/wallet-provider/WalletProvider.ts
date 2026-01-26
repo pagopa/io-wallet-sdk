@@ -91,6 +91,7 @@ export interface KeyAttestationOptions {
 
   /**
    * The levels of security for key storage as per ISO 18045 standards.
+   * @type {[string, ...string[]]}
    */
   keyStorage: [string, ...string[]];
 
@@ -123,6 +124,18 @@ export interface KeyAttestationOptions {
  * It handles the creation of wallet attestations required during the credential issuance flow.
  */
 export class WalletProvider extends Openid4vciWalletProvider {
+  /**
+   * Creates a wallet unit attestation.
+   *
+   * The key attestation is a signed token that describes the attested keys, their storage characteristics,
+   * user authentication level, and status, and can include certification and a trust chain as needed.
+   *
+   * @public
+   * @async
+   * @param {KeyAttestationOptions} options - The options used to construct and sign the key attestation JWT.
+   * @returns {Promise<string>} A promise that resolves to the signed key attestation JWT.
+   * @throws {WalletProviderError} Thrown when the JWT cannot be created or signed.
+   */
   public async createItKeyAttestationJwt(
     options: KeyAttestationOptions,
   ): Promise<string> {
@@ -130,7 +143,7 @@ export class WalletProvider extends Openid4vciWalletProvider {
 
     const issuedAt = options.issuedAt ?? new Date();
     const expiresAt =
-      options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60);
+      options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 360);
 
     const header = {
       alg: options.signer.alg,
@@ -166,7 +179,7 @@ export class WalletProvider extends Openid4vciWalletProvider {
   }
 
   /**
-   * Creates a wallet attestation JWT.
+   * Creates a wallet app attestation JWT.
    *
    * This method constructs a signed JWT that asserts the wallet's control over a specific
    * cryptographic key (DPoP key). This is a security measure to ensure that the entity
@@ -191,7 +204,7 @@ export class WalletProvider extends Openid4vciWalletProvider {
         jwk: options.dpopJwkPublic,
       },
       expiresAt:
-        options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60 * 60),
+        options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 360),
       issuer: options.issuer,
       signer: {
         alg: "ES256",

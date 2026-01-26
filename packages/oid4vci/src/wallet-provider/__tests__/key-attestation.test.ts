@@ -193,7 +193,7 @@ describe("createItKeyAttestationJwt", () => {
 
     expect(mockAddSecondsToDate).toHaveBeenCalledWith(
       expect.any(Date),
-      3600 * 24 * 60,
+      3600 * 24 * 360,
     );
   });
 
