@@ -28,7 +28,7 @@ export interface CredentialRequestOptionsV1_3 {
 /**
  * Create a Credential Request for IT-Wallet v1.3
  *
- * Version 1.3.3 specifics:
+ * Version 1.3 specifics:
  * - Returns plural `proofs` object with JWT array (batch support)
  * - proof_type field removed (implicit from structure)
  * - JWT header includes `key_attestation` field (Wallet Unit Attestation)
