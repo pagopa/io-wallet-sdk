@@ -3,12 +3,7 @@ import {
   ItWalletSpecsVersionError,
 } from "@pagopa/io-wallet-utils";
 
-import type {
-  CredentialRequest,
-  CredentialRequestOptions,
-  CredentialRequestOptionsV1_0,
-  CredentialRequestOptionsV1_3,
-} from "./types";
+import type { CredentialRequest, CredentialRequestOptions } from "./types";
 import type { CredentialRequestV1_0 } from "./v1.0/z-credential";
 import type { CredentialRequestV1_3 } from "./v1.3/z-credential";
 
@@ -56,12 +51,12 @@ import * as V1_3 from "./v1.3/create-credential-request";
 
 // Function overload for v1.0
 export function createCredentialRequest(
-  options: CredentialRequestOptionsV1_0,
+  options: V1_0.CredentialRequestOptionsV1_0,
 ): Promise<CredentialRequestV1_0>;
 
 // Function overload for v1.3
 export function createCredentialRequest(
-  options: CredentialRequestOptionsV1_3,
+  options: V1_3.CredentialRequestOptionsV1_3,
 ): Promise<CredentialRequestV1_3>;
 
 // Implementation signature (not callable by users)
@@ -81,12 +76,12 @@ export async function createCredentialRequest(
         );
       }
       return V1_0.createCredentialRequest(
-        options as CredentialRequestOptionsV1_0,
+        options as V1_0.CredentialRequestOptionsV1_0,
       );
     }
     case ItWalletSpecsVersion.V1_3: {
       return V1_3.createCredentialRequest(
-        options as CredentialRequestOptionsV1_3,
+        options as V1_3.CredentialRequestOptionsV1_3,
       );
     }
     default: {

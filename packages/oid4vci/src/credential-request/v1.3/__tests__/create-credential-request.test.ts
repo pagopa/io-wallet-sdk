@@ -1,3 +1,7 @@
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Oid4vciError } from "../../../errors";
@@ -26,6 +30,9 @@ describe("createCredentialRequest v1.3", () => {
   const baseOptions: CredentialRequestOptionsV1_3 = {
     callbacks: mockCallbacks,
     clientId: "test-client-id",
+    config: new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    }) as CredentialRequestOptionsV1_3["config"],
     credential_identifier: "test-credential-identifier",
     issuerIdentifier: "https://issuer.example.com",
     keyAttestation: "eyJhbGciOiJFUzI1NiJ9.test-key-attestation.signature",

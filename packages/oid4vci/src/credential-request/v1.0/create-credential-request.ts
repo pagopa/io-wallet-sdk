@@ -1,23 +1,27 @@
-import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
 import {
   ValidationError,
   dateToSeconds,
   parseWithErrorHandling,
 } from "@openid4vc/utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 
 import { Oid4vciError } from "../../errors";
+import { BaseCredentialRequestOptions } from "../types";
 import { CredentialRequestV1_0, zCredentialRequestV1_0 } from "./z-credential";
 
 /**
- * Options for creating a credential request in IT-Wallet v1.0
+ * Options for creating a credential request with v1.0
+ * Does NOT include keyAttestation parameter
  */
-export interface CredentialRequestOptionsV1_0 {
-  callbacks: Pick<CallbackContext, "signJwt">;
-  clientId: string;
-  credential_identifier: string;
-  issuerIdentifier: string;
-  nonce: string;
-  signer: JwtSignerJwk;
+export interface CredentialRequestOptionsV1_0
+  extends BaseCredentialRequestOptions {
+  config: {
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0;
+  } & IoWalletSdkConfig;
+  // keyAttestation is NOT accepted in v1.0
 }
 
 /**

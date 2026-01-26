@@ -139,7 +139,9 @@ describe("createCredentialRequest Version Router", () => {
       // v1.3 returns plural `proofs` object with JWT array
       expect(result).toHaveProperty("proofs");
       expect(result).not.toHaveProperty("proof");
-      expect(result.proofs.jwt).toBeInstanceOf(Array);
+      if ("proofs" in result) {
+        expect(result.proofs.jwt).toBeInstanceOf(Array);
+      }
     });
 
     it("should include key_attestation in JWT header for v1.3", async () => {
