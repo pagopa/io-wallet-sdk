@@ -72,12 +72,9 @@ export const createCredentialRequest = async (
       },
     } satisfies CredentialRequestV1_0);
   } catch (error) {
-    // Re-throw validation errors with full context for debugging
     if (error instanceof ValidationError) {
       throw error;
     }
-
-    // Only wrap unexpected errors
     throw new Oid4vciError(
       `Unexpected error during create credential request: ${error instanceof Error ? error.message : String(error)}`,
     );
