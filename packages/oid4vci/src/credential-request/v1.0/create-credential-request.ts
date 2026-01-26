@@ -23,7 +23,7 @@ export interface CredentialRequestOptionsV1_0 {
 /**
  * Create a Credential Request for IT-Wallet v1.0
  *
- * Version 1.0.2 specifics:
+ * Version 1.0 specifics:
  * - Returns singular `proof` object with explicit `proof_type` field
  * - JWT header does NOT include `key_attestation`
  * - Single credential per request (no batch support)
