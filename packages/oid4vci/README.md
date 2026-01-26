@@ -12,7 +12,6 @@ pnpm add @pagopa/io-wallet-oid4vci
 
 # Using yarn
 yarn add @pagopa/io-wallet-oid4vci
-```
 
 ## Usage
 
@@ -62,6 +61,69 @@ const attestationJwt = await walletProvider.createItWalletAttestationJwt(attesta
 ```
 
 The wallet attestation JWT can then be used in the OID4VCI protocol flow to prove the wallet's identity and key possession.
+
+### Creating Credential Requests
+
+The credential request format varies based on the configured IT-Wallet specification version:
+
+#### IT-Wallet v1.0
+
+```typescript
+import { 
+  IoWalletSdkConfig, 
+  ItWalletSpecsVersion,
+  createCredentialRequest 
+} from '@pagopa/io-wallet-oid4vci';
+
+const config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0
+});
+
+const request = await createCredentialRequest({
+  config,
+  callbacks: { signJwt: mySignJwtCallback },
+  clientId: "my-client-id",
+  credential_identifier: "UniversityDegree",
+  issuerIdentifier: "https://issuer.example.com",
+  nonce: "c_nonce_value",
+  signer: myJwtSigner
+});
+
+// Returns: { 
+//   credential_identifier: "UniversityDegree", 
+//   proof: { jwt: "...", proof_type: "jwt" } 
+// }
+```
+
+#### IT-Wallet v1.3
+
+```typescript
+import { 
+  IoWalletSdkConfig, 
+  ItWalletSpecsVersion,
+  createCredentialRequest 
+} from '@pagopa/io-wallet-oid4vci';
+
+const config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3
+});
+
+const request = await createCredentialRequest({
+  config,
+  callbacks: { signJwt: mySignJwtCallback },
+  clientId: "my-client-id",
+  credential_identifier: "education_degree_unibo_2017_l31_informatica",
+  issuerIdentifier: "https://issuer.example.com",
+  keyAttestation: "eyJhbGciOiJFUzI1NiJ9...", // Required in v1.3
+  nonce: "c_nonce_value",
+  signer: myJwtSigner
+});
+
+// Returns: { 
+//   credential_identifier: "education_degree_unibo_2017_l31_informatica", 
+//   proofs: { jwt: ["..."] } 
+// }
+```
 
 ### `completeAuthorization`
 
