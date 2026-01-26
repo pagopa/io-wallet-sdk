@@ -84,7 +84,7 @@ The SDK supports multiple versions of the Italian Wallet specifications simultan
 
 ---
 
-## �📝 Naming Conventions
+## 📝 Naming Conventions
 - **Object and method names must not include the prefix `ItWallet`.**  
   Use descriptive, context-appropriate names instead.  
 - Keep naming consistent across all packages.
