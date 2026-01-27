@@ -81,7 +81,6 @@ export async function parsePushedAuthorizationRequest(
 
   const authorizationRequest = parsedAuthorizationRequest.data;
   const { clientAttestation, dpop } = parseAuthorizationRequest({
-    authorizationRequest,
     request: options.request,
   });
 

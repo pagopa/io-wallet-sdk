@@ -45,23 +45,6 @@ describe("parsePushedAuthorizationRequest", () => {
       expect(result.authorizationRequestJwt).toBeUndefined();
     });
 
-    it("should parse authorization request with dpop_jkt", async () => {
-      const authRequestWithDpop = {
-        ...baseAuthorizationRequest,
-        dpop_jkt: "test-jkt-thumbprint",
-      };
-
-      const result = await parsePushedAuthorizationRequest({
-        authorizationRequest: authRequestWithDpop,
-        callbacks: { fetch: mockFetch },
-        request: mockRequest,
-      });
-
-      expect(result.authorizationRequest).toEqual(authRequestWithDpop);
-      expect(result.dpop).toBeDefined();
-      expect(result.dpop?.jwkThumbprint).toBe("test-jkt-thumbprint");
-    });
-
     it("should parse authorization request with scope instead of authorization_details", async () => {
       const authRequestWithScope = {
         client_id: "test-client-id",
@@ -186,25 +169,6 @@ describe("parsePushedAuthorizationRequest", () => {
           request: mockRequest,
         }),
       ).rejects.toThrow();
-    });
-
-    it("should parse JAR request with dpop_jkt in JWT payload", async () => {
-      const jarRequestJwt =
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCIsImRwb3Bfamt0IjoidGVzdC1qa3QtdGh1bWJwcmludCJ9.signature";
-
-      const jarRequest = {
-        client_id: "test-client-id",
-        request: jarRequestJwt,
-      };
-
-      const result = await parsePushedAuthorizationRequest({
-        authorizationRequest: jarRequest,
-        callbacks: { fetch: mockFetch },
-        request: mockRequest,
-      });
-
-      expect(result.authorizationRequest).toBeDefined();
-      expect(result.authorizationRequestJwt).toBe(jarRequestJwt);
     });
 
     it("should handle JAR request with both authorization_details and scope", async () => {
@@ -343,7 +307,6 @@ describe("parsePushedAuthorizationRequest", () => {
     it("should parse plain request with all optional fields", async () => {
       const fullAuthRequest = {
         ...baseAuthorizationRequest,
-        dpop_jkt: "test-jkt-thumbprint",
         issuer_state: "issuer-state-value",
         scope: "openid profile",
       };

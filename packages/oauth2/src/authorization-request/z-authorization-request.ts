@@ -13,7 +13,6 @@ export const zAuthorizationRequest = z
     client_id: z.string(),
     code_challenge: z.string(),
     code_challenge_method: z.string(),
-    dpop_jkt: z.optional(z.string()),
     issuer_state: z.optional(z.string()),
     redirect_uri: z.string().url().optional(),
     response_mode: z.string(),

@@ -5,10 +5,6 @@ import { Oauth2Error } from "../errors";
 import { extractDpopJwtFromHeaders } from "../token-dpop";
 
 export interface ParseAuthorizationRequestOptions {
-  authorizationRequest: {
-    dpop_jkt?: string;
-  };
-
   request: RequestLike;
 }
 
@@ -23,22 +19,13 @@ export interface ParseAuthorizationRequestResult {
   };
 
   /**
-   * The dpop params from the authorization request.
+   * The dpop jwt from the authorization request DPoP header.
    *
-   * Both `dpop_jkt` and DPoP header can be included in the request.
-   *
-   * The jkt and the signer of the jwt have not been verified against
-   * each other yet, this only happens during verification
+   * The signer of the jwt has not been verified yet, this only happens during verification.
    */
-  dpop?:
-    | {
-        jwkThumbprint: string;
-        jwt?: string;
-      }
-    | {
-        jwkThumbprint?: string;
-        jwt: string;
-      };
+  dpop?: {
+    jwt: string;
+  };
 }
 
 /**
@@ -75,15 +62,8 @@ export function parseAuthorizationRequest(
       : undefined,
     dpop: extractedDpopJwt.dpopJwt
       ? {
-          jwkThumbprint: options.authorizationRequest.dpop_jkt,
           jwt: extractedDpopJwt.dpopJwt,
         }
-      : // Basically the same as above, but with correct TS type hinting
-        options.authorizationRequest.dpop_jkt
-        ? {
-            jwkThumbprint: options.authorizationRequest.dpop_jkt,
-            jwt: extractedDpopJwt.dpopJwt,
-          }
-        : undefined,
+      : undefined,
   };
 }

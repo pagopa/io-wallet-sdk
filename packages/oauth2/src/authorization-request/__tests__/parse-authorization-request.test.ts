@@ -7,7 +7,7 @@ import { parseAuthorizationRequest } from "../parse-authorization-request";
 
 describe("parseAuthorizationRequest", () => {
   describe("DPoP parsing", () => {
-    it("should parse authorization request with DPoP header and dpop_jkt", () => {
+    it("should parse authorization request with DPoP header", () => {
       const headers = new Headers();
       headers.set(
         "DPoP",
@@ -21,41 +21,14 @@ describe("parseAuthorizationRequest", () => {
       };
 
       const result = parseAuthorizationRequest({
-        authorizationRequest: {
-          dpop_jkt: "test-jkt-thumbprint",
-        },
-        request: mockRequest,
-      });
-
-      expect(result.dpop).toBeDefined();
-      expect(result.dpop?.jwkThumbprint).toBe("test-jkt-thumbprint");
-      expect(result.dpop?.jwt).toBe(headers.get("DPoP"));
-    });
-
-    it("should parse authorization request with only DPoP header (no dpop_jkt)", () => {
-      const headers = new Headers();
-      headers.set(
-        "DPoP",
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0In0.eyJodG0iOiJQT1NUIiwiaHR1IjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZS5jb20iLCJpYXQiOjE2NDQ5OTk5OTksImp0aSI6InRlc3QtanRpIn0.signature",
-      );
-
-      const mockRequest: RequestLike = {
-        headers,
-        method: "POST",
-        url: "https://issuer.example.com",
-      };
-
-      const result = parseAuthorizationRequest({
-        authorizationRequest: {},
         request: mockRequest,
       });
 
       expect(result.dpop).toBeDefined();
       expect(result.dpop?.jwt).toBe(headers.get("DPoP"));
-      expect(result.dpop?.jwkThumbprint).toBeUndefined();
     });
 
-    it("should parse authorization request with only dpop_jkt (no DPoP header)", () => {
+    it("should return undefined dpop when DPoP header is not present", () => {
       const mockRequest: RequestLike = {
         headers: new Headers(),
         method: "POST",
@@ -63,26 +36,6 @@ describe("parseAuthorizationRequest", () => {
       };
 
       const result = parseAuthorizationRequest({
-        authorizationRequest: {
-          dpop_jkt: "test-jkt-thumbprint",
-        },
-        request: mockRequest,
-      });
-
-      expect(result.dpop).toBeDefined();
-      expect(result.dpop?.jwkThumbprint).toBe("test-jkt-thumbprint");
-      expect(result.dpop?.jwt).toBeUndefined();
-    });
-
-    it("should return undefined dpop when neither DPoP header nor dpop_jkt is present", () => {
-      const mockRequest: RequestLike = {
-        headers: new Headers(),
-        method: "POST",
-        url: "https://issuer.example.com",
-      };
-
-      const result = parseAuthorizationRequest({
-        authorizationRequest: {},
         request: mockRequest,
       });
 
@@ -101,7 +54,6 @@ describe("parseAuthorizationRequest", () => {
 
       expect(() =>
         parseAuthorizationRequest({
-          authorizationRequest: {},
           request: mockRequest,
         }),
       ).toThrow(Oauth2Error);
@@ -119,7 +71,6 @@ describe("parseAuthorizationRequest", () => {
 
       expect(() =>
         parseAuthorizationRequest({
-          authorizationRequest: {},
           request: mockRequest,
         }),
       ).toThrow(Oauth2Error);
@@ -145,7 +96,6 @@ describe("parseAuthorizationRequest", () => {
       };
 
       const result = parseAuthorizationRequest({
-        authorizationRequest: {},
         request: mockRequest,
       });
 
@@ -166,7 +116,6 @@ describe("parseAuthorizationRequest", () => {
       };
 
       const result = parseAuthorizationRequest({
-        authorizationRequest: {},
         request: mockRequest,
       });
 
@@ -189,7 +138,6 @@ describe("parseAuthorizationRequest", () => {
 
       expect(() =>
         parseAuthorizationRequest({
-          authorizationRequest: {},
           request: mockRequest,
         }),
       ).toThrow(Oauth2Error);
@@ -210,7 +158,6 @@ describe("parseAuthorizationRequest", () => {
 
       expect(() =>
         parseAuthorizationRequest({
-          authorizationRequest: {},
           request: mockRequest,
         }),
       ).toThrow(Oauth2Error);
@@ -240,14 +187,10 @@ describe("parseAuthorizationRequest", () => {
       };
 
       const result = parseAuthorizationRequest({
-        authorizationRequest: {
-          dpop_jkt: "test-jkt-thumbprint",
-        },
         request: mockRequest,
       });
 
       expect(result.dpop).toBeDefined();
-      expect(result.dpop?.jwkThumbprint).toBe("test-jkt-thumbprint");
       expect(result.dpop?.jwt).toBe(headers.get("DPoP"));
       expect(result.clientAttestation).toBeDefined();
       expect(result.clientAttestation?.clientAttestationJwt).toBe(
@@ -266,7 +209,6 @@ describe("parseAuthorizationRequest", () => {
       };
 
       const result = parseAuthorizationRequest({
-        authorizationRequest: {},
         request: mockRequest,
       });
 
@@ -296,9 +238,6 @@ describe("parseAuthorizationRequest", () => {
       };
 
       const result = parseAuthorizationRequest({
-        authorizationRequest: {
-          dpop_jkt: "test-jkt-thumbprint",
-        },
         request: mockRequest,
       });
 
