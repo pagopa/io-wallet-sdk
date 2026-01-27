@@ -1,75 +1,93 @@
-import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
-import { dateToSeconds, parseWithErrorHandling } from "@openid4vc/utils";
+import {
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
+} from "@pagopa/io-wallet-utils";
 
-import { Oid4vciError } from "../errors";
-import { CredentialRequest, zCredentialRequest } from "./z-credential";
+import type { CredentialRequest, CredentialRequestOptions } from "./types";
+import type { CredentialRequestV1_0 } from "./v1.0/z-credential";
+import type { CredentialRequestV1_3 } from "./v1.3/z-credential";
 
-export interface CredentialRequestOptions {
-  /**
-   * Callbacks to use for signing proof
-   */
-  callbacks: Pick<CallbackContext, "signJwt">;
+import * as V1_0 from "./v1.0/create-credential-request";
+import * as V1_3 from "./v1.3/create-credential-request";
 
-  /**
-   * Client identifier of the OAuth2 Client making the Credential Request.
-   */
-  clientId: string;
+function isV1_0Options(
+  options: CredentialRequestOptions,
+): options is V1_0.CredentialRequestOptionsV1_0 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
+}
 
-  /**
-   * This MUST be set with one of the value obtained in the credential_identifiers claim of the Token Response.
-   */
-  credential_identifier: string;
-
-  /**
-   * Identifier of the Credential Issuer, for ex: https://issuer.example.com.
-   */
-  issuerIdentifier: string;
-
-  /**
-   * A nonce value previously requested to associate a Client session with the Credential Request.
-   */
-  nonce: string;
-
-  /**
-   * The signer of the credential PoP JWT.
-   */
-  signer: JwtSignerJwk;
+function isV1_3Options(
+  options: CredentialRequestOptions,
+): options is V1_3.CredentialRequestOptionsV1_3 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
 }
 
 /**
- * Create a Credential Request.
- * @param options - Options to create the Credential Request
- * @returns The created Credential Request
+ * Creates a credential request according to the configured Italian Wallet specification version.
+ *
+ * Version Differences:
+ * - v1.0: Returns singular `proof` object with explicit `proof_type` field
+ * - v1.3: Returns plural `proofs` object with JWT array (batch support) and requires key attestation
+ *
+ * @param options - Request options including version config
+ * @returns Version-specific credential request object
+ * @throws {ItWalletSpecsVersionError} When version is not supported or keyAttestation is used with wrong version
+ *
+ * @example v1.0 - Basic credential request
+ * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 });
+ * const request = await createCredentialRequest({
+ *   config,
+ *   callbacks: { signJwt: mySignJwtCallback },
+ *   clientId: "my-client-id",
+ *   credential_identifier: "UniversityDegree",
+ *   issuerIdentifier: "https://issuer.example.com",
+ *   nonce: "c_nonce_value",
+ *   signer: myJwtSigner
+ * });
+ * // Returns: { credential_identifier: "...", proof: { jwt: "...", proof_type: "jwt" } }
+ *
+ * @example v1.3 - Credential request with key attestation
+ * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
+ * const request = await createCredentialRequest({
+ *   config,
+ *   callbacks: { signJwt: mySignJwtCallback },
+ *   clientId: "my-client-id",
+ *   credential_identifier: "education_degree_unibo_2017_l31_informatica",
+ *   issuerIdentifier: "https://issuer.example.com",
+ *   keyAttestation: 'eyJ...', // Required for v1.3
+ *   nonce: "c_nonce_value",
+ *   signer: myJwtSigner
+ * });
+ * // Returns: { credential_identifier: "...", proofs: { jwt: ["..."] } }
  */
-export const createCredentialRequest = async (
-  options: CredentialRequestOptions,
-): Promise<CredentialRequest> => {
-  try {
-    const { signJwt } = options.callbacks;
-    const proofJwt = await signJwt(options.signer, {
-      header: {
-        alg: options.signer.alg,
-        jwk: options.signer.publicJwk,
-        typ: "openid4vci-proof+jwt",
-      },
-      payload: {
-        aud: options.issuerIdentifier,
-        iat: dateToSeconds(new Date()),
-        iss: options.clientId,
-        nonce: options.nonce,
-      },
-    });
 
-    return parseWithErrorHandling(zCredentialRequest, {
-      credential_identifier: options.credential_identifier,
-      proof: {
-        jwt: proofJwt.jwt,
-        proof_type: "jwt",
-      },
-    } satisfies CredentialRequest);
-  } catch (error) {
-    throw new Oid4vciError(
-      `Unexpected error during create credential request: ${error instanceof Error ? error.message : String(error)}`,
-    );
+// Function overload for v1.0
+export function createCredentialRequest(
+  options: V1_0.CredentialRequestOptionsV1_0,
+): Promise<CredentialRequestV1_0>;
+
+// Function overload for v1.3
+export function createCredentialRequest(
+  options: V1_3.CredentialRequestOptionsV1_3,
+): Promise<CredentialRequestV1_3>;
+
+// Implementation signature (not callable by users)
+export async function createCredentialRequest(
+  options: CredentialRequestOptions,
+): Promise<CredentialRequest> {
+  const { config } = options;
+
+  if (isV1_0Options(options)) {
+    return V1_0.createCredentialRequest(options);
   }
-};
+
+  if (isV1_3Options(options)) {
+    return V1_3.createCredentialRequest(options);
+  }
+
+  throw new ItWalletSpecsVersionError(
+    "createCredentialRequest",
+    (config as { itWalletSpecsVersion: string }).itWalletSpecsVersion,
+    [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+  );
+}
