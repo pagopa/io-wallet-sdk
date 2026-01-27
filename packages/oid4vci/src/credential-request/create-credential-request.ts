@@ -10,6 +10,18 @@ import type { CredentialRequestV1_3 } from "./v1.3/z-credential";
 import * as V1_0 from "./v1.0/create-credential-request";
 import * as V1_3 from "./v1.3/create-credential-request";
 
+function isV1_0Options(
+  options: CredentialRequestOptions,
+): options is V1_0.CredentialRequestOptionsV1_0 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
+}
+
+function isV1_3Options(
+  options: CredentialRequestOptions,
+): options is V1_3.CredentialRequestOptionsV1_3 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
+}
+
 /**
  * Creates a credential request according to the configured Italian Wallet specification version.
  *
@@ -65,32 +77,17 @@ export async function createCredentialRequest(
 ): Promise<CredentialRequest> {
   const { config } = options;
 
-  switch (config.itWalletSpecsVersion) {
-    case ItWalletSpecsVersion.V1_0: {
-      // Validate that keyAttestation is NOT provided for v1.0
-      if ("keyAttestation" in options) {
-        throw new ItWalletSpecsVersionError(
-          "keyAttestation parameter",
-          ItWalletSpecsVersion.V1_0,
-          [ItWalletSpecsVersion.V1_3],
-        );
-      }
-      return V1_0.createCredentialRequest(
-        options as V1_0.CredentialRequestOptionsV1_0,
-      );
-    }
-    case ItWalletSpecsVersion.V1_3: {
-      return V1_3.createCredentialRequest(
-        options as V1_3.CredentialRequestOptionsV1_3,
-      );
-    }
-    default: {
-      // Exhaustiveness check - ensures all versions are handled
-      throw new ItWalletSpecsVersionError(
-        "createCredentialRequest",
-        (config as { itWalletSpecsVersion: string }).itWalletSpecsVersion,
-        [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
-      );
-    }
-  }
+  if (isV1_0Options(options)) {  
+    return V1_0.createCredentialRequest(options);  
+  }  
+
+  if (isV1_3Options(options)) {  
+    return V1_3.createCredentialRequest(options);  
+  }  
+  
+  throw new ItWalletSpecsVersionError(
+    "createCredentialRequest",
+    (config as { itWalletSpecsVersion: string }).itWalletSpecsVersion,
+    [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+  );
 }

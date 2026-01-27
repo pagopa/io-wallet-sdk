@@ -80,43 +80,6 @@ describe("createCredentialRequest Version Router", () => {
 
       expect(signJwtCall[1].header).not.toHaveProperty("key_attestation");
     });
-
-    it("should throw error when keyAttestation provided with v1.0", async () => {
-      const config = new IoWalletSdkConfig({
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
-      });
-
-      // TypeScript prevents this, but test runtime behavior
-      type InvalidOptions = {
-        keyAttestation: string;
-      } & CredentialRequestOptionsV1_0;
-
-      await expect(
-        createCredentialRequest({
-          callbacks: mockCallbacks,
-          clientId: "test-client-id",
-          config,
-          credential_identifier: "test-credential",
-          issuerIdentifier: "https://issuer.example.com",
-          keyAttestation: "eyJ...should-not-be-here", // Invalid for v1.0
-          nonce: "test-nonce",
-          signer: mockSigner,
-        } as InvalidOptions),
-      ).rejects.toThrow(ItWalletSpecsVersionError);
-
-      await expect(
-        createCredentialRequest({
-          callbacks: mockCallbacks,
-          clientId: "test-client-id",
-          config,
-          credential_identifier: "test-credential",
-          issuerIdentifier: "https://issuer.example.com",
-          keyAttestation: "eyJ...should-not-be-here",
-          nonce: "test-nonce",
-          signer: mockSigner,
-        } as InvalidOptions),
-      ).rejects.toThrow("keyAttestation parameter");
-    });
   });
 
   describe("v1.3 routing", () => {
