@@ -96,9 +96,8 @@ async function fetchJarRequestObject(options: {
   const response = await createFetcher(fetch)(requestUri, {
     headers: {
       Accept: `${ContentType.OAuthAuthorizationRequestJwt}, ${ContentType.Jwt};q=0.9, text/plain`,
-      "Content-Type": ContentType.XWwwFormUrlencoded,
     },
-    method: "get",
+    method: "GET",
   }).catch(() => {
     throw new Oauth2Error(
       `Fetching request_object from request_uri '${requestUri}' failed`,
