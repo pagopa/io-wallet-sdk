@@ -1,8 +1,12 @@
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { Oid4vciError } from "../../errors";
+import { Oid4vciError } from "../../../errors";
 import {
-  CredentialRequestOptions,
+  CredentialRequestOptionsV1_0,
   createCredentialRequest,
 } from "../create-credential-request";
 
@@ -11,7 +15,7 @@ const mockCallbacks = {
 };
 
 const mockSigner = {
-  alg: "ES256",
+  alg: "ES256" as const,
   method: "jwk" as const,
   publicJwk: {
     crv: "P-256",
@@ -22,10 +26,13 @@ const mockSigner = {
   },
 };
 
-describe("createCredentialRequest", () => {
-  const baseOptions: CredentialRequestOptions = {
+describe("createCredentialRequest v1.0", () => {
+  const baseOptions: CredentialRequestOptionsV1_0 = {
     callbacks: mockCallbacks,
     clientId: "test-client-id",
+    config: new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    }) as CredentialRequestOptionsV1_0["config"],
     credential_identifier: "test-credential-identifier",
     issuerIdentifier: "https://issuer.example.com",
     nonce: "test-nonce-123",
@@ -51,7 +58,21 @@ describe("createCredentialRequest", () => {
     });
   });
 
-  it("should call signJwt with correct parameters", async () => {
+  it("should return singular proof object (not proofs array)", async () => {
+    const result = await createCredentialRequest(baseOptions);
+
+    expect(result).toHaveProperty("proof");
+    expect(result).not.toHaveProperty("proofs");
+  });
+
+  it("should include explicit proof_type field", async () => {
+    const result = await createCredentialRequest(baseOptions);
+
+    expect(result.proof).toHaveProperty("proof_type");
+    expect(result.proof.proof_type).toBe("jwt");
+  });
+
+  it("should call signJwt with correct parameters (no key_attestation)", async () => {
     await createCredentialRequest(baseOptions);
 
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
@@ -59,6 +80,7 @@ describe("createCredentialRequest", () => {
         alg: "ES256",
         jwk: mockSigner.publicJwk,
         typ: "openid4vci-proof+jwt",
+        // key_attestation should NOT be present in v1.0
       },
       payload: {
         aud: "https://issuer.example.com",
@@ -67,6 +89,16 @@ describe("createCredentialRequest", () => {
         nonce: "test-nonce-123",
       },
     });
+  });
+
+  it("should NOT include key_attestation in JWT header", async () => {
+    await createCredentialRequest(baseOptions);
+
+    const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
+    expect(signJwtCall).toBeDefined();
+    if (!signJwtCall) throw new Error("signJwtCall is undefined");
+
+    expect(signJwtCall[1].header).not.toHaveProperty("key_attestation");
   });
 
   it("should include current timestamp in the proof JWT payload", async () => {
@@ -103,12 +135,6 @@ describe("createCredentialRequest", () => {
     await expect(createCredentialRequest(baseOptions)).rejects.toThrow(
       "Unexpected error during create credential request: Signing failed",
     );
-  });
-
-  it("should include proof_type as jwt in the credential request", async () => {
-    const result = await createCredentialRequest(baseOptions);
-
-    expect(result.proof.proof_type).toBe("jwt");
   });
 
   it("should use different nonce values correctly", async () => {

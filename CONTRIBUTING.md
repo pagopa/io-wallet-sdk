@@ -51,6 +51,39 @@ This approach gives consumers full flexibility — they can either use the built
 
 ---
 
+## Multi-Version Support
+The SDK supports multiple versions of the Italian Wallet specifications simultaneously. Follow these guidelines when implementing version-specific features:
+
+### Directory Structure
+- Create version-specific subdirectories: `v1.0/`, `v1.3/`, etc.
+- Each version directory contains:
+  - Implementation files (e.g., `create-feature.ts`)
+  - Zod schemas (prefixed with `z-`, e.g., `z-credential.ts`)
+  - Test files under `__tests__/`
+
+### Version Router Pattern
+- **Top-level router**: Create a main function with TypeScript overloads
+- **Type safety**: Use discriminated union types for version-specific options
+- **Runtime validation**: Validate version-specific constraints (e.g., required parameters)
+- **Exhaustiveness**: Always include a `default` case that throws `ItWalletSpecsVersionError`
+
+### Type Definitions
+- **Base options**: Define shared options in `types.ts`
+- **Version-specific options**: Extend base with version-specific fields
+- **Return types**: Create separate types for each version's response
+
+### When to Add a New Version
+- **New specification release**: Italian Wallet publishes a new major/minor version
+- **Breaking changes**: Protocol structure changes (e.g., `proof` → `proofs`)
+- **New required fields**: Version requires parameters not in previous versions
+
+### When NOT to Version
+- **Backward-compatible additions**: Add to existing implementation
+- **Bug fixes**: Apply to all affected versions
+- **Clarifications**: Update documentation, not code structure
+
+---
+
 ## 📝 Naming Conventions
 - **Object and method names must not include the prefix `ItWallet`.**  
   Use descriptive, context-appropriate names instead.  
