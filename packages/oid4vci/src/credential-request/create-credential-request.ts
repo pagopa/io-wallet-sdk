@@ -77,14 +77,14 @@ export async function createCredentialRequest(
 ): Promise<CredentialRequest> {
   const { config } = options;
 
-  if (isV1_0Options(options)) {  
-    return V1_0.createCredentialRequest(options);  
-  }  
+  if (isV1_0Options(options)) {
+    return V1_0.createCredentialRequest(options);
+  }
 
-  if (isV1_3Options(options)) {  
-    return V1_3.createCredentialRequest(options);  
-  }  
-  
+  if (isV1_3Options(options)) {
+    return V1_3.createCredentialRequest(options);
+  }
+
   throw new ItWalletSpecsVersionError(
     "createCredentialRequest",
     (config as { itWalletSpecsVersion: string }).itWalletSpecsVersion,
