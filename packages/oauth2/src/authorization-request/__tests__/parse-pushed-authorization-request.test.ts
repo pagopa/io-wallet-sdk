@@ -165,7 +165,7 @@ describe("parsePushedAuthorizationRequest", () => {
       expect(mockFetch).toHaveBeenCalledWith(
         "https://issuer.example.com/request/abc123",
         expect.objectContaining({
-          method: "get",
+          method: "GET",
         }),
       );
     });
