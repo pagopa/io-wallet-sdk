@@ -245,7 +245,7 @@ export function extractClientAttestationJwtsFromHeaders(headers: FetchHeaders):
     !zCompactJwt.safeParse(clientAttestationHeader).success ||
     !zCompactJwt.safeParse(clientAttestationPopHeader).success
   ) {
-    return { valid: false } as const;
+    return { valid: false };
   }
 
   return {
