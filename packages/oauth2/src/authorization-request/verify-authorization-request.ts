@@ -101,6 +101,67 @@ export interface VerifyAuthorizationRequestOptions {
   request: RequestLike;
 }
 
+/**
+ * Verifies an authorization request by validating DPoP and client attestation credentials.
+ *
+ * This function performs cryptographic verification of DPoP proofs and client attestation
+ * JWTs extracted from authorization request headers. It validates signatures, checks
+ * expiration times, and optionally ensures that DPoP and client attestation use the same key.
+ *
+ * **Important:** This function performs verification only. Use `parseAuthorizationRequest`
+ * first to extract the necessary JWTs from request headers.
+ *
+ * @param options - The verification options
+ * @param options.authorizationRequest - The authorization request parameters containing client_id
+ * @param options.authorizationServerMetadata - Authorization server metadata including issuer
+ * @param options.callbacks - Cryptographic callback functions for hash and JWT verification
+ * @param options.dpop - Optional DPoP verification configuration
+ * @param options.dpop.jwt - The DPoP JWT extracted from request headers
+ * @param options.dpop.required - Whether DPoP is required (will throw if missing)
+ * @param options.dpop.allowedSigningAlgs - Allowed signing algorithms for DPoP
+ * @param options.clientAttestation - Optional client attestation verification configuration
+ * @param options.clientAttestation.clientAttestationJwt - The client attestation JWT from headers
+ * @param options.clientAttestation.clientAttestationPopJwt - The client attestation PoP JWT from headers
+ * @param options.clientAttestation.required - Whether client attestation is required (will throw if missing)
+ * @param options.clientAttestation.ensureConfirmationKeyMatchesDpopKey - Whether to verify DPoP and client attestation use the same key
+ * @param options.request - The HTTP request object containing URL and headers
+ * @param options.now - Optional date for time-based validation (defaults to current time)
+ *
+ * @returns A promise resolving to verification results containing:
+ * - `dpop` - Verified DPoP information including JWK and thumbprint (if DPoP was provided)
+ * - `clientAttestation` - Verified client attestation JWTs (if client attestation was provided)
+ *
+ * @throws {Oauth2Error} When DPoP is required but missing
+ * @throws {Oauth2Error} When client attestation is required but missing
+ * @throws {Oauth2Error} When client_id doesn't match between request and client attestation
+ * @throws {Oauth2Error} When DPoP and client attestation keys don't match (if ensureConfirmationKeyMatchesDpopKey is true)
+ * @throws {Oauth2Error} When JWT signature verification fails
+ * @throws {Oauth2Error} When JWT is expired or has invalid claims
+ *
+ * @example
+ * ```typescript
+ * const result = await verifyAuthorizationRequest({
+ *   authorizationRequest: { client_id: 'client-123' },
+ *   authorizationServerMetadata: { issuer: 'https://auth.example.com' },
+ *   callbacks: { hash: hashCallback, verifyJwt: verifyJwtCallback },
+ *   dpop: {
+ *     jwt: dpopJwtFromHeaders,
+ *     required: true,
+ *     allowedSigningAlgs: ['ES256']
+ *   },
+ *   clientAttestation: {
+ *     clientAttestationJwt: clientAttJwtFromHeaders,
+ *     clientAttestationPopJwt: clientAttPopJwtFromHeaders,
+ *     required: true,
+ *     ensureConfirmationKeyMatchesDpopKey: true
+ *   },
+ *   request: httpRequest
+ * });
+ *
+ * console.log(result.dpop?.jwkThumbprint);
+ * console.log(result.clientAttestation?.clientAttestation.payload.sub);
+ * ```
+ */
 export async function verifyAuthorizationRequest(
   options: VerifyAuthorizationRequestOptions,
 ): Promise<VerifyAuthorizationRequestResult> {
