@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createClientAttestationPopJwt,
   verifyClientAttestationPopJwt,
-} from "../client-attestation-pop";
+} from "../client-attestation";
 import { Oauth2Error } from "../errors";
 
 describe("client-attestation-pop", () => {
