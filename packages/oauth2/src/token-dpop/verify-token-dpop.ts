@@ -72,7 +72,7 @@ export async function verifyTokenDPoP(options: VerifyTokenDPoPOptions) {
     !options.allowedSigningAlgs.includes(header.alg)
   ) {
     throw new Oauth2Error(
-      `dpop jwt uses alg value '${header.alg}' but allowed dpop signging alg values are ${options.allowedSigningAlgs.join(", ")}.`,
+      `dpop jwt uses alg value '${header.alg}' but allowed dpop signing alg values are ${options.allowedSigningAlgs.join(", ")}.`,
     );
   }
 
