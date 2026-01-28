@@ -3,6 +3,7 @@ import {
   HashAlgorithm,
   HttpMethod,
   JwtSignerJwk,
+  zCompactJwt,
 } from "@openid4vc/oauth2";
 import {
   ValidationError,
@@ -11,6 +12,7 @@ import {
   encodeToBase64Url,
   parseWithErrorHandling,
 } from "@openid4vc/utils";
+import { FetchHeaders } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 
 import { CreateTokenDPoPError } from "../errors";
@@ -136,3 +138,19 @@ const htuFromRequestUrl = (requestUrl: string) => {
 
   return htu.toString();
 };
+
+export function extractDpopJwtFromHeaders(
+  headers: FetchHeaders,
+): { dpopJwt?: string; valid: true } | { valid: false } {
+  const dpopJwt = headers.get("DPoP");
+
+  if (!dpopJwt) {
+    return { valid: true };
+  }
+
+  if (!zCompactJwt.safeParse(dpopJwt).success) {
+    return { valid: false };
+  }
+
+  return { dpopJwt, valid: true };
+}
