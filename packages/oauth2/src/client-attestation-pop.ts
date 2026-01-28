@@ -1,13 +1,4 @@
 import {
-  addSecondsToDate,
-  dateToSeconds,
-  encodeToBase64Url,
-} from "@openid4vc/utils";
-import { FetchHeaders } from "@pagopa/io-wallet-utils";
-import z from "zod";
-
-import { Oauth2Error } from "./errors";
-import {
   CallbackContext,
   ClientAttestationPopJwtHeader,
   ClientAttestationPopJwtPayload,
@@ -16,7 +7,16 @@ import {
   decodeJwt,
   verifyJwt,
   zCompactJwt,
-} from "./index";
+} from "@openid4vc/oauth2";
+import {
+  addSecondsToDate,
+  dateToSeconds,
+  encodeToBase64Url,
+} from "@openid4vc/utils";
+import { FetchHeaders } from "@pagopa/io-wallet-utils";
+import z from "zod";
+
+import { Oauth2Error } from "./errors";
 
 export const zOauthClientAttestationHeader = z.literal(
   "OAuth-Client-Attestation",

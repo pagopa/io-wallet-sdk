@@ -1,3 +1,4 @@
+import { CallbackContext } from "@openid4vc/oauth2";
 import {
   ContentType,
   type Fetch,
@@ -7,7 +8,6 @@ import {
 import z from "zod";
 
 import { Oauth2Error } from "./errors";
-import { CallbackContext } from "./index";
 
 export const zJarAuthorizationRequest = z
   .object({
