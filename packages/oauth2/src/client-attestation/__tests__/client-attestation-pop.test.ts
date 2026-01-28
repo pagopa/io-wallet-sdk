@@ -1,11 +1,11 @@
 import { encodeToBase64Url } from "@openid4vc/utils";
 import { describe, expect, it, vi } from "vitest";
 
+import { Oauth2Error } from "../../errors";
 import {
   createClientAttestationPopJwt,
   verifyClientAttestationPopJwt,
-} from "../client-attestation";
-import { Oauth2Error } from "../errors";
+} from "../client-attestation-pop";
 
 describe("client-attestation-pop", () => {
   const mockJwk = { crv: "P-256", kty: "EC", x: "...", y: "..." };
