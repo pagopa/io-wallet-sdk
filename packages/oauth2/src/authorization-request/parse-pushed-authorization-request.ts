@@ -1,3 +1,4 @@
+import { CallbackContext, decodeJwt } from "@openid4vc/oauth2";
 import {
   RequestLike,
   formatZodError,
@@ -6,7 +7,6 @@ import {
 import z from "zod";
 
 import { Oauth2Error } from "../errors";
-import { CallbackContext, decodeJwt } from "../index";
 import {
   isJarAuthorizationRequest,
   parseJarRequest,
@@ -38,6 +38,21 @@ export interface ParsePushedAuthorizationRequestResult
   authorizationRequestJwt?: string;
 }
 
+/**
+ * Parses and validates a pushed authorization request (PAR).
+ *
+ * Handles both standard authorization requests and JWT-secured Authorization Requests (JAR).
+ * When a JAR is provided, it validates the JWT structure, decodes it, and extracts the
+ * authorization request from the payload. Also extracts client attestation and DPoP proofs
+ * from the HTTP request headers.
+ *
+ * @param options - Configuration for parsing the pushed authorization request
+ * @param options.authorizationRequest - The authorization request data to parse (can be standard or JAR format)
+ * @param options.callbacks - Callbacks for external operations (requires `fetch` for JAR validation)
+ * @param options.request - The HTTP request object containing headers for client attestation and DPoP
+ * @returns A promise resolving to the parsed authorization request with extracted metadata
+ * @throws {Oauth2Error} When the authorization request is invalid or cannot be parsed
+ */
 export async function parsePushedAuthorizationRequest(
   options: ParsePushedAuthorizationRequestOptions,
 ): Promise<ParsePushedAuthorizationRequestResult> {

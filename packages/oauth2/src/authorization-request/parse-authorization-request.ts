@@ -29,7 +29,21 @@ export interface ParseAuthorizationRequestResult {
 }
 
 /**
- * Parse an authorization request.
+ * Parse an authorization request by extracting DPoP and client attestation
+ * information from HTTP request headers.
+ *
+ * **Important:** This function performs extraction and basic format validation
+ * but does NOT verify cryptographic signatures. JWT signature verification
+ * should be performed separately using the appropriate verification functions.
+ *
+ * @returns Parsed authorization request result containing:
+ * - `dpop` - DPoP information if present (jwt)
+ * - `clientAttestation` - Client attestation JWTs if present
+ *
+ * @throws {Oauth2Error} When required DPoP header is missing but dpop_jkt is present
+ * @throws {Oauth2Error} When DPoP JWT format is invalid
+ * @throws {Oauth2Error} When client attestation headers are incomplete
+ * @throws {Oauth2Error} When client attestation JWT format is invalid
  */
 export function parseAuthorizationRequest(
   options: ParseAuthorizationRequestOptions,
