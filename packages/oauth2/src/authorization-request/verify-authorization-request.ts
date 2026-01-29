@@ -39,9 +39,9 @@ export interface VerifyAuthorizationRequestDPoP {
 }
 
 export interface VerifyAuthorizationRequestClientAttestation {
-  clientAttestationJwt?: string;
+  clientAttestationJwt: string;
 
-  clientAttestationPopJwt?: string;
+  clientAttestationPopJwt: string;
 
   /**
    * Whether to ensure that the key used in client attestation confirmation
@@ -51,10 +51,6 @@ export interface VerifyAuthorizationRequestClientAttestation {
    * @default false
    */
   ensureConfirmationKeyMatchesDpopKey?: boolean;
-  /**
-   * Whether client attestation is required.
-   */
-  required?: boolean;
 }
 
 export interface VerifyAuthorizationRequestResult {
@@ -90,7 +86,7 @@ export interface VerifyAuthorizationRequestOptions {
   authorizationServerMetadata: AuthorizationServerMetadata;
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
 
-  clientAttestation?: VerifyAuthorizationRequestClientAttestation;
+  clientAttestation: VerifyAuthorizationRequestClientAttestation;
   dpop?: VerifyAuthorizationRequestDPoP;
 
   /**
@@ -119,7 +115,7 @@ export interface VerifyAuthorizationRequestOptions {
  * @param options.dpop.jwt - The DPoP JWT extracted from request headers
  * @param options.dpop.required - Whether DPoP is required (will throw if missing)
  * @param options.dpop.allowedSigningAlgs - Allowed signing algorithms for DPoP
- * @param options.clientAttestation - Optional client attestation verification configuration
+ * @param options.clientAttestation - Client attestation verification configuration
  * @param options.clientAttestation.clientAttestationJwt - The client attestation JWT from headers
  * @param options.clientAttestation.clientAttestationPopJwt - The client attestation PoP JWT from headers
  * @param options.clientAttestation.required - Whether client attestation is required (will throw if missing)
@@ -174,16 +170,15 @@ export async function verifyAuthorizationRequest(
       )
     : undefined;
 
-  const clientAttestationResult = options.clientAttestation
-    ? await verifyAuthorizationRequestClientAttestation(
-        options.clientAttestation,
-        options.authorizationServerMetadata,
-        options.callbacks,
-        dpopResult?.jwkThumbprint,
-        options.now,
-        options.authorizationRequest.client_id,
-      )
-    : undefined;
+  const clientAttestationResult =
+    await verifyAuthorizationRequestClientAttestation(
+      options.clientAttestation,
+      options.authorizationServerMetadata,
+      options.callbacks,
+      dpopResult?.jwkThumbprint,
+      options.now,
+      options.authorizationRequest.client_id,
+    );
 
   return {
     clientAttestation: clientAttestationResult,
@@ -205,14 +200,6 @@ async function verifyAuthorizationRequestClientAttestation(
   requestClientId?: string,
 ) {
   if (!options.clientAttestationJwt || !options.clientAttestationPopJwt) {
-    if (
-      !options.required &&
-      !options.clientAttestationJwt &&
-      !options.clientAttestationPopJwt
-    ) {
-      return undefined;
-    }
-
     throw new Oauth2Error(
       `Missing required client attestation parameters in pushed authorization request. Make sure to provide the '${oauthClientAttestationHeader}' and '${oauthClientAttestationPopHeader}' header values.`,
     );

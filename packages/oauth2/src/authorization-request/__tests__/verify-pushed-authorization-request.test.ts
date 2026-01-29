@@ -96,6 +96,22 @@ describe("verifyPushedAuthorizationRequest", () => {
         scope: "openid",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationRequestJwt: {
@@ -104,6 +120,10 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         request: mockRequest,
       };
 
@@ -118,10 +138,30 @@ describe("verifyPushedAuthorizationRequest", () => {
     });
 
     it("should verify pushed authorization request without JAR", async () => {
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         request: mockRequest,
       };
 
@@ -129,7 +169,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       expect(result.jar).toBeUndefined();
       expect(result.dpop).toBeUndefined();
-      expect(result.clientAttestation).toBeUndefined();
+      expect(result.clientAttestation).toBeDefined();
     });
 
     it("should verify JAR with complex authorization request payload", async () => {
@@ -147,6 +187,22 @@ describe("verifyPushedAuthorizationRequest", () => {
         state: "test-state",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationRequestJwt: {
@@ -155,6 +211,10 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         request: mockRequest,
       };
 
@@ -186,6 +246,22 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationRequestJwt: {
@@ -194,6 +270,10 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           jwt: dpopJwt,
         },
@@ -223,6 +303,22 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationRequestJwt: {
@@ -231,6 +327,10 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           jwt: dpopJwt,
           required: true,
@@ -252,6 +352,22 @@ describe("verifyPushedAuthorizationRequest", () => {
         iss: "client-123",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationRequestJwt: {
@@ -260,6 +376,10 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           required: true,
         },
@@ -323,7 +443,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       expect(result.clientAttestation?.clientAttestationPop).toBeDefined();
     });
 
-    it("should throw error when client attestation is required but not provided even with JAR", async () => {
+    it("should throw error when client attestation JWTs are not provided even with JAR", async () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
@@ -340,7 +460,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          required: true,
+          clientAttestationJwt: "",
+          clientAttestationPopJwt: "",
         },
         request: mockRequest,
       };
@@ -550,6 +671,22 @@ describe("verifyPushedAuthorizationRequest", () => {
         iss: "client-123",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(customDate.getTime() / 1000) + 3600,
+        iat: Math.floor(customDate.getTime() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(customDate.getTime() / 1000) + 3600,
+        iat: Math.floor(customDate.getTime() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationRequestJwt: {
@@ -558,6 +695,10 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         now: customDate,
         request: mockRequest,
       };
@@ -636,6 +777,22 @@ describe("verifyPushedAuthorizationRequest", () => {
         iss: "client-123",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: { client_id: "client-123" },
         authorizationRequestJwt: {
@@ -644,6 +801,10 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         request: mockRequest,
       };
 
@@ -651,10 +812,10 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       expect(result.jar).toBeDefined();
       expect(result.dpop).toBeUndefined();
-      expect(result.clientAttestation).toBeUndefined();
+      expect(result.clientAttestation).toBeDefined();
     });
 
-    it("should handle request with only DPoP (no JAR or client attestation)", async () => {
+    it("should handle request with DPoP and client attestation (no JAR)", async () => {
       const dpopJwt = createMockDpopJwt({
         htm: "POST",
         htu: "https://auth.example.com/par",
@@ -662,10 +823,30 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           jwt: dpopJwt,
         },
@@ -676,10 +857,10 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       expect(result.jar).toBeUndefined();
       expect(result.dpop).toBeDefined();
-      expect(result.clientAttestation).toBeUndefined();
+      expect(result.clientAttestation).toBeDefined();
     });
 
-    it("should handle request with only client attestation (no JAR or DPoP)", async () => {
+    it("should handle request with client attestation (no JAR or DPoP)", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,

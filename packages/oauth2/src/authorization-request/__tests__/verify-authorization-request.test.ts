@@ -90,10 +90,30 @@ describe("verifyAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           jwt: dpopJwt,
         },
@@ -109,10 +129,30 @@ describe("verifyAuthorizationRequest", () => {
     });
 
     it("should throw error when DPoP is required but not provided", async () => {
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           required: true,
         },
@@ -128,17 +168,37 @@ describe("verifyAuthorizationRequest", () => {
     });
 
     it("should return undefined dpop when not provided and not required", async () => {
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         request: mockRequest,
       };
 
       const result = await verifyAuthorizationRequest(options);
 
       expect(result.dpop).toBeUndefined();
-      expect(result.clientAttestation).toBeUndefined();
+      expect(result.clientAttestation).toBeDefined();
     });
 
     it("should verify DPoP with allowed signing algorithms", async () => {
@@ -149,10 +209,30 @@ describe("verifyAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           allowedSigningAlgs: ["ES256", "RS256"],
           jwt: dpopJwt,
@@ -202,13 +282,14 @@ describe("verifyAuthorizationRequest", () => {
       expect(result.clientAttestation?.clientAttestationPop).toBeDefined();
     });
 
-    it("should throw error when client attestation is required but not provided", async () => {
+    it("should throw error when client attestation JWTs are not provided", async () => {
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          required: true,
+          clientAttestationJwt: "",
+          clientAttestationPopJwt: "",
         },
         request: mockRequest,
       };
@@ -236,6 +317,7 @@ describe("verifyAuthorizationRequest", () => {
         callbacks: mockCallbacks,
         clientAttestation: {
           clientAttestationJwt,
+          clientAttestationPopJwt: "",
         },
         request: mockRequest,
       };
@@ -262,6 +344,7 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
+          clientAttestationJwt: "",
           clientAttestationPopJwt,
         },
         request: mockRequest,
@@ -311,17 +394,37 @@ describe("verifyAuthorizationRequest", () => {
       );
     });
 
-    it("should return undefined when client attestation is not provided and not required", async () => {
+    it("should verify when client attestation is provided", async () => {
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         request: mockRequest,
       };
 
       const result = await verifyAuthorizationRequest(options);
 
-      expect(result.clientAttestation).toBeUndefined();
+      expect(result.clientAttestation).toBeDefined();
     });
   });
 
@@ -536,10 +639,30 @@ describe("verifyAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(customDate.getTime() / 1000) + 3600,
+        iat: Math.floor(customDate.getTime() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(customDate.getTime() / 1000) + 3600,
+        iat: Math.floor(customDate.getTime() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           jwt: dpopJwt,
         },
@@ -552,7 +675,7 @@ describe("verifyAuthorizationRequest", () => {
       expect(result.dpop).toBeDefined();
     });
 
-    it("should work without client_id in authorization request when client attestation not used", async () => {
+    it("should work without client_id in authorization request", async () => {
       const dpopJwt = createMockDpopJwt({
         htm: "POST",
         htu: "https://auth.example.com/par",
@@ -560,10 +683,30 @@ describe("verifyAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyAuthorizationRequestOptions = {
         authorizationRequest: {},
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
         dpop: {
           jwt: dpopJwt,
         },
@@ -573,7 +716,7 @@ describe("verifyAuthorizationRequest", () => {
       const result = await verifyAuthorizationRequest(options);
 
       expect(result.dpop).toBeDefined();
-      expect(result.clientAttestation).toBeUndefined();
+      expect(result.clientAttestation).toBeDefined();
     });
   });
 });
