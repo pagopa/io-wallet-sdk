@@ -118,7 +118,6 @@ export interface VerifyAuthorizationRequestOptions {
  * @param options.clientAttestation - Client attestation verification configuration
  * @param options.clientAttestation.clientAttestationJwt - The client attestation JWT from headers
  * @param options.clientAttestation.clientAttestationPopJwt - The client attestation PoP JWT from headers
- * @param options.clientAttestation.required - Whether client attestation is required (will throw if missing)
  * @param options.clientAttestation.ensureConfirmationKeyMatchesDpopKey - Whether to verify DPoP and client attestation use the same key
  * @param options.request - The HTTP request object containing URL and headers
  * @param options.now - Optional date for time-based validation (defaults to current time)
