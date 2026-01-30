@@ -29,6 +29,8 @@ export type ClientAttestationJwtHeader = z.infer<
 export const zClientAttestationJwtPayload = z
   .object({
     ...zJwtPayload.shape,
+    // JSON String asserting the authentication level of the Wallet and the key as asserted in the cnf claim.
+    aal: z.string(),
     cnf: z
       .object({
         jwk: zJwk,
