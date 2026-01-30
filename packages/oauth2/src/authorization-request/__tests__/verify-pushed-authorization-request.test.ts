@@ -66,7 +66,12 @@ describe("verifyPushedAuthorizationRequest", () => {
 
   const createMockClientAttestationJwt = (payload: Record<string, unknown>) =>
     createMockJwt(
-      { alg: "ES256", typ: "oauth-client-attestation+jwt" },
+      {
+        alg: "ES256",
+        kid: "test-kid",
+        trust_chain: ["dummy.jwt.token"],
+        typ: "oauth-client-attestation+jwt",
+      },
       payload,
     );
 
@@ -97,6 +102,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -139,6 +145,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
     it("should verify pushed authorization request without JAR", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -188,6 +195,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -247,6 +255,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -304,6 +313,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -353,6 +363,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -405,6 +416,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -493,6 +505,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -554,6 +567,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -618,6 +632,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: differentJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -672,6 +687,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(customDate.getTime() / 1000) + 3600,
         iat: Math.floor(customDate.getTime() / 1000),
@@ -726,6 +742,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -778,6 +795,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -824,6 +842,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -862,6 +881,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
     it("should handle request with client attestation (no JAR or DPoP)", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),

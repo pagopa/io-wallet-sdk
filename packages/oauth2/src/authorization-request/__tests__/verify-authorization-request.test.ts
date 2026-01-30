@@ -51,7 +51,12 @@ describe("verifyAuthorizationRequest", () => {
   const createMockClientAttestationJwt = (payload: Record<string, unknown>) =>
     [
       encodeToBase64Url(
-        JSON.stringify({ alg: "ES256", typ: "oauth-client-attestation+jwt" }),
+        JSON.stringify({
+          alg: "ES256",
+          kid: "test-kid",
+          trust_chain: ["dummy.jwt.token"],
+          typ: "oauth-client-attestation+jwt",
+        }),
       ),
       encodeToBase64Url(JSON.stringify(payload)),
       "signature",
@@ -91,6 +96,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -130,6 +136,7 @@ describe("verifyAuthorizationRequest", () => {
 
     it("should throw error when DPoP is required but not provided", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -169,6 +176,7 @@ describe("verifyAuthorizationRequest", () => {
 
     it("should return undefined dpop when not provided and not required", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -210,6 +218,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -250,6 +259,7 @@ describe("verifyAuthorizationRequest", () => {
   describe("Client attestation verification", () => {
     it("should verify authorization request with valid client attestation", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -304,6 +314,7 @@ describe("verifyAuthorizationRequest", () => {
 
     it("should throw error when only clientAttestationJwt is provided", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -360,6 +371,7 @@ describe("verifyAuthorizationRequest", () => {
 
     it("should throw error when client_id does not match between request and attestation", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -396,6 +408,7 @@ describe("verifyAuthorizationRequest", () => {
 
     it("should verify when client attestation is provided", async () => {
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -438,6 +451,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -490,6 +504,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: differentJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -544,6 +559,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: differentJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -591,6 +607,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
@@ -640,6 +657,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(customDate.getTime() / 1000) + 3600,
         iat: Math.floor(customDate.getTime() / 1000),
@@ -684,6 +702,7 @@ describe("verifyAuthorizationRequest", () => {
       });
 
       const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
