@@ -6,8 +6,8 @@ export default [
     languageOptions: {
       parserOptions: {
         project: [
-          "./tsconfig.json",          
-          "./packages/*/tsconfig.json" 
+          "./tsconfig.json",
+          "./packages/*/tsconfig.json"
         ],
         tsconfigRootDir: import.meta.dirname,
       },
@@ -17,6 +17,8 @@ export default [
         "error",
         { fixMixedExportsWithInlineTypeSpecifier: true },
       ],
+      // Allow separate overloads for better type inference in version-specific APIs
+      "@typescript-eslint/unified-signatures": "off",
     },
   },
 ];
