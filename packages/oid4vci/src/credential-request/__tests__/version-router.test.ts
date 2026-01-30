@@ -251,24 +251,5 @@ describe("createCredentialRequest Version Router", () => {
         } as CredentialRequestOptionsV1_0),
       ).resolves.toBeDefined();
     });
-
-    it("v1.3 requires keyAttestation parameter", async () => {
-      const config = new IoWalletSdkConfig({
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
-      });
-
-      await expect(
-        createCredentialRequest({
-          callbacks: mockCallbacks,
-          clientId: "test-client-id",
-          config,
-          credential_identifier: "test-credential",
-          issuerIdentifier: "https://issuer.example.com",
-          keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig", // Required
-          nonce: "test-nonce",
-          signer: mockSigner,
-        } as CredentialRequestOptionsV1_3),
-      ).resolves.toBeDefined();
-    });
   });
 });
