@@ -18,7 +18,7 @@ export const oauthClientAttestationPopHeader =
 export const zClientAttestationJwtHeader = z
   .object({
     ...zJwtHeader.shape,
-    trust_chain: z.array(z.string()),
+    trust_chain: z.array(z.string()).nonempty(),
     typ: z.literal("oauth-client-attestation+jwt"),
   })
   .passthrough();
