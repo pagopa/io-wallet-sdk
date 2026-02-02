@@ -34,7 +34,7 @@ export interface ParseAccessTokenRequestResult {
   /**
    * The client attestation jwts from the access token request headers
    */
-  clientAttestation?: {
+  clientAttestation: {
     clientAttestationJwt: string;
     clientAttestationPopJwt: string;
   };
@@ -42,7 +42,7 @@ export interface ParseAccessTokenRequestResult {
   /**
    * The dpop jwt from the access token request headers
    */
-  dpop?: {
+  dpop: {
     jwt: string;
   };
 
@@ -109,7 +109,10 @@ export function parseAccessTokenRequest(
   const accessTokenRequest = validationResult.data;
   const grant = parseGrantParameters(accessTokenRequest);
   const securityHeaders = parseSecurityHeaders(options.request.headers);
-  const pkceCodeVerifier = accessTokenRequest.code_verifier;
+  const pkceCodeVerifier =
+    accessTokenRequest.grant_type === "authorization_code"
+      ? accessTokenRequest.code_verifier
+      : undefined;
 
   return {
     accessTokenRequest,
@@ -132,36 +135,22 @@ export function parseAccessTokenRequest(
 function parseGrantParameters(
   accessTokenRequest: AccessTokenRequest,
 ): ParsedAccessTokenRequestGrant {
-  const { code, grant_type, refresh_token } = accessTokenRequest;
-
-  if (grant_type === authorizationCodeGrantIdentifier) {
-    if (!code) {
-      throw new Oauth2Error(
-        `Missing required 'code' parameter for grant type '${authorizationCodeGrantIdentifier}'`,
-      );
-    }
-
+  if (accessTokenRequest.grant_type === authorizationCodeGrantIdentifier) {
     return {
-      code,
+      code: accessTokenRequest.code,
       grantType: authorizationCodeGrantIdentifier,
     };
   }
 
-  if (grant_type === refreshTokenGrantIdentifier) {
-    if (!refresh_token) {
-      throw new Oauth2Error(
-        `Missing required 'refresh_token' parameter for grant type '${refreshTokenGrantIdentifier}'`,
-      );
-    }
-
+  if (accessTokenRequest.grant_type === refreshTokenGrantIdentifier) {
     return {
       grantType: refreshTokenGrantIdentifier,
-      refreshToken: refresh_token,
+      refreshToken: accessTokenRequest.refresh_token,
     };
   }
 
   throw new Oauth2Error(
-    `Unsupported grant type '${grant_type}'. Supported types are: '${authorizationCodeGrantIdentifier}', '${refreshTokenGrantIdentifier}'`,
+    `Unsupported grant type. Supported types are: '${authorizationCodeGrantIdentifier}', '${refreshTokenGrantIdentifier}'`,
   );
 }
 
@@ -183,25 +172,38 @@ function parseSecurityHeaders(headers: FetchHeaders) {
     );
   }
 
+  if (!extractedDpopJwt.dpopJwt) {
+    throw new Oauth2Error("Request is missing required 'DPoP' header");
+  }
+
   const extractedClientAttestationJwts =
     extractClientAttestationJwtsFromHeaders(headers);
+
   if (!extractedClientAttestationJwts.valid) {
     throw new Oauth2Error(
       "Request contains client attestation headers, but the values are not in valid JWT format",
     );
   }
 
+  if (!extractedClientAttestationJwts.clientAttestationHeader) {
+    throw new Oauth2Error(
+      "Request is missing required 'OAuth-Client-Attestation' header",
+    );
+  }
+
+  if (!extractedClientAttestationJwts.clientAttestationPopHeader) {
+    throw new Oauth2Error(
+      "Request is missing required 'OAuth-Client-Attestation-PoP' header",
+    );
+  }
+
   return {
-    clientAttestation: extractedClientAttestationJwts.clientAttestationHeader
-      ? {
-          clientAttestationJwt:
-            extractedClientAttestationJwts.clientAttestationHeader,
-          clientAttestationPopJwt:
-            extractedClientAttestationJwts.clientAttestationPopHeader,
-        }
-      : undefined,
-    dpop: extractedDpopJwt.dpopJwt
-      ? { jwt: extractedDpopJwt.dpopJwt }
-      : undefined,
+    clientAttestation: {
+      clientAttestationJwt:
+        extractedClientAttestationJwts.clientAttestationHeader,
+      clientAttestationPopJwt:
+        extractedClientAttestationJwts.clientAttestationPopHeader,
+    },
+    dpop: { jwt: extractedDpopJwt.dpopJwt },
   };
 }
