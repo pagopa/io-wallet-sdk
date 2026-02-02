@@ -16,6 +16,16 @@ export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
 
 export type AccessTokenRequest = z.infer<typeof zAccessTokenRequest>;
 
+export type AuthorizationCodeGrantType = Extract<
+  AccessTokenRequest,
+  { grant_type: "authorization_code" }
+>;
+
+export type RefreshTokenGrantType = Extract<
+  AccessTokenRequest,
+  { grant_type: "refresh_token" }
+>;
+
 export const zAccessTokenResponse = z
   .object({
     access_token: z.string(),
