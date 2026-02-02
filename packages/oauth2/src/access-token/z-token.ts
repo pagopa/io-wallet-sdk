@@ -3,12 +3,13 @@ import { z } from "zod";
 export const zAccessTokenRequest = z
   .object({
     // Authorization code flow
-    code: z.optional(z.string()),
-    code_verifier: z.optional(z.string()),
+    code: z.string().optional(),
+    code_verifier: z.string().optional(),
     grant_type: z.literal("authorization_code").or(z.literal("refresh_token")),
-    redirect_uri: z.optional(z.string()),
+    redirect_uri: z.string().optional(),
     // Refresh token grant
-    refresh_token: z.optional(z.string()),
+    refresh_token: z.string().optional(),
+    scope: z.string().optional(),
   })
   .passthrough()
   .superRefine((data, ctx) => {
@@ -20,6 +21,14 @@ export const zAccessTokenRequest = z
             "For 'authorization_code', 'code', 'code_verifier', and 'redirect_uri' are required",
         });
       }
+
+      if (data.scope) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "'scope' parameter is not allowed for 'authorization_code' grant",
+        });
+      }
     }
 
     if (data.grant_type === "refresh_token") {
@@ -27,6 +36,14 @@ export const zAccessTokenRequest = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "For 'refresh_token', 'refresh_token' is required",
+        });
+      }
+
+      if (data.code || data.code_verifier || data.redirect_uri) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "'code', 'code_verifier', and 'redirect_uri' are not allowed for 'refresh_token' grant",
         });
       }
     }
