@@ -13,7 +13,7 @@ import {
   encodeToBase64Url,
 } from "@openid4vc/utils";
 
-import { Oauth2Error } from "./errors";
+import { Oauth2Error } from "../errors";
 
 export interface VerifyClientAttestationPopJwtOptions {
   /**
@@ -50,6 +50,7 @@ export interface VerifyClientAttestationPopJwtOptions {
 export type VerifiedClientAttestationPopJwt = Awaited<
   ReturnType<typeof verifyClientAttestationPopJwt>
 >;
+
 export async function verifyClientAttestationPopJwt(
   options: VerifyClientAttestationPopJwtOptions,
 ) {

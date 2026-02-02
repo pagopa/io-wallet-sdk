@@ -59,6 +59,24 @@ To set up the repository for local development:
    pnpm run build
    ```
 
+## Version Configuration
+
+The SDK supports multiple versions of the Italian Wallet technical specifications. You must configure the version in some methods using `IoWalletSdkConfig`.
+
+```typescript
+import { IoWalletSdkConfig, ItWalletSpecsVersion } from '@pagopa/io-wallet-utils';
+
+// Create a configuration for IT-Wallet v1.0
+const configV1_0 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0
+});
+
+// Create a configuration for IT-Wallet v1.3
+const configV1_3 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3
+});
+```
+
 ## 🧭 Contribute
 
 For internal development conventions and contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).

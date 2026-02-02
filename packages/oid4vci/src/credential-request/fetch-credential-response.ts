@@ -8,47 +8,38 @@ import {
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
+import type { CredentialRequestV1_0 } from "./v1.0";
+import type { CredentialRequestV1_3 } from "./v1.3";
+
 import { FetchCredentialResponseError } from "../errors";
-import {
-  CredentialRequest,
-  CredentialResponse,
-  zCredentialResponse,
-} from "./z-credential";
+import { CredentialResponse, zCredentialResponse } from "./z-credential";
 
+/**
+ * Options for fetching credential response
+ * Accepts credential requests from any supported version
+ */
 export interface FetchCredentialResponseOptions {
-  /**
-   * Access token to authorize the credential request for DPoP mechanism
-   */
   accessToken: string;
-  /**
-   * Callbacks to use for requesting access token
-   */
   callbacks: Pick<CallbackContext, "fetch">;
-
-  /**
-   * The credential endpoint URL
-   */
   credentialEndpoint: string;
-
   /**
-   * Credential request body
+   * Credential request object (supports both v1.0 and v1.3 formats)
    */
-  credentialRequest: CredentialRequest;
-
-  /**
-   * DPoP proof with addition of ath claim
-   */
+  credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
   dPoP: string;
 }
 
 /**
- * Fetches a credential response from the credential endpoint.
+ * Fetch a credential response from the credential endpoint
  *
- * @param options - Options for fetching the credential response
- * @returns The credential response
- * @throws FetchCredentialResponseError if an unexpected error occurs during the fetch
- * @throws UnexpectedStatusCodeError if the response status code is not 200
- * @throws ValidationError if the response cannot be parsed as a valid credential response
+ * Supports both v1.0 and v1.3 credential request formats.
+ * The response format is version-agnostic.
+ *
+ * @param options - Configuration for credential fetch
+ * @returns Parsed credential response
+ * @throws {UnexpectedStatusCodeError} If HTTP status is not 200
+ * @throws {ValidationError} If response validation fails
+ * @throws {FetchCredentialResponseError} For unexpected errors
  */
 export async function fetchCredentialResponse(
   options: FetchCredentialResponseOptions,
@@ -82,7 +73,9 @@ export async function fetchCredentialResponse(
       throw error;
     }
     throw new FetchCredentialResponseError(
-      `Unexpected error during credential response: ${error instanceof Error ? error.message : String(error)}`,
+      `Unexpected error during credential response: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   }
 }
