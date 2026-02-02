@@ -4,30 +4,33 @@ export const zAccessTokenRequest = z
   .object({
     // Authorization code flow
     code: z.optional(z.string()),
-
     code_verifier: z.optional(z.string()),
     grant_type: z.literal("authorization_code").or(z.literal("refresh_token")),
-
     redirect_uri: z.optional(z.string()),
     // Refresh token grant
     refresh_token: z.optional(z.string()),
   })
   .passthrough()
-  .refine(
-    ({ code, code_verifier, grant_type, redirect_uri }) =>
-      grant_type === "authorization_code" &&
-      (!code || !code_verifier || !redirect_uri),
-    {
-      message: `If 'grant_type' is 'authorization_code', 'code', 'code_verifier' and 'redirect_uri' must be provided`,
-    },
-  )
-  .refine(
-    ({ grant_type, refresh_token }) =>
-      grant_type === "refresh_token" && !refresh_token,
-    {
-      message: `If 'grant_type' is 'refresh_token', 'refresh_token' must be provided`,
-    },
-  );
+  .superRefine((data, ctx) => {
+    if (data.grant_type === "authorization_code") {
+      if (!data.code || !data.code_verifier || !data.redirect_uri) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "For 'authorization_code', 'code', 'code_verifier', and 'redirect_uri' are required",
+        });
+      }
+    }
+
+    if (data.grant_type === "refresh_token") {
+      if (!data.refresh_token) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "For 'refresh_token', 'refresh_token' is required",
+        });
+      }
+    }
+  });
 
 export type AccessTokenRequest = z.infer<typeof zAccessTokenRequest>;
 
