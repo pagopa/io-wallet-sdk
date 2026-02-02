@@ -288,7 +288,7 @@ describe("fetchTokenResponse - unexpected error handling", () => {
 });
 
 describe("toURLSearchParams", () => {
-  it("should convert basic string fields to URLSearchParams", () => {
+  it("should convert authorization_code grant to URLSearchParams", () => {
     const request: AccessTokenRequest = {
       code: "test-code",
       code_verifier: "test-verifier",
@@ -304,78 +304,43 @@ describe("toURLSearchParams", () => {
     expect(result.get("redirect_uri")).toBe("https://example.com/callback");
   });
 
-  it("should skip undefined fields", () => {
+  it("should convert refresh_token grant to URLSearchParams", () => {
     const request: AccessTokenRequest = {
-      code: "test-code",
-      code_verifier: undefined,
-      grant_type: "authorization_code",
-      redirect_uri: "https://example.com/callback",
+      grant_type: "refresh_token",
+      refresh_token: "test-refresh-token",
     };
 
     const result = toURLSearchParams(request);
 
-    expect(result.get("code")).toBe("test-code");
-    expect(result.get("code_verifier")).toBeNull();
-    expect(result.get("grant_type")).toBe("authorization_code");
-    expect(result.get("redirect_uri")).toBe("https://example.com/callback");
+    expect(result.get("grant_type")).toBe("refresh_token");
+    expect(result.get("refresh_token")).toBe("test-refresh-token");
   });
 
-  it("should stringify object fields", () => {
-    const request = {
-      code: "test-code",
-      custom_object: { key: "value", nested: { data: "test" } },
-      grant_type: "authorization_code" as const,
-    };
-
-    const result = toURLSearchParams(request);
-
-    expect(result.get("custom_object")).toBe(
-      JSON.stringify({ key: "value", nested: { data: "test" } }),
-    );
-  });
-
-  it("should convert number fields to strings", () => {
-    const request = {
-      grant_type: "authorization_code" as const,
-      numeric_field: 12345,
-    };
-
-    const result = toURLSearchParams(request);
-
-    expect(result.get("numeric_field")).toBe("12345");
-  });
-
-  it("should convert boolean fields to strings", () => {
-    const request = {
-      boolean_field: true,
-      grant_type: "authorization_code" as const,
-    };
-
-    const result = toURLSearchParams(request);
-
-    expect(result.get("boolean_field")).toBe("true");
-  });
-
-  it("should handle empty object", () => {
-    const request = {
-      grant_type: "authorization_code" as const,
-    };
-
-    const result = toURLSearchParams(request);
-
-    expect(result.toString()).toBe("grant_type=authorization_code");
-  });
-
-  it("should handle multiple undefined fields", () => {
+  it("should include optional scope for refresh_token grant", () => {
     const request: AccessTokenRequest = {
-      code: undefined,
-      code_verifier: undefined,
-      grant_type: "authorization_code",
-      redirect_uri: undefined,
+      grant_type: "refresh_token",
+      refresh_token: "test-refresh-token",
+      scope: "openid profile",
     };
 
     const result = toURLSearchParams(request);
 
-    expect(result.toString()).toBe("grant_type=authorization_code");
+    expect(result.get("grant_type")).toBe("refresh_token");
+    expect(result.get("refresh_token")).toBe("test-refresh-token");
+    expect(result.get("scope")).toBe("openid profile");
+  });
+
+  it("should not include undefined values", () => {
+    const request: AccessTokenRequest = {
+      grant_type: "refresh_token",
+      refresh_token: "test-refresh-token",
+      scope: undefined,
+    };
+
+    const result = toURLSearchParams(request);
+
+    expect(result.get("grant_type")).toBe("refresh_token");
+    expect(result.get("refresh_token")).toBe("test-refresh-token");
+    expect(result.get("scope")).toBeNull();
   });
 });
