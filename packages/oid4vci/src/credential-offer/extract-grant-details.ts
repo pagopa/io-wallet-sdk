@@ -23,17 +23,13 @@ export function extractGrantDetails(
   credentialOffer: CredentialOffer,
 ): ExtractGrantDetailsResult {
   if (!credentialOffer.grants) {
-    throw new CredentialOfferError(
-      "No grants found in credential offer (REQUIRED for IT-Wallet v1.3)",
-    );
+    throw new CredentialOfferError("No grants found in credential offer");
   }
 
   const authCodeGrant = credentialOffer.grants.authorization_code;
 
   if (!authCodeGrant) {
-    throw new CredentialOfferError(
-      "authorization_code grant not found (REQUIRED for IT-Wallet v1.3)",
-    );
+    throw new CredentialOfferError("authorization_code grant not found");
   }
 
   return {
