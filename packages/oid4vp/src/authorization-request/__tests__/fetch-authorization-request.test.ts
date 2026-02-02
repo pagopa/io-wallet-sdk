@@ -11,6 +11,7 @@ import { parseAuthorizeRequest } from "../parse-authorization-request";
 
 vi.mock("../parse-authorization-request");
 
+// eslint-disable-next-line max-lines-per-function
 describe("fetchAuthorizationRequest", () => {
   const mockFetch = vi.fn();
   const mockVerifyJwt = vi.fn();
@@ -45,7 +46,9 @@ describe("fetchAuthorizationRequest", () => {
         authorizeRequestUrl: "https://example.com?client_id=client-123",
         callbacks: mockCallbacks,
       }),
-    ).rejects.toThrow("Either request or request_uri parameter must be present");
+    ).rejects.toThrow(
+      "Either request or request_uri parameter must be present",
+    );
   });
 
   it("should fetch request object using GET by default", async () => {
@@ -125,10 +128,10 @@ describe("fetchAuthorizationRequest", () => {
     expect(mockFetch).toHaveBeenCalledWith(
       "https://request.com",
       expect.objectContaining({
-        method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
+        method: "POST",
       }),
     );
   });
@@ -283,7 +286,10 @@ describe("fetchAuthorizationRequest - by value mode", () => {
     });
 
     expect(result.sendBy).toBe("reference");
-    expect(mockFetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://rp.example.org/request",
+      expect.objectContaining({ method: "GET" }),
+    );
   });
 
   it("should throw error when both request and request_uri are present", async () => {
@@ -294,9 +300,7 @@ describe("fetchAuthorizationRequest - by value mode", () => {
         authorizeRequestUrl: url,
         callbacks: mockCallbacks,
       }),
-    ).rejects.toThrow(
-      "request and request_uri cannot both be present",
-    );
+    ).rejects.toThrow("request and request_uri cannot both be present");
   });
 
   it("should properly parse long inline request JWT", async () => {
@@ -346,8 +350,8 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
     const walletMetadata = {
       authorization_endpoint: "https://wallet.example.org/authorize",
-      response_types_supported: ["vp_token"],
       response_modes_supported: ["direct_post.jwt"],
+      response_types_supported: ["vp_token"],
       vp_formats_supported: {
         jwt_vc_json: { alg_values_supported: ["ES256"] },
       },
@@ -378,18 +382,21 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
     expect(mockFetch).toHaveBeenCalledWith(
       "https://rp.example.org/request",
       expect.objectContaining({
-        method: "POST",
+        body: expect.stringContaining("wallet_metadata="),
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: expect.stringContaining("wallet_metadata="),
+        method: "POST",
       }),
     );
 
     // Verify body contains JSON-encoded metadata
     const callArgs = mockFetch.mock.calls[0];
-    const body = new URLSearchParams(callArgs[1].body);
-    const decodedMetadata = JSON.parse(body.get("wallet_metadata")!);
+    expect(callArgs).toBeDefined();
+    const body = new URLSearchParams(callArgs?.[1].body as string);
+    const metadataValue = body.get("wallet_metadata");
+    expect(metadataValue).toBeTruthy();
+    const decodedMetadata = JSON.parse(metadataValue as string);
     expect(decodedMetadata).toEqual(walletMetadata);
   });
 
@@ -418,7 +425,8 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
     });
 
     const callArgs = mockFetch.mock.calls[0];
-    const body = new URLSearchParams(callArgs[1].body);
+    expect(callArgs).toBeDefined();
+    const body = new URLSearchParams(callArgs?.[1].body as string);
     expect(body.get("wallet_nonce")).toBe("test-nonce-12345");
   });
 
@@ -449,11 +457,11 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
     expect(mockFetch).toHaveBeenCalledWith(
       "https://rp.example.org/request",
       expect.objectContaining({
-        method: "POST",
+        body: "", // Empty body
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: "", // Empty body
+        method: "POST",
       }),
     );
   });
@@ -494,7 +502,8 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
     // Verify no body sent with GET
     const callArgs = mockFetch.mock.calls[0];
-    expect(callArgs[1].body).toBeUndefined();
+    expect(callArgs).toBeDefined();
+    expect(callArgs?.[1].body).toBeUndefined();
   });
 
   it("should throw InvalidRequestUriMethodError for invalid method", async () => {

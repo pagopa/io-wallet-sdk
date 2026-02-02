@@ -7,16 +7,16 @@ describe("validateAuthorizationRequestParams", () => {
   it("should throw error when both request and request_uri are present", () => {
     expect(() =>
       validateAuthorizationRequestParams({
+        client_id: "test-client",
         request: "eyJhbGc...",
         request_uri: "https://example.com/request",
-        client_id: "test-client",
       }),
     ).toThrow(Oid4vpError);
     expect(() =>
       validateAuthorizationRequestParams({
+        client_id: "test-client",
         request: "eyJhbGc...",
         request_uri: "https://example.com/request",
-        client_id: "test-client",
       }),
     ).toThrow("request and request_uri cannot both be present");
   });
@@ -37,16 +37,16 @@ describe("validateAuthorizationRequestParams", () => {
   it("should throw InvalidRequestUriMethodError for invalid request_uri_method", () => {
     expect(() =>
       validateAuthorizationRequestParams({
-        request_uri: "https://example.com/request",
-        request_uri_method: "PUT" as any,
         client_id: "test-client",
+        request_uri: "https://example.com/request",
+        request_uri_method: "PUT" as unknown as "get",
       }),
     ).toThrow(InvalidRequestUriMethodError);
     expect(() =>
       validateAuthorizationRequestParams({
-        request_uri: "https://example.com/request",
-        request_uri_method: "DELETE" as any,
         client_id: "test-client",
+        request_uri: "https://example.com/request",
+        request_uri_method: "DELETE" as unknown as "get",
       }),
     ).toThrow("Must be 'get' or 'post'");
   });
@@ -54,26 +54,24 @@ describe("validateAuthorizationRequestParams", () => {
   it("should throw error when request_uri_method used without request_uri", () => {
     expect(() =>
       validateAuthorizationRequestParams({
+        client_id: "test-client",
         request: "eyJhbGc...",
         request_uri_method: "post",
-        client_id: "test-client",
       }),
     ).toThrow(Oid4vpError);
     expect(() =>
       validateAuthorizationRequestParams({
+        client_id: "test-client",
         request: "eyJhbGc...",
         request_uri_method: "post",
-        client_id: "test-client",
       }),
-    ).toThrow(
-      "request_uri_method can only be used with request_uri parameter",
-    );
+    ).toThrow("request_uri_method can only be used with request_uri parameter");
   });
 
   it("should validate successfully with request parameter", () => {
     const params = {
-      request: "eyJhbGc...",
       client_id: "test-client",
+      request: "eyJhbGc...",
     };
     const result = validateAuthorizationRequestParams(params);
     expect(result.request).toBe("eyJhbGc...");
@@ -82,8 +80,8 @@ describe("validateAuthorizationRequestParams", () => {
 
   it("should validate successfully with request_uri parameter", () => {
     const params = {
-      request_uri: "https://example.com/request",
       client_id: "test-client",
+      request_uri: "https://example.com/request",
       request_uri_method: "post" as const,
     };
     const result = validateAuthorizationRequestParams(params);
@@ -94,16 +92,16 @@ describe("validateAuthorizationRequestParams", () => {
 
   it("should normalize request_uri_method case insensitively", () => {
     const params1 = {
-      request_uri: "https://example.com/request",
-      request_uri_method: "GET" as any,
       client_id: "test-client",
+      request_uri: "https://example.com/request",
+      request_uri_method: "GET" as unknown as "get",
     };
     expect(() => validateAuthorizationRequestParams(params1)).not.toThrow();
 
     const params2 = {
-      request_uri: "https://example.com/request",
-      request_uri_method: "Post" as any,
       client_id: "test-client",
+      request_uri: "https://example.com/request",
+      request_uri_method: "Post" as unknown as "get",
     };
     expect(() => validateAuthorizationRequestParams(params2)).not.toThrow();
   });
