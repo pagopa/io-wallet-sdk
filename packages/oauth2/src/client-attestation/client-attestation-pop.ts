@@ -6,27 +6,14 @@ import {
   JwtSignerJwk,
   decodeJwt,
   verifyJwt,
-  zCompactJwt,
 } from "@openid4vc/oauth2";
 import {
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
 } from "@openid4vc/utils";
-import { FetchHeaders } from "@pagopa/io-wallet-utils";
-import z from "zod";
 
-import { Oauth2Error } from "./errors";
-
-export const zOauthClientAttestationHeader = z.literal(
-  "OAuth-Client-Attestation",
-);
-export const oauthClientAttestationHeader = zOauthClientAttestationHeader.value;
-export const zOauthClientAttestationPopHeader = z.literal(
-  "OAuth-Client-Attestation-PoP",
-);
-export const oauthClientAttestationPopHeader =
-  zOauthClientAttestationPopHeader.value;
+import { Oauth2Error } from "../errors";
 
 export interface VerifyClientAttestationPopJwtOptions {
   /**
@@ -63,6 +50,7 @@ export interface VerifyClientAttestationPopJwtOptions {
 export type VerifiedClientAttestationPopJwt = Awaited<
   ReturnType<typeof verifyClientAttestationPopJwt>
 >;
+
 export async function verifyClientAttestationPopJwt(
   options: VerifyClientAttestationPopJwtOptions,
 ) {
@@ -214,43 +202,4 @@ export async function createClientAttestationPopJwt(
       `Error creating client attestation pop jwt : ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-}
-
-export function extractClientAttestationJwtsFromHeaders(headers: FetchHeaders):
-  | {
-      clientAttestationHeader: string;
-      clientAttestationPopHeader: string;
-      valid: true;
-    }
-  | {
-      clientAttestationHeader?: undefined;
-      clientAttestationPopHeader?: undefined;
-      valid: true;
-    }
-  | { valid: false } {
-  const clientAttestationHeader = headers.get(oauthClientAttestationHeader);
-  const clientAttestationPopHeader = headers.get(
-    oauthClientAttestationPopHeader,
-  );
-
-  if (!clientAttestationHeader && !clientAttestationPopHeader) {
-    return { valid: true };
-  }
-
-  if (!clientAttestationHeader || !clientAttestationPopHeader) {
-    return { valid: false };
-  }
-
-  if (
-    !zCompactJwt.safeParse(clientAttestationHeader).success ||
-    !zCompactJwt.safeParse(clientAttestationPopHeader).success
-  ) {
-    return { valid: false };
-  }
-
-  return {
-    clientAttestationHeader,
-    clientAttestationPopHeader,
-    valid: true,
-  } as const;
 }

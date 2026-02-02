@@ -1,6 +1,6 @@
 import type { RequestLike } from "@pagopa/io-wallet-utils";
 
-import { extractClientAttestationJwtsFromHeaders } from "../client-attestation-pop";
+import { extractClientAttestationJwtsFromHeaders } from "../client-attestation";
 import { Oauth2Error } from "../errors";
 import { extractDpopJwtFromHeaders } from "../token-dpop";
 
@@ -40,10 +40,8 @@ export interface ParseAuthorizationRequestResult {
  * - `dpop` - DPoP information if present (jwt)
  * - `clientAttestation` - Client attestation JWTs if present
  *
- * @throws {Oauth2Error} When required DPoP header is missing but dpop_jkt is present
  * @throws {Oauth2Error} When DPoP JWT format is invalid
  * @throws {Oauth2Error} When client attestation headers are incomplete
- * @throws {Oauth2Error} When client attestation JWT format is invalid
  */
 export function parseAuthorizationRequest(
   options: ParseAuthorizationRequestOptions,
