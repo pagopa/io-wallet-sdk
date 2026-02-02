@@ -1,6 +1,6 @@
 import { CallbackContext } from "@openid4vc/oauth2";
 
-import { AccessTokenRequest } from "./z-token";
+import { AuthorizationCodeGrantType } from "./z-token";
 
 export interface RetrieveAuthorizationCodeAccessTokenOptions {
   /**
@@ -25,13 +25,13 @@ export interface RetrieveAuthorizationCodeAccessTokenOptions {
   /**
    * PKCE Code verifier that was used in the authorization request.
    */
-  pkceCodeVerifier?: string;
+  pkceCodeVerifier: string;
 
   /**
-   * Redirect uri to include in the access token request. Only required
-   * if the redirect uri was present in the authorization request.
+   * Redirect uri to include in the access token request.
+   * It MUST be set as in the Request Object.
    */
-  redirectUri?: string;
+  redirectUri: string;
 }
 
 export const createTokenRequest = async (
@@ -43,4 +43,4 @@ export const createTokenRequest = async (
     grant_type: "authorization_code",
     redirect_uri: options.redirectUri,
     ...options.additionalRequestPayload,
-  }) satisfies AccessTokenRequest;
+  }) satisfies AuthorizationCodeGrantType;
