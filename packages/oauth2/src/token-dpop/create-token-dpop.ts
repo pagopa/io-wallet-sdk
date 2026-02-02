@@ -16,6 +16,7 @@ import { FetchHeaders } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 
 import { CreateTokenDPoPError } from "../errors";
+import { htuFromRequestUrl } from "./dpop-utils";
 import {
   DpopJwtHeader,
   DpopJwtPayload,
@@ -130,14 +131,6 @@ export async function createTokenDPoP(options: CreateTokenDPoPOptions) {
     );
   }
 }
-
-const htuFromRequestUrl = (requestUrl: string) => {
-  const htu = new URL(requestUrl);
-  htu.search = "";
-  htu.hash = "";
-
-  return htu.toString();
-};
 
 export function extractDpopJwtFromHeaders(
   headers: FetchHeaders,

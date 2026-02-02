@@ -1,6 +1,6 @@
 export * from "./access-token";
 export * from "./authorization-request";
-export * from "./client-attestation-pop";
+export * from "./client-attestation";
 export * from "./errors";
 export * from "./jar";
 export * from "./jarm-form-post-jwt";
