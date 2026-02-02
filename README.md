@@ -80,8 +80,3 @@ const configV1_3 = new IoWalletSdkConfig({
 ## 🧭 Contribute
 
 For internal development conventions and contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-
-## License
-
-This project is licensed under the MIT License.
