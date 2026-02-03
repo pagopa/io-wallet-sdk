@@ -161,7 +161,7 @@ export async function verifyPushedAuthorizationRequest(
       const decoded = decodeJwt({ jwt: options.authorizationRequestJwt.jwt });
       if (decoded.header.alg === "none") {
         throw new PushedAuthorizationRequestError(
-          'Authorization Server requires signed request objects, but JAR has algorithm "none" or missing algorithm header',
+          'Authorization Server requires signed request objects, but JAR has algorithm "none"',
         );
       }
     }
