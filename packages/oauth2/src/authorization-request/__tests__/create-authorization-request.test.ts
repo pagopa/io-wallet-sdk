@@ -39,6 +39,9 @@ const baseOptions: CreatePushedAuthorizationRequestOptions = {
       type: "openid_credential",
     },
   ],
+  authorizationServerMetadata: {
+    require_signed_request_object: true,
+  },
   callbacks: mockCallbacks,
   clientId: "test-client-id",
   codeChallengeMethodsSupported: ["S256"],
@@ -49,19 +52,19 @@ const baseOptions: CreatePushedAuthorizationRequestOptions = {
   responseMode: "form_post",
 };
 
-describe("createPushedAuthorizationRequest", () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-    mockCallbacks.generateRandom.mockResolvedValue(
-      new Uint8Array([1, 2, 3, 4]),
-    );
-    mockCallbacks.signJwt.mockResolvedValue({ jwt: "test-jwt-token" });
-    mockCreatePkce.mockResolvedValue({
-      codeChallenge: "test-code-challenge",
-      codeChallengeMethod: PkceCodeChallengeMethod.S256,
-      codeVerifier: "test-code-verifier",
-    });
+const setupMocks = () => {
+  vi.restoreAllMocks();
+  mockCallbacks.generateRandom.mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
+  mockCallbacks.signJwt.mockResolvedValue({ jwt: "test-jwt-token" });
+  mockCreatePkce.mockResolvedValue({
+    codeChallenge: "test-code-challenge",
+    codeChallengeMethod: PkceCodeChallengeMethod.S256,
+    codeVerifier: "test-code-verifier",
   });
+};
+
+describe("createPushedAuthorizationRequest", () => {
+  beforeEach(setupMocks);
 
   it("should create a pushed authorization request with PKCE", async () => {
     const result = await createPushedAuthorizationRequest(baseOptions);
@@ -228,6 +231,68 @@ describe("createPushedAuthorizationRequest", () => {
       client_id: "test-client-id",
       pkceCodeVerifier: "test-code-verifier",
       request: "test-jwt-token",
+    });
+  });
+});
+
+describe("createPushedAuthorizationRequest - JAR signing policy", () => {
+  beforeEach(setupMocks);
+
+  it("should create unsigned PAR when require_signed_request_object is false", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { dpop: _, ...baseWithoutDpop } = baseOptions;
+    const options = {
+      ...baseWithoutDpop,
+      authorizationServerMetadata: {
+        require_signed_request_object: false,
+      },
+    };
+
+    const result = await createPushedAuthorizationRequest(options);
+
+    expect(mockCallbacks.signJwt).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      authorizationRequest: expect.objectContaining({
+        authorization_details: [
+          {
+            credential_configuration_id: "test-config",
+            type: "openid_credential",
+          },
+        ],
+        client_id: "test-client-id",
+        code_challenge: "test-code-challenge",
+        code_challenge_method: "S256",
+        redirect_uri: "https://client.example.com/callback",
+        response_mode: "form_post",
+        response_type: "code",
+        state: "base64url_1,2,3,4",
+      }),
+      client_id: "test-client-id",
+      pkceCodeVerifier: "test-code-verifier",
+    });
+  });
+
+  it("should default to unsigned PAR when authorizationServerMetadata is not provided", async () => {
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    const {
+      authorizationServerMetadata: _,
+      dpop: __,
+      ...optionsWithoutMetadata
+    } = baseOptions;
+    /* eslint-enable @typescript-eslint/no-unused-vars */
+
+    const result = await createPushedAuthorizationRequest(
+      optionsWithoutMetadata,
+    );
+
+    expect(mockCallbacks.signJwt).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      authorizationRequest: expect.objectContaining({
+        client_id: "test-client-id",
+        response_type: "code",
+      }),
+      client_id: "test-client-id",
+      pkceCodeVerifier: "test-code-verifier",
     });
   });
 });
