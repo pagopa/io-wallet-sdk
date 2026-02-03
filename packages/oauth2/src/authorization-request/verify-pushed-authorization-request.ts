@@ -55,7 +55,7 @@ export interface VerifyPushedAuthorizationRequestOptions
  * 1. JAR signing policy enforcement (per RFC 9101 Section 10.5) - validates require_signed_request_object
  * 2. JAR request object verification (if provided) - validates JWT signature and claims
  * 3. DPoP proof verification (if provided) - validates proof of possession
- * 4. Client attestation verification (if provided) - validates client identity
+ * 4. Client attestation verification - validates client identity
  *
  * **JAR Signing Policy (RFC 9101):**
  * When `authorizationServerMetadata.require_signed_request_object` is true:
