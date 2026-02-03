@@ -131,8 +131,8 @@ export interface CreatePushedAuthorizationRequestOptions {
  *   - `PushedAuthorizationRequestSigned` when JAR signing is required (contains `request` JWT)
  *   - `PushedAuthorizationRequestUnsigned` when JAR signing is not required (contains `authorizationRequest` object)
  *
- * @throws {Error} If DPoP signer is missing required properties (alg, publicJwk.kid)
- * @throws {Error} If PKCE code challenge method is not supported
+ * @throws {PushedAuthorizationRequestError} If DPoP signer is missing required properties (alg, publicJwk.kid)
+ * @throws {PushedAuthorizationRequestError} If PKCE code challenge method is not supported
  * @throws {ZodError} If authorization request parameters fail validation
  *
  * @example
