@@ -6,9 +6,9 @@ import {
 import { RequestLike } from "@pagopa/io-wallet-utils";
 
 import {
+  ClientAttestationOptions,
   VerifiedClientAttestationJwt,
   VerifiedClientAttestationPopJwt,
-  VerifyClientAttestationOptions,
   verifyClientAttestation,
 } from "../client-attestation";
 import { Oauth2Error } from "../errors";
@@ -67,7 +67,7 @@ export interface VerifyAuthorizationRequestOptions {
   authorizationServerMetadata: AuthorizationServerMetadata;
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
 
-  clientAttestation: VerifyClientAttestationOptions;
+  clientAttestation: ClientAttestationOptions;
   dpop?: VerifyAuthorizationRequestDPoP;
 
   /**
@@ -150,14 +150,14 @@ export async function verifyAuthorizationRequest(
       )
     : undefined;
 
-  const clientAttestationResult = await verifyClientAttestation(
-    options.clientAttestation,
-    options.authorizationServerMetadata,
-    options.callbacks,
-    dpopResult?.jwkThumbprint,
-    options.now,
-    options.authorizationRequest.client_id,
-  );
+  const clientAttestationResult = await verifyClientAttestation({
+    authorizationServerMetadata: options.authorizationServerMetadata,
+    callbacks: options.callbacks,
+    clientAttestation: options.clientAttestation,
+    dpopJwkThumbprint: dpopResult?.jwkThumbprint,
+    now: options.now,
+    requestClientId: options.authorizationRequest.client_id,
+  });
 
   return {
     clientAttestation: clientAttestationResult,

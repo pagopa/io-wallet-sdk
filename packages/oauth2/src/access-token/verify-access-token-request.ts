@@ -6,9 +6,9 @@ import {
 import { RequestLike } from "@pagopa/io-wallet-utils";
 
 import {
+  ClientAttestationOptions,
   VerifiedClientAttestationJwt,
   VerifiedClientAttestationPopJwt,
-  VerifyClientAttestationOptions,
   verifyClientAttestation,
 } from "../client-attestation";
 import { Oauth2Error } from "../errors";
@@ -56,7 +56,7 @@ export interface VerifyAccessTokenRequestOptions {
   /**
    * Options for verifying the client attestation
    */
-  clientAttestation: VerifyClientAttestationOptions;
+  clientAttestation: ClientAttestationOptions;
 
   /**
    * The expiration date of the authorization code
@@ -161,13 +161,13 @@ export async function verifyAccessTokenRequest(
     request: options.request,
   });
 
-  const clientAttestationResult = await verifyClientAttestation(
-    options.clientAttestation,
-    options.authorizationServerMetadata,
-    options.callbacks,
-    jwkThumbprint,
-    options.now,
-  );
+  const clientAttestationResult = await verifyClientAttestation({
+    authorizationServerMetadata: options.authorizationServerMetadata,
+    callbacks: options.callbacks,
+    clientAttestation: options.clientAttestation,
+    dpopJwkThumbprint: jwkThumbprint,
+    now: options.now,
+  });
 
   if (options.grant.code !== options.expectedCode) {
     throw new Oauth2Error(`Invalid 'code' provided`);
