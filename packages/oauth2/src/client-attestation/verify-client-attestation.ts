@@ -38,7 +38,7 @@ export async function verifyClientAttestation(
 ) {
   if (!options.clientAttestationJwt || !options.clientAttestationPopJwt) {
     throw new Oauth2Error(
-      `Missing required client attestation parameters in pushed authorization request. Make sure to provide the '${oauthClientAttestationHeader}' and '${oauthClientAttestationPopHeader}' header values.`,
+      `Missing required client attestation parameters in the request. Make sure to provide the '${oauthClientAttestationHeader}' and '${oauthClientAttestationPopHeader}' header values.`,
     );
   }
 
