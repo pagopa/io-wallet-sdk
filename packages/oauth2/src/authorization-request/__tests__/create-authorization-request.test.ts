@@ -7,9 +7,13 @@ import {
 } from "../create-authorization-request";
 
 vi.mock("../../pkce");
-vi.mock("@openid4vc/utils", () => ({
-  encodeToBase64Url: vi.fn((data) => `base64url_${data}`),
-}));
+vi.mock(import("@openid4vc/utils"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    encodeToBase64Url: vi.fn((data) => `base64url_${data}`),
+  };
+});
 
 const mockCreatePkce = vi.mocked(createPkce);
 
@@ -131,7 +135,7 @@ describe("createPushedAuthorizationRequest", () => {
 
     await createPushedAuthorizationRequest(baseOptions);
 
-    const expectedIat = Math.floor(mockNow);
+    const expectedIat = Math.floor(mockNow / 1000);
     const expectedExp = expectedIat + 3600;
 
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {

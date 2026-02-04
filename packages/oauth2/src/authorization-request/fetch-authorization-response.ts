@@ -10,8 +10,9 @@ import {
 
 import { PushedAuthorizationRequestError } from "../errors";
 import {
-  PushedAuthorizationRequestSigned,
+  PushedAuthorizationRequest,
   PushedAuthorizationResponse,
+  isPushedAuthorizationRequestSigned,
   zPushedAuthorizationResponse,
 } from "./z-authorization-request";
 
@@ -32,16 +33,18 @@ export interface fetchPushedAuthorizationResponseOptions {
   clientAttestationDPoP: string;
 
   /**
+   * The pushed authorization request to send. Accepts both signed (JAR) and unsigned variants
+   * as returned by `createPushedAuthorizationRequest`. The correct form body is derived
+   * automatically: signed requests POST `{ client_id, request }`, unsigned requests POST
+   * every field from `authorizationRequest` as flat form parameters.
+   */
+  pushedAuthorizationRequest: PushedAuthorizationRequest;
+
+  /**
    * The endpoint URL where the pushed authorization request will be sent
    * This should be the authorization server's PAR endpoint
    */
   pushedAuthorizationRequestEndpoint: string;
-
-  /**
-   * The signed pushed authorization request object containing client_id and request JWT
-   * This object has been previously signed and is ready for transmission
-   */
-  pushedAuthorizationRequestSigned: PushedAuthorizationRequestSigned;
 
   /**
    * The wallet attestation JWT that proves the client's identity and capabilities
@@ -51,10 +54,14 @@ export interface fetchPushedAuthorizationResponseOptions {
 }
 
 /**
- * Sends a pushed authorization request to the authorization server and returns the response
+ * Sends a pushed authorization request to the authorization server and returns the response.
  *
- * This function implements the IT Wallet Pushed Authorization Requests (PAR) specification,
- * sending the signed authorization request to the server and handling the response.
+ * Supports both signed (JAR) and unsigned PAR variants as produced by
+ * `createPushedAuthorizationRequest`. The form body is built automatically:
+ * - **Signed**: posts `{ client_id, request }`.
+ * - **Unsigned**: posts every field from `authorizationRequest` as flat form
+ *   parameters, with object/array values (e.g. `authorization_details`)
+ *   JSON-serialised.
  *
  * @param options - Configuration options for the pushed authorization request
  * @returns Promise that resolves to the parsed pushed authorization response containing request_uri and expires_in
@@ -66,13 +73,22 @@ export async function fetchPushedAuthorizationResponse(
 ): Promise<PushedAuthorizationResponse> {
   try {
     const fetch = createFetcher(options.callbacks.fetch);
+
+    const body = isPushedAuthorizationRequestSigned(
+      options.pushedAuthorizationRequest,
+    )
+      ? new URLSearchParams({
+          client_id: options.pushedAuthorizationRequest.client_id,
+          request: options.pushedAuthorizationRequest.request,
+        })
+      : toURLSearchParams(
+          options.pushedAuthorizationRequest.authorizationRequest,
+        );
+
     const parResponse = await fetch(
       options.pushedAuthorizationRequestEndpoint,
       {
-        body: new URLSearchParams({
-          client_id: options.pushedAuthorizationRequestSigned.client_id,
-          request: options.pushedAuthorizationRequestSigned.request,
-        }),
+        body,
         headers: {
           [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
           [HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
@@ -107,4 +123,19 @@ export async function fetchPushedAuthorizationResponse(
       `Unexpected error during pushed authorization request: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+function toURLSearchParams(data: Record<string, unknown>): URLSearchParams {
+  const params = new URLSearchParams();
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === undefined) return;
+
+    params.append(
+      key,
+      typeof value === "object" ? JSON.stringify(value) : String(value),
+    );
+  });
+
+  return params;
 }
