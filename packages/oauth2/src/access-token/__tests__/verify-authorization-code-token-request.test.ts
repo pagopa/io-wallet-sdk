@@ -13,7 +13,7 @@ import { PkceCodeChallengeMethod } from "../../pkce";
 import {
   VerifyAccessTokenRequestOptions,
   verifyAccessTokenRequest,
-} from "../verify-authorization-code-token-request";
+} from "../verify-access-token-request";
 
 describe("verifyAuthorizationCodeTokenRequest", () => {
   const mockJwk: Jwk = {
