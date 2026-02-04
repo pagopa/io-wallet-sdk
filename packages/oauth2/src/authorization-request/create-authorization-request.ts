@@ -3,7 +3,7 @@ import {
   CallbackContext,
   RequestDpopOptions,
 } from "@openid4vc/oauth2";
-import { encodeToBase64Url } from "@openid4vc/utils";
+import { dateToSeconds, encodeToBase64Url } from "@openid4vc/utils";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";
@@ -244,7 +244,7 @@ export async function createPushedAuthorizationRequest(
       );
     }
 
-    const iat = Math.floor(Date.now());
+    const iat = new Date();
     const requestJwt = await options.callbacks.signJwt(dpop.signer, {
       header: {
         alg: dpop.signer.alg,
@@ -253,8 +253,8 @@ export async function createPushedAuthorizationRequest(
       },
       payload: {
         aud: options.audience,
-        exp: iat + JWT_EXPIRY_SECONDS,
-        iat,
+        exp: dateToSeconds(iat) + JWT_EXPIRY_SECONDS,
+        iat: dateToSeconds(iat),
         iss: dpop.signer.publicJwk.kid,
         jti:
           options.jti ??
