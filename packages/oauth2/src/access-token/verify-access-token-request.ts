@@ -158,6 +158,7 @@ export async function verifyAccessTokenRequest(
     allowedSigningAlgs: options.dpop.allowedSigningAlgs,
     callbacks: options.callbacks,
     dpopJwt: options.dpop.jwt,
+    now: options.now,
     request: options.request,
   });
 
