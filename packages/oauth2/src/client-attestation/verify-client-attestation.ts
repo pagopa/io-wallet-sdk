@@ -56,12 +56,19 @@ export interface VerifyClientAttestationOptions {
   dpopJwkThumbprint?: string;
 
   /**
-   * The current time to use when verifying the JWTs. If not provided, the current system time will be used.
+   * The current time to use when verifying the JWTs.
+   * If not provided current time will be used.
+   *
+   * @default new Date()
    */
   now?: Date;
 
   /**
    * The client id provided in the authorization request, if any.
+   *
+   * Pass this when the authorization request includes a `client_id` parameter.
+   * The function will verify that it matches the `sub` claim in the client attestation JWT.
+   * If not provided, no client_id validation is performed.
    */
   requestClientId?: string;
 }

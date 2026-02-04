@@ -79,7 +79,10 @@ export interface VerifyAccessTokenRequestOptions {
   grant: ParsedAccessTokenAuthorizationCodeRequestGrant;
 
   /**
-   * The current date/time. If not provided, the current system date/time will be used.
+   * The current time to use when verifying the JWTs.
+   * If not provided current time will be used.
+   *
+   * @default new Date()
    */
   now?: Date;
 
