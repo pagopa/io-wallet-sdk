@@ -1,19 +1,26 @@
 import { z } from "zod";
 
 import {
+  itWalletFederationEntityIdentifier,
+  itWalletFederationEntityMetadata,
+} from "./entity/itWalletFederationEntity";
+import {
   itWalletAuthorizationServerIdentifier,
   itWalletAuthorizationServerMetadata,
   itWalletCredentialIssuerIdentifier,
   itWalletCredentialIssuerMetadata,
   itWalletCredentialVerifierIdentifier,
   itWalletCredentialVerifierMetadata,
-  itWalletFederationEntityIdentifier,
-  itWalletFederationEntityMetadata,
   itWalletProviderEntityIdentifier,
   itWalletProviderEntityMetadata,
-} from "./entity";
+} from "./entity/v1.0";
+import {
+  itWalletSolutionEntityIdentifier,
+  itWalletSolutionEntityMetadata,
+} from "./entity/v1.3";
 
-export const itWalletMetadataSchema = z.object({
+// v1.0 combined metadata
+export const itWalletMetadataV1_0 = z.object({
   [itWalletAuthorizationServerIdentifier]:
     itWalletAuthorizationServerMetadata.optional(),
   [itWalletCredentialIssuerIdentifier]:
