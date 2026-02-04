@@ -111,6 +111,9 @@ importers:
       '@pagopa/io-wallet-oauth2':
         specifier: workspace:*
         version: link:../oauth2
+      '@pagopa/io-wallet-oid-federation':
+        specifier: workspace:*
+        version: link:../oid-federation
       '@pagopa/io-wallet-oid4vp':
         specifier: workspace:*
         version: link:../oid4vp
