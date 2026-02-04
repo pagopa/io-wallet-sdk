@@ -51,3 +51,16 @@ export class FetchCredentialResponseError extends Oid4vciError {
     this.name = "FetchCredentialResponseError";
   }
 }
+
+/**
+ * Error thrown when metadata fetching fails at all discovery endpoints.
+ */
+export class FetchMetadataError extends Oid4vciError {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "FetchMetadataError";
+  }
+}
