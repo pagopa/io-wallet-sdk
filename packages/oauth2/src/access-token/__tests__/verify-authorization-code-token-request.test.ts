@@ -11,8 +11,8 @@ import { describe, expect, it, vi } from "vitest";
 import { Oauth2Error } from "../../errors";
 import { PkceCodeChallengeMethod } from "../../pkce";
 import {
-  VerifyAuthorizationCodeAccessTokenRequestOptions,
-  verifyAuthorizationCodeTokenRequest,
+  VerifyAccessTokenRequestOptions,
+  verifyAccessTokenRequest,
 } from "../verify-authorization-code-token-request";
 
 describe("verifyAuthorizationCodeTokenRequest", () => {
@@ -94,8 +94,8 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
   const mockS256CodeChallenge = "aGFzaGVkLXNoYS0yNTYtdGVzdC1jb2RlLXZlcmlmaWVy";
 
   const createValidOptions = (
-    overrides?: Partial<VerifyAuthorizationCodeAccessTokenRequestOptions>,
-  ): VerifyAuthorizationCodeAccessTokenRequestOptions => {
+    overrides?: Partial<VerifyAccessTokenRequestOptions>,
+  ): VerifyAccessTokenRequestOptions => {
     const now = new Date();
     const dpopJwt = createMockDpopJwt({
       htm: "POST",
@@ -152,7 +152,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should verify authorization code token request with all valid inputs", async () => {
       const options = createValidOptions();
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
       expect(result.dpop).toBeDefined();
@@ -173,7 +173,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now,
       });
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
       expect(result.dpop).toBeDefined();
@@ -193,7 +193,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         },
       });
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
       expect(result.dpop.jwkThumbprint).toBeDefined();
@@ -201,11 +201,9 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
 
     it("should use current date when now is not provided", async () => {
       const options = createValidOptions();
-      delete (
-        options as Partial<VerifyAuthorizationCodeAccessTokenRequestOptions>
-      ).now;
+      delete (options as Partial<VerifyAccessTokenRequestOptions>).now;
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
     });
@@ -221,12 +219,12 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         },
       });
 
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow(Oauth2Error);
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow("Invalid 'code' provided");
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        Oauth2Error,
+      );
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Invalid 'code' provided",
+      );
     });
 
     it("should throw error when authorization code is expired", async () => {
@@ -238,21 +236,20 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now,
       });
 
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow(Oauth2Error);
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow("Expired 'code' provided");
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        Oauth2Error,
+      );
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Expired 'code' provided",
+      );
     });
 
     it("should not check expiration when codeExpiresAt is not provided", async () => {
       const options = createValidOptions();
-      delete (
-        options as Partial<VerifyAuthorizationCodeAccessTokenRequestOptions>
-      ).codeExpiresAt;
+      delete (options as Partial<VerifyAccessTokenRequestOptions>)
+        .codeExpiresAt;
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
     });
@@ -266,7 +263,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now,
       });
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
     });
@@ -282,7 +279,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         },
       });
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
     });
@@ -296,7 +293,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         },
       });
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
     });
@@ -306,7 +303,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should extract JWK from DPoP header", async () => {
       const options = createValidOptions();
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result.dpop.jwk).toEqual(mockJwk);
     });
@@ -314,7 +311,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should extract JWK thumbprint from DPoP", async () => {
       const options = createValidOptions();
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result.dpop.jwkThumbprint).toBeDefined();
       expect(typeof result.dpop.jwkThumbprint).toBe("string");
@@ -326,7 +323,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should verify client attestation JWT", async () => {
       const options = createValidOptions();
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result.clientAttestation.clientAttestation).toBeDefined();
       expect(result.clientAttestation.clientAttestation.payload).toBeDefined();
@@ -335,7 +332,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should verify client attestation PoP JWT", async () => {
       const options = createValidOptions();
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result.clientAttestation.clientAttestationPop).toBeDefined();
       expect(
@@ -357,12 +354,12 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         },
       });
 
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow(Oauth2Error);
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow(/Missing required client attestation parameters/);
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        Oauth2Error,
+      );
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        /Missing required client attestation parameters/,
+      );
     });
 
     it("should throw error when client attestation PoP JWT is missing", async () => {
@@ -380,12 +377,12 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         },
       });
 
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow(Oauth2Error);
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow(/Missing required client attestation parameters/);
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        Oauth2Error,
+      );
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        /Missing required client attestation parameters/,
+      );
     });
   });
 
@@ -430,7 +427,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now: customDate,
       });
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toBeDefined();
     });
@@ -444,9 +441,9 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now: customDate,
       });
 
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow("Expired 'code' provided");
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Expired 'code' provided",
+      );
     });
   });
 
@@ -454,7 +451,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should return correct result structure", async () => {
       const options = createValidOptions();
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result).toHaveProperty("clientAttestation");
       expect(result).toHaveProperty("dpop");
@@ -494,7 +491,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         },
       });
 
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
 
       expect(result.dpop.jwk).toEqual(customJwk);
     });
@@ -512,7 +509,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
 
       // When now.getTime() equals codeExpiresAt.getTime(), it should NOT be expired
       // (now > codeExpiresAt is false when equal)
-      const result = await verifyAuthorizationCodeTokenRequest(options);
+      const result = await verifyAccessTokenRequest(options);
       expect(result).toBeDefined();
     });
 
@@ -525,9 +522,9 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now,
       });
 
-      await expect(
-        verifyAuthorizationCodeTokenRequest(options),
-      ).rejects.toThrow("Expired 'code' provided");
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Expired 'code' provided",
+      );
     });
   });
 });

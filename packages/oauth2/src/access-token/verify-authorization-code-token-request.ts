@@ -37,7 +37,7 @@ export interface VerifyAccessTokenRequestDpop {
   jwt: string;
 }
 
-export interface VerifyAuthorizationCodeAccessTokenRequestOptions {
+export interface VerifyAccessTokenRequestOptions {
   /**
    * The access token request to verify
    */
@@ -130,7 +130,7 @@ export interface VerifyAccessTokenRequestResult {
  *
  * @example
  * ```typescript
- * const result = await verifyAuthorizationCodeTokenRequest({
+ * const result = await verifyAccessTokenRequest({
  *   accessTokenRequest: parsedRequest,
  *   authorizationServerMetadata: metadata,
  *   callbacks: { hash, verifyJwt },
@@ -144,8 +144,8 @@ export interface VerifyAccessTokenRequestResult {
  * });
  * ```
  */
-export async function verifyAuthorizationCodeTokenRequest(
-  options: VerifyAuthorizationCodeAccessTokenRequestOptions,
+export async function verifyAccessTokenRequest(
+  options: VerifyAccessTokenRequestOptions,
 ): Promise<VerifyAccessTokenRequestResult> {
   await verifyPkce({
     callbacks: options.callbacks,
