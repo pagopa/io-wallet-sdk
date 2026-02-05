@@ -209,7 +209,7 @@ export async function fetchAuthorizationRequest(
       state: url.searchParams.get("state") ?? undefined,
     };
 
-    // Parse with Zod schema (validates request_uri_method enum)
+    // Parse and validate URL parameters with Zod schema
     const parsedParams = zAuthorizationRequestUrlParams.parse(rawParams);
 
     // Validate business logic (mutual exclusivity, etc.)
