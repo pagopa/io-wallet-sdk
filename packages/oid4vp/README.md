@@ -135,7 +135,7 @@ const result = await fetchAuthorizationRequest({
 });
 
 console.log(result.sendBy); // "reference"
-console.log(result.parsedQrCode.requestUriMethod); // "get" (or undefined, defaults to GET)
+console.log(result.parsedQrCode.requestUriMethod); // "get" (default when request_uri_method is omitted)
 ```
 
 **By Reference with POST and Wallet Metadata** (IT-Wallet v1.3+): Sends wallet capabilities
