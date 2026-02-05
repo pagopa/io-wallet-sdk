@@ -1,7 +1,7 @@
 import { type CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { ValidationError, createFetcher } from "@openid4vc/utils";
 
-import { InvalidRequestUriMethodError, Oid4vpError } from "../errors";
+import { Oid4vpError } from "../errors";
 import {
   type ParsedAuthorizeRequestResult,
   parseAuthorizeRequest,
@@ -257,8 +257,7 @@ export async function fetchAuthorizationRequest(
     if (
       error instanceof ValidationError ||
       error instanceof Oauth2JwtParseError ||
-      error instanceof Oid4vpError ||
-      error instanceof InvalidRequestUriMethodError
+      error instanceof Oid4vpError
     ) {
       throw error;
     }
