@@ -139,6 +139,7 @@ describe("createItWalletEntityConfiguration", () => {
           logo_uri: "https://wallet.example.com/logo.svg",
           wallet_metadata: {
             authorization_endpoint: "https://wallet.example.com/authorize",
+            client_id_prefixes_supported: ["openid_federation"],
             credential_offer_endpoint:
               "https://wallet.example.com/credential_offer",
             request_object_signing_alg_values_supported: ["ES256"],
@@ -146,7 +147,6 @@ describe("createItWalletEntityConfiguration", () => {
             response_types_supported: ["vp_token"],
             vp_formats_supported: { "dc+sd-jwt": {} },
             wallet_name: "Test Wallet",
-            client_id_prefixes_supported: ["openid_federation"],
           },
         },
       },

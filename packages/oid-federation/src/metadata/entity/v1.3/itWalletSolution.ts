@@ -12,7 +12,7 @@ const walletMetadataSchema = z
     request_object_signing_alg_values_supported: z.array(z.string()),
     response_modes_supported: z.array(z.literal("query")).min(1),
     response_types_supported: z.array(z.string()),
-    vp_formats_supported: z.record(z.unknown()),
+    vp_formats_supported: z.record(z.string(), z.object({}).passthrough()),
     wallet_name: z.string(),
   })
   .passthrough();
