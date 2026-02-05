@@ -54,7 +54,7 @@ export interface ParsedQrCode {
    */
   requestUri?: string;
   /**
-   * The `request_uri_method` from the authorization URL (GET or POST)
+   * The `request_uri_method` from the authorization URL (get or post)
    */
   requestUriMethod?: "get" | "post";
 }
