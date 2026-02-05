@@ -146,6 +146,7 @@ describe("createItWalletEntityConfiguration", () => {
             response_types_supported: ["vp_token"],
             vp_formats_supported: { "dc+sd-jwt": {} },
             wallet_name: "Test Wallet",
+            client_id_prefixes_supported: ["openid_federation"],
           },
         },
       },
