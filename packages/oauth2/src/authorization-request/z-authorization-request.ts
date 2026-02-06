@@ -33,24 +33,68 @@ export type AuthorizationRequest = z.infer<typeof zAuthorizationRequest>;
 
 export const zPushedAuthorizationRequestSigned = z
   .object({
-    /*
-     * MUST be set to the thumbprint of the jwk value in the cnf parameter inside the Wallet Attestation.
-     */
-    client_id: z.string(),
-    /**
-     * Code verifier for PKCE. If not provided in CreatePushedAuthorizationRequestOptions, SDK will generate one.
-     */
-    pkceCodeVerifier: z.string(),
-
-    /*
-     * It MUST be a signed JWT. The private key corresponding to the public one in the cnf parameter inside the Wallet Attestation MUST be used for signing the Request Object.
-     */
-    request: z.string(),
+    client_id: z
+      .string()
+      .describe(
+        "MUST be set to the thumbprint of the jwk value in the cnf parameter inside the Wallet Attestation.",
+      ),
+    pkceCodeVerifier: z
+      .string()
+      .describe(
+        "Code verifier for PKCE. If not provided in CreatePushedAuthorizationRequestOptions, SDK will generate one.",
+      ),
+    request: z
+      .string()
+      .describe(
+        "It MUST be a signed JWT. The private key corresponding to the public one in the cnf parameter inside the Wallet Attestation MUST be used for signing the Request Object.",
+      ),
   })
   .passthrough();
 export type PushedAuthorizationRequestSigned = z.infer<
   typeof zPushedAuthorizationRequestSigned
 >;
+
+export const zPushedAuthorizationRequestUnsigned = z
+  .object({
+    authorizationRequest: zAuthorizationRequest.describe(
+      "The authorization request parameters as a plain object. " +
+        "Used when require_signed_request_object is false.",
+    ),
+    client_id: z
+      .string()
+      .describe(
+        "Thumbprint of the jwk value in the cnf parameter inside Wallet Attestation.",
+      ),
+    pkceCodeVerifier: z
+      .string()
+      .describe(
+        "PKCE code verifier. Auto-generated if not provided in options.",
+      ),
+  })
+  .passthrough();
+export type PushedAuthorizationRequestUnsigned = z.infer<
+  typeof zPushedAuthorizationRequestUnsigned
+>;
+
+/**
+ * Union type for Pushed Authorization Request - can be either signed (JAR) or unsigned.
+ * The variant depends on the Authorization Server's require_signed_request_object metadata.
+ */
+export type PushedAuthorizationRequest =
+  | PushedAuthorizationRequestSigned
+  | PushedAuthorizationRequestUnsigned;
+
+export function isPushedAuthorizationRequestSigned(
+  par: PushedAuthorizationRequest,
+): par is PushedAuthorizationRequestSigned {
+  return "request" in par && typeof par.request === "string";
+}
+
+export function isPushedAuthorizationRequestUnsigned(
+  par: PushedAuthorizationRequest,
+): par is PushedAuthorizationRequestUnsigned {
+  return "authorizationRequest" in par;
+}
 
 export const zPushedAuthorizationResponse = z
   .object({

@@ -39,6 +39,7 @@ export const itWalletAuthorizationServerMetadata = z
     jwks: jsonWebKeySetSchema,
     pushed_authorization_request_endpoint: z.string().url(),
     request_object_signing_alg_values_supported: z.array(z.string()),
+    require_signed_request_object: z.boolean().optional(),
     response_modes_supported: z.array(
       z.union([z.literal("query"), z.literal("form_post.jwt")]),
     ),

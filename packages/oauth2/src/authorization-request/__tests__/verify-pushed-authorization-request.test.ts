@@ -9,7 +9,7 @@ import { encodeToBase64Url } from "@openid4vc/utils";
 import { RequestLike } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
-import { Oauth2Error } from "../../errors";
+import { Oauth2Error, PushedAuthorizationRequestError } from "../../errors";
 import {
   VerifyPushedAuthorizationRequestOptions,
   verifyPushedAuthorizationRequest,
@@ -235,6 +235,106 @@ describe("verifyPushedAuthorizationRequest", () => {
       expect(result.jar?.authorizationRequestPayload.scope).toBe(
         "openid profile email",
       );
+    });
+  });
+
+  describe("JAR signing policy enforcement", () => {
+    it("should throw when require_signed_request_object is true but no JAR provided", async () => {
+      const options: VerifyPushedAuthorizationRequestOptions = {
+        authorizationRequest: mockAuthorizationRequest,
+        authorizationServerMetadata: {
+          ...mockAuthorizationServerMetadata,
+          require_signed_request_object: true,
+        },
+        callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt: "mock-client-attestation-jwt",
+          clientAttestationPopJwt: "mock-client-attestation-pop-jwt",
+        },
+        request: mockRequest,
+      };
+
+      await expect(verifyPushedAuthorizationRequest(options)).rejects.toThrow(
+        PushedAuthorizationRequestError,
+      );
+      await expect(verifyPushedAuthorizationRequest(options)).rejects.toThrow(
+        /requires signed request objects/,
+      );
+    });
+
+    it('should throw when require_signed_request_object is true and JAR has alg="none"', async () => {
+      // alg="none" is rejected at two layers (defense-in-depth):
+      // 1. decodeJwt schema validation rejects it before the explicit check runs
+      // 2. The explicit alg check in verifyPushedAuthorizationRequest serves as a fallback
+      const jarJwtWithAlgNone = createMockJwt(
+        { alg: "none" },
+        {
+          aud: "https://auth.example.com",
+          client_id: "client-123",
+          iat: Math.floor(Date.now() / 1000),
+          iss: "client-123",
+        },
+      );
+
+      const options: VerifyPushedAuthorizationRequestOptions = {
+        authorizationRequest: mockAuthorizationRequest,
+        authorizationRequestJwt: {
+          jwt: jarJwtWithAlgNone,
+          signer: mockJwtSigner,
+        },
+        authorizationServerMetadata: {
+          ...mockAuthorizationServerMetadata,
+          require_signed_request_object: true,
+        },
+        callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt: "mock-client-attestation-jwt",
+          clientAttestationPopJwt: "mock-client-attestation-pop-jwt",
+        },
+        request: mockRequest,
+      };
+
+      await expect(verifyPushedAuthorizationRequest(options)).rejects.toThrow(
+        /alg.*none/i,
+      );
+    });
+
+    it("should accept request without JAR when require_signed_request_object is false", async () => {
+      const clientAttestationJwt = createMockClientAttestationJwt({
+        aal: "high",
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
+      const options: VerifyPushedAuthorizationRequestOptions = {
+        authorizationRequest: mockAuthorizationRequest,
+        authorizationServerMetadata: {
+          ...mockAuthorizationServerMetadata,
+          require_signed_request_object: false,
+        },
+        callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationJwt,
+          clientAttestationPopJwt,
+        },
+        request: mockRequest,
+      };
+
+      const result = await verifyPushedAuthorizationRequest(options);
+
+      expect(result.jar).toBeUndefined();
+      expect(result.clientAttestation).toBeDefined();
     });
   });
 
