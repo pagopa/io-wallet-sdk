@@ -4,13 +4,12 @@ import {
   CallbackContext,
   Jwk,
   JwtSigner,
-  Oauth2Error,
 } from "@openid4vc/oauth2";
 import { encodeToBase64Url } from "@openid4vc/utils";
 import { RequestLike } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
-import { PushedAuthorizationRequestError } from "../../errors";
+import { Oauth2Error, PushedAuthorizationRequestError } from "../../errors";
 import {
   VerifyPushedAuthorizationRequestOptions,
   verifyPushedAuthorizationRequest,

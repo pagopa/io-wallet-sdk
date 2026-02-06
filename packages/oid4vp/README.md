@@ -90,6 +90,184 @@ const parsedRequestObject = await parseAuthorizeRequest({
 // RP metadata is automatically extracted from trust_chain[0]
 ```
 
+### Fetching Authorization Requests
+
+The `fetchAuthorizationRequest` function handles authorization requests from QR codes or deep links, supporting both transmission modes defined in IT-Wallet specifications.
+
+#### Transmission Modes
+
+**By Value** (IT-Wallet v1.3+): Request Object JWT embedded directly in URL
+
+```typescript
+import { fetchAuthorizationRequest } from '@pagopa/io-wallet-oid4vp';
+
+const qrCodeUrl =
+  "https://wallet.example.org/authorize?" +
+  "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
+  "&request=eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ...";
+
+const result = await fetchAuthorizationRequest({
+  authorizeRequestUrl: qrCodeUrl,
+  callbacks: {
+    fetch: globalThis.fetch,
+    verifyJwt: myJwtVerifier,
+  },
+});
+
+console.log(result.sendBy); // "value"
+console.log(result.parsedAuthorizeRequest); // Parsed request
+```
+
+**By Reference with GET** (IT-Wallet v1.0+): Request Object fetched from separate endpoint
+
+```typescript
+const qrCodeUrl =
+  "https://wallet.example.org/authorize?" +
+  "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
+  "&request_uri=https%3A%2F%2Frp.example.org%2Frequest";
+
+const result = await fetchAuthorizationRequest({
+  authorizeRequestUrl: qrCodeUrl,
+  callbacks: {
+    fetch: globalThis.fetch,
+    verifyJwt: myJwtVerifier,
+  },
+});
+
+console.log(result.sendBy); // "reference"
+console.log(result.parsedQrCode.requestUriMethod); // "get" (default when request_uri_method is omitted)
+```
+
+**By Reference with POST and Wallet Metadata** (IT-Wallet v1.3+): Sends wallet capabilities
+
+```typescript
+const qrCodeUrl =
+  "https://wallet.example.org/authorize?" +
+  "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
+  "&request_uri=https%3A%2F%2Frp.example.org%2Frequest" +
+  "&request_uri_method=post";
+
+const result = await fetchAuthorizationRequest({
+  authorizeRequestUrl: qrCodeUrl,
+  callbacks: {
+    fetch: globalThis.fetch,
+    verifyJwt: myJwtVerifier,
+  },
+  // Optional: Send wallet capabilities per IT-Wallet v1.3 spec
+  walletMetadata: {
+    authorization_endpoint: "https://wallet.example.org/authorize",
+    response_types_supported: ["vp_token"],
+    response_modes_supported: ["direct_post.jwt"],
+    vp_formats_supported: {
+      jwt_vc_json: {
+        alg_values_supported: ["ES256", "ES384"]
+      }
+    }
+  },
+  // Optional: Nonce for replay attack prevention
+  walletNonce: "random-nonce-value",
+});
+
+console.log(result.sendBy); // "reference"
+console.log(result.parsedQrCode.requestUriMethod); // "post"
+// POST body sent: wallet_metadata={"authorization_endpoint"...}&wallet_nonce=random-nonce-value
+```
+
+#### API Reference
+
+```typescript
+export interface FetchAuthorizationRequestOptions {
+  /**
+   * The authorization URL from the QR code
+   * Should contain `client_id` and either `request` or `request_uri` query parameters
+   */
+  authorizeRequestUrl: string;
+
+  /**
+   * Callback functions for making HTTP requests and JWT verification
+   */
+  callbacks: Pick<CallbackContext, "fetch" | "verifyJwt">;
+
+  /**
+   * Optional wallet metadata to send when request_uri_method=post.
+   * Per IT-Wallet v1.3.3 spec, the Wallet Instance SHOULD transmit
+   * its capabilities to allow dynamic request adjustment.
+   */
+  walletMetadata?: {
+    authorization_endpoint?: string;
+    response_types_supported?: string[];
+    response_modes_supported?: string[];
+    vp_formats_supported?: Record<string, unknown>;
+    request_object_signing_alg_values_supported?: string[];
+    client_id_prefixes_supported?: string[];
+  };
+
+  /**
+   * Optional wallet nonce for replay attack prevention.
+   * RECOMMENDED per IT-Wallet v1.3.3 specification.
+   */
+  walletNonce?: string;
+}
+
+export interface FetchAuthorizationRequestResult {
+  /**
+   * Parsed and verified authorization request object
+   */
+  parsedAuthorizeRequest: ParsedAuthorizeRequestResult;
+
+  /**
+   * Parsed QR code data including clientId, requestUri, and requestUriMethod
+   */
+  parsedQrCode: ParsedQrCode;
+
+  /**
+   * Transmission mode indicator
+   * - "value": Request Object JWT passed inline via `request` parameter
+   * - "reference": Request Object JWT fetched from `request_uri`
+   */
+  sendBy: "reference" | "value";
+}
+```
+
+#### Error Handling
+
+```typescript
+import {
+  fetchAuthorizationRequest,
+  InvalidRequestUriMethodError,
+  Oid4vpError,
+  ParseAuthorizeRequestError
+} from '@pagopa/io-wallet-oid4vp';
+import { ValidationError } from '@openid4vc/utils';
+
+try {
+  const result = await fetchAuthorizationRequest({
+    authorizeRequestUrl: url,
+    callbacks: { fetch, verifyJwt },
+  });
+} catch (error) {
+  if (error instanceof InvalidRequestUriMethodError) {
+    // Invalid request_uri_method value (not "get" or "post")
+    console.error("Invalid HTTP method:", error.message);
+  } else if (error instanceof Oid4vpError) {
+    // URL parsing, parameter validation, or HTTP fetch errors
+    console.error("Request fetch failed:", error.message);
+  } else if (error instanceof ParseAuthorizeRequestError) {
+    // JWT verification or signature validation errors
+    console.error("JWT verification failed:", error.message);
+  } else if (error instanceof ValidationError) {
+    // JWT structure validation errors (Zod schema)
+    console.error("Invalid structure:", error.message);
+  }
+}
+```
+
+**Error Types:**
+- `InvalidRequestUriMethodError`: Thrown when `request_uri_method` is not "get" or "post"
+- `Oid4vpError`: URL parsing, mutual exclusivity, or HTTP fetch failures
+- `ParseAuthorizeRequestError`: JWT signature verification failures
+- `ValidationError`: Zod schema validation failures (JWT structure, URL parameters)
+
 ### Generating an Authorization Response
 
 ```typescript
@@ -315,3 +493,13 @@ export class CreateAuthorizationResponseError extends Oid4vpError {
 }
 ```
 Error thrown by `createAuthorizationResponse` in case there are unexpected errors.
+
+```typescript
+export class InvalidRequestUriMethodError extends Oid4vpError {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidRequestUriMethodError";
+  }
+}
+```
+Error thrown when `request_uri_method` parameter has an invalid value. Valid values are "get" or "post" (case-insensitive).

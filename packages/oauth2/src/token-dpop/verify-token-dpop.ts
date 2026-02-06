@@ -52,6 +52,12 @@ export interface VerifyTokenDPoPOptions {
    */
   expectedNonce?: string;
 
+  /**
+   * The current time to use when verifying the JWTs.
+   * If not provided current time will be used.
+   *
+   * @default new Date()
+   */
   now?: Date;
 
   /**

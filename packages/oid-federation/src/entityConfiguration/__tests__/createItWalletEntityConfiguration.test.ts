@@ -128,4 +128,49 @@ describe("createItWalletEntityConfiguration", () => {
       }),
     ).rejects.toThrow("invalid payload claims provided");
   });
+
+  it("should create a signed entity configuration JWT with wallet_solution metadata (v1.3)", async () => {
+    const mockClaimsV1_3 = {
+      ...mockClaims,
+      metadata: {
+        federation_entity: mockClaims.metadata.federation_entity,
+        wallet_solution: {
+          jwks: { keys: [mockClaims.jwks.keys[0]] },
+          logo_uri: "https://wallet.example.com/logo.svg",
+          wallet_metadata: {
+            authorization_endpoint: "https://wallet.example.com/authorize",
+            client_id_prefixes_supported: ["openid_federation"],
+            credential_offer_endpoint:
+              "https://wallet.example.com/credential_offer",
+            request_object_signing_alg_values_supported: ["ES256"],
+            response_modes_supported: ["query"],
+            response_types_supported: ["vp_token"],
+            vp_formats_supported: { "dc+sd-jwt": {} },
+            wallet_name: "Test Wallet",
+          },
+        },
+      },
+    };
+
+    const result = await createItWalletEntityConfiguration({
+      claims: mockClaimsV1_3,
+      header: mockHeader,
+      signJwtCallback: mockSignJwtCallback,
+    });
+
+    expect(typeof result).toBe("string");
+    const parts = result.split(".");
+    expect(parts).toHaveLength(3);
+
+    const payloadB64 = parts[1];
+    if (!payloadB64) throw new Error("JWT payload missing");
+    const decodedPayload = JSON.parse(Base64.decode(payloadB64));
+    expect(decodedPayload.metadata.wallet_solution).toBeDefined();
+    expect(decodedPayload.metadata.wallet_solution.logo_uri).toBe(
+      "https://wallet.example.com/logo.svg",
+    );
+    expect(
+      decodedPayload.metadata.wallet_solution.wallet_metadata.wallet_name,
+    ).toBe("Test Wallet");
+  });
 });

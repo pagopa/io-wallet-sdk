@@ -2,14 +2,18 @@ import {
   CallbackContext,
   HashAlgorithm,
   HashCallback,
-  Oauth2Error,
 } from "@openid4vc/oauth2";
 import { decodeUtf8String, encodeToBase64Url } from "@openid4vc/utils";
 
-export enum PkceCodeChallengeMethod {
-  Plain = "plain",
-  S256 = "S256",
-}
+import { Oauth2Error } from "./errors";
+
+export const PkceCodeChallengeMethod = {
+  Plain: "plain",
+  S256: "S256",
+} as const;
+
+export type PkceCodeChallengeMethod =
+  (typeof PkceCodeChallengeMethod)[keyof typeof PkceCodeChallengeMethod];
 
 export interface CreatePkceOptions {
   /**
