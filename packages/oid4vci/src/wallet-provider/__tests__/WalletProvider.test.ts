@@ -97,7 +97,7 @@ describe("WalletProvider", () => {
 
       expect(mockAddSecondsToDate).toHaveBeenCalledWith(
         expect.any(Date),
-        3600 * 24 * 60 * 60,
+        3600 * 24 * 360,
       );
       expect(mockCreateWalletAttestationJwt).toHaveBeenCalledWith({
         clientId: mockWalletAttestationOptions.dpopJwkPublic.kid,
