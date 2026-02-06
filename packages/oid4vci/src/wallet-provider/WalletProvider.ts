@@ -1,106 +1,148 @@
-import { ClientAttestationJwtPayload } from "@openid4vc/oauth2";
 import { Openid4vciWalletProvider } from "@openid4vc/openid4vci";
-import { addSecondsToDate } from "@openid4vc/utils";
+import {
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
+} from "@pagopa/io-wallet-utils";
+
+import type { WalletAttestationOptions } from "./types";
 
 import { WalletProviderError } from "../errors";
+import * as V1_0 from "./v1.0";
+import * as V1_3 from "./v1.3";
 
 /**
- * @interface WalletAttestationOptions
- * @description Defines the options required to create a wallet attestation JWT.
- * This attestation is a signed token that proves the wallet's identity and possession of a cryptographic key.
+ * Type guard to check if options are for v1.0
  */
-export interface WalletAttestationOptions {
-  /**
-   * The public part of the DPoP (Demonstrating Proof-of-Possession) key in JWK (JSON Web Key) format.
-   * This key is used to bind the attestation to the client's session.
-   * @type {ClientAttestationJwtPayload['cnf']}
-   */
-  dpopJwkPublic: ClientAttestationJwtPayload["cnf"]["jwk"];
+function isV1_0Options(
+  options: WalletAttestationOptions,
+): options is V1_0.WalletAttestationOptionsV1_0 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
+}
 
-  /**
-   * The optional expiration date for the attestation JWT. If not provided, a default lifetime will be used.
-   * @type {Date}
-   */
-  expiresAt?: Date;
-  /**
-   * The issuer of the attestation, typically the Wallet Provider's identifier.
-   * @type {string}
-   */
-  issuer: string;
-
-  signer: {
-    /**
-     * An array of JWTs representing the chain of trust from the federation's trust anchor
-     * to the wallet provider. This is used in federated identity systems to validate the provider's authenticity.
-     * @type {[string, ...string[]]}
-     */
-    trustChain: [string, ...string[]];
-
-    /**
-     * The Key ID (`kid`) of the wallet provider's public key used for signing the attestation.
-     * @type {string}
-     */
-    walletProviderJwkPublicKid: string;
-  };
-
-  /**
-   * An optional deep link or URL that can be used to open or interact with the wallet.
-   * @type {string}
-   */
-  walletLink?: string;
-
-  /**
-   * An optional display name for the wallet.
-   * @type {string}
-   */
-  walletName?: string;
+/**
+ * Type guard to check if options are for v1.3
+ */
+function isV1_3Options(
+  options: WalletAttestationOptions,
+): options is V1_3.WalletAttestationOptionsV1_3 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
 }
 
 /**
  * @class WalletProvider
  * @extends Openid4vciWalletProvider
- * @description An implementation of a wallet provider for the OpenID4VCI protocol, tailored for a specific ecosystem (e.g., the Italian one).
+ * @description An implementation of a wallet provider for the OpenID4VCI protocol, tailored for the Italian ecosystem.
  * It handles the creation of wallet attestations required during the credential issuance flow.
  */
 export class WalletProvider extends Openid4vciWalletProvider {
   /**
-   * Creates a wallet attestation JWT.
+   * Creates a wallet attestation JWT according to the configured Italian Wallet specification version.
    *
-   * This method constructs a signed JWT that asserts the wallet's control over a specific
-   * cryptographic key (DPoP key). This is a security measure to ensure that the entity
-   * presenting the credential offer is the legitimate wallet instance.
+   * Version Differences:
+   * - v1.0: Uses only `trust_chain` in header (federation method)
+   * - v1.3: Requires `x5c` in header, optional `trust_chain`, supports `nbf` and `status` claims
    *
    * @public
    * @async
    * @param {WalletAttestationOptions} options - The necessary parameters to build the attestation.
    * @returns {Promise<string>} A promise that resolves to the signed wallet attestation JWT as a string.
+   * @throws {WalletProviderError} When dpopJwkPublic.kid is missing
+   * @throws {ItWalletSpecsVersionError} When version is not supported
+   *
+   * @example v1.0 - Basic wallet attestation with trust chain
+   * const jwt = await provider.createItWalletAttestationJwt({
+   *   callbacks: { signJwt: mySignJwtCallback },
+   *   config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 },
+   *   dpopJwkPublic: myJwk,
+   *   issuer: "https://wallet-provider.example.com",
+   *   signer: {
+   *     alg: "ES256",
+   *     kid: "provider-key-id",
+   *     trustChain: ["trust-anchor-jwt", "intermediate-jwt"]
+   *   }
+   * });
+   *
+   * @example v1.3 - Wallet attestation with x5c and optional fields
+   * const jwt = await provider.createItWalletAttestationJwt({
+   *   callbacks: { signJwt: mySignJwtCallback },
+   *   config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 },
+   *   dpopJwkPublic: myJwk,
+   *   issuer: "https://wallet-provider.example.com",
+   *   signer: {
+   *     alg: "ES256",
+   *     kid: "provider-key-id",
+   *     x5c: ["cert1-base64", "cert2-base64"],
+   *     trustChain: ["trust-anchor-jwt"] // Optional in v1.3
+   *   },
+   *   nbf: new Date('2025-01-01'), // Optional
+   *   status: { status_list: { idx: "0", uri: "https://status.example.com" } } // Optional
+   * });
    */
+  // Function overload for v1.0
+
+  public async createItWalletAttestationJwt(
+    options: V1_0.WalletAttestationOptionsV1_0,
+  ): Promise<string>;
+
+  // Function overload for v1.3
+
+  public async createItWalletAttestationJwt(
+    options: V1_3.WalletAttestationOptionsV1_3,
+  ): Promise<string>;
+
+  // Implementation signature (not callable by users)
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
+    if (!options.config) {
+      throw new WalletProviderError(
+        "config parameter is required with itWalletSpecsVersion",
+      );
+    }
+
+    // Store version for error reporting
+    const version = options.config.itWalletSpecsVersion;
+
+    // Validate that dpopJwkPublic has a kid property
+    // This validation is common across all versions
     if (!options.dpopJwkPublic.kid) {
       throw new WalletProviderError("The DPoP JWK must have a 'kid' property");
     }
 
-    const walletAttestation = await this.createWalletAttestationJwt({
-      clientId: options.dpopJwkPublic.kid,
-      confirmation: {
-        // We use the same key for DPoP as the wallet attestation
-        jwk: options.dpopJwkPublic,
-      },
-      expiresAt:
-        options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60 * 60),
-      issuer: options.issuer,
-      signer: {
-        alg: "ES256",
-        kid: options.signer.walletProviderJwkPublicKid,
-        method: "federation", // Indicates the validation method relies on a trust chain.
-        trustChain: options.signer.trustChain,
-      },
-      walletLink: options.walletLink,
-      walletName: options.walletName,
-    });
+    if (isV1_0Options(options)) {
+      // For v1.0: use trust_chain only
+      return V1_0.createWalletAttestationJwt({
+        callbacks: options.callbacks,
+        config: options.config,
+        dpopJwkPublic: options.dpopJwkPublic,
+        expiresAt: options.expiresAt,
+        issuer: options.issuer,
+        signer: options.signer,
+        walletLink: options.walletLink,
+        walletName: options.walletName,
+      });
+    }
 
-    return walletAttestation;
+    if (isV1_3Options(options)) {
+      // For v1.3: use x5c (required) and optional trust_chain, nbf, status
+      return V1_3.createWalletAttestationJwt({
+        callbacks: options.callbacks,
+        config: options.config,
+        dpopJwkPublic: options.dpopJwkPublic,
+        expiresAt: options.expiresAt,
+        issuer: options.issuer,
+        nbf: options.nbf,
+        signer: options.signer,
+        status: options.status,
+        walletLink: options.walletLink,
+        walletName: options.walletName,
+      });
+    }
+
+    throw new ItWalletSpecsVersionError(
+      "createItWalletAttestationJwt",
+      version,
+      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+    );
   }
 }

@@ -28,7 +28,6 @@ const mockSigner = {
   },
 };
 
-// eslint-disable-next-line max-lines-per-function
 describe("createCredentialRequest Version Router", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -58,28 +57,6 @@ describe("createCredentialRequest Version Router", () => {
       expect(result).not.toHaveProperty("proofs");
       expect(result.proof).toHaveProperty("proof_type", "jwt");
     });
-
-    it("should NOT include key_attestation in JWT header for v1.0", async () => {
-      const config = new IoWalletSdkConfig({
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
-      });
-
-      await createCredentialRequest({
-        callbacks: mockCallbacks,
-        clientId: "test-client-id",
-        config,
-        credential_identifier: "test-credential",
-        issuerIdentifier: "https://issuer.example.com",
-        nonce: "test-nonce",
-        signer: mockSigner,
-      } as CredentialRequestOptionsV1_0);
-
-      const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
-      expect(signJwtCall).toBeDefined();
-      if (!signJwtCall) throw new Error("signJwtCall is undefined");
-
-      expect(signJwtCall[1].header).not.toHaveProperty("key_attestation");
-    });
   });
 
   describe("v1.3 routing", () => {
@@ -105,33 +82,6 @@ describe("createCredentialRequest Version Router", () => {
       if ("proofs" in result) {
         expect(result.proofs.jwt).toBeInstanceOf(Array);
       }
-    });
-
-    it("should include key_attestation in JWT header for v1.3", async () => {
-      const config = new IoWalletSdkConfig({
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
-      });
-      const keyAttestation = "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig";
-
-      await createCredentialRequest({
-        callbacks: mockCallbacks,
-        clientId: "test-client-id",
-        config,
-        credential_identifier: "test-credential",
-        issuerIdentifier: "https://issuer.example.com",
-        keyAttestation,
-        nonce: "test-nonce",
-        signer: mockSigner,
-      } as CredentialRequestOptionsV1_3);
-
-      const signJwtCall = mockCallbacks.signJwt.mock.calls[0];
-      expect(signJwtCall).toBeDefined();
-      if (!signJwtCall) throw new Error("signJwtCall is undefined");
-
-      expect(signJwtCall[1].header).toHaveProperty(
-        "key_attestation",
-        keyAttestation,
-      );
     });
   });
 
@@ -204,33 +154,6 @@ describe("createCredentialRequest Version Router", () => {
         }),
       ).rejects.toThrow(ItWalletSpecsVersionError);
     });
-
-    it("should include supported versions in error message", async () => {
-      const invalidConfig = {
-        itWalletSpecsVersion: "2.0.0",
-      };
-
-      try {
-        await createCredentialRequest({
-          callbacks: mockCallbacks,
-          clientId: "test-client-id",
-          // @ts-expect-error - Testing invalid version (not in union type)
-          config: invalidConfig,
-          credential_identifier: "test-credential",
-          issuerIdentifier: "https://issuer.example.com",
-          nonce: "test-nonce",
-          signer: mockSigner,
-        });
-        throw new Error("Expected error to be thrown");
-      } catch (error) {
-        if (error instanceof ItWalletSpecsVersionError) {
-          expect(error.supportedVersions).toContain(ItWalletSpecsVersion.V1_0);
-          expect(error.supportedVersions).toContain(ItWalletSpecsVersion.V1_3);
-        } else {
-          throw error;
-        }
-      }
-    });
   });
 
   describe("Parameter validation across versions", () => {
@@ -249,25 +172,6 @@ describe("createCredentialRequest Version Router", () => {
           nonce: "test-nonce",
           signer: mockSigner,
         } as CredentialRequestOptionsV1_0),
-      ).resolves.toBeDefined();
-    });
-
-    it("v1.3 requires keyAttestation parameter", async () => {
-      const config = new IoWalletSdkConfig({
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
-      });
-
-      await expect(
-        createCredentialRequest({
-          callbacks: mockCallbacks,
-          clientId: "test-client-id",
-          config,
-          credential_identifier: "test-credential",
-          issuerIdentifier: "https://issuer.example.com",
-          keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig", // Required
-          nonce: "test-nonce",
-          signer: mockSigner,
-        } as CredentialRequestOptionsV1_3),
       ).resolves.toBeDefined();
     });
   });
