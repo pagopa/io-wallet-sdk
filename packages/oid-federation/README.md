@@ -97,6 +97,30 @@ console.log(entityConfigurationJwt);
 // This JWT can now be served at `https://issuer.example.it/.well-known/openid-federation`
 ```
 
+## Versioned Entity Metadata Layout
+
+Entity metadata schemas are organised by specification version under `src/metadata/entity/`:
+
+```
+metadata/entity/
+├── v1.0/                              # Spec v1.0 schemas
+│   ├── ItWalletProvider.ts            # wallet_provider
+│   ├── itWalletAuthorizationServer.ts # oauth_authorization_server
+│   ├── itWalletCredentialIssuer.ts    # openid_credential_issuer
+│   ├── itWalletCredentialVerifier.ts  # openid_credential_verifier
+│   └── index.ts
+├── v1.3/                              # Spec v1.3 schemas
+│   ├── itWalletSolution.ts            # wallet_solution (replaces wallet_provider)
+│   ├── itWalletAuthorizationServer.ts # re-export of v1.0 (unchanged)
+│   ├── itWalletCredentialIssuer.ts    # re-export of v1.0 (unchanged)
+│   ├── itWalletCredentialVerifier.ts  # re-export of v1.0 (unchanged)
+│   └── index.ts
+├── itWalletFederationEntity.ts        # shared across versions
+└── index.ts
+```
+
+The combined metadata schemas (`itWalletMetadataV1_0`, `itWalletMetadataV1_3`) and the `itWalletMetadataSchema` union are exported from `src/metadata/itWalletMetadata.ts`.
+
 ## API Reference
 
 ### Functions
@@ -140,7 +164,9 @@ This package exports a comprehensive set of Zod schemas to validate all parts of
 #### Metadata Schemas:
 - **`itWalletFederationEntityMetadata`**: For `federation_entity` metadata
 
-- **`itWalletProviderEntityMetadata`**: For `wallet_provider` metadata
+- **`itWalletProviderEntityMetadata`**: For `wallet_provider` metadata (v1.0)
+
+- **`itWalletSolutionEntityMetadata`**: For `wallet_solution` metadata (v1.3)
 
 - **`itWalletCredentialIssuerMetadata`**: For `openid_credential_issuer` metadata
 
@@ -148,7 +174,11 @@ This package exports a comprehensive set of Zod schemas to validate all parts of
 
 - **`itWalletAuthorizationServerMetadata`**: For `oauth_authorization_server` metadata
 
-- **`itWalletMetadataSchema`**: Combined metadata schema for all entity types
+- **`itWalletMetadataV1_0`**: Combined metadata schema for v1.0 entity types
+
+- **`itWalletMetadataV1_3`**: Combined metadata schema for v1.3 entity types
+
+- **`itWalletMetadataSchema`**: Union of `itWalletMetadataV1_0` and `itWalletMetadataV1_3`
 
 #### Claims Schemas:
 - **`itWalletEntityStatementClaimsSchema`**: Validates the claims within an Entity Statement

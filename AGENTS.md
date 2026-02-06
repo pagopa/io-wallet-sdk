@@ -140,6 +140,12 @@ export async function createFeature(options: FeatureOptions): Promise<Feature> {
 - Bug fixes (apply to all affected versions)
 - Internal refactoring (maintain same external API)
 
+When creating versioned folder structures (e.g., v1.0/, v1.3/), always update all related imports, tests, and README documentation in the same session.
+
+## Code Quality
+
+Always run type checks (`tsc --noEmit` or equivalent) after modifying TypeScript files, especially when changing schemas, enums, or type definitions.
+
 ## Development Commands
 
 ### Building
