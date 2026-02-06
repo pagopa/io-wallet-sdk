@@ -1,5 +1,21 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.0.0
+
+### Minor Changes
+
+- 752dbb0: Add parseAuthorizationRequest and parsePushedAuthorizationRequest
+- 6e19722: Add verifyPushedAuthorizationRequest and verifyAuthorizationRequest features
+- 086c33e: add isClientAttestationSupported utility function
+- fcf91a5: add parseAccessTokenRequest utility
+- 259f790: add verifyAuthorizationCodeTokenRequest utility function
+
+### Patch Changes
+
+- Updated dependencies [752dbb0]
+- Updated dependencies [e450ab5]
+  - @pagopa/io-wallet-utils@1.0.0
+
 ## 0.7.7
 
 ### Patch Changes

@@ -1,5 +1,23 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.0.0
+
+### Major Changes
+
+- e450ab5: Add support for IT-Wallet v1.0 and v1.3 credential request flows
+
+### Patch Changes
+
+- Updated dependencies [752dbb0]
+- Updated dependencies [6e19722]
+- Updated dependencies [086c33e]
+- Updated dependencies [fcf91a5]
+- Updated dependencies [e450ab5]
+- Updated dependencies [259f790]
+  - @pagopa/io-wallet-oauth2@1.0.0
+  - @pagopa/io-wallet-utils@1.0.0
+  - @pagopa/io-wallet-oid4vp@1.0.0
+
 ## 0.7.7
 
 ### Patch Changes
