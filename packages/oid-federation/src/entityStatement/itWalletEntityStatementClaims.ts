@@ -11,26 +11,27 @@ import { z } from "zod";
 import { jsonWebKeySetSchema } from "../jwk/jwk";
 import { itWalletMetadataSchema } from "../metadata/itWalletMetadata";
 
-export const itWalletEntityStatementClaimsSchema = z
-  .object({
-    authority_hints: z.array(z.string().url()).optional(),
-    constraints: constraintSchema.optional(),
-    crit: z.array(z.string()).optional(),
-    exp: dateSchema,
-    iat: dateSchema,
-    iss: z.string(),
-    jwks: jsonWebKeySetSchema,
-    metadata: itWalletMetadataSchema.optional(),
-    metadata_policy: z
-      .record(z.record(metadataPolicySchema).optional())
-      .optional(),
-    metadata_policy_crit: z.array(z.string()).optional(),
-    source_endpoint: z.string().url().optional(),
-    sub: z.string(),
-    trust_mark_issuers: trustMarkIssuerSchema.optional(),
-    trust_mark_owners: trustMarkOwnerSchema.optional(),
-    trust_marks: z.array(trustMarkSchema).optional(),
-  })
+const baseSchema = z.object({
+  authority_hints: z.array(z.string().url()).optional(),
+  constraints: constraintSchema.optional(),
+  crit: z.array(z.string()).optional(),
+  exp: dateSchema,
+  iat: dateSchema,
+  iss: z.string(),
+  jwks: jsonWebKeySetSchema,
+  metadata: itWalletMetadataSchema.optional(),
+  metadata_policy: z
+    .record(z.record(metadataPolicySchema).optional())
+    .optional(),
+  metadata_policy_crit: z.array(z.string()).optional(),
+  source_endpoint: z.string().url().optional(),
+  sub: z.string(),
+  trust_mark_issuers: trustMarkIssuerSchema.optional(),
+  trust_mark_owners: trustMarkOwnerSchema.optional(),
+  trust_marks: z.array(trustMarkSchema).optional(),
+});
+
+export const itWalletEntityStatementClaimsSchema: z.ZodSchema = baseSchema
   .passthrough()
   .refine(
     (data) => {

@@ -1,4 +1,8 @@
 export * from "./itWalletAuthorizationServer";
-export * from "./itWalletCredentialIssuer";
+export {
+  type ItWalletCredentialIssuerMetadata,
+  itWalletCredentialIssuerIdentifier,
+  itWalletCredentialIssuerMetadata,
+} from "./itWalletCredentialIssuer";
 export * from "./itWalletCredentialVerifier";
 export * from "./itWalletSolution";
