@@ -30,7 +30,6 @@ export interface CreateAuthorizationResponseOptions {
    * JARM encryption encoding (JWE enc)
    *
    * falls back to rpMetadata.authorization_encrypted_response_enc if not provided.
-   * rpMetadata.authorization_encrypted_response_enc if not provided.
    */
   authorization_encrypted_response_enc?: string;
 
