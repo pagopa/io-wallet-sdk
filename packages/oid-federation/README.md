@@ -170,7 +170,7 @@ This package exports a comprehensive set of Zod schemas to validate all parts of
 
 - **`itWalletCredentialIssuerMetadata`**: For `openid_credential_issuer` metadata
 
-- **`itWalletCredentialVerifierMetadata`**: For `openid_credential_verifier` metadata (default export - uses v1.3 schema)
+- **`itWalletCredentialVerifierMetadata`**: For `openid_credential_verifier` metadata (v1.0 schema - default export)
 
 - **`itWalletCredentialVerifierMetadataV1_3`**: For `openid_credential_verifier` metadata (v1.3 - with `logo_uri`, `encrypted_response_enc_values_supported`, and enhanced `vp_formats_supported`)
 
