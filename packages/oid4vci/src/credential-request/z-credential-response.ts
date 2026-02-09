@@ -12,9 +12,7 @@ import {
 /**
  * Unified Credential Response schema that supports both v1.0.2 and v1.3.3 specifications
  *
- * This is a discriminated union that accepts either version's response format:
- * - v1.0.2: uses `credentials` (string), `lead_time` for deferred flow
- * - v1.3.3: uses `credentials` (array), `interval` for deferred flow
+ * This is a discriminated union that accepts either version's response format
  */
 export const zCredentialResponse = z.union([
   zCredentialResponseV1_0,

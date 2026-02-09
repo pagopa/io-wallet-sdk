@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Schema for a single credential in the credentials array (v1.3.3)
+ * Schema for a single credential in the credentials array (v1.0.2)
  */
 const CredentialObjectSchema = z.object({
   credential: z
@@ -10,13 +10,14 @@ const CredentialObjectSchema = z.object({
       "REQUIRED if lead_time and transaction_id are not present, otherwise it MUST NOT be present. Contains the issued Digital Credential. For dc+sd-jwt format: unencoded credential string. For mso_mdoc format: base64url-encoded CBOR-encoded IssuerSigned structure per ISO 18013-5.",
     ),
 });
+
 /**
  * Credential Response schema for IT Wallet v1.0.2
  *
  * Reference: https://italia.github.io/eid-wallet-it-docs/releases/1.0.2/en/credential-issuer-endpoint.html#credential-response
  *
  * Response contains either:
- * - Immediate issuance: `credentials` (string)
+ * - Immediate issuance: `credentials` (array)
  * - Deferred issuance: `lead_time` + `transaction_id`
  */
 export const zCredentialResponseV1_0 = z
