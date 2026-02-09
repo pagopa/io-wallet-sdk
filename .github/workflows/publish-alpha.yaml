@@ -32,7 +32,6 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org/"
           node-version-file: ".node-version"
 
       # We force to publish with npm 11 because we are using npm trusted publishing
