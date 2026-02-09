@@ -11,5 +11,11 @@ export { zCredentialRequestV1_0 } from "./v1.0/z-credential";
 export type { CredentialRequestV1_3 } from "./v1.3/z-credential";
 export { zCredentialRequestV1_3 } from "./v1.3/z-credential";
 
-export { zCredentialResponse } from "./z-credential";
-export type { CredentialResponse } from "./z-credential";
+export {
+  type CredentialResponse,
+  type CredentialResponseV1_0,
+  type CredentialResponseV1_3,
+  zCredentialResponse,
+  zCredentialResponseV1_0,
+  zCredentialResponseV1_3,
+} from "./z-credential-response";

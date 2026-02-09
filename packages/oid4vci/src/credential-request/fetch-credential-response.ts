@@ -12,7 +12,10 @@ import type { CredentialRequestV1_0 } from "./v1.0";
 import type { CredentialRequestV1_3 } from "./v1.3";
 
 import { FetchCredentialResponseError } from "../errors";
-import { CredentialResponse, zCredentialResponse } from "./z-credential";
+import {
+  CredentialResponse,
+  zCredentialResponse,
+} from "./z-credential-response";
 
 /**
  * Options for fetching credential response
