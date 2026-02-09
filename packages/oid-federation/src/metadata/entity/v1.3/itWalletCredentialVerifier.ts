@@ -25,7 +25,7 @@ export const itWalletCredentialVerifierMetadataV1_3 = z
     application_type: z.literal("web"),
     client_id: z.string().url(),
     client_name: z.string(),
-    encrypted_response_enc_values_supported: z.array(z.string()),
+    encrypted_response_enc_values_supported: z.array(z.string()).min(1),
     erasure_endpoint: z.string().url().optional(),
     jwks: jsonWebKeySetSchema,
     logo_uri: z.string().url(),
