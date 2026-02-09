@@ -407,22 +407,23 @@ This method receives a Request Object in JWT format, verifies the signature and 
 export interface CreateAuthorizationResponseOptions {
   /**
    * Optional algorithm for signing the authorization response (JARM).
-   * Required when using v1.3 RP metadata that doesn't include this field.
-   * Defaults to ES256 if not provided.
+   * If not provided, it will be derived from the RP metadata when available,
+   * or defaults to ES256.
    */
   authorization_signed_response_alg?: string;
 
   /**
    * Optional algorithm for encrypting the authorization response (JARM).
-   * Required when using v1.3 RP metadata that doesn't include this field.
-   * Defaults to ECDH-ES for EC keys if not provided.
+   * If not provided, it will be derived from the RP metadata when available,
+   * or defaults to ECDH-ES for EC keys.
    */
   authorization_encrypted_response_alg?: string;
 
   /**
    * Optional content encryption encoding for the authorization response (JARM).
-   * Required when using v1.3 RP metadata that doesn't include this field.
-   * Falls back to first value in encrypted_response_enc_values_supported or A256GCM.
+   * If not provided, it will be derived from the RP metadata when available,
+   * or falls back to the first value in encrypted_response_enc_values_supported
+   * or A256GCM.
    */
   authorization_encrypted_response_enc?: string;
 
