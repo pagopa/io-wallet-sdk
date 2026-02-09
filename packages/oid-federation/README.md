@@ -112,7 +112,7 @@ metadata/entity/
 ├── v1.3/                              # Spec v1.3 schemas
 │   ├── itWalletSolution.ts            # wallet_solution (replaces wallet_provider)
 │   ├── itWalletAuthorizationServer.ts # re-export of v1.0 (unchanged)
-│   ├── itWalletCredentialIssuer.ts    # openid_credential_issuer (updated for v1.3)
+│   ├── itWalletCredentialIssuer.ts    # re-export of v1.0 (unchanged)
 │   ├── itWalletCredentialVerifier.ts  # openid_credential_verifier (updated for v1.3)
 │   └── index.ts
 ├── itWalletFederationEntity.ts        # shared across versions
