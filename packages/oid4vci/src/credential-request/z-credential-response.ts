@@ -12,7 +12,7 @@ import {
 /**
  * Unified Credential Response schema that supports both v1.0.2 and v1.3.3 specifications
  *
- * This is a discriminated union that accepts either version's response format
+ * This is a union of the two version-specific schemas, allowing for validation of either format.
  */
 export const zCredentialResponse = z.union([
   zCredentialResponseV1_0,

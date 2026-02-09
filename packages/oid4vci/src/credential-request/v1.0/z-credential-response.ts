@@ -52,6 +52,7 @@ export const zCredentialResponseV1_0 = z
         "REQUIRED for deferred flow. Identifier for deferred issuance transaction; must be invalidated after Credential obtainment.",
       ),
   })
+  .strict()
   .superRefine((data, ctx) => {
     const hasCredentials = data.credentials !== undefined;
     const hasLeadTime = data.lead_time !== undefined;

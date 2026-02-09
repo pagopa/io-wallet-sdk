@@ -52,6 +52,7 @@ export const zCredentialResponseV1_3 = z
         "Conditional. Deferred issuance identifier; used in subsequent requests when credentials not immediately available. Present for deferred flow (HTTP 202).",
       ),
   })
+  .strict()
   .superRefine((data, ctx) => {
     const hasCredentials = data.credentials !== undefined;
     const hasInterval = data.interval !== undefined;
