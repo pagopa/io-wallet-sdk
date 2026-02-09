@@ -95,12 +95,13 @@ export interface CreateAuthorizationResponseOptions {
  *
  * **Version Compatibility:**
  * - v1.0 metadata: JARM algorithms are read from rpMetadata if not explicitly provided
- * - v1.3 metadata: JARM algorithms must be provided via explicit parameters or will use defaults
+ * - v1.3 metadata: JARM algorithms may be provided explicitly; when omitted, values are
+ *   resolved from rpMetadata or fall back to implementation defaults (e.g. ECDH-ES / A256GCM / ES256)
  *
  * @param options - Configuration for creating the authorization response
- * @param options.authorization_encrypted_response_alg - JARM encryption algorithm (required for v1.3)
- * @param options.authorization_encrypted_response_enc - JARM encryption encoding (required for v1.3)
- * @param options.authorization_signed_response_alg - JARM signing algorithm (required for v1.3)
+ * @param options.authorization_encrypted_response_alg - Optional JARM encryption algorithm (JWE alg). For v1.3, if omitted, it is derived from rpMetadata or falls back to a default (e.g. ECDH-ES).
+ * @param options.authorization_encrypted_response_enc - Optional JARM encryption encoding (JWE enc). For v1.3, if omitted, it is derived from rpMetadata or falls back to a default (e.g. A256GCM).
+ * @param options.authorization_signed_response_alg - Optional JARM signing algorithm (JWS alg). For v1.3, if omitted, it is derived from rpMetadata or falls back to a default (e.g. ES256).
  * @param options.callbacks - Cryptographic callbacks for JWT operations
  * @param options.client_id - Thumbprint of the JWK in the cnf Wallet Attestation
  * @param options.exp - Optional JWT expiration time in seconds (default: 10 minutes)
