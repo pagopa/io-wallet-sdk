@@ -1,15 +1,6 @@
 import { z } from "zod";
 
-/**
- * Schema for a single credential in the credentials array (v1.3.3)
- */
-const CredentialObjectSchema = z.object({
-  credential: z
-    .string()
-    .describe(
-      "REQUIRED if interval and transaction_id are not present, otherwise it MUST NOT be present. Contains the issued Digital Credential. For dc+sd-jwt format: unencoded credential string. For mso_mdoc format: base64url-encoded CBOR-encoded IssuerSigned structure per ISO 18013-5.",
-    ),
-});
+import { zBaseCredentialResponse } from "../z-credential-response";
 
 /**
  * Credential Response schema for IT Wallet v1.3.3
@@ -20,36 +11,15 @@ const CredentialObjectSchema = z.object({
  * - Immediate issuance (HTTP 200): `credentials` (array)
  * - Deferred issuance (HTTP 202): `interval` + `transaction_id`
  */
-export const zCredentialResponseV1_3 = z
-  .object({
-    credentials: z
-      .array(CredentialObjectSchema)
-      .optional()
-      .describe(
-        "Conditional. Array of issued Digital Credentials as JSON objects with `credential` member containing encoded credential string. Present for immediate issuance (HTTP 200).",
-      ),
-
+export const zCredentialResponseV1_3 = zBaseCredentialResponse
+  .extend({
     interval: z
       .number()
       .int()
       .positive()
       .optional()
       .describe(
-        "Conditional. Time in seconds to wait before retry. Present for deferred flow (HTTP 202).",
-      ),
-
-    notification_id: z
-      .string()
-      .optional()
-      .describe(
-        "OPTIONAL. Identifier for notification requests. Only present with credentials parameter.",
-      ),
-
-    transaction_id: z
-      .string()
-      .optional()
-      .describe(
-        "Conditional. Deferred issuance identifier; used in subsequent requests when credentials not immediately available. Present for deferred flow (HTTP 202).",
+        "REQUIRED if transaction_id is present, otherwise it MUST NOT be present. The amount of time (in seconds) required before making a Deferred Credential Request",
       ),
   })
   .strict()

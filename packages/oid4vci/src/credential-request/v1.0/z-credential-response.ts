@@ -1,15 +1,6 @@
 import { z } from "zod";
 
-/**
- * Schema for a single credential in the credentials array (v1.0.2)
- */
-const CredentialObjectSchema = z.object({
-  credential: z
-    .string()
-    .describe(
-      "REQUIRED if lead_time and transaction_id are not present, otherwise it MUST NOT be present. Contains the issued Digital Credential. For dc+sd-jwt format: unencoded credential string. For mso_mdoc format: base64url-encoded CBOR-encoded IssuerSigned structure per ISO 18013-5.",
-    ),
-});
+import { zBaseCredentialResponse } from "../z-credential-response";
 
 /**
  * Credential Response schema for IT Wallet v1.0.2
@@ -17,39 +8,18 @@ const CredentialObjectSchema = z.object({
  * Reference: https://italia.github.io/eid-wallet-it-docs/releases/1.0.2/en/credential-issuer-endpoint.html#credential-response
  *
  * Response contains either:
- * - Immediate issuance: `credentials` (array)
- * - Deferred issuance: `lead_time` + `transaction_id`
+ * - Immediate issuance (HTTP 200): `credentials` (array)
+ * - Deferred issuance (HTTP 202): `lead_time` + `transaction_id`
  */
-export const zCredentialResponseV1_0 = z
-  .object({
-    credentials: z
-      .array(CredentialObjectSchema)
-      .optional()
-      .describe(
-        "Conditional. Array of issued Digital Credentials as JSON objects with `credential` member containing encoded credential string. Present for immediate issuance (HTTP 200).",
-      ),
-
+export const zCredentialResponseV1_0 = zBaseCredentialResponse
+  .extend({
     lead_time: z
       .number()
       .int()
       .positive()
       .optional()
       .describe(
-        "REQUIRED for deferred flow. Duration in seconds before making a Deferred Credential Request.",
-      ),
-
-    notification_id: z
-      .string()
-      .optional()
-      .describe(
-        "OPTIONAL. Identifier for issued Credential included in subsequent Notification Request. Only present with credentials parameter.",
-      ),
-
-    transaction_id: z
-      .string()
-      .optional()
-      .describe(
-        "REQUIRED for deferred flow. Identifier for deferred issuance transaction; must be invalidated after Credential obtainment.",
+        "REQUIRED if credentials is not present, otherwise it MUST NOT be present. The amount of time (in seconds) required before making a Deferred Credential Request.",
       ),
   })
   .strict()

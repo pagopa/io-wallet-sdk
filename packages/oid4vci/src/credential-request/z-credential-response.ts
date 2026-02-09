@@ -9,6 +9,33 @@ import {
   zCredentialResponseV1_3,
 } from "./v1.3/z-credential-response";
 
+const zCredentialObjectSchema = z.object({
+  credential: z.string(),
+});
+
+export const zBaseCredentialResponse = z.object({
+  credentials: z
+    .array(zCredentialObjectSchema)
+    .optional()
+    .describe(
+      "Conditional. Array of issued Digital Credentials as JSON objects with `credential` member containing encoded credential string. Present for immediate issuance (HTTP 200).",
+    ),
+
+  notification_id: z
+    .string()
+    .optional()
+    .describe(
+      "OPTIONAL. Identifier for notification requests. Only present with credentials parameter.",
+    ),
+
+  transaction_id: z
+    .string()
+    .optional()
+    .describe(
+      "Conditional. Deferred issuance identifier; used in subsequent requests when credentials not immediately available. Present for deferred flow (HTTP 202).",
+    ),
+});
+
 /**
  * Unified Credential Response schema that supports both v1.0.2 and v1.3.3 specifications
  *
