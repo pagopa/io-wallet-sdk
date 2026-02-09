@@ -164,7 +164,6 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
   });
 
   describe("deprecated fields and passthrough behavior", () => {
-
     it("should allow unknown fields via .passthrough()", () => {
       const metadataWithUnknownField = {
         ...validV1_3Metadata,
