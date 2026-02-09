@@ -164,23 +164,6 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
   });
 
   describe("deprecated fields and passthrough behavior", () => {
-    it("should reject deprecated authorization_signed_response_alg field", () => {
-      const metadataWithDeprecatedField = {
-        ...validV1_3Metadata,
-        authorization_signed_response_alg: "ES256",
-      };
-      // Note: .passthrough() allows extra fields, so this will pass
-      // The field should not be in the v1.3 schema but passthrough allows it
-      const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
-        metadataWithDeprecatedField,
-      );
-      // With .passthrough(), extra fields are allowed but not validated
-      expect(result.success).toBe(true);
-      // But the field should not be in the parsed output's type
-      if (result.success) {
-        expect("authorization_signed_response_alg" in result.data).toBe(true); // passthrough keeps it
-      }
-    });
 
     it("should allow unknown fields via .passthrough()", () => {
       const metadataWithUnknownField = {
