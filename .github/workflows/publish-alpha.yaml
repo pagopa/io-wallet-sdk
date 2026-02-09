@@ -49,7 +49,7 @@ jobs:
       - name: Create alpha version
         id: alpha_version
         run: |
-          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          TIMESTAMP=$(date -u +"%Y%m%d")
           echo "ALPHA_TAG=alpha-${TIMESTAMP}" >> $GITHUB_ENV
           pnpm changeset version --snapshot alpha-${TIMESTAMP}
 
