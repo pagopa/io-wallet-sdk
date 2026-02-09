@@ -22,7 +22,6 @@ export const zCredentialResponseV1_0 = zBaseCredentialResponse
         "REQUIRED if credentials is not present, otherwise it MUST NOT be present. The amount of time (in seconds) required before making a Deferred Credential Request.",
       ),
   })
-  .strict()
   .superRefine((data, ctx) => {
     const hasCredentials = data.credentials !== undefined;
     const hasLeadTime = data.lead_time !== undefined;

@@ -22,7 +22,6 @@ export const zCredentialResponseV1_3 = zBaseCredentialResponse
         "REQUIRED if transaction_id is present, otherwise it MUST NOT be present. The amount of time (in seconds) required before making a Deferred Credential Request",
       ),
   })
-  .strict()
   .superRefine((data, ctx) => {
     const hasCredentials = data.credentials !== undefined;
     const hasInterval = data.interval !== undefined;
