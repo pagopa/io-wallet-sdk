@@ -1,7 +1,11 @@
+import type {
+  ItWalletCredentialVerifierMetadata,
+  ItWalletCredentialVerifierMetadataV1_3,
+} from "@pagopa/io-wallet-oid-federation";
+
 import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
 import { CreateOpenid4vpAuthorizationResponseResult } from "@openid4vc/openid4vp";
 import { addSecondsToDate, dateToSeconds } from "@openid4vc/utils";
-import { ItWalletCredentialVerifierMetadata } from "@pagopa/io-wallet-oid-federation";
 import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -85,6 +89,37 @@ const callbacks: Pick<
 const TEN_MINUTES = dateToSeconds(addSecondsToDate(new Date(), 60 * 10));
 const ENCODED_NONCE = Base64.encode(MOCK_NONCE, true);
 const REQOBJ_ENCODED_NONCE = Base64.encode(REQOBJ_MOCK_NONCE, true);
+
+const mockRpMetadataV1_3: ItWalletCredentialVerifierMetadataV1_3 = {
+  application_type: "web",
+  client_id: "https://relying-party.example.org",
+  client_name: "Example Relying Party V1.3",
+  encrypted_response_enc_values_supported: ["A256GCM"],
+  jwks: {
+    keys: [
+      {
+        crv: "P-256",
+        kid: "v13-key-1",
+        kty: "EC",
+        x: "jE2RpcQbFQxKpMqehahgZv6smmXD0i/LTP2QRzMADk4",
+        y: "qkMx5iqt5PhPu5tfctS6HsP+FmLgrxfrzUV2GwMQuh8",
+      },
+    ],
+  },
+  logo_uri: "https://relying-party.example.org/public/logo.svg",
+  request_uris: ["https://relying-party.example.org/request_uri"],
+  response_uris: ["https://relying-party.example.org/response_uri"],
+  vp_formats_supported: {
+    "dc+sd-jwt": {
+      "kb-jwt_alg_values": ["ES256"],
+      "sd-jwt_alg_values": ["ES256", "ES384", "ES512"],
+    },
+    mso_mdoc: {
+      deviceauth_alg_values: [-7, -35, -36],
+      issuerauth_alg_values: [-7, -35, -36],
+    },
+  },
+};
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -175,5 +210,119 @@ describe("createAuthorizationResponseTests", () => {
         vp_token: MOCK_VP_TOKEN,
       }),
     ).rejects.toThrow(CreateAuthorizationResponseError);
+  });
+});
+
+describe("createAuthorizationResponse v1.3 metadata support", () => {
+  it("should create authorization response with v1.3 metadata and explicit JARM parameters", async () => {
+    const response = await createAuthorizationResponse({
+      authorization_encrypted_response_alg: "ECDH-ES",
+      authorization_encrypted_response_enc: "A256GCM",
+      authorization_signed_response_alg: "ES256",
+      callbacks,
+      client_id: MOCK_WALLET_CLIENT_ID,
+      requestObject: {
+        client_id: MOCK_RP_CLIENT_ID,
+        nonce: REQOBJ_MOCK_NONCE,
+        response_mode: "direct_post.jwt",
+        response_type: "vp_token",
+        state: MOCK_STATE,
+      },
+      rpMetadata: mockRpMetadataV1_3,
+      signer: mockSigner,
+      vp_token: MOCK_VP_TOKEN,
+    });
+
+    expect(response.jarm?.responseJwt).toMatch(/.*\..*\.signature_ENCRYPTED/);
+    expect(response.authorizationResponsePayload).toMatchObject({
+      aud: MOCK_RP_CLIENT_ID,
+      exp: TEN_MINUTES,
+      iss: MOCK_WALLET_CLIENT_ID,
+      state: MOCK_STATE,
+      vp_token: MOCK_VP_TOKEN,
+    });
+  });
+
+  it("should use default JARM algorithms for v1.3 metadata when not provided", async () => {
+    const response = await createAuthorizationResponse({
+      callbacks,
+      client_id: MOCK_WALLET_CLIENT_ID,
+      requestObject: {
+        client_id: MOCK_RP_CLIENT_ID,
+        nonce: REQOBJ_MOCK_NONCE,
+        response_mode: "direct_post.jwt",
+        response_type: "vp_token",
+        state: MOCK_STATE,
+      },
+      rpMetadata: mockRpMetadataV1_3,
+      signer: mockSigner,
+      vp_token: MOCK_VP_TOKEN,
+    });
+
+    // Should succeed with defaults: ECDH-ES, A256GCM (from encrypted_response_enc_values_supported), ES256
+    expect(response.jarm?.responseJwt).toMatch(/.*\..*\.signature_ENCRYPTED/);
+    expect(response.authorizationResponsePayload).toMatchObject({
+      aud: MOCK_RP_CLIENT_ID,
+      iss: MOCK_WALLET_CLIENT_ID,
+      state: MOCK_STATE,
+      vp_token: MOCK_VP_TOKEN,
+    });
+  });
+
+  it("should derive encryption encoding from encrypted_response_enc_values_supported for v1.3", async () => {
+    const metadataWith192GCM: ItWalletCredentialVerifierMetadataV1_3 = {
+      ...mockRpMetadataV1_3,
+      encrypted_response_enc_values_supported: ["A192GCM", "A256GCM"],
+    };
+
+    const response = await createAuthorizationResponse({
+      authorization_encrypted_response_alg: "ECDH-ES",
+      authorization_signed_response_alg: "ES256",
+      // Not providing authorization_encrypted_response_enc to test fallback
+      callbacks,
+      client_id: MOCK_WALLET_CLIENT_ID,
+      requestObject: {
+        client_id: MOCK_RP_CLIENT_ID,
+        nonce: REQOBJ_MOCK_NONCE,
+        response_mode: "direct_post.jwt",
+        response_type: "vp_token",
+        state: MOCK_STATE,
+      },
+      rpMetadata: metadataWith192GCM,
+      signer: mockSigner,
+      vp_token: MOCK_VP_TOKEN,
+    });
+
+    // Should use first value from encrypted_response_enc_values_supported (A192GCM)
+    expect(response.jarm?.responseJwt).toBeDefined();
+    expect(response.authorizationResponsePayload).toMatchObject({
+      vp_token: MOCK_VP_TOKEN,
+    });
+  });
+
+  it("should maintain backward compatibility with v1.0 metadata (without explicit JARM parameters)", async () => {
+    const response = await createAuthorizationResponse({
+      callbacks,
+      client_id: MOCK_WALLET_CLIENT_ID,
+      requestObject: {
+        client_id: MOCK_RP_CLIENT_ID,
+        nonce: REQOBJ_MOCK_NONCE,
+        response_mode: "direct_post.jwt",
+        response_type: "vp_token",
+        state: MOCK_STATE,
+      },
+      rpMetadata: mockRpMetadata, // v1.0 metadata
+      signer: mockSigner,
+      vp_token: MOCK_VP_TOKEN,
+    });
+
+    // Should work with v1.0 metadata by reading JARM config from rpMetadata
+    expect(response.jarm?.responseJwt).toMatch(/.*\..*\.signature_ENCRYPTED/);
+    expect(response.authorizationResponsePayload).toMatchObject({
+      aud: MOCK_RP_CLIENT_ID,
+      iss: MOCK_WALLET_CLIENT_ID,
+      state: MOCK_STATE,
+      vp_token: MOCK_VP_TOKEN,
+    });
   });
 });

@@ -406,6 +406,27 @@ This method receives a Request Object in JWT format, verifies the signature and 
 ```typescript
 export interface CreateAuthorizationResponseOptions {
   /**
+   * Optional algorithm for signing the authorization response (JARM).
+   * Required when using v1.3 RP metadata that doesn't include this field.
+   * Defaults to ES256 if not provided.
+   */
+  authorization_signed_response_alg?: string;
+
+  /**
+   * Optional algorithm for encrypting the authorization response (JARM).
+   * Required when using v1.3 RP metadata that doesn't include this field.
+   * Defaults to ECDH-ES for EC keys if not provided.
+   */
+  authorization_encrypted_response_alg?: string;
+
+  /**
+   * Optional content encryption encoding for the authorization response (JARM).
+   * Required when using v1.3 RP metadata that doesn't include this field.
+   * Falls back to first value in encrypted_response_enc_values_supported or A256GCM.
+   */
+  authorization_encrypted_response_enc?: string;
+
+  /**
    * Callbacks for authorization response generation
    */
   callbacks: Pick<
@@ -429,9 +450,10 @@ export interface CreateAuthorizationResponseOptions {
   requestObject: AuthorizationRequestObject;
 
   /**
-   * OpenID Federation Relying Party metadata
+   * OpenID Federation Relying Party metadata.
+   * Supports both v1.0 and v1.3 credential verifier metadata.
    */
-  rpMetadata: ItWalletCredentialVerifierMetadata;
+  rpMetadata: ItWalletCredentialVerifierMetadata | ItWalletCredentialVerifierMetadataV1_3;
 
   /**
    * Signer created from the Wallet Instance's private key
