@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { zBaseCredentialResponse } from "../z-credential-response";
+import { zBaseCredentialResponse } from "../z-base-credential-response";
 
 /**
  * Credential Response schema for IT Wallet v1.0.2
