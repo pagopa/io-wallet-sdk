@@ -24,17 +24,16 @@ export interface FetchMetadataOptions {
 
 /**
  * Attempts the federation discovery path.
- * Returns the normalised metadata object if successful, or undefined on any failure.
+ * Returns the normalised metadata object if successful or undefined.
+ * In case of ValidationError, the error is re-thrown, as it indicates a non-compliant implementation that should be surfaced instead of falling back to the OID4VCI discovery.
+ * For any other error (e.g. network issues, non-200 status code), undefined is returned to trigger the fallback mechanism.
  */
 async function tryFederationDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
 ): Promise<MetadataResponse | undefined> {
   try {
-    const federationUrl = new URL(
-      "/.well-known/openid-federation",
-      baseUrl,
-    );
+    const federationUrl = new URL("/.well-known/openid-federation", baseUrl);
     const response = await fetch(federationUrl.toString());
 
     if (response.status !== 200) {
@@ -127,7 +126,8 @@ async function fallbackDiscovery(
  * OID4VCI well-known endpoints.
  *
  * When federation discovery succeeds, the full entity statement claims are
- * preserved in `openid_federation_claims`.
+ * preserved in `openid_federation_claims`. 
+ * It does not verify the signature of the entity statement, as trust is derived from the successful retrieval of the metadata from the well-known endpoint. 
  * NOTE: It is included from IT Wallet v1.3, so MetadataResponse is designed to accommodate v1.3 metadata shapes.
  *
  * @param options - Configuration for metadata fetching
