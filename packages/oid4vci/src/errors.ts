@@ -64,3 +64,14 @@ export class FetchMetadataError extends Oid4vciError {
     this.name = "FetchMetadataError";
   }
 }
+
+/**
+ * Error thrown when an error occurs during credential offer operations.
+ * This includes parsing, resolving, validating, and extracting grant details from credential offers.
+ */
+export class CredentialOfferError extends Oid4vciError {
+  constructor(message: string, statusCode?: number) {
+    super(message, statusCode);
+    this.name = "CredentialOfferError";
+  }
+}

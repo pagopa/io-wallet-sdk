@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../jwk";
+import { jsonWebKeySetSchema } from "../../../jwk";
 
 /**
  *

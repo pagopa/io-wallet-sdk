@@ -1,5 +1,6 @@
-import { JwtSigner } from "@openid4vc/oauth2";
+import { JwtSigner, decodeJwt } from "@openid4vc/oauth2";
 
+import { PushedAuthorizationRequestError } from "../errors";
 import { VerifiedJarRequest, verifyJarRequest } from "../jar";
 import {
   type VerifyAuthorizationRequestOptions,
@@ -16,7 +17,10 @@ export interface VerifyPushedAuthorizationRequestReturn
 }
 
 export interface VerifyPushedAuthorizationRequestOptions
-  extends VerifyAuthorizationRequestOptions {
+  extends Omit<
+    VerifyAuthorizationRequestOptions,
+    "authorizationServerMetadata"
+  > {
   /**
    * The authorization request JWT to verify. If this value was returned from `parsePushedAuthorizationRequest`
    * you MUST provide this value to ensure the JWT is verified.
@@ -25,6 +29,18 @@ export interface VerifyPushedAuthorizationRequestOptions
     jwt: string;
     signer: JwtSigner;
   };
+
+  /**
+   * Authorization Server metadata for enforcing JAR signing policy.
+   * Includes standard Authorization Server metadata plus require_signed_request_object.
+   * When require_signed_request_object is true, the server will reject unsigned requests.
+   * Defaults to false (permissive) if not provided.
+   *
+   * @see {@link https://datatracker.ietf.org/doc/html/rfc9101#section-10.5 RFC 9101 Section 10.5}
+   */
+  authorizationServerMetadata: {
+    require_signed_request_object?: boolean;
+  } & VerifyAuthorizationRequestOptions["authorizationServerMetadata"];
 }
 
 /**
@@ -36,16 +52,25 @@ export interface VerifyPushedAuthorizationRequestOptions
  * RFC 9101 (JAR).
  *
  * The verification process includes:
- * 1. JAR request object verification (if provided) - validates JWT signature and claims
- * 2. DPoP proof verification (if provided) - validates proof of possession
- * 3. Client attestation verification (if provided) - validates client identity
+ * 1. JAR signing policy enforcement (per RFC 9101 Section 10.5) - validates require_signed_request_object
+ * 2. JAR request object verification (if provided) - validates JWT signature and claims
+ * 3. DPoP proof verification (if provided) - validates proof of possession
+ * 4. Client attestation verification - validates client identity
+ *
+ * **JAR Signing Policy (RFC 9101):**
+ * When `authorizationServerMetadata.require_signed_request_object` is true:
+ * - Rejects requests without signed JAR (downgrade attack protection)
+ * - Rejects JAR with algorithm "none" (security requirement)
+ * When false or omitted (default): accepts both signed and unsigned requests
  *
  * **Important:** Use `parsePushedAuthorizationRequest` first to extract the necessary
  * JWTs from request headers and body.
  *
  * @param options - The verification options
  * @param options.authorizationRequest - The authorization request parameters containing client_id
- * @param options.authorizationServerMetadata - Authorization server metadata including issuer
+ * @param options.authorizationServerMetadata - Authorization server metadata
+ * @param options.authorizationServerMetadata.issuer - Authorization server issuer URL
+ * @param options.authorizationServerMetadata.require_signed_request_object - Whether to enforce JAR signing (defaults to false)
  * @param options.callbacks - Cryptographic callback functions for hash and JWT verification
  * @param options.authorizationRequestJwt - Optional JAR JWT and signer information
  * @param options.authorizationRequestJwt.jwt - The JAR JWT string from request parameter
@@ -67,6 +92,8 @@ export interface VerifyPushedAuthorizationRequestOptions
  * - `dpop` - Verified DPoP information including JWK and thumbprint (if DPoP was provided)
  * - `clientAttestation` - Verified client attestation JWTs (if client attestation was provided)
  *
+ * @throws {PushedAuthorizationRequestError} When require_signed_request_object is true but request is unsigned
+ * @throws {PushedAuthorizationRequestError} When require_signed_request_object is true but JAR uses alg="none"
  * @throws {Oauth2Error} When JAR JWT verification fails
  * @throws {Oauth2Error} When JAR client_id doesn't match request client_id
  * @throws {Oauth2Error} When JAR request object is encrypted (not supported)
@@ -79,36 +106,67 @@ export interface VerifyPushedAuthorizationRequestOptions
  *
  * @example
  * ```typescript
- * // First parse the PAR request
- * const parsed = await parsePushedAuthorizationRequest({
- *   request: httpRequest,
- *   callbacks: { fetch }
- * });
- *
- * // Then verify with signer from federation metadata
+ * // Example 1: Enforce signed JAR (strict mode)
  * const result = await verifyPushedAuthorizationRequest({
  *   authorizationRequest: parsed.authorizationRequest,
- *   authorizationServerMetadata: { issuer: 'https://auth.example.com' },
+ *   authorizationServerMetadata: {
+ *     issuer: 'https://auth.example.com',
+ *     require_signed_request_object: true  // Reject unsigned requests
+ *   },
  *   callbacks: { hash: hashCallback, verifyJwt: verifyJwtCallback },
- *   authorizationRequestJwt: parsed.jar ? {
- *     jwt: parsed.jar.jwt,
+ *   authorizationRequestJwt: {
+ *     jwt: parsed.authorizationRequestJwt,
  *     signer: clientSignerFromFederation
- *   } : undefined,
- *   dpop: parsed.dpop,
- *   clientAttestation: parsed.clientAttestation,
+ *   },
  *   request: httpRequest
  * });
  *
- * console.log(result.jar?.authorizationRequestPayload.scope);
- * console.log(result.dpop?.jwkThumbprint);
+ * // Example 2: Accept both signed and unsigned (permissive mode)
+ * const result = await verifyPushedAuthorizationRequest({
+ *   authorizationRequest: parsed.authorizationRequest,
+ *   authorizationServerMetadata: {
+ *     issuer: 'https://auth.example.com',
+ *     require_signed_request_object: false  // Accept unsigned requests
+ *   },
+ *   callbacks: { hash: hashCallback, verifyJwt: verifyJwtCallback },
+ *   authorizationRequestJwt: parsed.authorizationRequestJwt ? {
+ *     jwt: parsed.authorizationRequestJwt,
+ *     signer: clientSignerFromFederation
+ *   } : undefined,
+ *   request: httpRequest
+ * });
  * ```
+ *
+ * @see {@link https://datatracker.ietf.org/doc/html/rfc9101#section-10.5 RFC 9101 Section 10.5 - require_signed_request_object}
  */
 export async function verifyPushedAuthorizationRequest(
   options: VerifyPushedAuthorizationRequestOptions,
 ): Promise<VerifyPushedAuthorizationRequestReturn> {
+  // Check if signed request objects are required (default to false for permissive server behavior)
+  const requireSigned =
+    options.authorizationServerMetadata?.require_signed_request_object ?? false;
+
+  // Enforce require_signed_request_object policy
+  if (requireSigned && !options.authorizationRequestJwt) {
+    throw new PushedAuthorizationRequestError(
+      "Authorization Server requires signed request objects (JAR) per RFC 9101, but request does not include a signed JWT",
+    );
+  }
+
   let jar: VerifiedJarRequest | undefined;
 
   if (options.authorizationRequestJwt) {
+    // Fail-fast: reject alg="none" before expensive signature verification (RFC 9101 Section 10.5)
+    if (requireSigned) {
+      const decoded = decodeJwt({ jwt: options.authorizationRequestJwt.jwt });
+      if (decoded.header.alg === "none") {
+        throw new PushedAuthorizationRequestError(
+          'Authorization Server requires signed request objects, but JAR has algorithm "none"',
+        );
+      }
+    }
+
+    // Verify JAR signature and claims
     jar = await verifyJarRequest({
       authorizationRequestJwt: options.authorizationRequestJwt.jwt,
       callbacks: options.callbacks,

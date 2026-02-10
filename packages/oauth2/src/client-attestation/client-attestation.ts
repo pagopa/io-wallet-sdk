@@ -30,7 +30,10 @@ export interface VerifyClientAttestationJwtOptions {
   clientAttestationJwt: string;
 
   /**
-   * Date to use for expiration. If not provided current date will be used.
+   * The current time to use when verifying the JWTs.
+   * If not provided current time will be used.
+   *
+   * @default new Date()
    */
   now?: Date;
 }
