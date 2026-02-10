@@ -92,10 +92,12 @@ async function fallbackDiscovery(
       );
     }
 
-    const authServerResponse = await fetch(
-      `${parsedUrl.data}/.well-known/oauth-authorization-server`,
-    );
+    const authServerUrl = new URL(
+      "/.well-known/oauth-authorization-server",
+      parsedUrl.data,
+    ).toString();
 
+    const authServerResponse = await fetch(authServerUrl);
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(authServerResponse);
 
     oauthAuthorizationServer = (await authServerResponse.json()) as Record<
