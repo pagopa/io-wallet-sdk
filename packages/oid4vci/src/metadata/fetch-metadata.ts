@@ -122,6 +122,7 @@ async function fallbackDiscovery(
  *
  * When federation discovery succeeds, the full entity statement claims are
  * preserved in `openid_federation_claims`.
+ * NOTE: It is included from IT Wallet v1.3, so MetadataResponse is designed to accommodate v1.3 metadata shapes.
  *
  * @param options - Configuration for metadata fetching
  * @returns Normalised metadata with `discoveredVia` indicating the discovery path used

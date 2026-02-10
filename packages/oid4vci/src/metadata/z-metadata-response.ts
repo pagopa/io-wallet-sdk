@@ -1,11 +1,13 @@
-import { entityConfigurationClaimsSchema } from "@openid-federation/core";
-import { itWalletMetadataSchema } from "@pagopa/io-wallet-oid-federation";
+import {
+  itWalletEntityConfigurationClaimsSchema,
+  itWalletMetadataV1_3,
+} from "@pagopa/io-wallet-oid-federation";
 import { z } from "zod";
 
 export const zMetadataResponse = z.object({
   discoveredVia: z.enum(["federation", "oid4vci"]),
-  metadata: itWalletMetadataSchema,
-  openid_federation_claims: entityConfigurationClaimsSchema.optional(),
+  metadata: itWalletMetadataV1_3,
+  openid_federation_claims: itWalletEntityConfigurationClaimsSchema.optional(),
 });
 
 export type MetadataResponse = z.infer<typeof zMetadataResponse>;

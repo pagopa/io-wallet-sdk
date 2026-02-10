@@ -32,12 +32,25 @@ const credentialIssuerMetadata = {
   client_registration_types_supported: ["automatic"],
   credential_configurations_supported: {
     "urn:id.gov.it:itWallet:issued_credential:ts_ci": {
+      authentic_sources: {
+        dataset_id: "dataset-123",
+        entity_id: "entity-456",
+      },
       claims: [
         {
           display: [{ locale: "it-IT", name: "Nome" }],
           path: ["name"],
         },
       ],
+      credential_metadata: {
+        claims: [
+          {
+            display: [{ locale: "it-IT", name: "Nome" }],
+            path: ["name"],
+          },
+        ],
+        display: [{ locale: "it-IT", name: "Tessera Sanitaria" }],
+      },
       credential_signing_alg_values_supported: ["ES256"],
       cryptographic_binding_methods_supported: ["did:example"],
       display: [{ locale: "it-IT", name: "Tessera Sanitaria" }],
@@ -45,6 +58,7 @@ const credentialIssuerMetadata = {
       proof_types_supported: {
         jwt: { proof_signing_alg_values_supported: ["ES256"] },
       },
+      schema_id: "urn:id.gov.it:itWallet:schema:ts_ci:1.0",
       scope: "urn:id.gov.it:itWallet:issued_credential:ts_ci",
       vct: "urn:id.gov.it:itWallet:issued_credential:ts_ci",
     },
@@ -65,18 +79,20 @@ const credentialIssuerMetadata = {
 };
 
 const authorizationServerMetadata = {
-  acr_values_supported: [
-    "https://trust-registry.eid-wallet.example.it/loa/low",
-  ],
+  acr_values_supported: ["https://trust-anchor.eid-wallet.example.it/loa/low"],
   authorization_endpoint: "https://auth.example.it/authorize",
   authorization_signing_alg_values_supported: ["ES256"],
+  client_attestation_pop_signing_alg_values_supported: ["ES256"],
+  client_attestation_signing_alg_values_supported: ["ES256"],
   client_registration_types_supported: ["automatic"],
   code_challenge_methods_supported: ["S256"],
+  dpop_signing_alg_values_supported: ["ES256"],
   grant_types_supported: ["authorization_code"],
   issuer: "https://auth.example.it",
   jwks: mockJwks,
   pushed_authorization_request_endpoint: "https://auth.example.it/par",
   request_object_signing_alg_values_supported: ["ES256"],
+  require_signed_request_object: true,
   response_modes_supported: ["query"],
   response_types_supported: ["code"],
   scopes_supported: ["openid"],
