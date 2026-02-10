@@ -5,6 +5,19 @@ on:
     branches: 
       - main
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: false
+        default: 'stable'
+        type: choice
+        options:
+          - stable
+          - alpha
+      branch:
+        description: 'Branch to publish from (for alpha releases)'
+        required: false
+        default: 'main'
 
 permissions:
   id-token: write  # Required for OIDC
@@ -17,6 +30,7 @@ jobs:
 
   changesets:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release_type == 'stable')
     outputs:
       hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
       published: ${{ steps.changesets.outputs.published }}
@@ -55,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     needs: changesets
-    if: needs.changesets.outputs.hasChangesets == 'false'
+    if: needs.changesets.outputs.hasChangesets == 'false' && (github.event_name == 'push' || inputs.release_type == 'stable')
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
@@ -104,3 +118,73 @@ jobs:
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 #v2.4.1
         with:
           tag_name: v${{ env.CURRENT_PACKAGE_VERSION }}
+
+  publish-alpha:
+    runs-on: ubuntu-latest
+    environment: prod
+    if: github.event_name == 'workflow_dispatch' && inputs.release_type == 'alpha'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda #v4.1.0
+        with:
+          version: 10.14.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org/"
+          node-version-file: ".node-version"
+
+      # We force to publish with npm 11 because we are using npm trusted publishing
+      - name: Install npm 11
+        run: npm install -g npm@11.7.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Create alpha version
+        id: alpha_version
+        run: pnpm changeset version --snapshot
+
+      - name: Publish alpha to npm
+        run: pnpm changeset publish --no-git-tag --tag alpha
+        env:
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Get published version
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./packages/oauth2/package.json').version")
+          echo "Published version: $VERSION"
+          echo "PUBLISHED_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create and push git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ env.PUBLISHED_VERSION }}" -m "Alpha release v${{ env.PUBLISHED_VERSION }}"
+          git push origin "v${{ env.PUBLISHED_VERSION }}"
+
+      - name: Summary
+        run: |
+          echo "## Alpha Release Published 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ env.PUBLISHED_VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Git Tag:** \`v${{ env.PUBLISHED_VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**NPM Tag:** \`alpha\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Install command:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @pagopa/io-wallet-oauth2@alpha" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
