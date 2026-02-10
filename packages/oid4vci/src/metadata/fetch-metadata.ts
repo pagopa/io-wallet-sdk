@@ -31,7 +31,11 @@ async function tryFederationDiscovery(
   baseUrl: string,
 ): Promise<MetadataResponse | undefined> {
   try {
-    const response = await fetch(`${baseUrl}/.well-known/openid-federation`);
+    const federationUrl = new URL(
+      "/.well-known/openid-federation",
+      baseUrl,
+    );
+    const response = await fetch(federationUrl.toString());
 
     if (response.status !== 200) {
       return undefined;
