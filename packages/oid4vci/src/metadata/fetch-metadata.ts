@@ -1,4 +1,8 @@
-import { CallbackContext, decodeJwt } from "@openid4vc/oauth2";
+import {
+  CallbackContext,
+  VerifyJwtCallback,
+  decodeJwt,
+} from "@openid4vc/oauth2";
 import { createFetcher, parseWithErrorHandling } from "@openid4vc/utils";
 import { itWalletEntityStatementClaimsSchema } from "@pagopa/io-wallet-oid-federation";
 import {
@@ -17,7 +21,15 @@ import {
 
 export interface FetchMetadataOptions {
   /** Callback providing the fetch implementation */
-  callbacks: Pick<CallbackContext, "fetch">;
+  callbacks: {
+    /**
+     * Optional JWT signature verification callback.
+     * When provided, the entity statement signature retrieved via federation
+     * discovery is verified using this callback.
+     * When omitted, trust is derived solely from TLS (the default behaviour).
+     */
+    verifyJwt?: VerifyJwtCallback;
+  } & Pick<CallbackContext, "fetch">;
 
   /**
    * Base URL of the Credential Issuer (e.g. "https://issuer.example.it").
@@ -35,6 +47,7 @@ export interface FetchMetadataOptions {
 async function tryFederationDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
+  verifyJwt?: VerifyJwtCallback,
 ): Promise<MetadataResponse | undefined> {
   try {
     const federationUrl = new URL(
@@ -48,10 +61,29 @@ async function tryFederationDiscovery(
     }
 
     const entityStatement = await response.text();
-    const { payload } = decodeJwt({
+    const { header, payload } = decodeJwt({
       jwt: entityStatement,
       payloadSchema: itWalletEntityStatementClaimsSchema,
     });
+
+    if (verifyJwt) {
+      const jwtSigner = {
+        alg: header.alg as string,
+        kid: header.kid as string,
+        method: "federation" as const,
+      };
+      const result = await verifyJwt(jwtSigner, {
+        compact: entityStatement,
+        header,
+        payload,
+      });
+      if (!result.verified) {
+        throw new ValidationError(
+          "Entity statement signature verification failed",
+        );
+      }
+    }
+
     return {
       discoveredVia: "federation",
       metadata: payload.metadata as MetadataResponse["metadata"],
@@ -133,7 +165,8 @@ async function fallbackDiscovery(
  *
  * When federation discovery succeeds, the full entity statement claims are
  * preserved in `openid_federation_claims`.
- * It does not verify the signature of the entity statement, as trust is derived from the successful retrieval of the metadata from the well-known endpoint.
+ * Signature verification of the entity statement is optional: supply `callbacks.verifyJwt` to enable it.
+ * When omitted, trust is derived from TLS alone (successful retrieval from the well-known endpoint).
  * NOTE: It is included from IT Wallet v1.3, so MetadataResponse is designed to accommodate v1.3 metadata shapes.
  *
  * @param options - Configuration for metadata fetching
@@ -158,6 +191,7 @@ export async function fetchMetadata(
     const federationResult = await tryFederationDiscovery(
       fetch,
       options.credentialIssuerUrl,
+      options.callbacks.verifyJwt,
     );
 
     const raw =

@@ -115,16 +115,16 @@ function buildFederationJwt(payload: Record<string, unknown>): string {
 
 // --- Tests ---
 
+const baseOptions: FetchMetadataOptions = {
+  callbacks: { fetch: mockFetch },
+  credentialIssuerUrl: "https://issuer.example.it",
+};
+
+beforeEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("fetchMetadata", () => {
-  const baseOptions: FetchMetadataOptions = {
-    callbacks: { fetch: mockFetch },
-    credentialIssuerUrl: "https://issuer.example.it",
-  };
-
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("should return normalised metadata when federation endpoint succeeds", async () => {
     const federationPayload = {
       exp: 1_700_003_600,
@@ -312,5 +312,56 @@ describe("fetchMetadata", () => {
     ).rejects.toThrow(ValidationError);
 
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("fetchMetadata - verifyJwt callback", () => {
+  const federationPayload = {
+    exp: 1_700_003_600,
+    iat: 1_700_000_000,
+    iss: "https://issuer.example.it",
+    jwks: mockJwks,
+    metadata: {
+      oauth_authorization_server: authorizationServerMetadata,
+      openid_credential_issuer: credentialIssuerMetadata,
+    },
+    sub: "https://issuer.example.it",
+  };
+
+  it("should succeed when verifyJwt callback returns verified: true", async () => {
+    const verifyJwt = vi.fn().mockResolvedValue({ verified: true });
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+    });
+
+    const result = await fetchMetadata({
+      ...baseOptions,
+      callbacks: { ...baseOptions.callbacks, verifyJwt },
+    });
+
+    expect(result.discoveredVia).toBe("federation");
+    expect(verifyJwt).toHaveBeenCalledOnce();
+    const [jwtSigner] = verifyJwt.mock.calls[0] as [
+      { alg: string; kid: string; method: string },
+      unknown,
+    ];
+    expect(jwtSigner.method).toBe("federation");
+    expect(jwtSigner.alg).toBe("ES256");
+  });
+
+  it("should throw ValidationError when verifyJwt callback returns verified: false", async () => {
+    const verifyJwt = vi.fn().mockResolvedValue({ verified: false });
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+    });
+
+    await expect(
+      fetchMetadata({
+        ...baseOptions,
+        callbacks: { ...baseOptions.callbacks, verifyJwt },
+      }),
+    ).rejects.toThrow(ValidationError);
   });
 });
