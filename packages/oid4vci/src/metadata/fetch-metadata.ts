@@ -9,7 +9,11 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { FetchMetadataError } from "../errors";
-import { MetadataResponse, zMetadataResponse } from "./z-metadata-response";
+import {
+  MetadataResponse,
+  zMetadataResponse,
+  zPartialIssuerMetadata,
+} from "./z-metadata-response";
 
 export interface FetchMetadataOptions {
   /** Callback providing the fetch implementation */
@@ -33,8 +37,11 @@ async function tryFederationDiscovery(
   baseUrl: string,
 ): Promise<MetadataResponse | undefined> {
   try {
-    const federationUrl = new URL("/.well-known/openid-federation", baseUrl);
-    const response = await fetch(federationUrl.toString());
+    const federationUrl = new URL(
+      "/.well-known/openid-federation",
+      baseUrl,
+    ).toString();
+    const response = await fetch(federationUrl);
 
     if (response.status !== 200) {
       return undefined;
@@ -69,17 +76,16 @@ async function fallbackDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
 ): Promise<MetadataResponse> {
-  const issuerResponse = await fetch(
-    `${baseUrl}/.well-known/openid-credential-issuer`,
-  );
+  const issuerlUrl = new URL(
+    "/.well-known/openid-credential-issuer",
+    baseUrl,
+  ).toString();
+  const issuerResponse = await fetch(issuerlUrl);
 
   await hasStatusOrThrow(200, UnexpectedStatusCodeError)(issuerResponse);
 
-  const issuerJson = (await issuerResponse.json()) as Record<string, unknown>;
-
-  const authorizationServers = issuerJson.authorization_servers as
-    | string[]
-    | undefined;
+  const issuerJson = zPartialIssuerMetadata.parse(await issuerResponse.json());
+  const authorizationServers = issuerJson.authorization_servers;
 
   let oauthAuthorizationServer: Record<string, unknown>;
 
@@ -123,7 +129,7 @@ async function fallbackDiscovery(
  *
  * Attempts {@link https://openid.net/specs/openid-federation-1_0.html | OpenID Federation}
  * discovery first (`/.well-known/openid-federation`). On failure, falls back to the standard
- * OID4VCI well-known endpoints.
+ * OID4VCI well-known endpoints `/.well-known/openid-credential-issuer`.
  *
  * When federation discovery succeeds, the full entity statement claims are
  * preserved in `openid_federation_claims`.
