@@ -113,7 +113,7 @@ metadata/entity/
 │   ├── itWalletSolution.ts            # wallet_solution (replaces wallet_provider)
 │   ├── itWalletAuthorizationServer.ts # re-export of v1.0 (unchanged)
 │   ├── itWalletCredentialIssuer.ts    # re-export of v1.0 (unchanged)
-│   ├── itWalletCredentialVerifier.ts  # re-export of v1.0 (unchanged)
+│   ├── itWalletCredentialVerifier.ts  # openid_credential_verifier (updated for v1.3)
 │   └── index.ts
 ├── itWalletFederationEntity.ts        # shared across versions
 └── index.ts
@@ -170,7 +170,9 @@ This package exports a comprehensive set of Zod schemas to validate all parts of
 
 - **`itWalletCredentialIssuerMetadata`**: For `openid_credential_issuer` metadata
 
-- **`itWalletCredentialVerifierMetadata`**: For `openid_credential_verifier` metadata
+- **`itWalletCredentialVerifierMetadata`**: For `openid_credential_verifier` metadata (v1.0 schema - default export)
+
+- **`itWalletCredentialVerifierMetadataV1_3`**: For `openid_credential_verifier` metadata (v1.3 - with `logo_uri`, `encrypted_response_enc_values_supported`, and enhanced `vp_formats_supported`)
 
 - **`itWalletAuthorizationServerMetadata`**: For `oauth_authorization_server` metadata
 
