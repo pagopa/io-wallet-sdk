@@ -3,62 +3,53 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 
+const mockHeader = {
+  alg: "ES256",
+  kid: "test-kid",
+  typ: "entity-statement+jwt" as const,
+};
+
+const mockTestKey = {
+  crv: "P-256",
+  kid: "test-kid",
+  kty: "EC" as const,
+  x: "...",
+  x5c: ["..."],
+  y: "...",
+};
+
+const mockClaims = {
+  exp: 1754321794,
+  iat: 1754321794,
+  iss: "https://wallet.example.com",
+  jwks: {
+    keys: [mockTestKey],
+  },
+  metadata: {
+    federation_entity: {
+      contacts: ["info@pagopa.it"],
+      federation_resolve_endpoint: `https://wallet.example.com/resolve`,
+      homepage_uri: "https://io.italia.it",
+      logo_uri: "https://io.italia.it/assets/img/io-it-logo-blue.svg",
+      organization_name: "PagoPa S.p.A.",
+      policy_uri: "https://io.italia.it/privacy-policy",
+      tos_uri: "https://io.italia.it/privacy-policy",
+    },
+    wallet_provider: {
+      jwks: {
+        keys: [mockTestKey],
+      },
+    },
+  },
+  sub: "https://wallet.example.com",
+};
+
+const mockSignJwtCallback = vi.fn(async ({ jwk, toBeSigned }) => {
+  const signatureString = `signed-${toBeSigned}-${jwk.kid}`;
+  return new TextEncoder().encode(signatureString);
+});
+
 describe("createItWalletEntityConfiguration", () => {
-  const mockHeader = {
-    alg: "ES256",
-    kid: "test-kid",
-    typ: "entity-statement+jwt" as const,
-  };
-
-  const mockClaims = {
-    exp: 1754321794,
-    iat: 1754321794,
-    iss: "https://wallet.example.com",
-    jwks: {
-      keys: [
-        {
-          crv: "P-256",
-          kid: "test-kid",
-          kty: "EC" as const,
-          x: "...",
-          x5c: ["..."],
-          y: "...",
-        },
-      ],
-    },
-    metadata: {
-      federation_entity: {
-        contacts: ["info@pagopa.it"],
-        federation_resolve_endpoint: `https://wallet.example.com/resolve`,
-        homepage_uri: "https://io.italia.it",
-        logo_uri: "https://io.italia.it/assets/img/io-it-logo-blue.svg",
-        organization_name: "PagoPa S.p.A.",
-        policy_uri: "https://io.italia.it/privacy-policy",
-        tos_uri: "https://io.italia.it/privacy-policy",
-      },
-      wallet_provider: {
-        jwks: {
-          keys: [
-            {
-              crv: "P-256",
-              kid: "test-kid",
-              kty: "EC" as const,
-              x: "...",
-              x5c: ["..."],
-              y: "...",
-            },
-          ],
-        },
-      },
-    },
-    sub: "https://wallet.example.com",
-  };
-
-  const mockSignJwtCallback = vi.fn(async ({ jwk, toBeSigned }) => {
-    const signatureString = `signed-${toBeSigned}-${jwk.kid}`;
-    return new TextEncoder().encode(signatureString);
-  });
-
   it("should create a signed entity configuration JWT successfully", async () => {
     const result = await createItWalletEntityConfiguration({
       claims: mockClaims,
@@ -134,7 +125,7 @@ describe("createItWalletEntityConfiguration", () => {
       metadata: {
         federation_entity: mockClaims.metadata.federation_entity,
         wallet_solution: {
-          jwks: { keys: [mockClaims.jwks.keys[0]] },
+          jwks: { keys: [mockTestKey] },
           logo_uri: "https://wallet.example.com/logo.svg",
           wallet_metadata: {
             authorization_endpoint: "https://wallet.example.com/authorize",
@@ -171,5 +162,68 @@ describe("createItWalletEntityConfiguration", () => {
     expect(
       decodedPayload.metadata.wallet_solution.wallet_metadata.wallet_name,
     ).toBe("Test Wallet");
+  });
+
+  it("should create a signed entity configuration JWT with openid_credential_verifier metadata (v1.3)", async () => {
+    const mockClaimsV1_3CredentialVerifier = {
+      ...mockClaims,
+      metadata: {
+        federation_entity: mockClaims.metadata.federation_entity,
+        openid_credential_verifier: {
+          application_type: "web" as const,
+          client_id: "https://relying-party.example.org",
+          client_name: "Example Relying Party",
+          encrypted_response_enc_values_supported: ["A256GCM"],
+          jwks: { keys: [mockTestKey] },
+          logo_uri: "https://relying-party.example.org/public/logo.svg",
+          request_uris: ["https://relying-party.example.org/request_uri"],
+          response_uris: ["https://relying-party.example.org/response_uri"],
+          vp_formats_supported: {
+            "dc+sd-jwt": {
+              "kb-jwt_alg_values": ["ES256"],
+              "sd-jwt_alg_values": ["ES256", "ES384", "ES512"],
+            },
+            mso_mdoc: {
+              deviceauth_alg_values: [-7, -35, -36],
+              issuerauth_alg_values: [-7, -35, -36],
+            },
+          },
+        },
+      },
+    };
+
+    const result = await createItWalletEntityConfiguration({
+      claims: mockClaimsV1_3CredentialVerifier,
+      header: mockHeader,
+      signJwtCallback: mockSignJwtCallback,
+    });
+
+    expect(typeof result).toBe("string");
+    const parts = result.split(".");
+    expect(parts).toHaveLength(3);
+
+    const payloadB64 = parts[1];
+    if (!payloadB64) throw new Error("JWT payload missing");
+    const decodedPayload = JSON.parse(Base64.decode(payloadB64));
+    expect(decodedPayload.metadata.openid_credential_verifier).toBeDefined();
+    expect(decodedPayload.metadata.openid_credential_verifier.logo_uri).toBe(
+      "https://relying-party.example.org/public/logo.svg",
+    );
+    expect(
+      decodedPayload.metadata.openid_credential_verifier
+        .encrypted_response_enc_values_supported,
+    ).toEqual(["A256GCM"]);
+    expect(
+      decodedPayload.metadata.openid_credential_verifier.vp_formats_supported,
+    ).toBeDefined();
+    expect(
+      decodedPayload.metadata.openid_credential_verifier.vp_formats_supported[
+        "dc+sd-jwt"
+      ],
+    ).toHaveProperty("kb-jwt_alg_values");
+    expect(
+      decodedPayload.metadata.openid_credential_verifier.vp_formats_supported
+        .mso_mdoc,
+    ).toHaveProperty("issuerauth_alg_values");
   });
 });
