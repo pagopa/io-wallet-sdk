@@ -103,7 +103,7 @@ const authorizationServerMetadata = {
 
 function base64UrlEncode(obj: unknown): string {
   const json = JSON.stringify(obj);
-  return btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  return Buffer.from(json, "utf8").toString("base64url");
 }
 
 function buildFederationJwt(payload: Record<string, unknown>): string {
