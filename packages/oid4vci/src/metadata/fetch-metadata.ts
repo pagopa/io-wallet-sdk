@@ -126,8 +126,8 @@ async function fallbackDiscovery(
  * OID4VCI well-known endpoints.
  *
  * When federation discovery succeeds, the full entity statement claims are
- * preserved in `openid_federation_claims`. 
- * It does not verify the signature of the entity statement, as trust is derived from the successful retrieval of the metadata from the well-known endpoint. 
+ * preserved in `openid_federation_claims`.
+ * It does not verify the signature of the entity statement, as trust is derived from the successful retrieval of the metadata from the well-known endpoint.
  * NOTE: It is included from IT Wallet v1.3, so MetadataResponse is designed to accommodate v1.3 metadata shapes.
  *
  * @param options - Configuration for metadata fetching
