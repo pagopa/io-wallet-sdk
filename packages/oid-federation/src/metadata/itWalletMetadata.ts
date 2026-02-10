@@ -8,7 +8,7 @@ import {
   itWalletAuthorizationServerIdentifier,
   itWalletAuthorizationServerMetadata as itWalletAuthorizationServerMetadataV1_0,
   itWalletCredentialIssuerIdentifier,
-  itWalletCredentialIssuerMetadata,
+  itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_0,
   itWalletCredentialVerifierIdentifier,
   itWalletCredentialVerifierMetadata,
   itWalletProviderEntityIdentifier,
@@ -16,6 +16,7 @@ import {
 } from "./entity/v1.0";
 import {
   itWalletAuthorizationServerMetadata as itWalletAuthorizationServerMetadataV1_3,
+  itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_3,
   itWalletSolutionEntityIdentifier,
   itWalletSolutionEntityMetadata,
 } from "./entity/v1.3";
@@ -29,7 +30,7 @@ export const itWalletMetadataV1_0 = z.object({
   [itWalletAuthorizationServerIdentifier]:
     itWalletAuthorizationServerMetadataV1_0.optional(),
   [itWalletCredentialIssuerIdentifier]:
-    itWalletCredentialIssuerMetadata.optional(),
+    itWalletCredentialIssuerMetadataV1_0.optional(),
   [itWalletCredentialVerifierIdentifier]:
     itWalletCredentialVerifierMetadata.optional(),
   [itWalletFederationEntityIdentifier]:
@@ -42,7 +43,7 @@ export const itWalletMetadataV1_3 = z.object({
   [itWalletAuthorizationServerIdentifier]:
     itWalletAuthorizationServerMetadataV1_3.optional(),
   [itWalletCredentialIssuerIdentifier]:
-    itWalletCredentialIssuerMetadata.optional(),
+    itWalletCredentialIssuerMetadataV1_3.optional(),
   [itWalletCredentialVerifierIdentifierV1_3]:
     itWalletCredentialVerifierMetadataV1_3.optional(),
   [itWalletFederationEntityIdentifier]:
