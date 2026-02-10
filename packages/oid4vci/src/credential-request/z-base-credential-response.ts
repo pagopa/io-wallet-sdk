@@ -7,6 +7,7 @@ const zCredentialObjectSchema = z.object({
 export const zBaseCredentialResponse = z.object({
   credentials: z
     .array(zCredentialObjectSchema)
+    .nonempty()
     .optional()
     .describe(
       "Conditional. Array of issued Digital Credentials as JSON objects with `credential` member containing encoded credential string. Present for immediate issuance (HTTP 200).",
