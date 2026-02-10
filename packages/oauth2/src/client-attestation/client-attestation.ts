@@ -162,6 +162,16 @@ export interface CreateClientAttestationJwtOptions {
    * Chain of trust for the client attestation jwt, containing the thumbprints of the jwk values in the cnf parameter inside Wallet Attestation, starting from the client and up to the root of trust.
    */
   trustChain: ClientAttestationJwtHeader["trust_chain"];
+
+  /**
+   * OPTIONAL. String containing a URL to get further information about the Wallet and the Wallet Provider.
+   */
+  walletLink?: ClientAttestationJwtPayload["wallet_link"];
+
+  /**
+   * OPTIONAL. String containing a human-readable name of the Wallet.
+   */
+  walletName?: ClientAttestationJwtPayload["wallet_name"];
 }
 
 export async function createClientAttestationJwt(
@@ -180,6 +190,8 @@ export async function createClientAttestationJwt(
     iat: dateToSeconds(options.issuedAt),
     iss: options.issuer,
     sub: options.clientId,
+    wallet_link: options.walletLink,
+    wallet_name: options.walletName,
     ...options.additionalPayload,
   } satisfies ClientAttestationJwtPayload);
 
