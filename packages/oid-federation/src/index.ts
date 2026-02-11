@@ -4,4 +4,4 @@ export * from "./jwk";
 export * from "./metadata";
 export type * from "./utils";
 
-export { type jsonWebKeySchema } from "@openid-federation/core";
+export { jsonWebKeySchema } from "@openid-federation/core";
