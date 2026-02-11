@@ -11,6 +11,7 @@ export {
   type CallbackContext,
   type ClientAttestationPopJwtHeader,
   type ClientAttestationPopJwtPayload,
+  type DecryptJweCallback,
   type EncryptJweCallback,
   type GenerateRandomCallback,
   HashAlgorithm,

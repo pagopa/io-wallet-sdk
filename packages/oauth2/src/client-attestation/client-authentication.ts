@@ -1,4 +1,15 @@
-import { AuthorizationServerMetadata } from "@openid4vc/oauth2";
+import {
+  AuthorizationServerMetadata,
+  CallbackContext,
+  HttpMethod,
+} from "@openid4vc/oauth2";
+import { ContentType, FetchHeaders } from "@pagopa/io-wallet-utils";
+
+import { createClientAttestationPopJwt } from "./client-attestation-pop";
+import {
+  oauthClientAttestationHeader,
+  oauthClientAttestationPopHeader,
+} from "./z-client-attestation";
 
 /**
  * Supported OAuth 2.0 client authentication methods.
@@ -47,5 +58,80 @@ export function isClientAttestationSupported(
 
   return {
     supported: true,
+  };
+}
+
+/**
+ * Options for client authentication
+ */
+export interface ClientAuthenticationCallbackOptions {
+  /**
+   * Metadata of the authorization server
+   */
+  authorizationServerMetadata: AuthorizationServerMetadata;
+
+  /**
+   * The body as a JSON object. If content type `x-www-form-urlencoded`
+   * is used, it will be encoded after this call.
+   *
+   * You can modify this object
+   */
+  body: Record<string, unknown>;
+
+  contentType: ContentType;
+
+  /**
+   * Headers for the request. You can modify this object
+   */
+  headers: FetchHeaders;
+
+  /**
+   * http method that will be used
+   */
+  method: HttpMethod;
+
+  /**
+   * URL to which the request will be made
+   */
+  url: string;
+}
+
+/**
+ * Callback method to determine the client authentication for a request.
+ */
+export type ClientAuthenticationCallback = (
+  options: ClientAuthenticationCallbackOptions,
+) => Promise<void> | void;
+
+/**
+ * Anonymous client authentication
+ */
+export function clientAuthenticationAnonymous(): ClientAuthenticationCallback {
+  return () => {
+    // No authentication, do nothing
+  };
+}
+
+export interface ClientAuthenticationClientAttestationJwtOptions {
+  callbacks: Pick<CallbackContext, "generateRandom" | "signJwt">;
+  clientAttestationJwt: string;
+}
+
+/**
+ * Client authentication using client attestation JWT.
+ * This method adds the client attestation JWT and a proof-of-possession JWT to the request headers.
+ */
+export function clientAuthenticationClientAttestationJwt(
+  options: ClientAuthenticationClientAttestationJwtOptions,
+): ClientAuthenticationCallback {
+  return async ({ authorizationServerMetadata, headers }) => {
+    const clientAttestationPop = await createClientAttestationPopJwt({
+      authorizationServer: authorizationServerMetadata.issuer,
+      callbacks: options.callbacks,
+      clientAttestation: options.clientAttestationJwt,
+    });
+
+    headers.set(oauthClientAttestationHeader, options.clientAttestationJwt);
+    headers.set(oauthClientAttestationPopHeader, clientAttestationPop);
   };
 }
