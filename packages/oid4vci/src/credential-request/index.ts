@@ -15,7 +15,6 @@ export {
   type CredentialResponse,
   type CredentialResponseV1_0,
   type CredentialResponseV1_3,
-  zCredentialResponse,
   zCredentialResponseV1_0,
   zCredentialResponseV1_3,
 } from "./z-credential-response";
