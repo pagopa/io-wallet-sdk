@@ -17,7 +17,7 @@ import {
 /**
  * Enum representing the client_id prefix types according to IT Wallet specifications
  */
-enum ClientIdPrefix {
+export enum ClientIdPrefix {
   NONE = "none",
   OPENID_FEDERATION = "openid_federation",
   X509_HASH = "x509_hash",
@@ -28,7 +28,7 @@ enum ClientIdPrefix {
  * @param clientId - The client_id from the request object
  * @returns The prefix type (x509_hash, openid_federation, or none)
  */
-function extractClientIdPrefix(clientId: string): ClientIdPrefix {
+export function extractClientIdPrefix(clientId: string): ClientIdPrefix {
   if (clientId.startsWith("x509_hash:")) {
     return ClientIdPrefix.X509_HASH;
   }
