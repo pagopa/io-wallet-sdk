@@ -4,6 +4,7 @@ export * from "./client-attestation";
 export * from "./errors";
 export * from "./jar";
 export * from "./jarm-form-post-jwt";
+export * from "./mrtd-pop";
 export * from "./pkce";
 export * from "./token-dpop";
 
