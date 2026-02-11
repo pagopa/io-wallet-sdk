@@ -11,14 +11,13 @@ import {
   zMrtdChallengeJwtHeader,
   zMrtdChallengeJwtPayload,
 } from "./z-mrtd-pop";
+import { MrtdPopError } from "../errors";
 
 export interface VerifyMrtdChallengeOptions {
   callbacks: Pick<CallbackContext, "verifyJwt">;
   challengeJwt: string;
   /** Expected client_id — must match JWT aud */
   clientId: string;
-  now?: Date;
-
   signer: JwtSignerJwk;
 }
 
@@ -53,7 +52,7 @@ export async function verifyMrtdChallenge(
   });
 
   if (jwt.payload.aud !== clientId) {
-    throw new Error("Invalid challenge: aud claim does not match client_id");
+    throw new MrtdPopError("Invalid challenge: aud claim does not match client_id");
   }
 
   await callbacks.verifyJwt(options.signer, {
