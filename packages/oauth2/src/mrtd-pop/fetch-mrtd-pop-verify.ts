@@ -38,6 +38,7 @@ export interface FetchMrtdPopVerifyResult {
  * @throws {ValidationError} If response body is invalid
  * @throws {MrtdPopError} For network failures
  *
+ * It is alligned to the IT-Wallet v1.3 specs
  * @see IT-Wallet L2+ specification Section 12.1.3.5.3.4 (MRTD PoP Validation Request)
  */
 export async function fetchMrtdPopVerify(

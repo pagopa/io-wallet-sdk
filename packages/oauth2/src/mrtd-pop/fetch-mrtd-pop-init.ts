@@ -49,6 +49,7 @@ export interface FetchMrtdPopInitResult {
  * @throws {UnexpectedStatusCodeError} If response is not HTTP 202
  * @throws {MrtdPopError} For network or parsing failures
  *
+ * It is alligned to the IT-Wallet v1.3 specs
  * @see IT-Wallet L2+ specification Section 12.1.3.5.3.2-3 (MRTD PoP Request/Response)
  */
 export async function fetchMrtdPopInit(

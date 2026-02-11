@@ -17,6 +17,7 @@ const JWT_EXPIRY_SECONDS = 300;
  * - Security Objects of Document (SOD) for MRTD and IAS applications
  * - IAS public key and Anti-Cloning challenge signature
  *
+ * It is alligned to the IT-Wallet v1.3 specs
  * @see IT-Wallet L2+ specification Section 12.1.3.5.3.5 (Validation JWT Structure)
  */
 export interface MrtdDocumentData {

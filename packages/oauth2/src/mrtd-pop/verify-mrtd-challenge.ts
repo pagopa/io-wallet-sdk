@@ -38,6 +38,7 @@ export interface VerifyMrtdChallengeResult {
  * @throws {Error} If aud doesn't match clientId
  * @throws {Oauth2JwtVerificationError} If signature verification fails
  *
+ * It is alligned to the IT-Wallet v1.3 specs
  * @see IT-Wallet L2+ specification Section 12.1.3.5.3.1 (MRTD Proof JWT)
  */
 export async function verifyMrtdChallenge(

@@ -29,6 +29,7 @@ export interface ParseMrtdChallengeResult {
  * @returns Decoded JWT header and payload (signature not yet verified)
  * @throws {MrtdPopError} If challenge_info is missing or JWT format is invalid
  *
+ * It is alligned to the IT-Wallet v1.3 specs
  * @see IT-Wallet L2+ specification Section 12.1.3.5.3.1 (MRTD Proof JWT)
  */
 export function parseMrtdChallenge(
