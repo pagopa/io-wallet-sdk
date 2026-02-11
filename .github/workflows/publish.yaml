@@ -154,7 +154,7 @@ jobs:
 
       - name: Create alpha version
         id: alpha_version
-        run: pnpm changeset version --snapshot
+        run: pnpm changeset version --snapshot alpha
 
       - name: Publish alpha to npm
         run: pnpm changeset publish --no-git-tag --tag alpha
