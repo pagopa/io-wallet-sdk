@@ -5,13 +5,13 @@ import {
   decodeJwt,
 } from "@openid4vc/oauth2";
 
+import { MrtdPopError } from "../errors";
 import {
   MrtdChallengeJwtHeader,
   MrtdChallengeJwtPayload,
   zMrtdChallengeJwtHeader,
   zMrtdChallengeJwtPayload,
 } from "./z-mrtd-pop";
-import { MrtdPopError } from "../errors";
 
 export interface VerifyMrtdChallengeOptions {
   callbacks: Pick<CallbackContext, "verifyJwt">;
@@ -52,7 +52,9 @@ export async function verifyMrtdChallenge(
   });
 
   if (jwt.payload.aud !== clientId) {
-    throw new MrtdPopError("Invalid challenge: aud claim does not match client_id");
+    throw new MrtdPopError(
+      "Invalid challenge: aud claim does not match client_id",
+    );
   }
 
   await callbacks.verifyJwt(options.signer, {
