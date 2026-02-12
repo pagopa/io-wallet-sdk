@@ -14,8 +14,12 @@ const baseSchema = z.object({
   authority_hints: z.array(z.string().url()).optional(),
   constraints: constraintSchema.optional(),
   crit: z.array(z.string()).optional(),
-  exp: z.number(),
-  iat: z.number(),
+  exp: z
+    .number()
+    .describe("Expiration time as a UNIX timestamp in seconds since epoch"),
+  iat: z
+    .number()
+    .describe("Issued-at time as a UNIX timestamp in seconds since epoch"),
   iss: z.string(),
   jwks: jsonWebKeySetSchema,
   metadata: itWalletMetadataSchema.optional(),
