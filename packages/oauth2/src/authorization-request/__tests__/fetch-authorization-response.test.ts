@@ -27,12 +27,12 @@ describe("fetchPushedAuthorizationResponse", () => {
       fetch: mockFetch,
     },
     clientAttestationDPoP: "test-client-attestation-dpop-jwt",
-    pushedAuthorizationRequestEndpoint: "https://auth-server.example.com/par",
-    pushedAuthorizationRequestSigned: {
+    pushedAuthorizationRequest: {
       client_id: "test-client-id",
       pkceCodeVerifier: "test-pkce-code-verifier",
       request: "test-jwt-request-token",
     },
+    pushedAuthorizationRequestEndpoint: "https://auth-server.example.com/par",
     walletAttestation: "test-wallet-attestation-jwt",
   };
 
@@ -212,5 +212,153 @@ describe("fetchPushedAuthorizationResponse", () => {
         "Failed to parse pushed authorization response",
       );
     });
+  });
+});
+
+describe("fetchPushedAuthorizationResponse - unsigned PAR", () => {
+  const baseOptions: fetchPushedAuthorizationResponseOptions = {
+    callbacks: {
+      fetch: mockFetch,
+    },
+    clientAttestationDPoP: "test-client-attestation-dpop-jwt",
+    pushedAuthorizationRequest: {
+      client_id: "test-client-id",
+      pkceCodeVerifier: "test-pkce-code-verifier",
+      request: "test-jwt-request-token",
+    },
+    pushedAuthorizationRequestEndpoint: "https://auth-server.example.com/par",
+    walletAttestation: "test-wallet-attestation-jwt",
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should successfully fetch unsigned pushed authorization request", async () => {
+    const mockResponse = {
+      json: vi.fn().mockResolvedValue({
+        expires_in: 60,
+        request_uri: "urn:ietf:params:oauth:request_uri:test-uri",
+      }),
+      status: 201,
+    };
+    mockFetch.mockResolvedValue(mockResponse);
+
+    const unsignedOptions: fetchPushedAuthorizationResponseOptions = {
+      ...baseOptions,
+      pushedAuthorizationRequest: {
+        authorizationRequest: {
+          client_id: "test-client-id",
+          code_challenge: "test-code-challenge",
+          code_challenge_method: "S256",
+          redirect_uri: "https://client.example.com/callback",
+          response_mode: "form_post",
+          response_type: "code",
+          scope: "openid",
+          state: "test-state",
+        },
+        client_id: "test-client-id",
+        pkceCodeVerifier: "test-pkce-code-verifier",
+      },
+    };
+
+    const result = await fetchPushedAuthorizationResponse(unsignedOptions);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://auth-server.example.com/par",
+      {
+        body: new URLSearchParams({
+          client_id: "test-client-id",
+          code_challenge: "test-code-challenge",
+          code_challenge_method: "S256",
+          redirect_uri: "https://client.example.com/callback",
+          response_mode: "form_post",
+          response_type: "code",
+          scope: "openid",
+          state: "test-state",
+        }),
+        headers: {
+          [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+          [HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",
+          [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
+            "test-client-attestation-dpop-jwt",
+        },
+        method: "POST",
+      },
+    );
+
+    expect(result).toEqual({
+      expires_in: 60,
+      request_uri: "urn:ietf:params:oauth:request_uri:test-uri",
+    });
+  });
+
+  it("should JSON-serialise authorization_details in unsigned request body", async () => {
+    const mockResponse = {
+      json: vi.fn().mockResolvedValue({
+        expires_in: 60,
+        request_uri: "urn:ietf:params:oauth:request_uri:test-uri",
+      }),
+      status: 201,
+    };
+    mockFetch.mockResolvedValue(mockResponse);
+
+    const authDetails = [
+      {
+        credential_configuration_id: "test-config-1",
+        type: "openid_credential" as const,
+      },
+      {
+        credential_configuration_id: "test-config-2",
+        type: "openid_credential" as const,
+      },
+    ];
+
+    const unsignedOptions: fetchPushedAuthorizationResponseOptions = {
+      ...baseOptions,
+      pushedAuthorizationRequest: {
+        authorizationRequest: {
+          authorization_details: authDetails,
+          client_id: "test-client-id",
+          code_challenge: "test-code-challenge",
+          code_challenge_method: "S256",
+          redirect_uri: "https://client.example.com/callback",
+          response_mode: "form_post",
+          response_type: "code",
+          state: "test-state",
+        },
+        client_id: "test-client-id",
+        pkceCodeVerifier: "test-pkce-code-verifier",
+      },
+    };
+
+    await fetchPushedAuthorizationResponse(unsignedOptions);
+
+    const expectedParams = new URLSearchParams();
+    expectedParams.append("authorization_details", JSON.stringify(authDetails));
+    expectedParams.append("client_id", "test-client-id");
+    expectedParams.append("code_challenge", "test-code-challenge");
+    expectedParams.append("code_challenge_method", "S256");
+    expectedParams.append(
+      "redirect_uri",
+      "https://client.example.com/callback",
+    );
+    expectedParams.append("response_mode", "form_post");
+    expectedParams.append("response_type", "code");
+    expectedParams.append("state", "test-state");
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://auth-server.example.com/par",
+      {
+        body: expectedParams,
+        headers: {
+          [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+          [HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",
+          [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
+            "test-client-attestation-dpop-jwt",
+        },
+        method: "POST",
+      },
+    );
   });
 });

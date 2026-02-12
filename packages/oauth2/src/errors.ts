@@ -36,6 +36,20 @@ export class CreateTokenDPoPError extends Oauth2Error {
 }
 
 /**
+ * Error thrown during MRTD (Machine Readable Travel Document) Proof of Possession operations.
+ * Used in eID Substantial Authentication with MRTD Verification flow (IT-Wallet L2+ specification).
+ */
+export class MrtdPopError extends Oauth2Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "MrtdPopError";
+  }
+}
+
+/**
  * Custom error thrown when pushed authorization request operations fail
  */
 export class FetchTokenResponseError extends Oauth2Error {
