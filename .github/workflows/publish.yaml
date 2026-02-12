@@ -112,7 +112,7 @@ jobs:
 
       - name: Get current package version
         id: get_version
-        run: echo "CURRENT_PACKAGE_VERSION=$(node -p "require('./packages/openid4vci/package.json').version")" >> $GITHUB_ENV
+        run: echo "CURRENT_PACKAGE_VERSION=$(node -p "require('./packages/oid4vci/package.json').version")" >> $GITHUB_ENV
 
       - name: Create Github Release
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 #v2.4.1
