@@ -164,7 +164,7 @@ async function fetchRequestObjectJwt(
  * 1. Parses the authorization URL to extract parameters
  * 2. Validates that exactly one of `request` or `request_uri` is present
  * 3. Either uses inline JWT or fetches from URI (GET/POST based on request_uri_method)
- * 4. Parses and verifies the Request Object JWT
+ * 4. Parses and optionally verifies the Request Object JWT
  * 5. Returns the parsed object along with transmission mode metadata
  *
  * @param options {@link FetchAuthorizationRequestOptions}
