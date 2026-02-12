@@ -164,7 +164,8 @@ jobs:
       - name: Get published version
         id: get_version
         run: |
-          VERSION=$(node -p "require('./packages/oauth2/package.json').version")
+          # Use the oid4vci package as the canonical source of the release version
+          VERSION=$(node -p "require('./packages/oid4vci/package.json').version")
           echo "Published version: $VERSION"
           echo "PUBLISHED_VERSION=$VERSION" >> $GITHUB_ENV
 
