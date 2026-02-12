@@ -112,6 +112,7 @@ describe("createItWalletEntityConfiguration", () => {
 
     await expect(
       createItWalletEntityConfiguration({
+        // @ts-expect-error the claims are intentionally invalid for this test
         claims: invalidClaims,
         header: mockHeader,
         signJwtCallback: mockSignJwtCallback,
