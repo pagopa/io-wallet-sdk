@@ -34,9 +34,9 @@ const baseSchema = z.object({
   trust_marks: z.array(trustMarkSchema).optional(),
 });
 
-export type ItWalletEntityStatementClaimsOptions = z.input<typeof baseSchema>;
+type ItWalletEntityStatementClaimsOptions = z.input<typeof baseSchema>;
 
-export type ItWalletEntityStatementClaims = z.output<typeof baseSchema>;
+type ItWalletEntityStatementClaims = z.output<typeof baseSchema>;
 
 export const itWalletEntityStatementClaimsSchema: z.ZodType<
   ItWalletEntityStatementClaims,
