@@ -1,13 +1,25 @@
 import z from "zod";
 
+const zOpenidCredentialAuthorizationDetails = z.object({
+  credential_configuration_id: z.string(),
+  type: z.literal("openid_credential"),
+});
+
+const zItL2DocumentProofAuthorizationDetails = z.object({
+  challenge_method: z.literal("mrtd+ias"),
+  challenge_redirect_uri: z.string().url(),
+  idphinting: z.string().url(),
+  type: z.literal("it_l2+document_proof"),
+});
+
 export const zAuthorizationRequest = z
   .object({
     authorization_details: z
       .array(
-        z.object({
-          credential_configuration_id: z.string(),
-          type: z.literal("openid_credential"),
-        }),
+        z.discriminatedUnion("type", [
+          zOpenidCredentialAuthorizationDetails,
+          zItL2DocumentProofAuthorizationDetails,
+        ]),
       )
       .optional(),
     client_id: z.string(),
