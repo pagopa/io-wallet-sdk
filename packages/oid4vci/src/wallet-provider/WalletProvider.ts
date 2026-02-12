@@ -1,4 +1,5 @@
 import { Openid4vciWalletProvider } from "@openid4vc/openid4vci";
+import { V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
 import {
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
@@ -7,8 +8,6 @@ import {
 import type { WalletAttestationOptions } from "./types";
 
 import { WalletProviderError } from "../errors";
-import * as V1_0 from "./v1.0";
-import * as V1_3 from "./v1.3";
 
 /**
  * Type guard to check if options are for v1.0

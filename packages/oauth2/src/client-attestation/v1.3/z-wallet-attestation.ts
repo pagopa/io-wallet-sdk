@@ -1,3 +1,4 @@
+import { zJwk, zJwtHeader, zJwtPayload } from "@openid4vc/oauth2";
 import { z } from "zod";
 
 /**
@@ -9,8 +10,7 @@ import { z } from "zod";
  */
 export const zWalletAttestationJwtHeaderV1_3 = z
   .object({
-    alg: z.string(),
-    kid: z.string(),
+    ...zJwtHeader.shape,
     trust_chain: z.array(z.string()).nonempty().optional(), // OPTIONAL in v1.3
     typ: z.literal("oauth-client-attestation+jwt"),
     x5c: z.array(z.string()).nonempty(), // REQUIRED in v1.3
@@ -26,8 +26,9 @@ export const zWalletAttestationJwtHeaderV1_3 = z
  */
 export const zWalletAttestationJwtPayloadV1_3 = z
   .object({
+    ...zJwtPayload.shape,
     cnf: z.object({
-      jwk: z.record(z.unknown()),
+      jwk: zJwk,
     }),
     exp: z.number(),
     iat: z.number(),
@@ -42,7 +43,7 @@ export const zWalletAttestationJwtPayloadV1_3 = z
       })
       .optional(), // NEW in v1.3 - status object for revocation
     sub: z.string(),
-    wallet_link: z.string().optional(),
+    wallet_link: z.string().url().optional(),
     wallet_name: z.string().optional(),
   })
   .passthrough();

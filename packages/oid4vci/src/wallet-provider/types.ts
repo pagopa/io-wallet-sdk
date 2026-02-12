@@ -1,27 +1,9 @@
-import {
-  CallbackContext,
-  ClientAttestationJwtPayload,
-} from "@openid4vc/oauth2";
-import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
+import type { V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
 
-import type { WalletAttestationOptionsV1_0 } from "./v1.0";
-import type { WalletAttestationOptionsV1_3 } from "./v1.3";
+export type { BaseWalletAttestationOptions } from "@pagopa/io-wallet-oauth2";
 
-// Re-export version-specific options
-export type { WalletAttestationOptionsV1_0, WalletAttestationOptionsV1_3 };
-
-/**
- * Base options shared across all wallet attestation versions
- */
-export interface BaseWalletAttestationOptions {
-  callbacks: Pick<CallbackContext, "signJwt">;
-  config: IoWalletSdkConfig;
-  dpopJwkPublic: ClientAttestationJwtPayload["cnf"]["jwk"];
-  expiresAt?: Date;
-  issuer: string;
-  walletLink?: string;
-  walletName?: string;
-}
+export type WalletAttestationOptionsV1_0 = V1_0.WalletAttestationOptionsV1_0;
+export type WalletAttestationOptionsV1_3 = V1_3.WalletAttestationOptionsV1_3;
 
 /**
  * Union type for wallet attestation options

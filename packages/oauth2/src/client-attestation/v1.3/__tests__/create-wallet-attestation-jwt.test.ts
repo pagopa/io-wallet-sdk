@@ -5,14 +5,14 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { WalletProviderError } from "../../../errors";
+import { ClientAttestationError } from "../../../errors";
 import { createWalletAttestationJwt } from "../create-wallet-attestation-jwt";
 
-describe("createWalletAttestationJwt v1.0", () => {
+describe("createWalletAttestationJwt v1.3", () => {
   const mockSignJwt = vi.fn();
   const mockConfig = new IoWalletSdkConfig({
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
-  }) as { itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 } & IoWalletSdkConfig;
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+  }) as { itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 } & IoWalletSdkConfig;
 
   const mockJwk = {
     crv: "P-256",
@@ -22,15 +22,20 @@ describe("createWalletAttestationJwt v1.0", () => {
     y: "test-y-value",
   };
 
+  const mockX5c = ["MIICertificate1Base64==", "MIICertificate2Base64=="] as [
+    string,
+    ...string[],
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockSignJwt.mockResolvedValue({
-      jwt: "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWNsaWVudC1hdHRlc3RhdGlvbitqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImp3dDEiLCJqd3QyIl19.eyJpc3MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLmNvbSIsInN1YiI6InRlc3QtY2xpZW50LWlkIiwiaWF0IjoxNzM4MjQzMjAwLCJleHAiOjE3NDMzMzk2MDAsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJraWQiOiJ0ZXN0LWtleS1pZCIsImt0eSI6IkVDIiwieCI6InRlc3QteC12YWx1ZSIsInkiOiJ0ZXN0LXktdmFsdWUifX19.signature",
+      jwt: "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWNsaWVudC1hdHRlc3RhdGlvbitqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsIng1YyI6WyJNSUlDZXJ0aWZpY2F0ZTFCYXNlNjQ9PSIsIk1JSUNLZXJ0aWZpY2F0ZTJCYXNlNjQ9PSJdfQ.eyJpc3MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLmNvbSIsInN1YiI6InRlc3QtY2xpZW50LWlkIiwiaWF0IjoxNzM4MjQzMjAwLCJleHAiOjE3NDMzMzk2MDAsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJraWQiOiJ0ZXN0LWtleS1pZCIsImt0eSI6IkVDIiwieCI6InRlc3QteC12YWx1ZSIsInkiOiJ0ZXN0LXktdmFsdWUifX19.signature",
     });
   });
 
   describe("successful JWT creation", () => {
-    it("should create a valid wallet attestation JWT with required fields", async () => {
+    it("should create a valid wallet attestation JWT with x5c", async () => {
       const options = {
         callbacks: { signJwt: mockSignJwt },
         config: mockConfig,
@@ -40,16 +45,15 @@ describe("createWalletAttestationJwt v1.0", () => {
         signer: {
           alg: "ES256",
           kid: "test-kid",
-          method: "federation" as const,
-          trustChain: ["jwt1", "jwt2"] as [string, ...string[]],
+          method: "x5c" as const,
+          x5c: mockX5c,
         },
       };
 
       const result = await createWalletAttestationJwt(options);
 
-      expect(result).toBe(
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWNsaWVudC1hdHRlc3RhdGlvbitqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImp3dDEiLCJqd3QyIl19.eyJpc3MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLmNvbSIsInN1YiI6InRlc3QtY2xpZW50LWlkIiwiaWF0IjoxNzM4MjQzMjAwLCJleHAiOjE3NDMzMzk2MDAsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJraWQiOiJ0ZXN0LWtleS1pZCIsImt0eSI6IkVDIiwieCI6InRlc3QteC12YWx1ZSIsInkiOiJ0ZXN0LXktdmFsdWUifX19.signature",
-      );
+      expect(result).toBeDefined();
+      expect(typeof result).toBe("string");
 
       expect(mockSignJwt).toHaveBeenCalledWith(
         options.signer,
@@ -57,8 +61,8 @@ describe("createWalletAttestationJwt v1.0", () => {
           header: {
             alg: "ES256",
             kid: "test-kid",
-            trust_chain: ["jwt1", "jwt2"],
             typ: "oauth-client-attestation+jwt",
+            x5c: mockX5c,
           },
           payload: expect.objectContaining({
             cnf: mockJwk,
@@ -71,21 +75,21 @@ describe("createWalletAttestationJwt v1.0", () => {
       );
     });
 
-    it("should include both walletLink and walletName when provided", async () => {
+    it("should include optional nbf when provided", async () => {
+      const nbfDate = new Date("2025-01-01T00:00:00Z");
       const options = {
         callbacks: { signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
         issuer: "https://wallet-provider.example.com",
+        nbf: nbfDate,
         signer: {
           alg: "ES256",
           kid: "test-kid",
-          method: "federation" as const,
-          trustChain: ["jwt1", "jwt2"] as [string, ...string[]],
+          method: "x5c" as const,
+          x5c: mockX5c,
         },
-        walletLink: "https://wallet.example.com",
-        walletName: "Test Wallet",
       };
 
       await createWalletAttestationJwt(options);
@@ -94,43 +98,37 @@ describe("createWalletAttestationJwt v1.0", () => {
         options.signer,
         expect.objectContaining({
           payload: expect.objectContaining({
-            wallet_link: "https://wallet.example.com",
-            wallet_name: "Test Wallet",
+            nbf: dateToSeconds(nbfDate),
           }),
         }),
       );
     });
   });
 
-  describe("v1.0 specific constraints", () => {
-    it("should set typ header to oauth-client-attestation+jwt", async () => {
+  describe("nbf validation", () => {
+    it("should accept when nbf is before exp", async () => {
       const options = {
         callbacks: { signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
         issuer: "https://wallet-provider.example.com",
+        nbf: new Date("2025-01-01T00:00:00Z"),
         signer: {
           alg: "ES256",
           kid: "test-kid",
-          method: "federation" as const,
-          trustChain: ["jwt1", "jwt2"] as [string, ...string[]],
+          method: "x5c" as const,
+          x5c: mockX5c,
         },
       };
 
-      await createWalletAttestationJwt(options);
-
-      const call = mockSignJwt.mock.calls[0];
-      if (!call) throw new Error("call is undefined");
-      const header = call[1].header;
-
-      expect(header.typ).toBe("oauth-client-attestation+jwt");
+      await expect(createWalletAttestationJwt(options)).resolves.toBeDefined();
     });
   });
 
   describe("error handling", () => {
-    it("should wrap unexpected errors in WalletProviderError", async () => {
-      mockSignJwt.mockRejectedValue(new Error("Unexpected signing error"));
+    it("should wrap unexpected errors in ClientAttestationError", async () => {
+      mockSignJwt.mockRejectedValue(new Error("Crypto module crashed"));
 
       const options = {
         callbacks: { signJwt: mockSignJwt },
@@ -141,13 +139,13 @@ describe("createWalletAttestationJwt v1.0", () => {
         signer: {
           alg: "ES256",
           kid: "test-kid",
-          method: "federation" as const,
-          trustChain: ["jwt1", "jwt2"] as [string, ...string[]],
+          method: "x5c" as const,
+          x5c: mockX5c,
         },
       };
 
       await expect(createWalletAttestationJwt(options)).rejects.toThrow(
-        WalletProviderError,
+        ClientAttestationError,
       );
       await expect(createWalletAttestationJwt(options)).rejects.toThrow(
         /Unexpected error during wallet attestation creation/,

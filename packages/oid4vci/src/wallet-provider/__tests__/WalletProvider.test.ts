@@ -1,5 +1,6 @@
 import { Openid4vciWalletProviderOptions } from "@openid4vc/openid4vci";
 import { addSecondsToDate } from "@openid4vc/utils";
+import { V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -16,8 +17,6 @@ import {
 
 import { WalletProviderError } from "../../errors";
 import { WalletProvider } from "../WalletProvider";
-import * as V1_0 from "../v1.0";
-import * as V1_3 from "../v1.3";
 
 vi.mock("@openid4vc/utils", async () => {
   const actual = await vi.importActual("@openid4vc/utils");
@@ -27,13 +26,21 @@ vi.mock("@openid4vc/utils", async () => {
   };
 });
 
-vi.mock("../v1.0", () => ({
-  createWalletAttestationJwt: vi.fn(),
-}));
-
-vi.mock("../v1.3", () => ({
-  createWalletAttestationJwt: vi.fn(),
-}));
+vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@pagopa/io-wallet-oauth2")>();
+  return {
+    ...actual,
+    V1_0: {
+      ...actual.V1_0,
+      createWalletAttestationJwt: vi.fn(),
+    },
+    V1_3: {
+      ...actual.V1_3,
+      createWalletAttestationJwt: vi.fn(),
+    },
+  };
+});
 
 const mockAddSecondsToDate = addSecondsToDate as MockedFunction<
   typeof addSecondsToDate
