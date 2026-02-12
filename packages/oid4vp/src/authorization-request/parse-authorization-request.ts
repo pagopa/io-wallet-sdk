@@ -151,12 +151,12 @@ export async function parseAuthorizeRequest(
       payloadSchema: zOpenid4vpAuthorizationRequestPayload,
     });
 
-    const signer = await getPublicKeyForVerification({
-      header: decoded.header,
-      payload: decoded.payload,
-    });
-
     if (options.callbacks && options.callbacks.verifyJwt) {
+      const signer = await getPublicKeyForVerification({
+        header: decoded.header,
+        payload: decoded.payload,
+      });
+
       const verificationResult = await options.callbacks.verifyJwt(signer, {
         compact: options.requestObjectJwt,
         header: decoded.header,
