@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-
 import {
   itWalletAuthorizationServerIdentifier,
   itWalletAuthorizationServerIdentifierV1_3,

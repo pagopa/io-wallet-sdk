@@ -3,8 +3,8 @@ export * from "./v1.0";
 
 // v1.3 exports with version suffixes for disambiguation
 export {
-  itWalletAuthorizationServerMetadata as itWalletAuthorizationServerMetadataV1_3,
   itWalletAuthorizationServerIdentifier as itWalletAuthorizationServerIdentifierV1_3,
+  itWalletAuthorizationServerMetadata as itWalletAuthorizationServerMetadataV1_3,
   itWalletCredentialIssuerIdentifier as itWalletCredentialIssuerIdentifierV1_3,
   itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_3,
   itWalletCredentialVerifierIdentifier as itWalletCredentialVerifierIdentifierV1_3,
