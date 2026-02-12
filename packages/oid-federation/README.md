@@ -97,6 +97,98 @@ console.log(entityConfigurationJwt);
 // This JWT can now be served at `https://issuer.example.it/.well-known/openid-federation`
 ```
 
+## Versioned Entity Metadata Layout
+
+Entity metadata schemas are organised by specification version under `src/metadata/entity/`:
+
+```
+metadata/entity/
+├── v1.0/                              # Spec v1.0 schemas
+│   ├── ItWalletProvider.ts            # wallet_provider
+│   ├── itWalletAuthorizationServer.ts # oauth_authorization_server
+│   ├── itWalletCredentialIssuer.ts    # openid_credential_issuer
+│   ├── itWalletCredentialVerifier.ts  # openid_credential_verifier
+│   └── index.ts
+├── v1.3/                              # Spec v1.3 schemas
+│   ├── itWalletSolution.ts            # wallet_solution (replaces wallet_provider)
+│   ├── itWalletAuthorizationServer.ts # oauth_authorization_server (updated for v1.3)
+│   ├── itWalletCredentialIssuer.ts    # v1.3 schema with breaking changes
+│   ├── itWalletCredentialVerifier.ts  # openid_credential_verifier (updated for v1.3)
+│   └── index.ts
+├── itWalletFederationEntity.ts        # shared across versions
+└── index.ts
+```
+
+The combined metadata schemas (`itWalletMetadataV1_0`, `itWalletMetadataV1_3`) and the `itWalletMetadataSchema` union are exported from `src/metadata/itWalletMetadata.ts`.
+
+## Breaking Changes in v1.3
+
+The v1.3 specification introduces breaking changes to the `openid_credential_issuer` metadata schema. These changes are isolated to the v1.3 version to maintain backward compatibility with existing v1.0 implementations.
+
+### Removed Fields
+
+The following fields have been removed from the top-level `openid_credential_issuer` metadata:
+
+- **`revocation_endpoint`** - Replaced by status list aggregation mechanisms
+- **`status_assertion_endpoint`** - Replaced by `status_list_aggregation_endpoint`
+- **`credential_hash_alg_supported`** - No longer used in the specification
+- **`evidence_supported`** - Moved to credential-specific metadata
+
+### Added Fields
+
+New fields introduced at the top level:
+
+- **`batch_credential_issuance`** (optional) - Configuration for batch credential issuance
+  - `batch_size` (integer, positive) - Maximum number of credentials in a single batch request
+- **`status_list_aggregation_endpoint`** (optional, string URL) - Endpoint for TOKEN-STATUS-LIST aggregation per the specification
+
+### Enhanced Credential Configuration
+
+Each entry in `credential_configurations_supported` now requires additional mandatory fields:
+
+#### New Required Fields
+
+- **`credential_metadata`** (required) - Comprehensive display and claims metadata structure
+  - `display[]` (optional) - Enhanced display metadata with:
+    - `name` (required) - Display name
+    - `locale` (required) - Locale identifier
+    - `description` (optional) - Description text
+    - `logo` (optional) - Logo image with URI and integrity hash
+    - `background_color` (optional) - Background color
+    - `background_image` (optional) - Background image with URI and integrity hash
+    - `watermark_image` (optional) - Watermark image with URI and integrity hash
+  - `claims[]` (optional) - Claim-level configuration with:
+    - `path` (required) - JSON path to the claim
+    - `mandatory` (optional, boolean) - Whether the claim is mandatory
+    - `sd` (optional, enum: "always" | "never") - Selective disclosure configuration
+    - `display[]` (optional) - Display metadata for the claim
+
+- **`schema_id`** (required, string) - Reference to the credential schema in the Schema Registry
+
+- **`authentic_sources`** (required) - Data source attribution
+  - `entity_id` (required, string) - Source entity identifier
+  - `dataset_id` (required, string) - Dataset identifier within the source
+
+#### Enhanced Proof Types
+
+The `proof_types_supported.jwt` object now supports an additional optional field:
+
+- **`key_attestations_required`** (optional, boolean) - Indicates whether key attestation is required per OpenID4VCI Appendix F.1 and Section 12.2
+
+### Image Metadata
+
+Images in v1.3 support integrity verification through subresource integrity hashes:
+
+```typescript
+{
+  uri: "https://example.org/image.svg",
+  "uri#integrity": "sha256-base64encodedHash",
+  alt_text: "Alternative text for accessibility"
+}
+```
+
+The `uri#integrity` field follows the Subresource Integrity specification format.
+
 ## API Reference
 
 ### Functions
@@ -140,15 +232,23 @@ This package exports a comprehensive set of Zod schemas to validate all parts of
 #### Metadata Schemas:
 - **`itWalletFederationEntityMetadata`**: For `federation_entity` metadata
 
-- **`itWalletProviderEntityMetadata`**: For `wallet_provider` metadata
+- **`itWalletProviderEntityMetadata`**: For `wallet_provider` metadata (v1.0)
+
+- **`itWalletSolutionEntityMetadata`**: For `wallet_solution` metadata (v1.3)
 
 - **`itWalletCredentialIssuerMetadata`**: For `openid_credential_issuer` metadata
 
-- **`itWalletCredentialVerifierMetadata`**: For `openid_credential_verifier` metadata
+- **`itWalletCredentialVerifierMetadata`**: For `openid_credential_verifier` metadata (v1.0 schema - default export)
+
+- **`itWalletCredentialVerifierMetadataV1_3`**: For `openid_credential_verifier` metadata (v1.3 - with `logo_uri`, `encrypted_response_enc_values_supported`, and enhanced `vp_formats_supported`)
 
 - **`itWalletAuthorizationServerMetadata`**: For `oauth_authorization_server` metadata
 
-- **`itWalletMetadataSchema`**: Combined metadata schema for all entity types
+- **`itWalletMetadataV1_0`**: Combined metadata schema for v1.0 entity types
+
+- **`itWalletMetadataV1_3`**: Combined metadata schema for v1.3 entity types
+
+- **`itWalletMetadataSchema`**: Union of `itWalletMetadataV1_0` and `itWalletMetadataV1_3`
 
 #### Claims Schemas:
 - **`itWalletEntityStatementClaimsSchema`**: Validates the claims within an Entity Statement

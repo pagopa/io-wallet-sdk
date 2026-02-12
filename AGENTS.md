@@ -140,6 +140,12 @@ export async function createFeature(options: FeatureOptions): Promise<Feature> {
 - Bug fixes (apply to all affected versions)
 - Internal refactoring (maintain same external API)
 
+When creating versioned folder structures (e.g., v1.0/, v1.3/), always update all related imports, tests, and README documentation in the same session.
+
+## Code Quality
+
+Always run type checks (`tsc --noEmit` or equivalent) after modifying TypeScript files, especially when changing schemas, enums, or type definitions.
+
 ## Development Commands
 
 ### Building
@@ -225,25 +231,129 @@ export interface CreatePushedAuthorizationRequestOptions {
 }
 ```
 
-**Example from [create-credential-request.ts](packages/oid4vci/src/credential-request/create-credential-request.ts):**
+#### Critical Rule: Always Use Provided Callbacks
+
+**⚠️ IMPORTANT**: When implementing SDK functions, you **MUST ALWAYS use the callbacks provided through `options.callbacks`** instead of native or global implementations. This is the core principle that makes the SDK environment-agnostic.
+
+**✅ CORRECT - Use callbacks from options:**
 ```typescript
-const { signJwt } = options.callbacks;
-const proofJwt = await signJwt(options.signer, {
-  header: {
-    alg: options.signer.alg,
-    jwk: options.signer.publicJwk,
-    typ: "openid4vci-proof+jwt",
-  },
-  payload: {
-    aud: options.issuerIdentifier,
-    iat: dateToSeconds(new Date()),
-    iss: options.clientId,
-    nonce: options.nonce,
-  },
-});
+export async function fetchTokenResponse(
+  options: FetchTokenResponseOptions
+): Promise<TokenResponse> {
+  // Use the fetch callback from options
+  const { fetch } = options.callbacks;
+
+  const response = await fetch(tokenEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: createTokenRequest(options),
+  });
+
+  return zTokenResponse.parse(await response.json());
+}
 ```
 
-This pattern ensures the SDK works in Node.js, browsers, and React Native by letting consumers provide platform-specific crypto and HTTP implementations.
+**❌ WRONG - Using native fetch:**
+```typescript
+export async function fetchTokenResponse(
+  options: FetchTokenResponseOptions
+): Promise<TokenResponse> {
+  // NEVER use native fetch directly!
+  const response = await fetch(tokenEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: createTokenRequest(options),
+  });
+
+  return zTokenResponse.parse(await response.json());
+}
+```
+
+**✅ CORRECT - Use generateRandom callback:**
+```typescript
+export async function createAuthorizationRequest(
+  options: CreateAuthorizationRequestOptions
+): Promise<AuthorizationRequest> {
+  const { generateRandom } = options.callbacks;
+
+  const state = options.state ??
+    encodeToBase64Url(await generateRandom(RANDOM_BYTES_SIZE));
+
+  // ... rest of implementation
+}
+```
+
+**❌ WRONG - Using crypto.randomBytes or Math.random:**
+```typescript
+export async function createAuthorizationRequest(
+  options: CreateAuthorizationRequestOptions
+): Promise<AuthorizationRequest> {
+  // NEVER use native crypto directly!
+  const state = options.state ??
+    encodeToBase64Url(crypto.randomBytes(RANDOM_BYTES_SIZE));
+
+  // ... rest of implementation
+}
+```
+
+#### Why This Matters
+
+1. **Cross-platform compatibility**: Native `fetch` doesn't exist in React Native; native `crypto` modules differ between Node.js and browsers
+2. **Custom implementations**: Consumers may need to add logging, retry logic, authentication, or proxying to HTTP requests
+3. **Testing**: Callbacks can be easily mocked in tests without complex module mocking
+4. **Security**: Consumers control cryptographic implementations (hardware security modules, specific crypto libraries)
+
+#### Complete Example from Credential Request
+
+**Example from [create-credential-request.ts](packages/oid4vci/src/credential-request/create-credential-request.ts):**
+```typescript
+export async function createCredentialRequest(
+  options: CreateCredentialRequestOptions
+): Promise<CredentialRequest> {
+  // Extract ALL required callbacks from options
+  const { signJwt } = options.callbacks;
+
+  // Use the callback instead of any native JWT signing
+  const proofJwt = await signJwt(options.signer, {
+    header: {
+      alg: options.signer.alg,
+      jwk: options.signer.publicJwk,
+      typ: "openid4vci-proof+jwt",
+    },
+    payload: {
+      aud: options.issuerIdentifier,
+      iat: dateToSeconds(new Date()),
+      iss: options.clientId,
+      nonce: options.nonce,
+    },
+  });
+
+  return {
+    format: options.format,
+    proof: {
+      proof_type: "jwt",
+      jwt: proofJwt,
+    },
+  };
+}
+```
+
+#### Checklist for Implementing Functions
+
+When implementing or modifying SDK functions:
+
+1. ✅ Identify all operations that need callbacks (fetch, crypto operations, JWT operations)
+2. ✅ Add the required callbacks to the function's options type using `Pick<CallbackContext, ...>`
+3. ✅ Extract callbacks from `options.callbacks` at the start of the function
+4. ✅ Use the extracted callbacks throughout the function implementation
+5. ✅ Never import or use native implementations (`fetch`, `crypto`, JWT libraries)
+6. ✅ In tests, provide mock callbacks that verify correct usage
+
+**High-level vs Low-level functions:**
+- **High-level functions** (e.g., `fetchTokenResponse`): Must include `fetch` in their callbacks
+- **Low-level functions** (e.g., `createTokenRequest`): Only include the crypto callbacks they need (e.g., `signJwt`, `generateRandom`, `hash`)
+
+This pattern ensures the SDK works seamlessly in Node.js, browsers, and React Native by letting consumers provide platform-specific implementations.
 
 ### Cryptographic Values
 

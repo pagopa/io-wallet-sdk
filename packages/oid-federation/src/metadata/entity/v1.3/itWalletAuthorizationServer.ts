@@ -1,25 +1,27 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../jwk";
+import { jsonWebKeySetSchema } from "../../../jwk";
 
 /**
  *
- * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.1.0/en/credential-issuer-solution.html#metadata-for-oauth-authorization-server}
+ * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/credential-issuer-solution.html#metadata-for-oauth-authorization-server}
  *
  */
 export const itWalletAuthorizationServerMetadata = z
   .object({
     acr_values_supported: z.array(
       z.union([
-        z.literal("https://trust-registry.eid-wallet.example.it/loa/low"),
-        z.literal(
-          "https://trust-registry.eid-wallet.example.it/loa/substantial",
-        ),
-        z.literal("https://trust-registry.eid-wallet.example.it/loa/high"),
+        z.literal("https://trust-anchor.eid-wallet.example.it/loa/low"),
+        z.literal("https://trust-anchor.eid-wallet.example.it/loa/substantial"),
+        z.literal("https://trust-anchor.eid-wallet.example.it/loa/high"),
       ]),
     ),
     authorization_endpoint: z.string().url(),
     authorization_signing_alg_values_supported: z.array(z.string()),
+    client_attestation_pop_signing_alg_values_supported: z
+      .array(z.string())
+      .min(1),
+    client_attestation_signing_alg_values_supported: z.array(z.string()).min(1),
     client_registration_types_supported: z.array(
       z.union([z.literal("automatic"), z.literal("explicit")]),
     ),
@@ -29,6 +31,7 @@ export const itWalletAuthorizationServerMetadata = z
         message:
           "The code_challenge_methods_supported array MUST include 'S256'.",
       }),
+    dpop_signing_alg_values_supported: z.array(z.string()).min(1),
     grant_types_supported: z
       .array(z.string())
       .refine((arr) => arr.includes("authorization_code"), {
@@ -39,9 +42,7 @@ export const itWalletAuthorizationServerMetadata = z
     jwks: jsonWebKeySetSchema,
     pushed_authorization_request_endpoint: z.string().url(),
     request_object_signing_alg_values_supported: z.array(z.string()),
-    response_modes_supported: z.array(
-      z.union([z.literal("query"), z.literal("form_post.jwt")]),
-    ),
+    require_signed_request_object: z.literal(true),
     response_types_supported: z
       .array(z.string())
       .refine((arr) => arr.includes("code"), {

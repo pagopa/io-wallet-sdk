@@ -52,3 +52,14 @@ export class CreateAuthorizationResponseError extends Oid4vpError {
     this.name = "CreateAuthorizationResponseError";
   }
 }
+
+/**
+ * Error thrown when request_uri_method parameter has an invalid value.
+ * Valid values are "get" or "post" (case-insensitive).
+ */
+export class InvalidRequestUriMethodError extends Oid4vpError {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidRequestUriMethodError";
+  }
+}

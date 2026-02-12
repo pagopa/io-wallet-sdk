@@ -4,6 +4,7 @@ export * from "./client-attestation";
 export * from "./errors";
 export * from "./jar";
 export * from "./jarm-form-post-jwt";
+export * from "./mrtd-pop";
 export * from "./pkce";
 export * from "./token-dpop";
 
@@ -11,6 +12,7 @@ export {
   type CallbackContext,
   type ClientAttestationPopJwtHeader,
   type ClientAttestationPopJwtPayload,
+  type DecryptJweCallback,
   type EncryptJweCallback,
   type GenerateRandomCallback,
   HashAlgorithm,
