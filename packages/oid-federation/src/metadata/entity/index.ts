@@ -9,12 +9,12 @@ export {
   itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_3,
   itWalletCredentialVerifierIdentifier as itWalletCredentialVerifierIdentifierV1_3,
   itWalletCredentialVerifierMetadata as itWalletCredentialVerifierMetadataV1_3,
-  itWalletSolutionEntityIdentifier,
-  itWalletSolutionEntityMetadata,
+  itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_3,
+  itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
 } from "./v1.3";
 export type {
   ItWalletAuthorizationServerMetadata as ItWalletAuthorizationServerMetadataV1_3,
   ItWalletCredentialIssuerMetadata as ItWalletCredentialIssuerMetadataV1_3,
   ItWalletCredentialVerifierMetadata as ItWalletCredentialVerifierMetadataV1_3,
-  ItWalletSolutionEntityMetadata,
+  ItWalletSolutionEntityMetadata as ItWalletSolutionEntityMetadataV1_3,
 } from "./v1.3";

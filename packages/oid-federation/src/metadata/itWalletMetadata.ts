@@ -17,35 +17,41 @@ import {
   itWalletFederationEntityMetadata,
   itWalletProviderEntityIdentifier,
   itWalletProviderEntityMetadata,
-  itWalletSolutionEntityIdentifier,
-  itWalletSolutionEntityMetadata,
+  itWalletSolutionEntityIdentifierV1_3,
+  itWalletSolutionEntityMetadataV1_3,
 } from "./entity";
 
 // v1.0 combined metadata
-export const itWalletMetadataV1_0 = z.object({
-  [itWalletAuthorizationServerIdentifier]:
-    itWalletAuthorizationServerMetadata.optional(),
-  [itWalletCredentialIssuerIdentifier]:
-    itWalletCredentialIssuerMetadata.optional(),
-  [itWalletCredentialVerifierIdentifier]:
-    itWalletCredentialVerifierMetadata.optional(),
-  [itWalletFederationEntityIdentifier]:
-    itWalletFederationEntityMetadata.optional(),
-  [itWalletProviderEntityIdentifier]: itWalletProviderEntityMetadata.optional(),
-});
+export const itWalletMetadataV1_0 = z
+  .object({
+    [itWalletAuthorizationServerIdentifier]:
+      itWalletAuthorizationServerMetadata.optional(),
+    [itWalletCredentialIssuerIdentifier]:
+      itWalletCredentialIssuerMetadata.optional(),
+    [itWalletCredentialVerifierIdentifier]:
+      itWalletCredentialVerifierMetadata.optional(),
+    [itWalletFederationEntityIdentifier]:
+      itWalletFederationEntityMetadata.optional(),
+    [itWalletProviderEntityIdentifier]:
+      itWalletProviderEntityMetadata.optional(),
+  })
+  .strict();
 
 // v1.3 combined metadata (stubs re-export v1.0 schemas for some entities)
-export const itWalletMetadataV1_3 = z.object({
-  [itWalletAuthorizationServerIdentifierV1_3]:
-    itWalletAuthorizationServerMetadataV1_3.optional(),
-  [itWalletCredentialIssuerIdentifierV1_3]:
-    itWalletCredentialIssuerMetadataV1_3.optional(),
-  [itWalletCredentialVerifierIdentifierV1_3]:
-    itWalletCredentialVerifierMetadataV1_3.optional(),
-  [itWalletFederationEntityIdentifier]:
-    itWalletFederationEntityMetadata.optional(),
-  [itWalletSolutionEntityIdentifier]: itWalletSolutionEntityMetadata.optional(),
-});
+export const itWalletMetadataV1_3 = z
+  .object({
+    [itWalletAuthorizationServerIdentifierV1_3]:
+      itWalletAuthorizationServerMetadataV1_3.optional(),
+    [itWalletCredentialIssuerIdentifierV1_3]:
+      itWalletCredentialIssuerMetadataV1_3.optional(),
+    [itWalletCredentialVerifierIdentifierV1_3]:
+      itWalletCredentialVerifierMetadataV1_3.optional(),
+    [itWalletFederationEntityIdentifier]:
+      itWalletFederationEntityMetadata.optional(),
+    [itWalletSolutionEntityIdentifierV1_3]:
+      itWalletSolutionEntityMetadataV1_3.optional(),
+  })
+  .strict();
 
 // Union — used by entity statement / entity configuration claims
 export const itWalletMetadataSchema =
