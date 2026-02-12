@@ -108,7 +108,7 @@ export interface ParseAuthorizeRequestOptions {
   /**
    * Callback context for signature verification.
    */
-  callbacks: Pick<CallbackContext, "verifyJwt">;
+  callbacks?: Pick<CallbackContext, "verifyJwt">;
 
   /**
    * The Authorization Request Object JWT.
@@ -156,16 +156,18 @@ export async function parseAuthorizeRequest(
       payload: decoded.payload,
     });
 
-    const verificationResult = await options.callbacks.verifyJwt(signer, {
-      compact: options.requestObjectJwt,
-      header: decoded.header,
-      payload: decoded.payload,
-    });
+    if (options.callbacks && options.callbacks.verifyJwt) {
+      const verificationResult = await options.callbacks.verifyJwt(signer, {
+        compact: options.requestObjectJwt,
+        header: decoded.header,
+        payload: decoded.payload,
+      });
 
-    if (!verificationResult.verified)
-      throw new ParseAuthorizeRequestError(
-        "Error verifying Request Object signature",
-      );
+      if (!verificationResult.verified)
+        throw new ParseAuthorizeRequestError(
+          "Error verifying Request Object signature",
+        );
+    }
 
     return {
       header: decoded.header,

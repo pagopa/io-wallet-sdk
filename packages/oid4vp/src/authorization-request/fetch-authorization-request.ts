@@ -1,4 +1,8 @@
-import { type CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
+import {
+  type CallbackContext,
+  Oauth2JwtParseError,
+  VerifyJwtCallback,
+} from "@openid4vc/oauth2";
 import { ValidationError, createFetcher } from "@openid4vc/utils";
 
 import { Oid4vpError } from "../errors";
@@ -20,7 +24,12 @@ export interface FetchAuthorizationRequestOptions {
    * Callback functions for making HTTP requests and JWT verification
    * Allows for custom fetch and verifyJwt implementations
    */
-  callbacks: Pick<CallbackContext, "fetch" | "verifyJwt">;
+  callbacks: {
+    /**
+     * Optional JWT signature verification callback.
+     */
+    verifyJwt?: VerifyJwtCallback;
+  } & Pick<CallbackContext, "fetch">;
 
   /**
    * Optional wallet metadata to send when request_uri_method=post.
@@ -70,6 +79,11 @@ export interface FetchAuthorizationRequestResult {
    * Includes `clientId`, `requestUri` and `requestUriMethod`
    */
   parsedQrCode: ParsedQrCode;
+
+  /**
+   * The original Request Object JWT, either fetched from `request_uri` or extracted from `request` parameter.
+   */
+  requestObjectJwt: string;
 
   /**
    * Transmission mode indicator
@@ -161,6 +175,8 @@ async function fetchRequestObjectJwt(
  * @throws {ParseAuthorizeRequestError} When JWT verification fails
  * @throws {Oauth2JwtParseError} When the request object JWT is malformed
  *
+ * @security WARNING: If `verifyJwt` callback is not provided, JWT signature verification is skipped.
+ *
  * @example By Value mode
  * ```typescript
  * const url = "https://wallet.example.org/authorize?" +
@@ -235,10 +251,11 @@ export async function fetchAuthorizationRequest(
       );
     }
 
-    // Parse and verify JWT
+    // Parse and optionally verify JWT
+    const { verifyJwt } = options.callbacks;
     const parsedAuthorizeRequest = await parseAuthorizeRequest({
-      callbacks: options.callbacks,
       requestObjectJwt,
+      ...(verifyJwt ? { callbacks: { verifyJwt } } : {}),
     });
 
     return {
@@ -251,6 +268,7 @@ export async function fetchAuthorizationRequest(
             ? (validatedParams.request_uri_method ?? "get")
             : undefined,
       },
+      requestObjectJwt,
       sendBy,
     };
   } catch (error) {

@@ -83,7 +83,7 @@ describe("fetchAuthorizationRequest", () => {
       expect.objectContaining({ method: "GET" }),
     );
     expect(parseAuthorizeRequest).toHaveBeenCalledWith({
-      callbacks: mockCallbacks,
+      callbacks: { verifyJwt: mockVerifyJwt },
       requestObjectJwt,
     });
     expect(result).toEqual({
@@ -96,6 +96,7 @@ describe("fetchAuthorizationRequest", () => {
         requestUri: "https://request.com",
         requestUriMethod: "get",
       },
+      requestObjectJwt,
       sendBy: "reference",
     });
   });
@@ -257,7 +258,7 @@ describe("fetchAuthorizationRequest - by value mode", () => {
     expect(result.parsedQrCode.requestUri).toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled(); // No fetch for inline JWT
     expect(parseAuthorizeRequest).toHaveBeenCalledWith({
-      callbacks: mockCallbacks,
+      callbacks: { verifyJwt: mockVerifyJwt },
       requestObjectJwt: requestJwt,
     });
   });
@@ -588,5 +589,158 @@ describe("fetchAuthorizationRequest - backward compatibility", () => {
 
     expect(result.parsedAuthorizeRequest).toBeDefined();
     expect(result.parsedQrCode.requestUriMethod).toBe("post");
+  });
+});
+
+describe("fetchAuthorizationRequest - optional verification", () => {
+  const mockFetch = vi.fn();
+  const mockCallbacksWithoutVerify = {
+    fetch: mockFetch,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch and parse without verification when verifyJwt is not provided (by reference)", async () => {
+    const url =
+      "https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request";
+    const mockHeader = {
+      alg: "ES256",
+      kid: "test-kid",
+      trust_chain: ["mock-trust-chain"],
+      typ: "oauth-authz-req+jwt",
+    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () => requestObjectJwt,
+    });
+
+    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
+      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
+      payload: {} as AuthorizationRequestObject,
+    });
+
+    const result = await fetchAuthorizationRequest({
+      authorizeRequestUrl: url,
+      callbacks: mockCallbacksWithoutVerify,
+    });
+
+    expect(result.parsedAuthorizeRequest).toBeDefined();
+    expect(result.sendBy).toBe("reference");
+    expect(parseAuthorizeRequest).toHaveBeenCalledWith({
+      requestObjectJwt,
+    });
+  });
+
+  it("should parse without verification when verifyJwt is not provided (by value)", async () => {
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
+    const url = `https://wallet.example.org/authorize?client_id=test-client&request=${requestObjectJwt}`;
+    const mockHeader = {
+      alg: "ES256",
+      kid: "test-kid",
+      trust_chain: ["mock-trust-chain"],
+      typ: "oauth-authz-req+jwt",
+    };
+
+    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
+      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
+      payload: {} as AuthorizationRequestObject,
+    });
+
+    const result = await fetchAuthorizationRequest({
+      authorizeRequestUrl: url,
+      callbacks: mockCallbacksWithoutVerify,
+    });
+
+    expect(result.parsedAuthorizeRequest).toBeDefined();
+    expect(result.sendBy).toBe("value");
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(parseAuthorizeRequest).toHaveBeenCalledWith({
+      requestObjectJwt,
+    });
+  });
+
+  it("should fetch using POST without verification", async () => {
+    const url =
+      "https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request&request_uri_method=post";
+    const mockHeader = {
+      alg: "ES256",
+      kid: "test-kid",
+      typ: "oauth-authz-req+jwt",
+    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () => requestObjectJwt,
+    });
+
+    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
+      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
+      payload: {} as AuthorizationRequestObject,
+    });
+
+    const result = await fetchAuthorizationRequest({
+      authorizeRequestUrl: url,
+      callbacks: mockCallbacksWithoutVerify,
+      walletMetadata: {
+        response_types_supported: ["vp_token"],
+      },
+      walletNonce: "test-nonce",
+    });
+
+    expect(result.parsedAuthorizeRequest).toBeDefined();
+    expect(result.parsedQrCode.requestUriMethod).toBe("post");
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://rp.example.org/request",
+      expect.objectContaining({
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method: "POST",
+      }),
+    );
+    expect(parseAuthorizeRequest).toHaveBeenCalledWith({
+      requestObjectJwt,
+    });
+  });
+
+  it("should pass verifyJwt to parseAuthorizeRequest when provided", async () => {
+    const mockVerifyJwt = vi.fn();
+    const url =
+      "https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request";
+    const mockHeader = {
+      alg: "ES256",
+      kid: "test-kid",
+      trust_chain: ["mock-trust-chain"],
+      typ: "oauth-authz-req+jwt",
+    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () => requestObjectJwt,
+    });
+
+    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
+      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
+      payload: {} as AuthorizationRequestObject,
+    });
+
+    await fetchAuthorizationRequest({
+      authorizeRequestUrl: url,
+      callbacks: {
+        fetch: mockFetch,
+        verifyJwt: mockVerifyJwt,
+      },
+    });
+
+    expect(parseAuthorizeRequest).toHaveBeenCalledWith({
+      callbacks: { verifyJwt: mockVerifyJwt },
+      requestObjectJwt,
+    });
   });
 });
