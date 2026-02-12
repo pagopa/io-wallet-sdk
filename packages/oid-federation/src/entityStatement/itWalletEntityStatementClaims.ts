@@ -38,6 +38,7 @@ type ItWalletEntityStatementClaimsOptions = z.input<typeof baseSchema>;
 
 type ItWalletEntityStatementClaims = z.output<typeof baseSchema>;
 
+// The explicit type annotation here is necessary to avoid this node exceeds the maximum length the compiler will serialize.
 export const itWalletEntityStatementClaimsSchema: z.ZodType<
   ItWalletEntityStatementClaims,
   z.ZodTypeDef,
