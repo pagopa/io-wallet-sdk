@@ -1,6 +1,5 @@
 import {
   constraintSchema,
-  dateSchema,
   metadataPolicySchema,
   trustMarkIssuerSchema,
   trustMarkOwnerSchema,
@@ -15,8 +14,8 @@ const baseSchema = z.object({
   authority_hints: z.array(z.string().url()).optional(),
   constraints: constraintSchema.optional(),
   crit: z.array(z.string()).optional(),
-  exp: dateSchema,
-  iat: dateSchema,
+  exp: z.number(),
+  iat: z.number(),
   iss: z.string(),
   jwks: jsonWebKeySetSchema,
   metadata: itWalletMetadataSchema.optional(),
@@ -31,24 +30,22 @@ const baseSchema = z.object({
   trust_marks: z.array(trustMarkSchema).optional(),
 });
 
-export const itWalletEntityStatementClaimsSchema: z.ZodSchema = baseSchema
-  .passthrough()
-  .refine(
-    (data) => {
-      const keyIds = data.jwks.keys.map((key) => key.kid);
-      const uniqueKeyIds = new Set(keyIds);
-      return uniqueKeyIds.size === keyIds.length;
-    },
-    {
-      message: "keys include duplicate key ids",
-      path: ["jwks", "keys"],
-    },
-  );
+export type ItWalletEntityStatementClaimsOptions = z.input<typeof baseSchema>;
 
-export type ItWalletEntityStatementClaimsOptions = z.input<
-  typeof itWalletEntityStatementClaimsSchema
->;
+export type ItWalletEntityStatementClaims = z.output<typeof baseSchema>;
 
-export type ItWalletEntityStatementClaims = z.output<
-  typeof itWalletEntityStatementClaimsSchema
->;
+export const itWalletEntityStatementClaimsSchema: z.ZodType<
+  ItWalletEntityStatementClaims,
+  z.ZodTypeDef,
+  ItWalletEntityStatementClaimsOptions
+> = baseSchema.passthrough().refine(
+  (data) => {
+    const keyIds = data.jwks.keys.map((key) => key.kid);
+    const uniqueKeyIds = new Set(keyIds);
+    return uniqueKeyIds.size === keyIds.length;
+  },
+  {
+    message: "keys include duplicate key ids",
+    path: ["jwks", "keys"],
+  },
+);
