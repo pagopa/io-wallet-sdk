@@ -16,5 +16,6 @@ export {
   encodeToBase64Url,
   formatZodError,
   parseWithErrorHandling,
+  setGlobalConfig,
   zHttpsUrl,
 } from "@openid4vc/utils";
