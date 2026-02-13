@@ -35,8 +35,8 @@ export interface ParseAccessTokenRequestResult {
    * The client attestation jwts from the access token request headers
    */
   clientAttestation: {
-    clientAttestationJwt: string;
     clientAttestationPopJwt: string;
+    walletAttestationJwt: string;
   };
 
   /**
@@ -185,7 +185,7 @@ function parseSecurityHeaders(headers: FetchHeaders) {
     );
   }
 
-  if (!extractedClientAttestationJwts.clientAttestationHeader) {
+  if (!extractedClientAttestationJwts.walletAttestationHeader) {
     throw new Oauth2Error(
       "Request is missing required 'OAuth-Client-Attestation' header",
     );
@@ -199,10 +199,10 @@ function parseSecurityHeaders(headers: FetchHeaders) {
 
   return {
     clientAttestation: {
-      clientAttestationJwt:
-        extractedClientAttestationJwts.clientAttestationHeader,
       clientAttestationPopJwt:
         extractedClientAttestationJwts.clientAttestationPopHeader,
+      walletAttestationJwt:
+        extractedClientAttestationJwts.walletAttestationHeader,
     },
     dpop: { jwt: extractedDpopJwt.dpopJwt },
   };

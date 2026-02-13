@@ -296,7 +296,7 @@ describe("parsePushedAuthorizationRequest", () => {
       });
 
       expect(result.clientAttestation).toBeDefined();
-      expect(result.clientAttestation?.clientAttestationJwt).toBe(
+      expect(result.clientAttestation?.walletAttestationJwt).toBe(
         headers.get("OAuth-Client-Attestation"),
       );
       expect(result.clientAttestation?.clientAttestationPopJwt).toBe(

@@ -4,21 +4,17 @@ import {
   HashAlgorithm,
   calculateJwkThumbprint,
 } from "@openid4vc/oauth2";
+import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "../errors";
-import { verifyClientAttestationJwt } from "./client-attestation";
 import { verifyClientAttestationPopJwt } from "./client-attestation-pop";
 import {
   oauthClientAttestationHeader,
   oauthClientAttestationPopHeader,
-} from "./z-client-attestation";
+} from "./types";
+import { verifyWalletAttestationJwt } from "./wallet-attestation";
 
 export interface ClientAttestationOptions {
-  /**
-   * The client attestation JWT provided in the request.
-   */
-  clientAttestationJwt: string;
-
   /**
    * The client attestation DPoP JWT provided in the request.
    */
@@ -32,6 +28,11 @@ export interface ClientAttestationOptions {
    * @default false
    */
   ensureConfirmationKeyMatchesDpopKey?: boolean;
+
+  /**
+   * The wallet attestation JWT provided in the request.
+   */
+  walletAttestationJwt: string;
 }
 
 export interface VerifyClientAttestationOptions {
@@ -49,6 +50,12 @@ export interface VerifyClientAttestationOptions {
    * The client attestation options.
    */
   clientAttestation: ClientAttestationOptions;
+
+  /**
+   * The IT-Wallet SDK configuration, used to select the correct version-specific
+   * validation schema for the wallet attestation JWT.
+   */
+  config: IoWalletSdkConfig;
 
   /**
    * The DPoP JWK thumbprint value, if DPoP is being used in the request.
@@ -77,7 +84,7 @@ export async function verifyClientAttestation(
   options: VerifyClientAttestationOptions,
 ) {
   if (
-    !options.clientAttestation.clientAttestationJwt ||
+    !options.clientAttestation.walletAttestationJwt ||
     !options.clientAttestation.clientAttestationPopJwt
   ) {
     throw new Oauth2Error(
@@ -85,10 +92,12 @@ export async function verifyClientAttestation(
     );
   }
 
-  const clientAttestation = await verifyClientAttestationJwt({
+  const clientAttestation = await verifyWalletAttestationJwt({
     callbacks: options.callbacks,
-    clientAttestationJwt: options.clientAttestation.clientAttestationJwt,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    config: options.config as any,
     now: options.now,
+    walletAttestationJwt: options.clientAttestation.walletAttestationJwt,
   });
 
   const clientAttestationPop = await verifyClientAttestationPopJwt({
