@@ -4,6 +4,12 @@ import {
 } from "@openid4vc/oauth2";
 import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
 
+export interface BaseVerifyClientAttestationJwtOptions {
+  callbacks: Pick<CallbackContext, "verifyJwt">;
+  clientAttestationJwt: string;
+  now?: Date;
+}
+
 /**
  * Base options shared across all wallet attestation versions
  */

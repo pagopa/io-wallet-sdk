@@ -4,6 +4,7 @@ import {
   HashAlgorithm,
   calculateJwkThumbprint,
 } from "@openid4vc/oauth2";
+import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "../errors";
 import { verifyClientAttestationJwt } from "./client-attestation";
@@ -51,6 +52,12 @@ export interface VerifyClientAttestationOptions {
   clientAttestation: ClientAttestationOptions;
 
   /**
+   * The IT-Wallet SDK configuration, used to select the correct version-specific
+   * validation schema for the client attestation JWT.
+   */
+  config: IoWalletSdkConfig;
+
+  /**
    * The DPoP JWK thumbprint value, if DPoP is being used in the request.
    */
   dpopJwkThumbprint?: string;
@@ -88,6 +95,8 @@ export async function verifyClientAttestation(
   const clientAttestation = await verifyClientAttestationJwt({
     callbacks: options.callbacks,
     clientAttestationJwt: options.clientAttestation.clientAttestationJwt,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    config: options.config as any,
     now: options.now,
   });
 

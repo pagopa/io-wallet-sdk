@@ -1,67 +1,62 @@
+import { zCompactJwt } from "@openid4vc/oauth2";
 import {
-  CallbackContext,
-  decodeJwt,
-  jwtSignerFromJwt,
-  verifyJwt,
-  zCompactJwt,
-} from "@openid4vc/oauth2";
-import { FetchHeaders } from "@pagopa/io-wallet-utils";
+  FetchHeaders,
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
+} from "@pagopa/io-wallet-utils";
 
+import * as V1_0 from "./v1.0";
+import * as V1_3 from "./v1.3";
 import {
   oauthClientAttestationHeader,
   oauthClientAttestationPopHeader,
-  zClientAttestationJwtHeader,
-  zClientAttestationJwtPayload,
 } from "./z-client-attestation";
 
-export type VerifiedClientAttestationJwt = Awaited<
-  ReturnType<typeof verifyClientAttestationJwt>
->;
-
-export interface VerifyClientAttestationJwtOptions {
-  /**
-   * Callbacks used for verifying client attestation pop jwt.
-   */
-  callbacks: Pick<CallbackContext, "verifyJwt">;
-
-  /**
-   * The compact client attestation jwt.
-   */
-  clientAttestationJwt: string;
-
-  /**
-   * The current time to use when verifying the JWTs.
-   * If not provided current time will be used.
-   *
-   * @default new Date()
-   */
-  now?: Date;
+function isV1_0Options(
+  options: VerifyClientAttestationJwtOptions,
+): options is V1_0.VerifyClientAttestationJwtOptionsV1_0 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
 }
+
+function isV1_3Options(
+  options: VerifyClientAttestationJwtOptions,
+): options is V1_3.VerifyClientAttestationJwtOptionsV1_3 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
+}
+
+export type VerifiedClientAttestationJwt =
+  | V1_0.VerifiedClientAttestationJwtV1_0
+  | V1_3.VerifiedClientAttestationJwtV1_3;
+
+export type VerifyClientAttestationJwtOptions =
+  | V1_0.VerifyClientAttestationJwtOptionsV1_0
+  | V1_3.VerifyClientAttestationJwtOptionsV1_3;
+
+export async function verifyClientAttestationJwt(
+  options: V1_0.VerifyClientAttestationJwtOptionsV1_0,
+): Promise<V1_0.VerifiedClientAttestationJwtV1_0>;
+
+export async function verifyClientAttestationJwt(
+  options: V1_3.VerifyClientAttestationJwtOptionsV1_3,
+): Promise<V1_3.VerifiedClientAttestationJwtV1_3>;
 
 export async function verifyClientAttestationJwt(
   options: VerifyClientAttestationJwtOptions,
-) {
-  const { header, payload } = decodeJwt({
-    headerSchema: zClientAttestationJwtHeader,
-    jwt: options.clientAttestationJwt,
-    payloadSchema: zClientAttestationJwtPayload,
-  });
+): Promise<VerifiedClientAttestationJwt> {
+  const version = options.config.itWalletSpecsVersion;
 
-  const { signer } = await verifyJwt({
-    compact: options.clientAttestationJwt,
-    errorMessage: "client attestation jwt verification failed.",
-    header,
-    now: options.now,
-    payload,
-    signer: jwtSignerFromJwt({ header, payload }),
-    verifyJwtCallback: options.callbacks.verifyJwt,
-  });
+  if (isV1_0Options(options)) {
+    return V1_0.verifyClientAttestationJwt(options);
+  }
 
-  return {
-    header,
-    payload,
-    signer,
-  };
+  if (isV1_3Options(options)) {
+    return V1_3.verifyClientAttestationJwt(options);
+  }
+
+  throw new ItWalletSpecsVersionError("verifyClientAttestationJwt", version, [
+    ItWalletSpecsVersion.V1_0,
+    ItWalletSpecsVersion.V1_3,
+  ]);
 }
 
 export function extractClientAttestationJwtsFromHeaders(headers: FetchHeaders):
