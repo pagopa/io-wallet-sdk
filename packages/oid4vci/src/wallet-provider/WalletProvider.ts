@@ -74,7 +74,7 @@ export class WalletProvider extends Openid4vciWalletProvider {
    *     trustChain: ["trust-anchor-jwt"] // Optional in v1.3
    *   },
    *   nbf: new Date('2025-01-01'), // Optional
-   *   status: { status_list: { idx: "0", uri: "https://status.example.com" } } // Optional
+   *   status: { status_list: { idx: 2, uri: "https://status.example.com" } } // Optional
    * });
    */
   // Function overload for v1.0
@@ -93,12 +93,6 @@ export class WalletProvider extends Openid4vciWalletProvider {
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
-    if (!options.config) {
-      throw new WalletProviderError(
-        "config parameter is required with itWalletSpecsVersion",
-      );
-    }
-
     // Store version for error reporting
     const version = options.config.itWalletSpecsVersion;
 
@@ -111,6 +105,7 @@ export class WalletProvider extends Openid4vciWalletProvider {
     if (isV1_0Options(options)) {
       // For v1.0: use trust_chain only
       return V1_0.createWalletAttestationJwt({
+        authenticatorAssuranceLevel: options.authenticatorAssuranceLevel,
         callbacks: options.callbacks,
         config: options.config,
         dpopJwkPublic: options.dpopJwkPublic,

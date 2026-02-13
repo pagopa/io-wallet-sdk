@@ -15,7 +15,6 @@ import {
   vi,
 } from "vitest";
 
-import { WalletProviderError } from "../../errors";
 import { WalletProvider } from "../WalletProvider";
 
 vi.mock("@openid4vc/utils", async () => {
@@ -87,6 +86,7 @@ describe("WalletProvider", () => {
       } & IoWalletSdkConfig;
 
       const options: V1_0.WalletAttestationOptionsV1_0 = {
+        authenticatorAssuranceLevel: "aal1",
         callbacks: { signJwt: mockSignJwt },
         config,
         dpopJwkPublic: mockJwk,
@@ -169,7 +169,7 @@ describe("WalletProvider", () => {
       const nbfDate = new Date("2025-01-01T00:00:00Z");
       const status = {
         status_list: {
-          idx: "42",
+          idx: 42,
           uri: "https://status.example.com/list",
         },
       };
@@ -213,30 +213,6 @@ describe("WalletProvider", () => {
         walletLink: "https://wallet.example.com",
         walletName: "Premium Wallet",
       });
-    });
-  });
-
-  describe("validation", () => {
-    it("should throw WalletProviderError when config is missing", async () => {
-      const options = {
-        callbacks: { signJwt: mockSignJwt },
-        dpopJwkPublic: mockJwk,
-        issuer: "https://wallet-provider.example.com",
-        signer: {
-          alg: "ES256",
-          kid: "provider-key-id",
-          method: "federation",
-          trustChain: ["jwt1"],
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
-
-      await expect(
-        provider.createItWalletAttestationJwt(options),
-      ).rejects.toThrow(WalletProviderError);
-      await expect(
-        provider.createItWalletAttestationJwt(options),
-      ).rejects.toThrow("config parameter is required");
     });
   });
 });
