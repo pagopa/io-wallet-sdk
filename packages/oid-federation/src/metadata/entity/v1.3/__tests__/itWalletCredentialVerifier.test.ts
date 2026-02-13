@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   itWalletCredentialVerifierIdentifier,
-  itWalletCredentialVerifierMetadataV1_3,
+  itWalletCredentialVerifierMetadata,
 } from "../itWalletCredentialVerifier";
 
 const validV1_3Metadata = {
@@ -37,11 +37,11 @@ const validV1_3Metadata = {
   },
 };
 
-describe("itWalletCredentialVerifierMetadataV1_3", () => {
+describe("itWalletCredentialVerifierMetadata (v1.3)", () => {
   describe("basic validation", () => {
     it("should validate correct v1.3.3 metadata", () => {
       const result =
-        itWalletCredentialVerifierMetadataV1_3.safeParse(validV1_3Metadata);
+        itWalletCredentialVerifierMetadata.safeParse(validV1_3Metadata);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toEqual(validV1_3Metadata);
@@ -56,7 +56,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
         logo_uri: "https://example.org/logo.svg",
       };
       const result =
-        itWalletCredentialVerifierMetadataV1_3.safeParse(metadataWithLogoUri);
+        itWalletCredentialVerifierMetadata.safeParse(metadataWithLogoUri);
       expect(result.success).toBe(true);
     });
 
@@ -65,7 +65,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
         ...validV1_3Metadata,
         logo_uri: "not-a-url",
       };
-      const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+      const result = itWalletCredentialVerifierMetadata.safeParse(
         metadataWithInvalidLogoUri,
       );
       expect(result.success).toBe(false);
@@ -75,7 +75,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { logo_uri: _logo_uri, ...metadataWithoutLogoUri } =
         validV1_3Metadata;
-      const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+      const result = itWalletCredentialVerifierMetadata.safeParse(
         metadataWithoutLogoUri,
       );
       expect(result.success).toBe(false);
@@ -88,7 +88,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
         ...validV1_3Metadata,
         encrypted_response_enc_values_supported: ["A256GCM", "A128GCM"],
       };
-      const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+      const result = itWalletCredentialVerifierMetadata.safeParse(
         metadataWithEncValues,
       );
       expect(result.success).toBe(true);
@@ -101,7 +101,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
           _encrypted_response_enc_values_supported,
         ...metadataWithoutEncValues
       } = validV1_3Metadata;
-      const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+      const result = itWalletCredentialVerifierMetadata.safeParse(
         metadataWithoutEncValues,
       );
       expect(result.success).toBe(false);
@@ -120,7 +120,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
         },
       };
       const result =
-        itWalletCredentialVerifierMetadataV1_3.safeParse(metadataWithSdJwt);
+        itWalletCredentialVerifierMetadata.safeParse(metadataWithSdJwt);
       expect(result.success).toBe(true);
     });
 
@@ -135,13 +135,13 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
         },
       };
       const result =
-        itWalletCredentialVerifierMetadataV1_3.safeParse(metadataWithMsoMdoc);
+        itWalletCredentialVerifierMetadata.safeParse(metadataWithMsoMdoc);
       expect(result.success).toBe(true);
     });
 
     it("should validate vp_formats_supported with both dc+sd-jwt and mso_mdoc formats", () => {
       const result =
-        itWalletCredentialVerifierMetadataV1_3.safeParse(validV1_3Metadata);
+        itWalletCredentialVerifierMetadata.safeParse(validV1_3Metadata);
       expect(result.success).toBe(true);
     });
 
@@ -156,7 +156,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
           },
         },
       };
-      const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+      const result = itWalletCredentialVerifierMetadata.safeParse(
         metadataWithDeprecatedAlg,
       );
       expect(result.success).toBe(true);
@@ -170,7 +170,7 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
         another_unknown_field: 123,
         custom_field: "custom_value",
       };
-      const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+      const result = itWalletCredentialVerifierMetadata.safeParse(
         metadataWithUnknownField,
       );
       expect(result.success).toBe(true);
@@ -187,13 +187,13 @@ describe("itWalletCredentialVerifierMetadataV1_3", () => {
   });
 });
 
-describe("itWalletCredentialVerifierMetadataV1_3 field validation", () => {
+describe("itWalletCredentialVerifierMetadata field validation", () => {
   it("should reject invalid client_id (not a URL)", () => {
     const metadataWithInvalidClientId = {
       ...validV1_3Metadata,
       client_id: "not-a-url",
     };
-    const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+    const result = itWalletCredentialVerifierMetadata.safeParse(
       metadataWithInvalidClientId,
     );
     expect(result.success).toBe(false);
@@ -204,7 +204,7 @@ describe("itWalletCredentialVerifierMetadataV1_3 field validation", () => {
       ...validV1_3Metadata,
       application_type: "native", // Should be "web"
     };
-    const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+    const result = itWalletCredentialVerifierMetadata.safeParse(
       metadataWithInvalidAppType,
     );
     expect(result.success).toBe(false);
@@ -216,7 +216,7 @@ describe("itWalletCredentialVerifierMetadataV1_3 field validation", () => {
       erasure_endpoint: _erasure_endpoint,
       ...metadataWithoutErasureEndpoint
     } = validV1_3Metadata;
-    const result = itWalletCredentialVerifierMetadataV1_3.safeParse(
+    const result = itWalletCredentialVerifierMetadata.safeParse(
       metadataWithoutErasureEndpoint,
     );
     expect(result.success).toBe(true);

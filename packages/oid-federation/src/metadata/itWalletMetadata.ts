@@ -1,55 +1,57 @@
 import { z } from "zod";
 
 import {
+  itWalletAuthorizationServerIdentifier,
+  itWalletAuthorizationServerIdentifierV1_3,
+  itWalletAuthorizationServerMetadata,
+  itWalletAuthorizationServerMetadataV1_3,
+  itWalletCredentialIssuerIdentifier,
+  itWalletCredentialIssuerIdentifierV1_3,
+  itWalletCredentialIssuerMetadata,
+  itWalletCredentialIssuerMetadataV1_3,
+  itWalletCredentialVerifierIdentifier,
+  itWalletCredentialVerifierIdentifierV1_3,
+  itWalletCredentialVerifierMetadata,
+  itWalletCredentialVerifierMetadataV1_3,
   itWalletFederationEntityIdentifier,
   itWalletFederationEntityMetadata,
-} from "./entity/itWalletFederationEntity";
-import {
-  itWalletAuthorizationServerIdentifier,
-  itWalletAuthorizationServerMetadata as itWalletAuthorizationServerMetadataV1_0,
-  itWalletCredentialIssuerIdentifier,
-  itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_0,
-  itWalletCredentialVerifierIdentifier,
-  itWalletCredentialVerifierMetadata,
   itWalletProviderEntityIdentifier,
   itWalletProviderEntityMetadata,
-} from "./entity/v1.0";
-import {
-  itWalletAuthorizationServerMetadata as itWalletAuthorizationServerMetadataV1_3,
-  itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_3,
-  itWalletSolutionEntityIdentifier,
-  itWalletSolutionEntityMetadata,
-} from "./entity/v1.3";
-import {
-  itWalletCredentialVerifierIdentifier as itWalletCredentialVerifierIdentifierV1_3,
-  itWalletCredentialVerifierMetadata as itWalletCredentialVerifierMetadataV1_3,
-} from "./entity/v1.3";
+  itWalletSolutionEntityIdentifierV1_3,
+  itWalletSolutionEntityMetadataV1_3,
+} from "./entity";
 
 // v1.0 combined metadata
-export const itWalletMetadataV1_0 = z.object({
-  [itWalletAuthorizationServerIdentifier]:
-    itWalletAuthorizationServerMetadataV1_0.optional(),
-  [itWalletCredentialIssuerIdentifier]:
-    itWalletCredentialIssuerMetadataV1_0.optional(),
-  [itWalletCredentialVerifierIdentifier]:
-    itWalletCredentialVerifierMetadata.optional(),
-  [itWalletFederationEntityIdentifier]:
-    itWalletFederationEntityMetadata.optional(),
-  [itWalletProviderEntityIdentifier]: itWalletProviderEntityMetadata.optional(),
-});
+export const itWalletMetadataV1_0 = z
+  .object({
+    [itWalletAuthorizationServerIdentifier]:
+      itWalletAuthorizationServerMetadata.optional(),
+    [itWalletCredentialIssuerIdentifier]:
+      itWalletCredentialIssuerMetadata.optional(),
+    [itWalletCredentialVerifierIdentifier]:
+      itWalletCredentialVerifierMetadata.optional(),
+    [itWalletFederationEntityIdentifier]:
+      itWalletFederationEntityMetadata.optional(),
+    [itWalletProviderEntityIdentifier]:
+      itWalletProviderEntityMetadata.optional(),
+  })
+  .strict();
 
 // v1.3 combined metadata (stubs re-export v1.0 schemas for some entities)
-export const itWalletMetadataV1_3 = z.object({
-  [itWalletAuthorizationServerIdentifier]:
-    itWalletAuthorizationServerMetadataV1_3.optional(),
-  [itWalletCredentialIssuerIdentifier]:
-    itWalletCredentialIssuerMetadataV1_3.optional(),
-  [itWalletCredentialVerifierIdentifierV1_3]:
-    itWalletCredentialVerifierMetadataV1_3.optional(),
-  [itWalletFederationEntityIdentifier]:
-    itWalletFederationEntityMetadata.optional(),
-  [itWalletSolutionEntityIdentifier]: itWalletSolutionEntityMetadata.optional(),
-});
+export const itWalletMetadataV1_3 = z
+  .object({
+    [itWalletAuthorizationServerIdentifierV1_3]:
+      itWalletAuthorizationServerMetadataV1_3.optional(),
+    [itWalletCredentialIssuerIdentifierV1_3]:
+      itWalletCredentialIssuerMetadataV1_3.optional(),
+    [itWalletCredentialVerifierIdentifierV1_3]:
+      itWalletCredentialVerifierMetadataV1_3.optional(),
+    [itWalletFederationEntityIdentifier]:
+      itWalletFederationEntityMetadata.optional(),
+    [itWalletSolutionEntityIdentifierV1_3]:
+      itWalletSolutionEntityMetadataV1_3.optional(),
+  })
+  .strict();
 
 // Union — used by entity statement / entity configuration claims
 export const itWalletMetadataSchema =
