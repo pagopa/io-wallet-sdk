@@ -1,8 +1,8 @@
+import { decodeJwt } from "@openid4vc/oauth2";
 import {
   ValidationError,
   addSecondsToDate,
   dateToSeconds,
-  parseWithErrorHandling,
 } from "@openid4vc/utils";
 import {
   IoWalletSdkConfig,
@@ -13,7 +13,8 @@ import { ClientAttestationError } from "../../errors";
 import { BaseWalletAttestationOptions } from "../types";
 import {
   WalletAttestationJwtV1_3,
-  zWalletAttestationJwtV1_3,
+  zWalletAttestationJwtHeaderV1_3,
+  zWalletAttestationJwtPayloadV1_3,
 } from "./z-wallet-attestation";
 
 /**
@@ -38,7 +39,7 @@ export interface WalletAttestationOptionsV1_3
   };
   status?: {
     status_list: {
-      idx: string;
+      idx: number;
       uri: string;
     };
   }; // Status object for revocation mechanisms
@@ -74,7 +75,7 @@ export const createWalletAttestationJwt = async (
     }
 
     const payload = {
-      cnf: options.dpopJwkPublic,
+      cnf: { jwk: options.dpopJwkPublic },
       exp: dateToSeconds(exp),
       iat: dateToSeconds(new Date()),
       iss: options.issuer,
@@ -97,12 +98,15 @@ export const createWalletAttestationJwt = async (
 
     const result = await signJwt(options.signer, {
       header,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      payload: payload as any, // Cast to any to avoid type conflicts with signJwt's strict payload validation
+      payload,
     });
 
     // Validate the generated JWT structure
-    parseWithErrorHandling(zWalletAttestationJwtV1_3, result.jwt);
+    decodeJwt({
+      headerSchema: zWalletAttestationJwtHeaderV1_3,
+      jwt: result.jwt,
+      payloadSchema: zWalletAttestationJwtPayloadV1_3,
+    });
 
     return result.jwt;
   } catch (error) {

@@ -37,7 +37,7 @@ export const zWalletAttestationJwtPayloadV1_3 = z
     status: z
       .object({
         status_list: z.object({
-          idx: z.string(),
+          idx: z.number().int(),
           uri: z.string(),
         }),
       })

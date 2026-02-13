@@ -65,7 +65,7 @@ describe("createWalletAttestationJwt v1.3", () => {
             x5c: mockX5c,
           },
           payload: expect.objectContaining({
-            cnf: mockJwk,
+            cnf: { jwk: mockJwk },
             exp: dateToSeconds(new Date("2025-01-25T00:00:00Z")),
             iat: expect.any(Number),
             iss: "https://wallet-provider.example.com",
