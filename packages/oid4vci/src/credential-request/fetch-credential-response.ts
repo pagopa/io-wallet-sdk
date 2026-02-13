@@ -12,7 +12,11 @@ import type { CredentialRequestV1_0 } from "./v1.0";
 import type { CredentialRequestV1_3 } from "./v1.3";
 
 import { FetchCredentialResponseError } from "../errors";
-import { CredentialResponse, zCredentialResponse } from "./z-credential";
+import {
+  CredentialResponse,
+  zCredentialResponseV1_0,
+  zCredentialResponseV1_3,
+} from "./z-credential-response";
 
 /**
  * Options for fetching credential response
@@ -37,7 +41,7 @@ export interface FetchCredentialResponseOptions {
  *
  * @param options - Configuration for credential fetch
  * @returns Parsed credential response
- * @throws {UnexpectedStatusCodeError} If HTTP status is not 200
+ * @throws {UnexpectedStatusCodeError} If HTTP status is not 200 or 202 for deferred issuance
  * @throws {ValidationError} If response validation fails
  * @throws {FetchCredentialResponseError} For unexpected errors
  */
@@ -56,14 +60,25 @@ export async function fetchCredentialResponse(
       method: "POST",
     });
 
-    await hasStatusOrThrow(200, UnexpectedStatusCodeError)(credentialResponse);
+    await hasStatusOrThrow(
+      [200, 202],
+      UnexpectedStatusCodeError,
+    )(credentialResponse);
 
     const credentialResponseJson = await credentialResponse.json();
 
+    if ("proof" in options.credentialRequest) {
+      return parseWithErrorHandling(
+        zCredentialResponseV1_0,
+        credentialResponseJson,
+        `Failed to parse credential response (v1.0)`,
+      );
+    }
+
     return parseWithErrorHandling(
-      zCredentialResponse,
+      zCredentialResponseV1_3,
       credentialResponseJson,
-      `Failed to parse credential response`,
+      `Failed to parse credential response (v1.3)`,
     );
   } catch (error) {
     if (
