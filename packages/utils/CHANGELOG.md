@@ -1,5 +1,15 @@
 # @pagopa/io-wallet-utils
 
+## 1.0.0
+
+### Major Changes
+
+- e450ab5: Add support for IT-Wallet v1.0 and v1.3 credential request flows
+
+### Minor Changes
+
+- 752dbb0: Add parseAuthorizationRequest and parsePushedAuthorizationRequest
+
 ## 0.7.7
 
 ## 0.7.6
