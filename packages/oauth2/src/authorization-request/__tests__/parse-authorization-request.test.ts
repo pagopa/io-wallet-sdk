@@ -100,7 +100,7 @@ describe("parseAuthorizationRequest", () => {
       });
 
       expect(result.clientAttestation).toBeDefined();
-      expect(result.clientAttestation?.clientAttestationJwt).toBe(
+      expect(result.clientAttestation?.walletAttestationJwt).toBe(
         headers.get("OAuth-Client-Attestation"),
       );
       expect(result.clientAttestation?.clientAttestationPopJwt).toBe(
@@ -193,7 +193,7 @@ describe("parseAuthorizationRequest", () => {
       expect(result.dpop).toBeDefined();
       expect(result.dpop?.jwt).toBe(headers.get("DPoP"));
       expect(result.clientAttestation).toBeDefined();
-      expect(result.clientAttestation?.clientAttestationJwt).toBe(
+      expect(result.clientAttestation?.walletAttestationJwt).toBe(
         headers.get("OAuth-Client-Attestation"),
       );
       expect(result.clientAttestation?.clientAttestationPopJwt).toBe(

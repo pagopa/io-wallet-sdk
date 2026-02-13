@@ -8,9 +8,13 @@ import { UnexpectedStatusCodeError } from "./errors";
  * @returns The given response object
  */
 export const hasStatusOrThrow =
-  (status: number, customError?: typeof UnexpectedStatusCodeError) =>
+  (status: number | number[], customError?: typeof UnexpectedStatusCodeError) =>
   async (res: Response): Promise<Response> => {
-    if (res.status !== status) {
+    if (
+      Array.isArray(status)
+        ? !status.includes(res.status)
+        : res.status !== status
+    ) {
       const ErrorClass = customError ?? UnexpectedStatusCodeError;
       throw new ErrorClass({
         message: `Http request failed. Expected ${status}, got ${res.status}, url: ${res.url}`,

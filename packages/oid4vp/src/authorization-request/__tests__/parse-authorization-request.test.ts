@@ -372,3 +372,67 @@ describe("parseAuthorizationRequest tests", () => {
     ).rejects.toThrow(ParseAuthorizeRequestError);
   });
 });
+
+describe("parseAuthorizeRequest - optional verification", () => {
+  it("should parse request object without verification when callbacks is undefined", async () => {
+    const result = await parseAuthorizeRequest({
+      requestObjectJwt: correctRequestObjectJwt,
+    });
+
+    expect(result.payload).toEqual(correctRequestObject);
+    expect(result.header).toBeDefined();
+    expect(result.header.alg).toBe("ES256");
+    expect(result.header.trust_chain).toBeDefined();
+  });
+
+  it("should parse x509_hash request without verification when callbacks is not provided", async () => {
+    const result = await parseAuthorizeRequest({
+      requestObjectJwt: x509RequestObjectJwt,
+    });
+
+    expect(result.payload).toEqual(x509RequestObject);
+    expect(result.header.x5c).toBeDefined();
+  });
+
+  it("should accept wrongly signed JWT when verification is disabled", async () => {
+    // This JWT has an invalid signature, but should parse successfully without verification
+    const result = await parseAuthorizeRequest({
+      requestObjectJwt: wrongSignedRequestObjectJwt,
+    });
+
+    expect(result.payload).toEqual(correctRequestObject);
+    expect(result.header).toBeDefined();
+  });
+
+  it("should still validate JWT structure even without verification", async () => {
+    // Malformed JWT should still throw Oauth2JwtParseError
+    const malformedJwt = "not.a.valid.jwt.structure";
+
+    await expect(
+      async () =>
+        await parseAuthorizeRequest({
+          requestObjectJwt: malformedJwt,
+        }),
+    ).rejects.toThrow(Oauth2JwtParseError);
+  });
+
+  it("should still validate payload schema even without verification", async () => {
+    // Missing mandatory fields should still throw ValidationError
+    await expect(
+      async () =>
+        await parseAuthorizeRequest({
+          requestObjectJwt: missingMandatoryFieldRequestObjectJwt,
+        }),
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("should still validate header schema even without verification", async () => {
+    // Invalid header typ should still throw ValidationError
+    await expect(
+      async () =>
+        await parseAuthorizeRequest({
+          requestObjectJwt: invalidHeaderTypJwt,
+        }),
+    ).rejects.toThrow(ValidationError);
+  });
+});

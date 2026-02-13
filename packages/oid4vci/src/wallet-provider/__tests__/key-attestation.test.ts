@@ -14,10 +14,14 @@ import { WalletProviderError } from "../../errors";
 import { KeyAttestationOptions, WalletProvider } from "../WalletProvider";
 import { KeyAttestationStatus } from "../z-key-attestation";
 
-vi.mock("@openid4vc/utils", () => ({
-  addSecondsToDate: vi.fn(),
-  dateToSeconds: vi.fn(),
-}));
+vi.mock("@openid4vc/utils", async () => {
+  const actual = await vi.importActual("@openid4vc/utils");
+  return {
+    ...actual,
+    addSecondsToDate: vi.fn(),
+    dateToSeconds: vi.fn(),
+  };
+});
 
 const mockAddSecondsToDate = addSecondsToDate as MockedFunction<
   typeof addSecondsToDate

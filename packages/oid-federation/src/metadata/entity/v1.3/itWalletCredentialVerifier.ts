@@ -20,7 +20,7 @@ import { jsonWebKeySetSchema } from "../../../jwk";
  *
  * @see {@link https://italia.github.io/eidas-it-wallet-docs/versioned_docs/version-1.3.3/en/relying-party-metadata.html}
  */
-export const itWalletCredentialVerifierMetadataV1_3 = z
+export const itWalletCredentialVerifierMetadata = z
   .object({
     application_type: z.literal("web"),
     client_id: z.string().url(),
@@ -44,19 +44,9 @@ export const itWalletCredentialVerifierMetadataV1_3 = z
   })
   .passthrough();
 
-export type ItWalletCredentialVerifierMetadataV1_3 = z.input<
-  typeof itWalletCredentialVerifierMetadataV1_3
+export type ItWalletCredentialVerifierMetadata = z.input<
+  typeof itWalletCredentialVerifierMetadata
 >;
-
-/**
- * Alias export for use in metadata unions
- * When importing from the v1.3 directory, this provides the v1.3 schema
- */
-export const itWalletCredentialVerifierMetadata =
-  itWalletCredentialVerifierMetadataV1_3;
-
-export type ItWalletCredentialVerifierMetadata =
-  ItWalletCredentialVerifierMetadataV1_3;
 
 /**
  * Re-export the identifier from v1.0 as it remains unchanged
