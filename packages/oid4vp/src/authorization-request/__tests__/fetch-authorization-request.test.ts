@@ -1,23 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  AuthorizationRequestObject,
-  Openid4vpAuthorizationRequestHeader,
-} from "../z-request-object";
-
 import { InvalidRequestUriMethodError, Oid4vpError } from "../../errors";
 import { fetchAuthorizationRequest } from "../fetch-authorization-request";
-import { parseAuthorizeRequest } from "../parse-authorization-request";
 
-vi.mock("../parse-authorization-request");
-
-// eslint-disable-next-line max-lines-per-function
 describe("fetchAuthorizationRequest", () => {
   const mockFetch = vi.fn();
-  const mockVerifyJwt = vi.fn();
   const mockCallbacks = {
     fetch: mockFetch,
-    verifyJwt: mockVerifyJwt,
   };
 
   beforeEach(() => {
@@ -55,22 +44,10 @@ describe("fetchAuthorizationRequest", () => {
     const authorizeRequestUrl =
       "https://example.com?client_id=123&request_uri=https://request.com";
     const requestObjectJwt = "mock-jwt";
-    const parsedRequestObject = { some: "data" };
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      trust_chain: ["mock-trust-chain"],
-      typ: "oauth-authz-req+jwt",
-    };
 
     mockFetch.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(requestObjectJwt),
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: parsedRequestObject as unknown as AuthorizationRequestObject,
     });
 
     const result = await fetchAuthorizationRequest({
@@ -82,20 +59,13 @@ describe("fetchAuthorizationRequest", () => {
       "https://request.com",
       expect.objectContaining({ method: "GET" }),
     );
-    expect(parseAuthorizeRequest).toHaveBeenCalledWith({
-      callbacks: mockCallbacks,
-      requestObjectJwt,
-    });
     expect(result).toEqual({
-      parsedAuthorizeRequest: {
-        header: mockHeader,
-        payload: parsedRequestObject,
-      },
       parsedQrCode: {
         clientId: "123",
         requestUri: "https://request.com",
         requestUriMethod: "get",
       },
+      requestObjectJwt,
       sendBy: "reference",
     });
   });
@@ -104,20 +74,10 @@ describe("fetchAuthorizationRequest", () => {
     const authorizeRequestUrl =
       "https://example.com?client_id=123&request_uri=https://request.com&request_uri_method=post";
     const requestObjectJwt = "mock-jwt";
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
 
     mockFetch.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(requestObjectJwt),
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
     });
 
     await fetchAuthorizationRequest({
@@ -154,25 +114,22 @@ describe("fetchAuthorizationRequest", () => {
     ).rejects.toThrow(Oid4vpError);
   });
 
-  it("should rethrow Oid4vpError from parseAuthorizeRequest", async () => {
+  it("should rethrow Oid4vpError on fetch failure", async () => {
     const authorizeRequestUrl =
       "https://example.com?client_id=123&request_uri=https://request.com";
-    const requestObjectJwt = "mock-jwt";
 
     mockFetch.mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve(requestObjectJwt),
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
     });
-
-    const error = new Oid4vpError("Parse error");
-    vi.mocked(parseAuthorizeRequest).mockRejectedValue(error);
 
     await expect(
       fetchAuthorizationRequest({
         authorizeRequestUrl,
         callbacks: mockCallbacks,
       }),
-    ).rejects.toThrow(error);
+    ).rejects.toThrow(Oid4vpError);
   });
 
   it("should wrap unexpected errors in Oid4vpError", async () => {
@@ -189,25 +146,14 @@ describe("fetchAuthorizationRequest", () => {
     ).rejects.toThrow(Oid4vpError);
   });
 
-  it("should handle authorizationRequestHeader in the result", async () => {
+  it("should return request object JWT in the result", async () => {
     const authorizeRequestUrl =
       "https://example.com?client_id=123&request_uri=https://request.com";
     const requestObjectJwt = "mock-jwt";
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      trust_chain: ["mock-trust-chain"],
-      typ: "oauth-authz-req+jwt",
-    };
 
     mockFetch.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(requestObjectJwt),
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: { some: "data" } as unknown as AuthorizationRequestObject,
     });
 
     const result = await fetchAuthorizationRequest({
@@ -215,18 +161,16 @@ describe("fetchAuthorizationRequest", () => {
       callbacks: mockCallbacks,
     });
 
-    expect(result.parsedAuthorizeRequest.header).toEqual(mockHeader);
-    expect(result.parsedAuthorizeRequest.header.kid).toBe("test-kid");
-    expect(result.parsedAuthorizeRequest.header.trust_chain).toBeDefined();
+    expect(result.requestObjectJwt).toBe(requestObjectJwt);
+    expect(result.sendBy).toBe("reference");
+    expect(result.parsedQrCode.clientId).toBe("123");
   });
 });
 
 describe("fetchAuthorizationRequest - by value mode", () => {
   const mockFetch = vi.fn();
-  const mockVerifyJwt = vi.fn();
   const mockCallbacks = {
     fetch: mockFetch,
-    verifyJwt: mockVerifyJwt,
   };
 
   beforeEach(() => {
@@ -236,16 +180,6 @@ describe("fetchAuthorizationRequest - by value mode", () => {
   it("should handle request parameter (by value)", async () => {
     const requestJwt = "eyJhbGciOiJFUzI1NiJ9...";
     const url = `https://wallet.example.org/authorize?client_id=test-client&request=${requestJwt}`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
-    });
 
     const result = await fetchAuthorizationRequest({
       authorizeRequestUrl: url,
@@ -255,29 +189,17 @@ describe("fetchAuthorizationRequest - by value mode", () => {
     expect(result.sendBy).toBe("value");
     expect(result.parsedQrCode.clientId).toBe("test-client");
     expect(result.parsedQrCode.requestUri).toBeUndefined();
+    expect(result.requestObjectJwt).toBe(requestJwt);
     expect(mockFetch).not.toHaveBeenCalled(); // No fetch for inline JWT
-    expect(parseAuthorizeRequest).toHaveBeenCalledWith({
-      callbacks: mockCallbacks,
-      requestObjectJwt: requestJwt,
-    });
   });
 
   it("should return sendBy='reference' for request_uri mode", async () => {
     const url = `https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => "eyJhbGciOiJFUzI1NiJ9...",
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
+      text: async () => requestObjectJwt,
     });
 
     const result = await fetchAuthorizationRequest({
@@ -286,6 +208,7 @@ describe("fetchAuthorizationRequest - by value mode", () => {
     });
 
     expect(result.sendBy).toBe("reference");
+    expect(result.requestObjectJwt).toBe(requestObjectJwt);
     expect(mockFetch).toHaveBeenCalledWith(
       "https://rp.example.org/request",
       expect.objectContaining({ method: "GET" }),
@@ -303,21 +226,11 @@ describe("fetchAuthorizationRequest - by value mode", () => {
     ).rejects.toThrow("request and request_uri cannot both be present");
   });
 
-  it("should properly parse long inline request JWT", async () => {
+  it("should properly handle long inline request JWT", async () => {
     // Test with realistic JWT length (QR codes can handle ~4KB)
     const longJwt =
       "eyJhbGciOiJFUzI1NiJ9." + "A".repeat(2000) + "." + "B".repeat(300);
     const url = `https://wallet.example.org/authorize?client_id=test-client&request=${longJwt}`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
-    });
 
     const result = await fetchAuthorizationRequest({
       authorizeRequestUrl: url,
@@ -325,20 +238,14 @@ describe("fetchAuthorizationRequest - by value mode", () => {
     });
 
     expect(result.sendBy).toBe("value");
-    expect(parseAuthorizeRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        requestObjectJwt: longJwt,
-      }),
-    );
+    expect(result.requestObjectJwt).toBe(longJwt);
   });
 });
 
 describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
   const mockFetch = vi.fn();
-  const mockVerifyJwt = vi.fn();
   const mockCallbacks = {
     fetch: mockFetch,
-    verifyJwt: mockVerifyJwt,
   };
 
   beforeEach(() => {
@@ -357,20 +264,11 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
       },
     };
 
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => "eyJhbGciOiJFUzI1NiJ9...",
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
+      text: async () => requestObjectJwt,
     });
 
     await fetchAuthorizationRequest({
@@ -402,20 +300,11 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
   it("should send wallet_nonce in POST body when provided", async () => {
     const url = `https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request&request_uri_method=post`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => "eyJhbGciOiJFUzI1NiJ9...",
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
+      text: async () => requestObjectJwt,
     });
 
     await fetchAuthorizationRequest({
@@ -432,20 +321,11 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
   it("should send POST with empty body when no metadata provided", async () => {
     const url = `https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request&request_uri_method=post`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => "eyJhbGciOiJFUzI1NiJ9...",
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
+      text: async () => requestObjectJwt,
     });
 
     await fetchAuthorizationRequest({
@@ -468,20 +348,11 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
   it("should use GET method when request_uri_method is get", async () => {
     const url = `https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request&request_uri_method=get`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => "eyJhbGciOiJFUzI1NiJ9...",
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
+      text: async () => requestObjectJwt,
     });
 
     await fetchAuthorizationRequest({
@@ -520,10 +391,8 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
 describe("fetchAuthorizationRequest - backward compatibility", () => {
   const mockFetch = vi.fn();
-  const mockVerifyJwt = vi.fn();
   const mockCallbacks = {
     fetch: mockFetch,
-    verifyJwt: mockVerifyJwt,
   };
 
   beforeEach(() => {
@@ -532,20 +401,11 @@ describe("fetchAuthorizationRequest - backward compatibility", () => {
 
   it("should maintain existing behavior for by-reference GET requests", async () => {
     const url = `https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => "eyJhbGciOiJFUzI1NiJ9...",
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
+      text: async () => requestObjectJwt,
     });
 
     const result = await fetchAuthorizationRequest({
@@ -553,7 +413,7 @@ describe("fetchAuthorizationRequest - backward compatibility", () => {
       callbacks: mockCallbacks,
     });
 
-    expect(result.parsedAuthorizeRequest).toBeDefined();
+    expect(result.requestObjectJwt).toBe(requestObjectJwt);
     expect(result.parsedQrCode.clientId).toBe("test-client");
     expect(result.sendBy).toBe("reference");
     expect(mockFetch).toHaveBeenCalledWith(
@@ -564,20 +424,11 @@ describe("fetchAuthorizationRequest - backward compatibility", () => {
 
   it("should work without walletMetadata/walletNonce (backward compatible)", async () => {
     const url = `https://wallet.example.org/authorize?client_id=test-client&request_uri=https://rp.example.org/request&request_uri_method=post`;
-    const mockHeader = {
-      alg: "ES256",
-      kid: "test-kid",
-      typ: "oauth-authz-req+jwt",
-    };
+    const requestObjectJwt = "eyJhbGciOiJFUzI1NiJ9...";
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => "eyJhbGciOiJFUzI1NiJ9...",
-    });
-
-    vi.mocked(parseAuthorizeRequest).mockResolvedValue({
-      header: mockHeader as unknown as Openid4vpAuthorizationRequestHeader,
-      payload: {} as AuthorizationRequestObject,
+      text: async () => requestObjectJwt,
     });
 
     // Old code didn't provide walletMetadata/walletNonce
@@ -586,7 +437,7 @@ describe("fetchAuthorizationRequest - backward compatibility", () => {
       callbacks: mockCallbacks,
     });
 
-    expect(result.parsedAuthorizeRequest).toBeDefined();
+    expect(result.requestObjectJwt).toBe(requestObjectJwt);
     expect(result.parsedQrCode.requestUriMethod).toBe("post");
   });
 });
