@@ -5,7 +5,11 @@ import {
   Jwk,
 } from "@openid4vc/oauth2";
 import { encodeToBase64Url } from "@openid4vc/utils";
-import { RequestLike } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  RequestLike,
+} from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error } from "../../errors";
@@ -44,6 +48,10 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
   const mockAuthorizationServerMetadata = {
     issuer: "https://auth.example.com",
   } as AuthorizationServerMetadata;
+
+  const mockConfig = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  }) as IoWalletSdkConfig;
 
   const mockAccessTokenRequest = {
     code: "test-auth-code",
@@ -129,6 +137,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         clientAttestationJwt,
         clientAttestationPopJwt,
       },
+      config: mockConfig,
       dpop: {
         jwt: dpopJwt,
       },

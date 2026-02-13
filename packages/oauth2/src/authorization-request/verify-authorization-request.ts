@@ -3,7 +3,7 @@ import {
   CallbackContext,
   Jwk,
 } from "@openid4vc/oauth2";
-import { RequestLike } from "@pagopa/io-wallet-utils";
+import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
 import {
   ClientAttestationOptions,
@@ -68,6 +68,7 @@ export interface VerifyAuthorizationRequestOptions {
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
 
   clientAttestation: ClientAttestationOptions;
+  config: IoWalletSdkConfig;
   dpop?: VerifyAuthorizationRequestDPoP;
 
   /**
@@ -157,6 +158,7 @@ export async function verifyAuthorizationRequest(
     authorizationServerMetadata: options.authorizationServerMetadata,
     callbacks: options.callbacks,
     clientAttestation: options.clientAttestation,
+    config: options.config,
     dpopJwkThumbprint: dpopResult?.jwkThumbprint,
     now: options.now,
     requestClientId: options.authorizationRequest.client_id,

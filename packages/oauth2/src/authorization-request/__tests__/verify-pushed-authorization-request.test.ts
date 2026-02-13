@@ -6,7 +6,11 @@ import {
   JwtSigner,
 } from "@openid4vc/oauth2";
 import { encodeToBase64Url } from "@openid4vc/utils";
-import { RequestLike } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  RequestLike,
+} from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error, PushedAuthorizationRequestError } from "../../errors";
@@ -40,6 +44,10 @@ describe("verifyPushedAuthorizationRequest", () => {
       verified: true,
     })),
   };
+
+  const mockConfig = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  }) as IoWalletSdkConfig;
 
   const mockAuthorizationServerMetadata = {
     issuer: "https://auth.example.com",
@@ -130,6 +138,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -169,6 +178,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -223,6 +233,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -251,6 +262,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt: "mock-client-attestation-jwt",
           clientAttestationPopJwt: "mock-client-attestation-pop-jwt",
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -291,6 +303,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt: "mock-client-attestation-jwt",
           clientAttestationPopJwt: "mock-client-attestation-pop-jwt",
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -328,6 +341,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -383,6 +397,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -441,6 +456,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
           required: true,
@@ -491,6 +507,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         dpop: {
           required: true,
         },
@@ -544,6 +561,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -575,6 +593,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt: "",
           clientAttestationPopJwt: "",
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -633,6 +652,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -696,6 +716,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationPopJwt,
           ensureConfirmationKeyMatchesDpopKey: true,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -761,6 +782,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationPopJwt,
           ensureConfirmationKeyMatchesDpopKey: true,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -815,6 +837,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         now: customDate,
         request: mockRequest,
       };
@@ -870,6 +893,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -923,6 +947,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -966,6 +991,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -1005,6 +1031,7 @@ describe("verifyPushedAuthorizationRequest", () => {
           clientAttestationJwt,
           clientAttestationPopJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 

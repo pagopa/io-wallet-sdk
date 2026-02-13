@@ -3,7 +3,7 @@ import {
   CallbackContext,
   Jwk,
 } from "@openid4vc/oauth2";
-import { RequestLike } from "@pagopa/io-wallet-utils";
+import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
 import {
   ClientAttestationOptions,
@@ -57,11 +57,12 @@ export interface VerifyAccessTokenRequestOptions {
    * Options for verifying the client attestation
    */
   clientAttestation: ClientAttestationOptions;
-
   /**
    * The expiration date of the authorization code
    */
   codeExpiresAt?: Date;
+
+  config: IoWalletSdkConfig;
 
   /**
    * The dpop verification options
@@ -169,6 +170,7 @@ export async function verifyAccessTokenRequest(
     authorizationServerMetadata: options.authorizationServerMetadata,
     callbacks: options.callbacks,
     clientAttestation: options.clientAttestation,
+    config: options.config,
     dpopJwkThumbprint: jwkThumbprint,
     now: options.now,
   });
