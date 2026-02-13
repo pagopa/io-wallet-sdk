@@ -1,8 +1,8 @@
+import { decodeJwt } from "@openid4vc/oauth2";
 import {
   ValidationError,
   addSecondsToDate,
   dateToSeconds,
-  parseWithErrorHandling,
 } from "@openid4vc/utils";
 import {
   IoWalletSdkConfig,
@@ -13,7 +13,8 @@ import { ClientAttestationError } from "../../errors";
 import { BaseWalletAttestationOptions } from "../types";
 import {
   WalletAttestationJwtV1_0,
-  zWalletAttestationJwtV1_0,
+  zWalletAttestationJwtHeaderV1_0,
+  zWalletAttestationJwtPayloadV1_0,
 } from "./z-wallet-attestation";
 
 /**
@@ -22,6 +23,11 @@ import {
  */
 export interface WalletAttestationOptionsV1_0
   extends BaseWalletAttestationOptions {
+  /**
+   * It expresses the strength of the authentication mechanism backing the Wallet instance when interacting with a Relying Party.
+   */
+  authenticatorAssuranceLevel: string;
+
   config: {
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_0;
   } & IoWalletSdkConfig;
@@ -32,8 +38,6 @@ export interface WalletAttestationOptionsV1_0
     method: "federation";
     trustChain: [string, ...string[]]; // REQUIRED in v1.0
   };
-
-  // x5c, nbf, status are NOT accepted in v1.0
 }
 
 /**
@@ -41,8 +45,6 @@ export interface WalletAttestationOptionsV1_0
  *
  * Version 1.0 specifics:
  * - Uses only `trust_chain` in header (federation method)
- * - No x5c support
- * - No nbf or status claims
  *
  * @param options - Wallet attestation options for v1.0
  * @returns Signed wallet attestation JWT string
@@ -60,13 +62,14 @@ export const createWalletAttestationJwt = async (
       options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60);
 
     const payload = {
-      cnf: options.dpopJwkPublic,
+      cnf: { jwk: options.dpopJwkPublic },
       exp: dateToSeconds(exp),
       iat: dateToSeconds(new Date()),
       iss: options.issuer,
       sub: options.dpopJwkPublic.kid,
       ...(options.walletLink && { wallet_link: options.walletLink }),
       ...(options.walletName && { wallet_name: options.walletName }),
+      aal: options.authenticatorAssuranceLevel,
     };
 
     const header = {
@@ -78,12 +81,14 @@ export const createWalletAttestationJwt = async (
 
     const result = await signJwt(options.signer, {
       header,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      payload: payload as any, // Cast to any to avoid type conflicts with signJwt's strict payload validation
+      payload,
     });
 
-    // Validate the generated JWT structure
-    parseWithErrorHandling(zWalletAttestationJwtV1_0, result.jwt);
+    decodeJwt({
+      headerSchema: zWalletAttestationJwtHeaderV1_0,
+      jwt: result.jwt,
+      payloadSchema: zWalletAttestationJwtPayloadV1_0,
+    });
 
     return result.jwt;
   } catch (error) {

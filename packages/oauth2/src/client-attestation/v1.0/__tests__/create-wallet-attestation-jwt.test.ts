@@ -22,16 +22,21 @@ describe("createWalletAttestationJwt v1.0", () => {
     y: "test-y-value",
   };
 
+  // Mock JWT with aal at top-level payload:
+  // header: {"alg":"ES256","typ":"oauth-client-attestation+jwt","kid":"test-kid","trust_chain":["jwt1","jwt2"]}
+  // payload: {"iss":"https://wallet-provider.example.com","sub":"test-client-id","iat":1738243200,"exp":1743339600,"cnf":{"jwk":{"crv":"P-256","kid":"test-key-id","kty":"EC","x":"test-x-value","y":"test-y-value"}},"aal":"aal1"}
+  const mockJwt =
+    "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWNsaWVudC1hdHRlc3RhdGlvbitqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImp3dDEiLCJqd3QyIl19.eyJpc3MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLmNvbSIsInN1YiI6InRlc3QtY2xpZW50LWlkIiwiaWF0IjoxNzM4MjQzMjAwLCJleHAiOjE3NDMzMzk2MDAsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJraWQiOiJ0ZXN0LWtleS1pZCIsImt0eSI6IkVDIiwieCI6InRlc3QteC12YWx1ZSIsInkiOiJ0ZXN0LXktdmFsdWUifX0sImFhbCI6ImFhbDEifQ.signature";
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSignJwt.mockResolvedValue({
-      jwt: "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWNsaWVudC1hdHRlc3RhdGlvbitqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImp3dDEiLCJqd3QyIl19.eyJpc3MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLmNvbSIsInN1YiI6InRlc3QtY2xpZW50LWlkIiwiaWF0IjoxNzM4MjQzMjAwLCJleHAiOjE3NDMzMzk2MDAsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJraWQiOiJ0ZXN0LWtleS1pZCIsImt0eSI6IkVDIiwieCI6InRlc3QteC12YWx1ZSIsInkiOiJ0ZXN0LXktdmFsdWUifX19.signature",
-    });
+    mockSignJwt.mockResolvedValue({ jwt: mockJwt });
   });
 
   describe("successful JWT creation", () => {
     it("should create a valid wallet attestation JWT with required fields", async () => {
       const options = {
+        authenticatorAssuranceLevel: "aal1",
         callbacks: { signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
@@ -47,9 +52,7 @@ describe("createWalletAttestationJwt v1.0", () => {
 
       const result = await createWalletAttestationJwt(options);
 
-      expect(result).toBe(
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWNsaWVudC1hdHRlc3RhdGlvbitqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImp3dDEiLCJqd3QyIl19.eyJpc3MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLmNvbSIsInN1YiI6InRlc3QtY2xpZW50LWlkIiwiaWF0IjoxNzM4MjQzMjAwLCJleHAiOjE3NDMzMzk2MDAsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJraWQiOiJ0ZXN0LWtleS1pZCIsImt0eSI6IkVDIiwieCI6InRlc3QteC12YWx1ZSIsInkiOiJ0ZXN0LXktdmFsdWUifX19.signature",
-      );
+      expect(result).toBe(mockJwt);
 
       expect(mockSignJwt).toHaveBeenCalledWith(
         options.signer,
@@ -61,7 +64,8 @@ describe("createWalletAttestationJwt v1.0", () => {
             typ: "oauth-client-attestation+jwt",
           },
           payload: expect.objectContaining({
-            cnf: mockJwk,
+            aal: "aal1",
+            cnf: { jwk: mockJwk },
             exp: dateToSeconds(new Date("2025-01-25T00:00:00Z")),
             iat: expect.any(Number),
             iss: "https://wallet-provider.example.com",
@@ -73,6 +77,7 @@ describe("createWalletAttestationJwt v1.0", () => {
 
     it("should include both walletLink and walletName when provided", async () => {
       const options = {
+        authenticatorAssuranceLevel: "aal1",
         callbacks: { signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
@@ -105,6 +110,7 @@ describe("createWalletAttestationJwt v1.0", () => {
   describe("v1.0 specific constraints", () => {
     it("should set typ header to oauth-client-attestation+jwt", async () => {
       const options = {
+        authenticatorAssuranceLevel: "aal1",
         callbacks: { signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
@@ -133,6 +139,7 @@ describe("createWalletAttestationJwt v1.0", () => {
       mockSignJwt.mockRejectedValue(new Error("Unexpected signing error"));
 
       const options = {
+        authenticatorAssuranceLevel: "aal1",
         callbacks: { signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
