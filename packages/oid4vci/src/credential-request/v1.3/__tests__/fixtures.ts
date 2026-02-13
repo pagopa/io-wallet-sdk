@@ -1,4 +1,5 @@
 import { CredentialRequestV1_3 } from "../z-credential";
+import { CredentialResponseV1_3 } from "../z-credential-response";
 
 /**
  * Mock JWT signer for testing v1.3
@@ -82,7 +83,7 @@ export const sampleBatchCredentialResponseV1_3 = {
 /**
  * Sample deferred credential response for v1.3
  */
-export const sampleDeferredCredentialResponseV1_3 = {
-  lead_time: 86400,
+export const sampleDeferredCredentialResponseV1_3: CredentialResponseV1_3 = {
+  interval: 86400,
   transaction_id: "txn_v1.3_123456789",
 };
