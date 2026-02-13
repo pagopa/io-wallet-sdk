@@ -1,5 +1,5 @@
 import { zJwk, zJwtHeader, zJwtPayload } from "@openid4vc/oauth2";
-import { zHttpMethod, zHttpsUrl, zInteger } from "@openid4vc/utils";
+import { zHttpMethod, zHttpsUrl, zInteger } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 export const zDpopJwtPayload = z
