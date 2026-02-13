@@ -1,15 +1,7 @@
-import {
-  type CallbackContext,
-  Oauth2JwtParseError,
-  VerifyJwtCallback,
-} from "@openid4vc/oauth2";
+import { type CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { ValidationError, createFetcher } from "@openid4vc/utils";
 
 import { Oid4vpError } from "../errors";
-import {
-  type ParsedAuthorizeRequestResult,
-  parseAuthorizeRequest,
-} from "./parse-authorization-request";
 import { validateAuthorizationRequestParams } from "./validate-authorization-request";
 import { zAuthorizationRequestUrlParams } from "./z-authorization-request-url";
 
@@ -21,15 +13,10 @@ export interface FetchAuthorizationRequestOptions {
   authorizeRequestUrl: string;
 
   /**
-   * Callback functions for making HTTP requests and JWT verification
-   * Allows for custom fetch and verifyJwt implementations
+   * Callback functions for making HTTP requests
+   * Allows for custom fetch implementation
    */
-  callbacks: {
-    /**
-     * Optional JWT signature verification callback.
-     */
-    verifyJwt?: VerifyJwtCallback;
-  } & Pick<CallbackContext, "fetch">;
+  callbacks: Pick<CallbackContext, "fetch">;
 
   /**
    * Optional wallet metadata to send when request_uri_method=post.
@@ -70,11 +57,6 @@ export interface ParsedQrCode {
 
 export interface FetchAuthorizationRequestResult {
   /**
-   * The parsed authorization request
-   */
-  parsedAuthorizeRequest: ParsedAuthorizeRequestResult;
-
-  /**
    * The parsed QR code data
    * Includes `clientId`, `requestUri` and `requestUriMethod`
    */
@@ -102,7 +84,7 @@ export interface FetchAuthorizationRequestResult {
  * @returns The Request Object JWT as a string
  * @throws {Oid4vpError} If fetch fails
  */
-async function fetchRequestObjectJwt(
+export async function fetchRequestObjectJwt(
   requestUri: string,
   options: {
     fetch: CallbackContext["fetch"];
@@ -154,7 +136,7 @@ async function fetchRequestObjectJwt(
 }
 
 /**
- * Fetches and parses an OpenID4VP authorization request from a QR code URL.
+ * Fetches an OpenID4VP authorization request JWT from a QR code URL.
  *
  * Supports two transmission modes:
  * - **By Value**: Request Object JWT passed inline via `request` parameter
@@ -164,18 +146,15 @@ async function fetchRequestObjectJwt(
  * 1. Parses the authorization URL to extract parameters
  * 2. Validates that exactly one of `request` or `request_uri` is present
  * 3. Either uses inline JWT or fetches from URI (GET/POST based on request_uri_method)
- * 4. Parses and optionally verifies the Request Object JWT
- * 5. Returns the parsed object along with transmission mode metadata
+ * 4. Returns the Request Object JWT along with transmission mode metadata
+ *
+ * Note: This function does NOT parse or verify the JWT. Use {@link parseAuthorizeRequest}
+ * separately to decode and optionally verify the signature.
  *
  * @param options {@link FetchAuthorizationRequestOptions}
  * @returns Promise that resolves to {@link FetchAuthorizationRequestResult}
- * @throws {Oid4vpError} When required query parameters are missing or URL is invalid
- * @throws {InvalidRequestUriMethodError} When request_uri_method is not "get" or "post"
- * @throws {ValidationError} When the request object cannot be parsed or is invalid
- * @throws {ParseAuthorizeRequestError} When JWT verification fails
- * @throws {Oauth2JwtParseError} When the request object JWT is malformed
- *
- * @security WARNING: If `verifyJwt` callback is not provided, JWT signature verification is skipped.
+ * @throws {Oid4vpError} When required query parameters are missing, URL is invalid, or fetch fails
+ * @throws {ValidationError} When URL parameters fail schema validation
  *
  * @example By Value mode
  * ```typescript
@@ -185,9 +164,10 @@ async function fetchRequestObjectJwt(
  *
  * const result = await fetchAuthorizationRequest({
  *   authorizeRequestUrl: url,
- *   callbacks: { fetch, verifyJwt },
+ *   callbacks: { fetch },
  * });
  * // result.sendBy === "value"
+ * // result.requestObjectJwt === "eyJhbGciOiJFUzI1NiIs..."
  * ```
  *
  * @example By Reference mode with POST
@@ -199,7 +179,7 @@ async function fetchRequestObjectJwt(
  *
  * const result = await fetchAuthorizationRequest({
  *   authorizeRequestUrl: url,
- *   callbacks: { fetch, verifyJwt },
+ *   callbacks: { fetch },
  *   walletMetadata: {
  *     authorization_endpoint: "https://wallet.example.org/authorize",
  *     response_types_supported: ["vp_token"],
@@ -207,6 +187,7 @@ async function fetchRequestObjectJwt(
  *   walletNonce: "random-nonce",
  * });
  * // result.sendBy === "reference"
+ * // result.requestObjectJwt === fetched JWT from request_uri
  * ```
  */
 export async function fetchAuthorizationRequest(
@@ -251,15 +232,7 @@ export async function fetchAuthorizationRequest(
       );
     }
 
-    // Parse and optionally verify JWT
-    const { verifyJwt } = options.callbacks;
-    const parsedAuthorizeRequest = await parseAuthorizeRequest({
-      requestObjectJwt,
-      ...(verifyJwt ? { callbacks: { verifyJwt } } : {}),
-    });
-
     return {
-      parsedAuthorizeRequest,
       parsedQrCode: {
         clientId: validatedParams.client_id,
         requestUri: validatedParams.request_uri,
