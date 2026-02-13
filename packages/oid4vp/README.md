@@ -406,13 +406,6 @@ This method receives a Request Object in JWT format, verifies the signature and 
 ```typescript
 export interface CreateAuthorizationResponseOptions {
   /**
-   * Optional algorithm for signing the authorization response (JARM).
-   * If not provided, it will be derived from the RP metadata when available,
-   * or defaults to ES256.
-   */
-  authorization_signed_response_alg?: string;
-
-  /**
    * Optional algorithm for encrypting the authorization response (JARM).
    * If not provided, it will be derived from the RP metadata when available,
    * or defaults to ECDH-ES for EC keys.

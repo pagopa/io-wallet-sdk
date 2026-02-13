@@ -142,6 +142,26 @@ export async function createFeature(options: FeatureOptions): Promise<Feature> {
 
 When creating versioned folder structures (e.g., v1.0/, v1.3/), always update all related imports, tests, and README documentation in the same session.
 
+
+## IT-Wallet Technical Specifications
+
+This project implements features based on the IT-Wallet Technical Specifications.
+
+### When to Consult Specs
+
+Before implementing any feature related to:
+- Credential issuance, presentation, or revocation flows
+- Wallet Provider, Credential Issuer, or Relying Party endpoints
+- Trust infrastructure (OpenID Federation, trust chains, entity statements)
+- Data models (SD-JWT-VC, mDOC-CBOR, PID/EAA)
+- Security constraints (algorithms, X.509 validation, key management)
+- PDND e-Service integration
+- Proximity flow (NFC/BLE) or remote flow (same-device/cross-device)
+- Wallet instance lifecycle (activation, revocation, backup/restore)
+
+**ALWAYS** use the `it-wallet-spec-advisor` subagent, if it is available, to look up the relevant specs first.
+Do NOT implement based on assumptions - the specs are normative and must be followed exactly.
+
 ## Code Quality
 
 Always run type checks (`tsc --noEmit` or equivalent) after modifying TypeScript files, especially when changing schemas, enums, or type definitions.
@@ -447,17 +467,6 @@ const mockCallbacks = {
 
 - **Package Manager**: pnpm 10.14.0 (enforced via `packageManager` field)
 - **Node Version**: >=20.0.0 (specified in engines, .node-version: 20.19.4)
-
-## Compliance and Specifications
-
-The SDK implements the Italian IT-Wallet specifications v1.0:
-- https://italia.github.io/eid-wallet-it-docs/releases/1.0.2/en/
-
-When making changes, ensure compatibility with:
-- OpenID4VCI (Verifiable Credential Issuance)
-- OpenID4VP (Verifiable Presentation)
-- Italian Federation trust model
-- OAuth 2.0 extensions: PAR, DPoP, PKCE, JARM
 
 ## Package Build Configuration
 

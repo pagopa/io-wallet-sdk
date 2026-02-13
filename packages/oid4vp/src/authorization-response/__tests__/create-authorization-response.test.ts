@@ -3,9 +3,7 @@ import type {
   ItWalletCredentialVerifierMetadataV1_3,
 } from "@pagopa/io-wallet-oid-federation";
 
-import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
-import { CreateOpenid4vpAuthorizationResponseResult } from "@openid4vc/openid4vp";
-import { addSecondsToDate, dateToSeconds } from "@openid4vc/utils";
+import { CallbackContext } from "@openid4vc/oauth2";
 import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -45,18 +43,6 @@ const mockRpMetadata = {
   },
 };
 
-const mockSigner: JwtSignerJwk = {
-  alg: "ES256",
-  method: "jwk",
-  publicJwk: {
-    crv: "P-256",
-    kid: "testtesttest",
-    kty: "EC",
-    x: "...",
-    y: "...",
-  },
-};
-
 const MOCK_VP_TOKEN = ["vp_token1"];
 const MOCK_STATE = "TEST_STATE";
 const MOCK_WALLET_CLIENT_ID = "TEST_CLIENT";
@@ -69,24 +55,11 @@ const mockEncryptJwe = vi.fn((encrytor, data) => ({
   jwe: `${data}_ENCRYPTED`,
 }));
 
-const callbacks: Pick<
-  CallbackContext,
-  "encryptJwe" | "fetch" | "generateRandom" | "signJwt"
-> = {
+const callbacks: Pick<CallbackContext, "encryptJwe" | "generateRandom"> = {
   encryptJwe: mockEncryptJwe,
-  fetch: vi.fn(),
   generateRandom: () => new Uint8Array(Buffer.from(MOCK_NONCE)),
-  signJwt: (signer, { header, payload }) => {
-    if (signer.method === "jwk") {
-      return {
-        jwt: `${Base64.encode(JSON.stringify(header), true)}.${Base64.encode(JSON.stringify(payload), true)}.signature`,
-        signerJwk: signer.publicJwk,
-      };
-    } else throw new Error();
-  },
 };
 
-const TEN_MINUTES = dateToSeconds(addSecondsToDate(new Date(), 60 * 10));
 const ENCODED_NONCE = Base64.encode(MOCK_NONCE, true);
 const REQOBJ_ENCODED_NONCE = Base64.encode(REQOBJ_MOCK_NONCE, true);
 
@@ -126,7 +99,7 @@ beforeEach(() => {
 });
 
 describe("createAuthorizationResponseTests", () => {
-  it("should create an encrypted and signed authorization response successfully", async () => {
+  it("should create an encrypted authorization response successfully", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
       client_id: MOCK_WALLET_CLIENT_ID,
@@ -137,18 +110,12 @@ describe("createAuthorizationResponseTests", () => {
         response_type: "vp_token",
         state: MOCK_STATE,
       },
-      rpMetadata: mockRpMetadata,
-      signer: mockSigner,
+      rpJwks: mockRpMetadata,
       vp_token: MOCK_VP_TOKEN,
     });
 
-    expect(response.jarm?.responseJwt).toMatch(/.*\..*\.signature_ENCRYPTED/);
-    expect(response.authorizationResponsePayload).toEqual<
-      CreateOpenid4vpAuthorizationResponseResult["authorizationResponsePayload"]
-    >({
-      aud: MOCK_RP_CLIENT_ID,
-      exp: TEN_MINUTES,
-      iss: MOCK_WALLET_CLIENT_ID,
+    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
+    expect(response.authorizationResponsePayload).toEqual({
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
     });
@@ -160,30 +127,6 @@ describe("createAuthorizationResponseTests", () => {
     expect(encryptArgs[0]).toMatchObject({
       apu: ENCODED_NONCE,
       apv: REQOBJ_ENCODED_NONCE,
-    });
-  });
-
-  it("should create an encrypted and signed authorization response successfully passing the custom expiration", async () => {
-    const customExp = dateToSeconds(addSecondsToDate(new Date(), 60 * 60)); // 1h
-
-    const response = await createAuthorizationResponse({
-      callbacks,
-      client_id: MOCK_WALLET_CLIENT_ID,
-      exp: customExp,
-      requestObject: {
-        client_id: MOCK_RP_CLIENT_ID,
-        nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
-        state: MOCK_STATE,
-      },
-      rpMetadata: mockRpMetadata,
-      signer: mockSigner,
-      vp_token: MOCK_VP_TOKEN,
-    });
-
-    expect(response.authorizationResponsePayload).toMatchObject({
-      exp: customExp,
     });
   });
 
@@ -205,8 +148,7 @@ describe("createAuthorizationResponseTests", () => {
           response_type: "vp_token",
           state: MOCK_STATE,
         },
-        rpMetadata: rpMetadataWithoutKeys,
-        signer: mockSigner,
+        rpJwks: rpMetadataWithoutKeys,
         vp_token: MOCK_VP_TOKEN,
       }),
     ).rejects.toThrow(CreateAuthorizationResponseError);
@@ -218,7 +160,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
     const response = await createAuthorizationResponse({
       authorization_encrypted_response_alg: "ECDH-ES",
       authorization_encrypted_response_enc: "A256GCM",
-      authorization_signed_response_alg: "ES256",
       callbacks,
       client_id: MOCK_WALLET_CLIENT_ID,
       requestObject: {
@@ -228,16 +169,12 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
         response_type: "vp_token",
         state: MOCK_STATE,
       },
-      rpMetadata: mockRpMetadataV1_3,
-      signer: mockSigner,
+      rpJwks: mockRpMetadataV1_3,
       vp_token: MOCK_VP_TOKEN,
     });
 
-    expect(response.jarm?.responseJwt).toMatch(/.*\..*\.signature_ENCRYPTED/);
+    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
     expect(response.authorizationResponsePayload).toMatchObject({
-      aud: MOCK_RP_CLIENT_ID,
-      exp: TEN_MINUTES,
-      iss: MOCK_WALLET_CLIENT_ID,
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
     });
@@ -254,16 +191,13 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
         response_type: "vp_token",
         state: MOCK_STATE,
       },
-      rpMetadata: mockRpMetadataV1_3,
-      signer: mockSigner,
+      rpJwks: mockRpMetadataV1_3,
       vp_token: MOCK_VP_TOKEN,
     });
 
-    // Should succeed with defaults: ECDH-ES, A256GCM (from encrypted_response_enc_values_supported), ES256
-    expect(response.jarm?.responseJwt).toMatch(/.*\..*\.signature_ENCRYPTED/);
+    // Should succeed with defaults: ECDH-ES, A256GCM (from encrypted_response_enc_values_supported)
+    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
     expect(response.authorizationResponsePayload).toMatchObject({
-      aud: MOCK_RP_CLIENT_ID,
-      iss: MOCK_WALLET_CLIENT_ID,
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
     });
@@ -277,7 +211,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
 
     const response = await createAuthorizationResponse({
       authorization_encrypted_response_alg: "ECDH-ES",
-      authorization_signed_response_alg: "ES256",
       // Not providing authorization_encrypted_response_enc to test fallback
       callbacks,
       client_id: MOCK_WALLET_CLIENT_ID,
@@ -288,8 +221,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
         response_type: "vp_token",
         state: MOCK_STATE,
       },
-      rpMetadata: metadataWith192GCM,
-      signer: mockSigner,
+      rpJwks: metadataWith192GCM,
       vp_token: MOCK_VP_TOKEN,
     });
 
@@ -311,16 +243,13 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
         response_type: "vp_token",
         state: MOCK_STATE,
       },
-      rpMetadata: mockRpMetadata, // v1.0 metadata
-      signer: mockSigner,
+      rpJwks: mockRpMetadata, // v1.0 metadata
       vp_token: MOCK_VP_TOKEN,
     });
 
-    // Should work with v1.0 metadata by reading JARM config from rpMetadata
-    expect(response.jarm?.responseJwt).toMatch(/.*\..*\.signature_ENCRYPTED/);
+    // Should work with v1.0 metadata by reading JARM config from rpJwks
+    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
     expect(response.authorizationResponsePayload).toMatchObject({
-      aud: MOCK_RP_CLIENT_ID,
-      iss: MOCK_WALLET_CLIENT_ID,
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
     });

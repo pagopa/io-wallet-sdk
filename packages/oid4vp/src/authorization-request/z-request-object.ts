@@ -41,18 +41,7 @@ export const zOpenid4vpAuthorizationRequestPayload = z
     response_uri: z.string().url().optional(),
     scope: z.string().optional(),
     state: z.string(),
-
-    /** Currently not supported in createOpenid4vpAuthorizationResponse
-     * 
-    transaction_data: z
-      .array(
-        z.object({
-          credential_ids: z.array(z.string()).nonempty(),
-          type: z.string(),
-        }),
-      )
-      .optional(),
-      */
+    transaction_data: z.array(z.string()).nonempty().optional(),
     transaction_data_hashes_alg: z.array(z.string()).optional(),
     wallet_nonce: z.string().optional(),
   })
