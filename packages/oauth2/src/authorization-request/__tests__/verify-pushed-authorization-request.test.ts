@@ -72,7 +72,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       "signature",
     ].join(".");
 
-  const createMockClientAttestationJwt = (payload: Record<string, unknown>) =>
+  const createMockWalletAttestationJwt = (payload: Record<string, unknown>) =>
     createMockJwt(
       {
         alg: "ES256",
@@ -109,7 +109,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         scope: "openid",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -135,8 +135,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,
@@ -153,7 +153,7 @@ describe("verifyPushedAuthorizationRequest", () => {
     });
 
     it("should verify pushed authorization request without JAR", async () => {
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -175,8 +175,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,
@@ -204,7 +204,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         state: "test-state",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -230,8 +230,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,
@@ -259,8 +259,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt: "mock-client-attestation-jwt",
           clientAttestationPopJwt: "mock-client-attestation-pop-jwt",
+          walletAttestationJwt: "mock-client-attestation-jwt",
         },
         config: mockConfig,
         request: mockRequest,
@@ -300,8 +300,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt: "mock-client-attestation-jwt",
           clientAttestationPopJwt: "mock-client-attestation-pop-jwt",
+          walletAttestationJwt: "mock-client-attestation-jwt",
         },
         config: mockConfig,
         request: mockRequest,
@@ -313,7 +313,7 @@ describe("verifyPushedAuthorizationRequest", () => {
     });
 
     it("should accept request without JAR when require_signed_request_object is false", async () => {
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -338,8 +338,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,
@@ -368,7 +368,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -394,8 +394,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -427,7 +427,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -453,8 +453,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -478,7 +478,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         iss: "client-123",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -504,8 +504,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -532,7 +532,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         iss: "client-123",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -558,8 +558,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,
@@ -590,8 +590,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt: "",
           clientAttestationPopJwt: "",
+          walletAttestationJwt: "",
         },
         config: mockConfig,
         request: mockRequest,
@@ -623,7 +623,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -649,8 +649,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -686,7 +686,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -712,9 +712,9 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
           ensureConfirmationKeyMatchesDpopKey: true,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -752,7 +752,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: differentJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -778,9 +778,9 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
           ensureConfirmationKeyMatchesDpopKey: true,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -808,7 +808,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         iss: "client-123",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(customDate.getTime() / 1000) + 3600,
@@ -834,8 +834,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         now: customDate,
@@ -864,7 +864,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -890,8 +890,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -918,7 +918,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         iss: "client-123",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -944,8 +944,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,
@@ -966,7 +966,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -988,8 +988,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         dpop: {
@@ -1006,7 +1006,7 @@ describe("verifyPushedAuthorizationRequest", () => {
     });
 
     it("should handle request with client attestation (no JAR or DPoP)", async () => {
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -1028,8 +1028,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,

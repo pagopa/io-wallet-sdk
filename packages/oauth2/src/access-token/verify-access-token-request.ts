@@ -7,8 +7,8 @@ import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
 import {
   ClientAttestationOptions,
-  VerifiedClientAttestationJwt,
   VerifiedClientAttestationPopJwt,
+  VerifiedWalletAttestationJwt,
   verifyClientAttestation,
 } from "../client-attestation";
 import { Oauth2Error } from "../errors";
@@ -100,7 +100,7 @@ export interface VerifyAccessTokenRequestOptions {
 
 export interface VerifyAccessTokenRequestResult {
   clientAttestation: {
-    clientAttestation: VerifiedClientAttestationJwt;
+    clientAttestation: VerifiedWalletAttestationJwt;
     clientAttestationPop: VerifiedClientAttestationPopJwt;
   };
 

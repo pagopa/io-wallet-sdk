@@ -80,7 +80,7 @@ export interface VerifyPushedAuthorizationRequestOptions
  * @param options.dpop.required - Whether DPoP is required (will throw if missing)
  * @param options.dpop.allowedSigningAlgs - Allowed signing algorithms for DPoP
  * @param options.clientAttestation - Optional client attestation verification configuration
- * @param options.clientAttestation.clientAttestationJwt - The client attestation JWT from headers
+ * @param options.clientAttestation.walletAttestationJwt - The wallet attestation JWT from headers
  * @param options.clientAttestation.clientAttestationPopJwt - The client attestation PoP JWT from headers
  * @param options.clientAttestation.required - Whether client attestation is required (will throw if missing)
  * @param options.clientAttestation.ensureConfirmationKeyMatchesDpopKey - Whether to verify DPoP and client attestation use the same key

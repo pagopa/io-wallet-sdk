@@ -14,8 +14,8 @@ export interface ParseAuthorizationRequestResult {
    * These have not been verified yet.
    */
   clientAttestation?: {
-    clientAttestationJwt: string;
     clientAttestationPopJwt: string;
+    walletAttestationJwt: string;
   };
 
   /**
@@ -64,12 +64,12 @@ export function parseAuthorizationRequest(
   }
 
   return {
-    clientAttestation: extractedClientAttestationJwts.clientAttestationHeader
+    clientAttestation: extractedClientAttestationJwts.walletAttestationHeader
       ? {
-          clientAttestationJwt:
-            extractedClientAttestationJwts.clientAttestationHeader,
           clientAttestationPopJwt:
             extractedClientAttestationJwts.clientAttestationPopHeader,
+          walletAttestationJwt:
+            extractedClientAttestationJwts.walletAttestationHeader,
         }
       : undefined,
     dpop: extractedDpopJwt.dpopJwt

@@ -5,9 +5,9 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
-import { verifyClientAttestationJwt } from "../verify-client-attestation-jwt";
+import { verifyWalletAttestationJwt } from "../verify-wallet-attestation-jwt";
 
-describe("verifyClientAttestationJwt v1.0", () => {
+describe("verifyWalletAttestationJwt v1.0", () => {
   const mockJwk = { crv: "P-256", kty: "EC", x: "x-value", y: "y-value" };
   const mockVerifyJwt = vi.fn(async () => ({
     signerJwk: mockJwk,
@@ -43,10 +43,10 @@ describe("verifyClientAttestationJwt v1.0", () => {
     it("should verify a valid v1.0 wallet attestation JWT", async () => {
       const jwt = buildJwt(validHeader, validPayload);
 
-      const result = await verifyClientAttestationJwt({
+      const result = await verifyWalletAttestationJwt({
         callbacks: { verifyJwt: mockVerifyJwt },
-        clientAttestationJwt: jwt,
         config: mockConfig,
+        walletAttestationJwt: jwt,
       });
 
       expect(result.header.trust_chain).toEqual(["jwt1", "jwt2"]);
@@ -66,10 +66,10 @@ describe("verifyClientAttestationJwt v1.0", () => {
       const jwt = buildJwt(headerWithoutTrustChain, validPayload);
 
       await expect(
-        verifyClientAttestationJwt({
+        verifyWalletAttestationJwt({
           callbacks: { verifyJwt: mockVerifyJwt },
-          clientAttestationJwt: jwt,
           config: mockConfig,
+          walletAttestationJwt: jwt,
         }),
       ).rejects.toThrow();
     });
@@ -81,10 +81,10 @@ describe("verifyClientAttestationJwt v1.0", () => {
       const jwt = buildJwt(validHeader, payloadWithoutAal);
 
       await expect(
-        verifyClientAttestationJwt({
+        verifyWalletAttestationJwt({
           callbacks: { verifyJwt: mockVerifyJwt },
-          clientAttestationJwt: jwt,
           config: mockConfig,
+          walletAttestationJwt: jwt,
         }),
       ).rejects.toThrow();
     });
@@ -96,10 +96,10 @@ describe("verifyClientAttestationJwt v1.0", () => {
       });
 
       await expect(
-        verifyClientAttestationJwt({
+        verifyWalletAttestationJwt({
           callbacks: { verifyJwt: mockVerifyJwt },
-          clientAttestationJwt: jwt,
           config: mockConfig,
+          walletAttestationJwt: jwt,
         }),
       ).rejects.toThrow();
     });

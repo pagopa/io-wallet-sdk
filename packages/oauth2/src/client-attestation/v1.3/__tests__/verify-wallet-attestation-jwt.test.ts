@@ -5,9 +5,9 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
-import { verifyClientAttestationJwt } from "../verify-client-attestation-jwt";
+import { verifyWalletAttestationJwt } from "../verify-wallet-attestation-jwt";
 
-describe("verifyClientAttestationJwt v1.3", () => {
+describe("verifyWalletAttestationJwt v1.3", () => {
   const mockJwk = { crv: "P-256", kty: "EC", x: "x-value", y: "y-value" };
   const mockX5c = ["MIICert1Base64==", "MIICert2Base64=="] as [
     string,
@@ -46,10 +46,10 @@ describe("verifyClientAttestationJwt v1.3", () => {
     it("should verify a valid v1.3 wallet attestation JWT", async () => {
       const jwt = buildJwt(validHeader, validPayload);
 
-      const result = await verifyClientAttestationJwt({
+      const result = await verifyWalletAttestationJwt({
         callbacks: { verifyJwt: mockVerifyJwt },
-        clientAttestationJwt: jwt,
         config: mockConfig,
+        walletAttestationJwt: jwt,
       });
 
       expect(result.header.x5c).toEqual(mockX5c);
@@ -63,10 +63,10 @@ describe("verifyClientAttestationJwt v1.3", () => {
       const nbf = Math.floor(new Date("2025-01-01").getTime() / 1000);
       const jwt = buildJwt(validHeader, { ...validPayload, nbf });
 
-      const result = await verifyClientAttestationJwt({
+      const result = await verifyWalletAttestationJwt({
         callbacks: { verifyJwt: mockVerifyJwt },
-        clientAttestationJwt: jwt,
         config: mockConfig,
+        walletAttestationJwt: jwt,
       });
 
       expect(result.payload.nbf).toBe(nbf);
@@ -79,10 +79,10 @@ describe("verifyClientAttestationJwt v1.3", () => {
       };
       const jwt = buildJwt(headerWithTrustChain, validPayload);
 
-      const result = await verifyClientAttestationJwt({
+      const result = await verifyWalletAttestationJwt({
         callbacks: { verifyJwt: mockVerifyJwt },
-        clientAttestationJwt: jwt,
         config: mockConfig,
+        walletAttestationJwt: jwt,
       });
 
       expect(result.header.trust_chain).toEqual(["jwt1", "jwt2"]);
@@ -97,10 +97,10 @@ describe("verifyClientAttestationJwt v1.3", () => {
       const jwt = buildJwt(headerWithoutX5c, validPayload);
 
       await expect(
-        verifyClientAttestationJwt({
+        verifyWalletAttestationJwt({
           callbacks: { verifyJwt: mockVerifyJwt },
-          clientAttestationJwt: jwt,
           config: mockConfig,
+          walletAttestationJwt: jwt,
         }),
       ).rejects.toThrow();
     });
@@ -109,10 +109,10 @@ describe("verifyClientAttestationJwt v1.3", () => {
       const jwt = buildJwt(validHeader, validPayload);
 
       await expect(
-        verifyClientAttestationJwt({
+        verifyWalletAttestationJwt({
           callbacks: { verifyJwt: mockVerifyJwt },
-          clientAttestationJwt: jwt,
           config: mockConfig,
+          walletAttestationJwt: jwt,
         }),
       ).resolves.toBeDefined();
     });

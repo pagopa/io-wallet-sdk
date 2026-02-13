@@ -3,11 +3,12 @@ import {
   ClientAttestationJwtPayload,
 } from "@openid4vc/oauth2";
 import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
+import z from "zod";
 
-export interface BaseVerifyClientAttestationJwtOptions {
+export interface BaseVerifyWalletAttestationJwtOptions {
   callbacks: Pick<CallbackContext, "verifyJwt">;
-  clientAttestationJwt: string;
   now?: Date;
+  walletAttestationJwt: string;
 }
 
 /**
@@ -22,3 +23,16 @@ export interface BaseWalletAttestationOptions {
   walletLink?: string;
   walletName?: string;
 }
+
+export const zOauthClientAttestationHeader = z.literal(
+  "OAuth-Client-Attestation",
+);
+
+export const oauthClientAttestationHeader = zOauthClientAttestationHeader.value;
+
+export const zOauthClientAttestationPopHeader = z.literal(
+  "OAuth-Client-Attestation-PoP",
+);
+
+export const oauthClientAttestationPopHeader =
+  zOauthClientAttestationPopHeader.value;

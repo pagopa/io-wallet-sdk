@@ -7,8 +7,8 @@ import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
 import {
   ClientAttestationOptions,
-  VerifiedClientAttestationJwt,
   VerifiedClientAttestationPopJwt,
+  VerifiedWalletAttestationJwt,
   verifyClientAttestation,
 } from "../client-attestation";
 import { Oauth2Error } from "../errors";
@@ -39,7 +39,7 @@ export interface VerifyAuthorizationRequestResult {
    * The verified client attestation if any were provided.
    */
   clientAttestation?: {
-    clientAttestation: VerifiedClientAttestationJwt;
+    clientAttestation: VerifiedWalletAttestationJwt;
     clientAttestationPop: VerifiedClientAttestationPopJwt;
   };
 
@@ -101,7 +101,7 @@ export interface VerifyAuthorizationRequestOptions {
  * @param options.dpop.required - Whether DPoP is required (will throw if missing)
  * @param options.dpop.allowedSigningAlgs - Allowed signing algorithms for DPoP
  * @param options.clientAttestation - Client attestation verification configuration
- * @param options.clientAttestation.clientAttestationJwt - The client attestation JWT from headers
+ * @param options.clientAttestation.walletAttestationJwt - The wallet attestation JWT from headers
  * @param options.clientAttestation.clientAttestationPopJwt - The client attestation PoP JWT from headers
  * @param options.clientAttestation.ensureConfirmationKeyMatchesDpopKey - Whether to verify DPoP and client attestation use the same key
  * @param options.request - The HTTP request object containing URL and headers
@@ -130,7 +130,7 @@ export interface VerifyAuthorizationRequestOptions {
  *     allowedSigningAlgs: ['ES256']
  *   },
  *   clientAttestation: {
- *     clientAttestationJwt: clientAttJwtFromHeaders,
+ *     walletAttestationJwt: clientAttJwtFromHeaders,
  *     clientAttestationPopJwt: clientAttPopJwtFromHeaders,
  *     required: true,
  *     ensureConfirmationKeyMatchesDpopKey: true

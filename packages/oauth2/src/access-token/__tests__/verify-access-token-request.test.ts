@@ -60,7 +60,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     redirect_uri: "https://client.example.com/callback",
   };
 
-  const createMockClientAttestationJwt = (payload: Record<string, unknown>) =>
+  const createMockWalletAttestationJwt = (payload: Record<string, unknown>) =>
     [
       encodeToBase64Url(
         JSON.stringify({
@@ -112,7 +112,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       jti: "test-jti",
     });
 
-    const clientAttestationJwt = createMockClientAttestationJwt({
+    const clientAttestationJwt = createMockWalletAttestationJwt({
       aal: "high",
       cnf: { jwk: mockJwk },
       exp: Math.floor(now.getTime() / 1000) + 3600,
@@ -134,8 +134,8 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       authorizationServerMetadata: mockAuthorizationServerMetadata,
       callbacks: mockCallbacks,
       clientAttestation: {
-        clientAttestationJwt,
         clientAttestationPopJwt,
+        walletAttestationJwt: clientAttestationJwt,
       },
       config: mockConfig,
       dpop: {
@@ -352,7 +352,6 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should throw error when client attestation JWT is missing", async () => {
       const options = createValidOptions({
         clientAttestation: {
-          clientAttestationJwt: "",
           clientAttestationPopJwt: createMockClientAttestationPopJwt({
             aud: "https://auth.example.com",
             exp: Math.floor(Date.now() / 1000) + 3600,
@@ -360,6 +359,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
             iss: "client-123",
             jti: "test-jti",
           }),
+          walletAttestationJwt: "",
         },
       });
 
@@ -374,7 +374,8 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
     it("should throw error when client attestation PoP JWT is missing", async () => {
       const options = createValidOptions({
         clientAttestation: {
-          clientAttestationJwt: createMockClientAttestationJwt({
+          clientAttestationPopJwt: "",
+          walletAttestationJwt: createMockWalletAttestationJwt({
             aal: "high",
             cnf: { jwk: mockJwk },
             exp: Math.floor(Date.now() / 1000) + 3600,
@@ -382,7 +383,6 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
             iss: "https://issuer.example.com",
             sub: "client-123",
           }),
-          clientAttestationPopJwt: "",
         },
       });
 
@@ -407,7 +407,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         jti: "test-jti",
       });
 
-      const clientAttestationJwt = createMockClientAttestationJwt({
+      const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
         exp: Math.floor(customDate.getTime() / 1000) + 3600,
@@ -426,8 +426,8 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
 
       const options = createValidOptions({
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         codeExpiresAt,
         dpop: {

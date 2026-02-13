@@ -9,16 +9,16 @@ import { createClientAttestationPopJwt } from "./client-attestation-pop";
 import {
   oauthClientAttestationHeader,
   oauthClientAttestationPopHeader,
-} from "./z-client-attestation";
+} from "./types";
 
 /**
  * Supported OAuth 2.0 client authentication methods.
  */
 export const SupportedClientAuthenticationMethod = {
-  ClientAttestationJwt: "attest_jwt_client_auth",
   ClientSecretBasic: "client_secret_basic",
   ClientSecretPost: "client_secret_post",
   None: "none",
+  WalletAttestationJwt: "attest_jwt_client_auth",
 } as const;
 
 /**
@@ -48,7 +48,7 @@ export function isClientAttestationSupported(
     !options.authorizationServerMetadata
       .token_endpoint_auth_methods_supported ||
     !options.authorizationServerMetadata.token_endpoint_auth_methods_supported.includes(
-      SupportedClientAuthenticationMethod.ClientAttestationJwt,
+      SupportedClientAuthenticationMethod.WalletAttestationJwt,
     )
   ) {
     return {
@@ -112,26 +112,26 @@ export function clientAuthenticationAnonymous(): ClientAuthenticationCallback {
   };
 }
 
-export interface ClientAuthenticationClientAttestationJwtOptions {
+export interface ClientAuthenticationWalletAttestationJwtOptions {
   callbacks: Pick<CallbackContext, "generateRandom" | "signJwt">;
-  clientAttestationJwt: string;
+  walletAttestationJwt: string;
 }
 
 /**
- * Client authentication using client attestation JWT.
- * This method adds the client attestation JWT and a proof-of-possession JWT to the request headers.
+ * Client authentication using wallet attestation JWT.
+ * This method adds the wallet attestation JWT and a proof-of-possession JWT to the request headers.
  */
-export function clientAuthenticationClientAttestationJwt(
-  options: ClientAuthenticationClientAttestationJwtOptions,
+export function clientAuthenticationWalletAttestationJwt(
+  options: ClientAuthenticationWalletAttestationJwtOptions,
 ): ClientAuthenticationCallback {
   return async ({ authorizationServerMetadata, headers }) => {
     const clientAttestationPop = await createClientAttestationPopJwt({
       authorizationServer: authorizationServerMetadata.issuer,
       callbacks: options.callbacks,
-      clientAttestation: options.clientAttestationJwt,
+      clientAttestation: options.walletAttestationJwt,
     });
 
-    headers.set(oauthClientAttestationHeader, options.clientAttestationJwt);
+    headers.set(oauthClientAttestationHeader, options.walletAttestationJwt);
     headers.set(oauthClientAttestationPopHeader, clientAttestationPop);
   };
 }

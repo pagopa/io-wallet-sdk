@@ -52,7 +52,7 @@ describe("parseAccessTokenRequest", () => {
       });
       expect(result.pkceCodeVerifier).toBe("test-code-verifier");
       expect(result.dpop.jwt).toBe(VALID_DPOP_JWT);
-      expect(result.clientAttestation.clientAttestationJwt).toBe(
+      expect(result.clientAttestation.walletAttestationJwt).toBe(
         VALID_CLIENT_ATTESTATION_JWT,
       );
       expect(result.clientAttestation.clientAttestationPopJwt).toBe(
@@ -167,7 +167,7 @@ describe("parseAccessTokenRequest", () => {
       });
       expect(result.pkceCodeVerifier).toBeUndefined();
       expect(result.dpop.jwt).toBe(VALID_DPOP_JWT);
-      expect(result.clientAttestation.clientAttestationJwt).toBe(
+      expect(result.clientAttestation.walletAttestationJwt).toBe(
         VALID_CLIENT_ATTESTATION_JWT,
       );
       expect(result.clientAttestation.clientAttestationPopJwt).toBe(

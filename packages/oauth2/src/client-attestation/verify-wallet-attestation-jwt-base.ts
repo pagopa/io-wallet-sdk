@@ -1,13 +1,13 @@
 import { decodeJwt, jwtSignerFromJwt, verifyJwt } from "@openid4vc/oauth2";
 import { ZodType, z } from "zod";
 
-import { BaseVerifyClientAttestationJwtOptions } from "./types";
+import { BaseVerifyWalletAttestationJwtOptions } from "./types";
 
-export async function verifyClientAttestationJwtBase<
+export async function verifyWalletAttestationBase<
   THeader extends ZodType,
   TPayload extends ZodType,
 >(
-  options: BaseVerifyClientAttestationJwtOptions,
+  options: BaseVerifyWalletAttestationJwtOptions,
   headerSchema: THeader,
   payloadSchema: TPayload,
 ): Promise<{
@@ -17,13 +17,13 @@ export async function verifyClientAttestationJwtBase<
 }> {
   const { header, payload } = decodeJwt({
     headerSchema,
-    jwt: options.clientAttestationJwt,
+    jwt: options.walletAttestationJwt,
     payloadSchema,
   });
 
   const { signer } = await verifyJwt({
-    compact: options.clientAttestationJwt,
-    errorMessage: "client attestation jwt verification failed.",
+    compact: options.walletAttestationJwt,
+    errorMessage: "wallet attestation verification failed.",
     header,
     now: options.now,
     payload,
