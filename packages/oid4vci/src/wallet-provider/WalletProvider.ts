@@ -1,6 +1,6 @@
-import { Openid4vciWalletProvider } from "@openid4vc/openid4vci";
 import { V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
 import {
+  IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
 } from "@pagopa/io-wallet-utils";
@@ -14,8 +14,9 @@ import { WalletProviderError } from "../errors";
  */
 function isV1_0Options(
   options: WalletAttestationOptions,
+  version: ItWalletSpecsVersion,
 ): options is V1_0.WalletAttestationOptionsV1_0 {
-  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
+  return version === ItWalletSpecsVersion.V1_0;
 }
 
 /**
@@ -23,17 +24,23 @@ function isV1_0Options(
  */
 function isV1_3Options(
   options: WalletAttestationOptions,
+  version: ItWalletSpecsVersion,
 ): options is V1_3.WalletAttestationOptionsV1_3 {
-  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
+  return version === ItWalletSpecsVersion.V1_3;
 }
 
 /**
  * @class WalletProvider
- * @extends Openid4vciWalletProvider
  * @description An implementation of a wallet provider for the OpenID4VCI protocol, tailored for the Italian ecosystem.
  * It handles the creation of wallet attestations required during the credential issuance flow.
  */
-export class WalletProvider extends Openid4vciWalletProvider {
+export class WalletProvider {
+  private specVersion: ItWalletSpecsVersion;
+
+  constructor(options: IoWalletSdkConfig) {
+    this.specVersion = options.itWalletSpecsVersion;
+  }
+
   /**
    * Creates a wallet attestation JWT according to the configured Italian Wallet specification version.
    *
@@ -51,7 +58,6 @@ export class WalletProvider extends Openid4vciWalletProvider {
    * @example v1.0 - Basic wallet attestation with trust chain
    * const jwt = await provider.createItWalletAttestationJwt({
    *   callbacks: { signJwt: mySignJwtCallback },
-   *   config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 },
    *   dpopJwkPublic: myJwk,
    *   issuer: "https://wallet-provider.example.com",
    *   signer: {
@@ -64,7 +70,6 @@ export class WalletProvider extends Openid4vciWalletProvider {
    * @example v1.3 - Wallet attestation with x5c and optional fields
    * const jwt = await provider.createItWalletAttestationJwt({
    *   callbacks: { signJwt: mySignJwtCallback },
-   *   config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 },
    *   dpopJwkPublic: myJwk,
    *   issuer: "https://wallet-provider.example.com",
    *   signer: {
@@ -77,37 +82,21 @@ export class WalletProvider extends Openid4vciWalletProvider {
    *   status: { status_list: { idx: 2, uri: "https://status.example.com" } } // Optional
    * });
    */
-  // Function overload for v1.0
 
-  public async createItWalletAttestationJwt(
-    options: V1_0.WalletAttestationOptionsV1_0,
-  ): Promise<string>;
-
-  // Function overload for v1.3
-
-  public async createItWalletAttestationJwt(
-    options: V1_3.WalletAttestationOptionsV1_3,
-  ): Promise<string>;
-
-  // Implementation signature (not callable by users)
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
-    // Store version for error reporting
-    const version = options.config.itWalletSpecsVersion;
-
     // Validate that dpopJwkPublic has a kid property
     // This validation is common across all versions
     if (!options.dpopJwkPublic.kid) {
       throw new WalletProviderError("The DPoP JWK must have a 'kid' property");
     }
 
-    if (isV1_0Options(options)) {
+    if (isV1_0Options(options, this.specVersion)) {
       // For v1.0: use trust_chain only
       return V1_0.createWalletAttestationJwt({
         authenticatorAssuranceLevel: options.authenticatorAssuranceLevel,
         callbacks: options.callbacks,
-        config: options.config,
         dpopJwkPublic: options.dpopJwkPublic,
         expiresAt: options.expiresAt,
         issuer: options.issuer,
@@ -117,11 +106,10 @@ export class WalletProvider extends Openid4vciWalletProvider {
       });
     }
 
-    if (isV1_3Options(options)) {
+    if (isV1_3Options(options, this.specVersion)) {
       // For v1.3: use x5c (required) and optional trust_chain, nbf, status
       return V1_3.createWalletAttestationJwt({
         callbacks: options.callbacks,
-        config: options.config,
         dpopJwkPublic: options.dpopJwkPublic,
         expiresAt: options.expiresAt,
         issuer: options.issuer,
@@ -135,7 +123,7 @@ export class WalletProvider extends Openid4vciWalletProvider {
 
     throw new ItWalletSpecsVersionError(
       "createItWalletAttestationJwt",
-      version,
+      this.specVersion,
       [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
     );
   }
