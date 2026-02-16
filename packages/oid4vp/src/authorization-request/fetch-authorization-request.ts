@@ -87,6 +87,7 @@ export interface FetchAuthorizationRequestResult {
  * @param options - Fetch options including method and wallet metadata
  * @returns The Request Object JWT as a string
  * @throws {UnexpectedStatusCodeError} If the server returns a non-200 status code
+ * @throws {Error} If the underlying fetch/createFetcher call fails (for example, due to network errors)
  */
 export async function fetchRequestObjectJwt(
   requestUri: string,
@@ -152,7 +153,7 @@ export async function fetchRequestObjectJwt(
  *
  * @param options {@link FetchAuthorizationRequestOptions}
  * @returns Promise that resolves to {@link FetchAuthorizationRequestResult}
- * @throws {Oid4vpError} When required query parameters are missing or URL is invalid
+ * @throws {Oid4vpError} When required query parameters are missing, the URL is invalid, or an unexpected error occurs during fetch or parsing
  * @throws {UnexpectedStatusCodeError} When the server returns a non-200 status code during fetch
  * @throws {ValidationError} When URL parameters fail schema validation
  *
