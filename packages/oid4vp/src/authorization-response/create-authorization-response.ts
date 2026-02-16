@@ -44,7 +44,9 @@ export interface CreateAuthorizationResponseOptions {
   rpJwks: Pick<
     ItWalletCredentialVerifierMetadata | ItWalletCredentialVerifierMetadataV1_3,
     "jwks"
-  >;
+  > & {
+    encrypted_response_enc_values_supported?: string[];
+  };
 
   /**
    * Array containing the vp_tokens of the credentials
@@ -135,17 +137,24 @@ export async function createAuthorizationResponse(
       );
     }
 
+    const encValuesSupported =
+      effectiveClientMetadata?.encrypted_response_enc_values_supported ??
+      options.rpJwks.encrypted_response_enc_values_supported;
+
     let enc: string;
-    if (effectiveClientMetadata?.encrypted_response_enc_values_supported) {
-      // Take first supported, or otherwise the first value
-      enc =
-        [encryptionEnc].find((e) =>
-          effectiveClientMetadata.encrypted_response_enc_values_supported?.includes(
-            e,
-          ),
-        ) ??
-        effectiveClientMetadata.encrypted_response_enc_values_supported[0] ??
-        encryptionEnc;
+    if (encValuesSupported) {
+      if (options.authorization_encrypted_response_enc !== undefined) {
+        // Explicit value provided: use it if supported, otherwise take the first supported value
+        enc =
+          encValuesSupported.find(
+            (e) => e === options.authorization_encrypted_response_enc,
+          ) ??
+          encValuesSupported[0] ??
+          options.authorization_encrypted_response_enc;
+      } else {
+        // No explicit value: take the first (most preferred) value from the metadata
+        enc = encValuesSupported[0] ?? encryptionEnc;
+      }
     } else {
       enc = encryptionEnc;
     }
