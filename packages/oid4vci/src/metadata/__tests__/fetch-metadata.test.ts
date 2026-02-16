@@ -329,7 +329,10 @@ describe("fetchMetadata - base URL with path segment", () => {
       jwks: mockJwks,
       metadata: {
         oauth_authorization_server: authorizationServerMetadata,
-        openid_credential_issuer: credentialIssuerMetadata,
+        openid_credential_issuer: {
+          ...credentialIssuerMetadata,
+          credential_issuer: "https://issuer.example.it/v1",
+        },
       },
       sub: "https://issuer.example.it/v1",
     };
@@ -350,6 +353,7 @@ describe("fetchMetadata - base URL with path segment", () => {
     const issuerWithAuthServers = {
       ...credentialIssuerMetadata,
       authorization_servers: ["https://auth.example.it/v1"],
+      credential_issuer: "https://issuer.example.it/v1",
     };
 
     // Federation fails
