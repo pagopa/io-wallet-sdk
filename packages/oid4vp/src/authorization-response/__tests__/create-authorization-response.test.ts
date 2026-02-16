@@ -222,7 +222,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
     // Should use first value from encrypted_response_enc_values_supported (A192GCM)
     expect(mockEncryptJwe).toHaveBeenCalledWith(
       expect.objectContaining({ enc: "A192GCM" }),
-      expect.anything()
+      expect.anything(),
     );
     expect(response.jarm?.responseJwe).toBeDefined();
     expect(response.authorizationResponsePayload).toMatchObject({

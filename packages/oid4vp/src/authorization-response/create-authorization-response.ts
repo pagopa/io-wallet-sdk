@@ -41,12 +41,12 @@ export interface CreateAuthorizationResponseOptions {
   /**
    * Relying Party metadata JWKS
    */
-  rpJwks: Pick<
+  rpJwks: {
+    encrypted_response_enc_values_supported?: string[];
+  } & Pick<
     ItWalletCredentialVerifierMetadata | ItWalletCredentialVerifierMetadataV1_3,
     "jwks"
-  > & {
-    encrypted_response_enc_values_supported?: string[];
-  };
+  >;
 
   /**
    * Array containing the vp_tokens of the credentials
