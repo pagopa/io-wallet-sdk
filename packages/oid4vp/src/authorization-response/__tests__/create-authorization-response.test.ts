@@ -45,7 +45,6 @@ const mockRpMetadata = {
 
 const MOCK_VP_TOKEN = ["vp_token1"];
 const MOCK_STATE = "TEST_STATE";
-const MOCK_WALLET_CLIENT_ID = "TEST_CLIENT";
 const MOCK_RP_CLIENT_ID = "TEST_RP_CLIENT";
 const MOCK_NONCE = "TEST_NONCE";
 const REQOBJ_MOCK_NONCE = "REQ_TEST_NONCE";
@@ -102,7 +101,6 @@ describe("createAuthorizationResponseTests", () => {
   it("should create an encrypted authorization response successfully", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
-      client_id: MOCK_WALLET_CLIENT_ID,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -114,7 +112,7 @@ describe("createAuthorizationResponseTests", () => {
       vp_token: MOCK_VP_TOKEN,
     });
 
-    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
+    expect(response.jarm?.responseJwe).toMatch(/_ENCRYPTED$/);
     expect(response.authorizationResponsePayload).toEqual({
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
@@ -140,7 +138,6 @@ describe("createAuthorizationResponseTests", () => {
     await expect(
       createAuthorizationResponse({
         callbacks,
-        client_id: MOCK_WALLET_CLIENT_ID,
         requestObject: {
           client_id: MOCK_RP_CLIENT_ID,
           nonce: REQOBJ_MOCK_NONCE,
@@ -161,7 +158,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       authorization_encrypted_response_alg: "ECDH-ES",
       authorization_encrypted_response_enc: "A256GCM",
       callbacks,
-      client_id: MOCK_WALLET_CLIENT_ID,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -173,7 +169,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       vp_token: MOCK_VP_TOKEN,
     });
 
-    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
+    expect(response.jarm?.responseJwe).toMatch(/_ENCRYPTED$/);
     expect(response.authorizationResponsePayload).toMatchObject({
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
@@ -183,7 +179,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
   it("should use default JARM algorithms for v1.3 metadata when not provided", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
-      client_id: MOCK_WALLET_CLIENT_ID,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -196,7 +191,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
     });
 
     // Should succeed with defaults: ECDH-ES, A256GCM (from encrypted_response_enc_values_supported)
-    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
+    expect(response.jarm?.responseJwe).toMatch(/_ENCRYPTED$/);
     expect(response.authorizationResponsePayload).toMatchObject({
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
@@ -213,7 +208,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       authorization_encrypted_response_alg: "ECDH-ES",
       // Not providing authorization_encrypted_response_enc to test fallback
       callbacks,
-      client_id: MOCK_WALLET_CLIENT_ID,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -226,7 +220,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
     });
 
     // Should use first value from encrypted_response_enc_values_supported (A192GCM)
-    expect(response.jarm?.responseJwt).toBeDefined();
+    expect(response.jarm?.responseJwe).toBeDefined();
     expect(response.authorizationResponsePayload).toMatchObject({
       vp_token: MOCK_VP_TOKEN,
     });
@@ -235,7 +229,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
   it("should maintain backward compatibility with v1.0 metadata (without explicit JARM parameters)", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
-      client_id: MOCK_WALLET_CLIENT_ID,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -248,10 +241,77 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
     });
 
     // Should work with v1.0 metadata by reading JARM config from rpJwks
-    expect(response.jarm?.responseJwt).toMatch(/_ENCRYPTED$/);
+    expect(response.jarm?.responseJwe).toMatch(/_ENCRYPTED$/);
     expect(response.authorizationResponsePayload).toMatchObject({
       state: MOCK_STATE,
       vp_token: MOCK_VP_TOKEN,
     });
+  });
+});
+
+describe("createAuthorizationResponse client_id prefix validation", () => {
+  it("should throw when x509_hash client_id is used without client_metadata", async () => {
+    await expect(
+      createAuthorizationResponse({
+        callbacks,
+        requestObject: {
+          client_id: "x509_hash:https://rp.example.org",
+          nonce: REQOBJ_MOCK_NONCE,
+          response_mode: "direct_post.jwt",
+          response_type: "vp_token",
+          state: MOCK_STATE,
+        },
+        rpJwks: mockRpMetadata,
+        vp_token: MOCK_VP_TOKEN,
+      }),
+    ).rejects.toThrow(CreateAuthorizationResponseError);
+  });
+
+  it("should throw when openid_federation client_id is used with client_metadata", async () => {
+    await expect(
+      createAuthorizationResponse({
+        callbacks,
+        requestObject: {
+          client_id: "openid_federation:https://rp.example.org",
+          client_metadata: {
+            jwks: mockRpMetadata.jwks,
+            vp_formats_supported: {},
+          },
+          nonce: REQOBJ_MOCK_NONCE,
+          response_mode: "direct_post.jwt",
+          response_type: "vp_token",
+          state: MOCK_STATE,
+        },
+        rpJwks: mockRpMetadata,
+        vp_token: MOCK_VP_TOKEN,
+      }),
+    ).rejects.toThrow(CreateAuthorizationResponseError);
+  });
+
+  it("should succeed when x509_hash client_id is used with client_metadata", async () => {
+    const response = await createAuthorizationResponse({
+      callbacks,
+      requestObject: {
+        client_id: "x509_hash:https://rp.example.org",
+        client_metadata: {
+          encrypted_response_enc_values_supported: ["A192GCM"],
+          jwks: mockRpMetadata.jwks,
+          vp_formats_supported: {},
+        },
+        nonce: REQOBJ_MOCK_NONCE,
+        response_mode: "direct_post.jwt",
+        response_type: "vp_token",
+        state: MOCK_STATE,
+      },
+      rpJwks: mockRpMetadata,
+      vp_token: MOCK_VP_TOKEN,
+    });
+
+    expect(response.jarm?.responseJwe).toBeDefined();
+    const encryptArgs = mockEncryptJwe.mock.calls[0] as unknown as [
+      { enc: string },
+      string,
+    ];
+    expect(encryptArgs[0].enc).toBe("A192GCM");
   });
 });

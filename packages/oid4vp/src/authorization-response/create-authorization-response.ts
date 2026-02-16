@@ -34,16 +34,6 @@ export interface CreateAuthorizationResponseOptions {
   callbacks: Pick<CallbackContext, "encryptJwe" | "generateRandom">;
 
   /**
-   * Thumbprint of the JWK in the cnf Wallet Attestation
-   */
-  client_id: string;
-
-  /**
-   * Optional expiration of the Authorization Response JWT, defaults to 10 minutes
-   */
-  exp?: number;
-
-  /**
    * Presentation's Request Object
    */
   requestObject: AuthorizationRequestObject;
@@ -71,12 +61,12 @@ export interface CreateAuthorizationResponseResult {
   authorizationResponsePayload: AuthorizationResponse;
   jarm: {
     encryptionJwk: Jwk;
-    responseJwt: string;
+    responseJwe: string;
   };
 }
 
 /**
- * Creates a signed and encrypted authorization response for OpenID4VP presentation.
+ * Creates an encrypted JARM authorization response for OpenID4VP presentation.
  *
  * This function generates a JARM (JWT Secured Authorization Response Mode) response
  * containing the VP tokens from the wallet to the verifier.
@@ -87,19 +77,16 @@ export interface CreateAuthorizationResponseResult {
  *   resolved from rpJwks or fall back to implementation defaults (e.g. ECDH-ES / A256GCM)
  *
  * @param options - Configuration for creating the authorization response
- * @param options.authorization_encrypted_response_alg - Optional JARM encryption algorithm (JWE alg). For v1.3, if omitted, it is derived from rpJwks or falls back to a default (e.g. ECDH-ES).
- * @param options.authorization_encrypted_response_enc - Optional JARM encryption encoding (JWE enc). For v1.3, if omitted, it is derived from rpJwks or falls back to a default (e.g. A256GCM).
- * @param options.callbacks - Cryptographic callbacks for JWT operations
- * @param options.client_id - Thumbprint of the JWK in the cnf Wallet Attestation
- * @param options.exp - Optional JWT expiration time in seconds (default: 10 minutes)
+ * @param options.authorization_encrypted_response_alg - Optional JARM encryption algorithm (JWE alg). If omitted, falls back to "ECDH-ES".
+ * @param options.authorization_encrypted_response_enc - Optional JARM encryption encoding (JWE enc). If omitted, the first value from metadata's encrypted_response_enc_values_supported is used, or falls back to "A256GCM".
+ * @param options.callbacks - Cryptographic callbacks for JWE encryption
  * @param options.requestObject - The authorization request object to respond to
- * @param options.rpJwks - OpenID Federation Relying Party JWKS (v1.0 or v1.3)
- * @param options.signer - Optional signer for JWT signing. If omitted, response won't be signed
+ * @param options.rpJwks - Relying Party JWKS with optional enc values (v1.0 or v1.3)
  * @param options.vp_token - Array of VP tokens to include in the response
  *
- * @returns A signed and/or encrypted authorization response
+ * @returns An encrypted JARM authorization response (JWE compact serialization)
  *
- * @throws {CreateAuthorizationResponseError} If response generation, encryption, or signing fails
+ * @throws {CreateAuthorizationResponseError} If response generation or encryption fails
  */
 export async function createAuthorizationResponse(
   options: CreateAuthorizationResponseOptions,
@@ -183,7 +170,7 @@ export async function createAuthorizationResponse(
       authorizationResponsePayload,
       jarm: {
         encryptionJwk: usedJwk,
-        responseJwt: jwe,
+        responseJwe: jwe,
       },
     };
   } catch (error) {
