@@ -315,6 +315,73 @@ describe("fetchMetadata", () => {
   });
 });
 
+describe("fetchMetadata - base URL with path segment", () => {
+  const pathBaseOptions: FetchMetadataOptions = {
+    callbacks: { fetch: mockFetch },
+    credentialIssuerUrl: "https://issuer.example.it/v1",
+  };
+
+  it("should call federation endpoint preserving base URL path segment", async () => {
+    const federationPayload = {
+      exp: 1_700_003_600,
+      iat: 1_700_000_000,
+      iss: "https://issuer.example.it/v1",
+      jwks: mockJwks,
+      metadata: {
+        oauth_authorization_server: authorizationServerMetadata,
+        openid_credential_issuer: {
+          ...credentialIssuerMetadata,
+          credential_issuer: "https://issuer.example.it/v1",
+        },
+      },
+      sub: "https://issuer.example.it/v1",
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+    });
+
+    await fetchMetadata(pathBaseOptions);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://issuer.example.it/v1/.well-known/openid-federation",
+    );
+  });
+
+  it("should call credential-issuer endpoint preserving base URL path segment", async () => {
+    const issuerWithAuthServers = {
+      ...credentialIssuerMetadata,
+      authorization_servers: ["https://auth.example.it/v1"],
+      credential_issuer: "https://issuer.example.it/v1",
+    };
+
+    // Federation fails
+    mockFetch.mockResolvedValueOnce({ status: 404 });
+    // Credential issuer succeeds
+    mockFetch.mockResolvedValueOnce({
+      json: vi.fn().mockResolvedValue(issuerWithAuthServers),
+      status: 200,
+    });
+    // Auth server succeeds
+    mockFetch.mockResolvedValueOnce({
+      json: vi.fn().mockResolvedValue(authorizationServerMetadata),
+      status: 200,
+    });
+
+    await fetchMetadata(pathBaseOptions);
+
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://issuer.example.it/v1/.well-known/openid-credential-issuer",
+    );
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      3,
+      "https://auth.example.it/v1/.well-known/oauth-authorization-server",
+    );
+  });
+});
+
 describe("fetchMetadata - verifyJwt callback", () => {
   const federationPayload = {
     exp: 1_700_003_600,
