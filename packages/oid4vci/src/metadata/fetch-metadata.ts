@@ -19,6 +19,10 @@ import {
   zPartialIssuerMetadata,
 } from "./z-metadata-response";
 
+function ensureTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url : `${url}/`;
+}
+
 export interface FetchMetadataOptions {
   /** Callback providing the fetch implementation */
   callbacks: {
@@ -51,8 +55,8 @@ async function tryFederationDiscovery(
 ): Promise<MetadataResponse | undefined> {
   try {
     const federationUrl = new URL(
-      "/.well-known/openid-federation",
-      baseUrl,
+      ".well-known/openid-federation",
+      ensureTrailingSlash(baseUrl),
     ).toString();
     const response = await fetch(federationUrl);
 
@@ -109,8 +113,8 @@ async function fallbackDiscovery(
   baseUrl: string,
 ): Promise<MetadataResponse> {
   const issuerlUrl = new URL(
-    "/.well-known/openid-credential-issuer",
-    baseUrl,
+    ".well-known/openid-credential-issuer",
+    ensureTrailingSlash(baseUrl),
   ).toString();
   const issuerResponse = await fetch(issuerlUrl);
 
@@ -130,8 +134,8 @@ async function fallbackDiscovery(
     }
 
     const authServerUrl = new URL(
-      "/.well-known/oauth-authorization-server",
-      parsedUrl.data,
+      ".well-known/oauth-authorization-server",
+      ensureTrailingSlash(parsedUrl.data),
     ).toString();
 
     const authServerResponse = await fetch(authServerUrl);
