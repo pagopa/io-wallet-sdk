@@ -4,10 +4,6 @@ import {
   addSecondsToDate,
   dateToSeconds,
 } from "@openid4vc/utils";
-import {
-  IoWalletSdkConfig,
-  ItWalletSpecsVersion,
-} from "@pagopa/io-wallet-utils";
 
 import { ClientAttestationError } from "../../errors";
 import { BaseWalletAttestationOptions } from "../types";
@@ -27,10 +23,6 @@ export interface WalletAttestationOptionsV1_0
    * It expresses the strength of the authentication mechanism backing the Wallet instance when interacting with a Relying Party.
    */
   authenticatorAssuranceLevel: string;
-
-  config: {
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0;
-  } & IoWalletSdkConfig;
 
   signer: {
     alg: string;

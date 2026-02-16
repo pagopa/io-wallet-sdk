@@ -4,10 +4,6 @@ import {
   addSecondsToDate,
   dateToSeconds,
 } from "@openid4vc/utils";
-import {
-  IoWalletSdkConfig,
-  ItWalletSpecsVersion,
-} from "@pagopa/io-wallet-utils";
 
 import { ClientAttestationError } from "../../errors";
 import { BaseWalletAttestationOptions } from "../types";
@@ -23,10 +19,6 @@ import {
  */
 export interface WalletAttestationOptionsV1_3
   extends BaseWalletAttestationOptions {
-  config: {
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3;
-  } & IoWalletSdkConfig;
-
   // NEW OPTIONAL CLAIMS
   nbf?: Date; // Not Before timestamp
 
