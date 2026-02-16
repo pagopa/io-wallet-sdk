@@ -13,6 +13,7 @@ import {
   vi,
 } from "vitest";
 
+import { WalletProviderError } from "../../errors";
 import { WalletProvider } from "../WalletProvider";
 
 vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
@@ -134,6 +135,36 @@ describe("WalletProvider", () => {
       await expect(
         provider.createItWalletAttestationJwt(options),
       ).rejects.toThrow(ItWalletSpecsVersionError);
+    });
+  });
+
+  describe("version mismatch", () => {
+    it("should throw WalletProviderError when options signer method mismatches configured version", async () => {
+      const provider = new WalletProvider(
+        new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+        }),
+      );
+
+      const v1_3Options: V1_3.WalletAttestationOptionsV1_3 = {
+        callbacks: { signJwt: mockSignJwt },
+        dpopJwkPublic: mockJwk,
+        issuer: "https://wallet-provider.example.com",
+        signer: {
+          alg: "ES256",
+          kid: "provider-key-id",
+          method: "x5c",
+          x5c: ["cert1-base64"] as [string, ...string[]],
+        },
+      };
+
+      await expect(
+        provider.createItWalletAttestationJwt(
+          v1_3Options as Parameters<
+            typeof provider.createItWalletAttestationJwt
+          >[0],
+        ),
+      ).rejects.toThrow(WalletProviderError);
     });
   });
 
