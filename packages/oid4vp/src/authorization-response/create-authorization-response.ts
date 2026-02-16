@@ -65,7 +65,7 @@ export interface CreateAuthorizationResponseOptions {
 
 /**
  * Result of createAuthorizationResponse function
- * Contains the generated JARM payload and the encrypted JWT response to send to the verifier
+ * Contains the generated JARM payload and the encrypted response to send to the verifier
  */
 export interface CreateAuthorizationResponseResult {
   authorizationResponsePayload: AuthorizationResponse;
