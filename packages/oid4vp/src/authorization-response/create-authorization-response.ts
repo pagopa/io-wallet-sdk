@@ -109,11 +109,13 @@ export async function createAuthorizationResponse(
       );
     }
 
-    if (clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION && clientMetadata) {
-      throw new CreateAuthorizationResponseError(
-        "clientMetadata is not required when client_id uses openid_federation prefix",
-      );
-    }
+    // When using OpenID Federation, client_metadata may be present in the request
+    // but per the Italian specification most of its content should be ignored —
+    // use rpJwks for encryption parameters instead.
+    const effectiveClientMetadata =
+      clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION
+        ? undefined
+        : clientMetadata;
 
     const authorizationResponsePayload: AuthorizationResponse = {
       state: requestObject.state,
@@ -121,8 +123,8 @@ export async function createAuthorizationResponse(
     };
 
     // Extract encryption JWK from effective metadata
-    const encryptionJwks = clientMetadata
-      ? clientMetadata.jwks
+    const encryptionJwks = effectiveClientMetadata
+      ? effectiveClientMetadata.jwks
       : options.rpJwks.jwks;
     const encryptionJwk = extractEncryptionJwkFromJwks(encryptionJwks, {
       supportedAlgValues: [encryptionAlg],
@@ -134,13 +136,15 @@ export async function createAuthorizationResponse(
     }
 
     let enc: string;
-    if (clientMetadata?.encrypted_response_enc_values_supported) {
+    if (effectiveClientMetadata?.encrypted_response_enc_values_supported) {
       // Take first supported, or otherwise the first value
       enc =
         [encryptionEnc].find((e) =>
-          clientMetadata.encrypted_response_enc_values_supported?.includes(e),
+          effectiveClientMetadata.encrypted_response_enc_values_supported?.includes(
+            e,
+          ),
         ) ??
-        clientMetadata.encrypted_response_enc_values_supported[0] ??
+        effectiveClientMetadata.encrypted_response_enc_values_supported[0] ??
         encryptionEnc;
     } else {
       enc = encryptionEnc;

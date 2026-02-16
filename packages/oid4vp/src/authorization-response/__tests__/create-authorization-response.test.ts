@@ -267,25 +267,45 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
     ).rejects.toThrow(CreateAuthorizationResponseError);
   });
 
-  it("should throw when openid_federation client_id is used with client_metadata", async () => {
-    await expect(
-      createAuthorizationResponse({
-        callbacks,
-        requestObject: {
-          client_id: "openid_federation:https://rp.example.org",
-          client_metadata: {
-            jwks: mockRpMetadata.jwks,
-            vp_formats_supported: {},
-          },
-          nonce: REQOBJ_MOCK_NONCE,
-          response_mode: "direct_post.jwt",
-          response_type: "vp_token",
-          state: MOCK_STATE,
+  it("should succeed when openid_federation client_id is used with client_metadata (client_metadata is ignored)", async () => {
+    // Per Italian specification, client_metadata may be present when using OpenID Federation
+    // but its content should be ignored — rpJwks must be used instead.
+    const differentJwks = {
+      keys: [
+        {
+          crv: "P-256",
+          kid: "different-key",
+          kty: "EC" as "EC" | "RSA",
+          x: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          y: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
         },
-        rpJwks: mockRpMetadata,
-        vp_token: MOCK_VP_TOKEN,
-      }),
-    ).rejects.toThrow(CreateAuthorizationResponseError);
+      ],
+    };
+    const response = await createAuthorizationResponse({
+      callbacks,
+      requestObject: {
+        client_id: "openid_federation:https://rp.example.org",
+        client_metadata: {
+          // Different JWKs than rpJwks to verify they are ignored
+          jwks: differentJwks,
+          vp_formats_supported: {},
+        },
+        nonce: REQOBJ_MOCK_NONCE,
+        response_mode: "direct_post.jwt",
+        response_type: "vp_token",
+        state: MOCK_STATE,
+      },
+      rpJwks: mockRpMetadata,
+      vp_token: MOCK_VP_TOKEN,
+    });
+
+    expect(response.jarm?.responseJwe).toBeDefined();
+    // Verify rpJwks was used, not client_metadata.jwks
+    const encryptArgs = mockEncryptJwe.mock.calls[0] as unknown as [
+      { publicJwk: { kid: string } },
+      string,
+    ];
+    expect(encryptArgs[0].publicJwk.kid).toBe(mockRpMetadata.jwks.keys[0]?.kid);
   });
 
   it("should succeed when x509_hash client_id is used with client_metadata", async () => {
