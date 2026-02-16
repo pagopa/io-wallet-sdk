@@ -1,3 +1,4 @@
+import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { InvalidRequestUriMethodError, Oid4vpError } from "../../errors";
@@ -47,6 +48,7 @@ describe("fetchAuthorizationRequest", () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
+      status: 200,
       text: () => Promise.resolve(requestObjectJwt),
     });
 
@@ -77,6 +79,7 @@ describe("fetchAuthorizationRequest", () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
+      status: 200,
       text: () => Promise.resolve(requestObjectJwt),
     });
 
@@ -96,14 +99,15 @@ describe("fetchAuthorizationRequest", () => {
     );
   });
 
-  it("should throw error if fetch fails", async () => {
+  it("should throw UnexpectedStatusCodeError if fetch returns non-200 status", async () => {
     const authorizeRequestUrl =
       "https://example.com?client_id=123&request_uri=https://request.com";
 
     mockFetch.mockResolvedValue({
-      ok: false,
+      headers: new Headers(),
       status: 404,
-      statusText: "Not Found",
+      text: vi.fn().mockResolvedValue("Not Found"),
+      url: "https://request.com",
     });
 
     await expect(
@@ -111,17 +115,18 @@ describe("fetchAuthorizationRequest", () => {
         authorizeRequestUrl,
         callbacks: mockCallbacks,
       }),
-    ).rejects.toThrow(Oid4vpError);
+    ).rejects.toThrow(UnexpectedStatusCodeError);
   });
 
-  it("should rethrow Oid4vpError on fetch failure", async () => {
+  it("should rethrow UnexpectedStatusCodeError on server error", async () => {
     const authorizeRequestUrl =
       "https://example.com?client_id=123&request_uri=https://request.com";
 
     mockFetch.mockResolvedValue({
-      ok: false,
+      headers: new Headers(),
       status: 500,
-      statusText: "Internal Server Error",
+      text: vi.fn().mockResolvedValue("Internal Server Error"),
+      url: "https://request.com",
     });
 
     await expect(
@@ -129,7 +134,7 @@ describe("fetchAuthorizationRequest", () => {
         authorizeRequestUrl,
         callbacks: mockCallbacks,
       }),
-    ).rejects.toThrow(Oid4vpError);
+    ).rejects.toThrow(UnexpectedStatusCodeError);
   });
 
   it("should wrap unexpected errors in Oid4vpError", async () => {
@@ -153,6 +158,7 @@ describe("fetchAuthorizationRequest", () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
+      status: 200,
       text: () => Promise.resolve(requestObjectJwt),
     });
 
@@ -199,6 +205,7 @@ describe("fetchAuthorizationRequest - by value mode", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       text: async () => requestObjectJwt,
     });
 
@@ -268,6 +275,7 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       text: async () => requestObjectJwt,
     });
 
@@ -304,6 +312,7 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       text: async () => requestObjectJwt,
     });
 
@@ -325,6 +334,7 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       text: async () => requestObjectJwt,
     });
 
@@ -352,6 +362,7 @@ describe("fetchAuthorizationRequest - POST with wallet metadata", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       text: async () => requestObjectJwt,
     });
 
@@ -405,6 +416,7 @@ describe("fetchAuthorizationRequest - backward compatibility", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       text: async () => requestObjectJwt,
     });
 
@@ -428,6 +440,7 @@ describe("fetchAuthorizationRequest - backward compatibility", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       text: async () => requestObjectJwt,
     });
 

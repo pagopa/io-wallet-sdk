@@ -1,5 +1,9 @@
 import { type CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { ValidationError, createFetcher } from "@openid4vc/utils";
+import {
+  UnexpectedStatusCodeError,
+  hasStatusOrThrow,
+} from "@pagopa/io-wallet-utils";
 
 import { Oid4vpError } from "../errors";
 import { validateAuthorizationRequestParams } from "./validate-authorization-request";
@@ -82,7 +86,8 @@ export interface FetchAuthorizationRequestResult {
  * @param requestUri - URI to fetch Request Object from
  * @param options - Fetch options including method and wallet metadata
  * @returns The Request Object JWT as a string
- * @throws {Oid4vpError} If fetch fails
+ * @throws {UnexpectedStatusCodeError} If the server returns a non-200 status code
+ * @throws {Error} If the underlying fetch/createFetcher call fails (for example, due to network errors)
  */
 export async function fetchRequestObjectJwt(
   requestUri: string,
@@ -125,12 +130,7 @@ export async function fetchRequestObjectJwt(
 
   const response = await fetch(requestUri, requestInit);
 
-  if (!response.ok) {
-    throw new Oid4vpError(
-      `Failed to fetch authorization request object: ${response.status} ${response.statusText}`,
-      response.status,
-    );
-  }
+  await hasStatusOrThrow(200, UnexpectedStatusCodeError)(response);
 
   return await response.text();
 }
@@ -153,7 +153,8 @@ export async function fetchRequestObjectJwt(
  *
  * @param options {@link FetchAuthorizationRequestOptions}
  * @returns Promise that resolves to {@link FetchAuthorizationRequestResult}
- * @throws {Oid4vpError} When required query parameters are missing, URL is invalid, or fetch fails
+ * @throws {Oid4vpError} When required query parameters are missing, the URL is invalid, or an unexpected error occurs during fetch or parsing
+ * @throws {UnexpectedStatusCodeError} When the server returns a non-200 status code during fetch
  * @throws {ValidationError} When URL parameters fail schema validation
  *
  * @example By Value mode
@@ -248,7 +249,8 @@ export async function fetchAuthorizationRequest(
     if (
       error instanceof ValidationError ||
       error instanceof Oauth2JwtParseError ||
-      error instanceof Oid4vpError
+      error instanceof Oid4vpError ||
+      error instanceof UnexpectedStatusCodeError
     ) {
       throw error;
     }
