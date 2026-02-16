@@ -106,9 +106,10 @@ async function getPublicKeyForVerification(options: {
 
 export interface ParseAuthorizeRequestOptions {
   /**
-   * Callback context for signature verification.
+   * Optional callback context for JWT signature verification.
+   * If not provided, signature verification is skipped.
    */
-  callbacks: Pick<CallbackContext, "verifyJwt">;
+  callbacks?: Pick<CallbackContext, "verifyJwt">;
 
   /**
    * The Authorization Request Object JWT.
@@ -128,10 +129,11 @@ export interface ParsedAuthorizeRequestResult {
 }
 
 /**
- * This method verifies a JWT containing a Request Object and returns its
- * decoded value for further processing.
+ * Parses and optionally verifies a JWT containing an OpenID4VP Request Object.
  *
- * The public key for signature verification is obtained according to IT Wallet specifications:
+ * This method decodes the Request Object JWT and validates its structure. If the `verifyJwt`
+ * callback is provided, it also verifies the JWT signature using the public key obtained
+ * according to IT Wallet specifications:
  * 1. If client_id has x509_hash prefix: use x5c certificate chain from header
  * 2. If client_id has openid_federation prefix or no prefix: extract from header.trust_chain
  *
@@ -139,7 +141,9 @@ export interface ParsedAuthorizeRequestResult {
  * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
  * @throws {@link ValidationError} in case there are errors validating the Request Object structure
  * @throws {@link Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
- * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid or there are unexpected errors
+ * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid (when verifyJwt is provided) or there are unexpected errors
+ *
+ * @security If `verifyJwt` callback is not provided in options, JWT signature verification is skipped.
  */
 export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,
@@ -151,21 +155,23 @@ export async function parseAuthorizeRequest(
       payloadSchema: zOpenid4vpAuthorizationRequestPayload,
     });
 
-    const signer = await getPublicKeyForVerification({
-      header: decoded.header,
-      payload: decoded.payload,
-    });
+    if (options.callbacks && options.callbacks.verifyJwt) {
+      const signer = await getPublicKeyForVerification({
+        header: decoded.header,
+        payload: decoded.payload,
+      });
 
-    const verificationResult = await options.callbacks.verifyJwt(signer, {
-      compact: options.requestObjectJwt,
-      header: decoded.header,
-      payload: decoded.payload,
-    });
+      const verificationResult = await options.callbacks.verifyJwt(signer, {
+        compact: options.requestObjectJwt,
+        header: decoded.header,
+        payload: decoded.payload,
+      });
 
-    if (!verificationResult.verified)
-      throw new ParseAuthorizeRequestError(
-        "Error verifying Request Object signature",
-      );
+      if (!verificationResult.verified)
+        throw new ParseAuthorizeRequestError(
+          "Error verifying Request Object signature",
+        );
+    }
 
     return {
       header: decoded.header,

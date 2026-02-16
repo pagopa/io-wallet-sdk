@@ -5,7 +5,11 @@ import {
   Jwk,
 } from "@openid4vc/oauth2";
 import { encodeToBase64Url } from "@openid4vc/utils";
-import { RequestLike } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  RequestLike,
+} from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error } from "../../errors";
@@ -43,6 +47,10 @@ describe("verifyAuthorizationRequest", () => {
   const mockAuthorizationServerMetadata = {
     issuer: "https://auth.example.com",
   } as AuthorizationServerMetadata;
+
+  const mockConfig = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  }) as IoWalletSdkConfig;
 
   const mockAuthorizationRequest = {
     client_id: "client-123",
@@ -117,9 +125,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -157,9 +166,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           required: true,
         },
@@ -197,9 +207,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -239,9 +250,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           allowedSigningAlgs: ["ES256", "RS256"],
           jwt: dpopJwt,
@@ -279,9 +291,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -298,9 +311,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt: "",
           clientAttestationPopJwt: "",
+          walletAttestationJwt: "",
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -327,9 +341,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt: "",
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -355,9 +370,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt: "",
           clientAttestationPopJwt,
+          walletAttestationJwt: "",
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -392,9 +408,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -429,9 +446,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         request: mockRequest,
       };
 
@@ -472,10 +490,11 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
           ensureConfirmationKeyMatchesDpopKey: true,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -525,10 +544,11 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
           ensureConfirmationKeyMatchesDpopKey: true,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -580,10 +600,11 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
           ensureConfirmationKeyMatchesDpopKey: false,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -628,9 +649,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -678,9 +700,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
@@ -723,9 +746,10 @@ describe("verifyAuthorizationRequest", () => {
         authorizationServerMetadata: mockAuthorizationServerMetadata,
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationJwt,
           clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
+        config: mockConfig,
         dpop: {
           jwt: dpopJwt,
         },
