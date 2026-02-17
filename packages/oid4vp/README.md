@@ -272,61 +272,49 @@ try {
 
 ```typescript
 import { createAuthorizationResponse, AuthorizationRequestObject } from '@pagopa/io-wallet-oid4vp';
-import { ItWalletCredentialVerifierMetadata } from "@pagopa/io-wallet-oid-federation";
+import {
+  ItWalletCredentialVerifierMetadata,
+  ItWalletCredentialVerifierMetadataV1_3
+} from "@pagopa/io-wallet-oid-federation";
 
-//Obtain the RP's metadata
-const rpMetadata : ItWalletCredentialVerifierMetadata = {
-  ...
-}
-
-//Obtain a decoded Request Object from, e.g., parseAuthorizeRequest invocation
+// Obtain a decoded Request Object from, e.g., parseAuthorizeRequest invocation
 const requestObject: AuthorizationRequestObject = {
   ...
 }
 
-//Obtain the signer
-const signer = {
-    method : 'jwk',
-    publicJwk : {/*... jwk details*/},
-    alg : 'ES256'
+// Build rpJwks from the RP's resolved metadata (e.g. from the trust chain)
+const rpJwks = {
+  jwks: rpMetadata.jwks,
+  encrypted_response_enc_values_supported: rpMetadata.encrypted_response_enc_values_supported,
 }
 
-//Obtain the vp_token
+// Obtain the vp_token
 const vp_token = {
-  ... //VP token containing the attributes to disclose
+  ... // VP token containing the attributes to disclose
 }
 
-//Prepare the callbacks
+// Prepare the callbacks
 const callbacks = {
-    encryptJwe : async (jweEncryptor, data) => {
-        const result = encrypt(data, jweEncryptor)
+    encryptJwe: async (jweEncryptor, data) => {
+        const jwe = await encrypt(data, jweEncryptor)
         return {
-            verified : result,
-            encryptionJwk : jweEncryptor
+            encryptionJwk: jweEncryptor.publicJwk,
+            jwe
         }
     },
-    fetch : async (input, init) => {
-      ...//Fetch implementation
-    },
-    generateRandom : async (number) => new Uint8Array(number),
-    signJwt : async (jwtSigner, {header, payload}) => {
-      const str = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(body))}`
-      const sig = signJwt(jwtSigner, str)
-      return `${str}.${sig}`
-    }
+    generateRandom: async (number) => crypto.getRandomValues(new Uint8Array(number)),
 }
 
-//Create the response
-
-const resp = createAuthorizationResponse({
+// Create the response
+const { authorizationResponsePayload, jarm } = await createAuthorizationResponse({
   callbacks,
-  client_id : "JWK Thumbprint",
   requestObject,
-  rpMetadata,
-  signer,
-  vp_token
+  rpJwks,
+  vp_token,
 })
 
+// jarm.responseJwe is the encrypted JWE to POST to the response_uri
+// jarm.encryptionJwk is the JWK used for encryption
 ```
 
 ## API Reference
@@ -406,44 +394,21 @@ This method receives a Request Object in JWT format, verifies the signature and 
 ```typescript
 export interface CreateAuthorizationResponseOptions {
   /**
-   * Optional algorithm for signing the authorization response (JARM).
-   * If not provided, it will be derived from the RP metadata when available,
-   * or defaults to ES256.
-   */
-  authorization_signed_response_alg?: string;
-
-  /**
-   * Optional algorithm for encrypting the authorization response (JARM).
-   * If not provided, it will be derived from the RP metadata when available,
-   * or defaults to ECDH-ES for EC keys.
+   * JARM encryption algorithm (JWE alg), should be one of the values supported by the verifier's metadata.
+   * Falls back to "ECDH-ES" if not provided.
    */
   authorization_encrypted_response_alg?: string;
 
   /**
-   * Optional content encryption encoding for the authorization response (JARM).
-   * If not provided, it will be derived from the RP metadata when available,
-   * or falls back to the first value in encrypted_response_enc_values_supported
-   * or A256GCM.
+   * JARM encryption encoding (JWE enc), should be one of the values supported by the verifier's metadata.
+   * Falls back to the first value in encrypted_response_enc_values_supported, or "A256GCM" if not provided.
    */
   authorization_encrypted_response_enc?: string;
 
   /**
    * Callbacks for authorization response generation
    */
-  callbacks: Pick<
-    CallbackContext,
-    "encryptJwe" | "fetch" | "generateRandom" | "signJwt"
-  >;
-
-  /**
-   * Thumbprint of the JWK in the cnf Wallet Attestation
-   */
-  client_id: string;
-
-  /**
-   * Optional expiration of the Authorization Response JWT, defaults to 10 minutes
-   */
-  exp?: number;
+  callbacks: Pick<CallbackContext, "encryptJwe" | "generateRandom">;
 
   /**
    * Presentation's Request Object
@@ -451,30 +416,50 @@ export interface CreateAuthorizationResponseOptions {
   requestObject: AuthorizationRequestObject;
 
   /**
-   * OpenID Federation Relying Party metadata.
-   * Supports both v1.0 and v1.3 credential verifier metadata.
+   * Relying Party JWKS and optional enc values.
+   * The jwks field is used to locate the encryption key.
+   * encrypted_response_enc_values_supported drives enc algorithm selection when
+   * authorization_encrypted_response_enc is not explicitly provided.
    */
-  rpMetadata: ItWalletCredentialVerifierMetadata | ItWalletCredentialVerifierMetadataV1_3;
+  rpJwks: {
+    encrypted_response_enc_values_supported?: string[];
+  } & Pick<
+    ItWalletCredentialVerifierMetadata | ItWalletCredentialVerifierMetadataV1_3,
+    "jwks"
+  >;
 
   /**
-   * Signer created from the Wallet Instance's private key
-   */
-  signer: JwtSigner;
-
-  /**
-   * Array containing the vp_tokens of the credentials
-   * to present
+   * Array containing the vp_tokens of the credentials to present
    */
   vp_token: VpToken;
 }
 
+export interface CreateAuthorizationResponseResult {
+  /**
+   * The plain authorization response payload (before encryption)
+   */
+  authorizationResponsePayload: AuthorizationResponse;
+
+  jarm: {
+    /**
+     * The JWK used for encryption
+     */
+    encryptionJwk: Jwk;
+
+    /**
+     * The encrypted JARM response (JWE compact serialization) to POST to the response_uri
+     */
+    responseJwe: string;
+  };
+}
+
 export async function createAuthorizationResponse(
   options: CreateAuthorizationResponseOptions,
-) {
+): Promise<CreateAuthorizationResponseResult> {
   ...
 }
 ```
-This method receives the RequestObject, its resolved VP Tokens and other necessary cryptographic and configuration data and returns a signed Authorization Response
+This method receives the Request Object, the resolved VP tokens and cryptographic configuration, and returns an encrypted JARM authorization response (JWE compact serialization) to be sent to the verifier's `response_uri`.
 
 ### Errors
 
