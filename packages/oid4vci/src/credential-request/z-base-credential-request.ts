@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { CredentialRequestV1_0 } from "./v1.0";
-import { CredentialRequestV1_3 } from "./v1.3";
+import type { CredentialRequestV1_0 } from "./v1.0";
+import type { CredentialRequestV1_3 } from "./v1.3";
 
 /**
  * Base Credential request schema for IT-Wallet v1.0 and v1.3.
