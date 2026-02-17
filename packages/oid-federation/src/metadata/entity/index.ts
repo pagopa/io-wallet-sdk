@@ -12,7 +12,14 @@ export {
   itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_3,
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
 } from "./v1.3";
+
 export type {
+  AuthenticSources as AuthenticSourcesV1_3,
+  ClaimDisplayMetadata as ClaimDisplayMetadataV1_3,
+  ClaimsMetadata as ClaimsMetadataV1_3,
+  CredentialDisplayMetadata as CredentialDisplayMetadataV1_3,
+  CredentialMetadata as CredentialMetadataV1_3,
+  ImageMetadata as ImageMetadataV1_3,
   ItWalletAuthorizationServerMetadata as ItWalletAuthorizationServerMetadataV1_3,
   ItWalletCredentialIssuerMetadata as ItWalletCredentialIssuerMetadataV1_3,
   ItWalletCredentialVerifierMetadata as ItWalletCredentialVerifierMetadataV1_3,
