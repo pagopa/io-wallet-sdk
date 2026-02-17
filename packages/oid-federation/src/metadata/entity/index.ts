@@ -17,4 +17,5 @@ export type {
   ItWalletCredentialIssuerMetadata as ItWalletCredentialIssuerMetadataV1_3,
   ItWalletCredentialVerifierMetadata as ItWalletCredentialVerifierMetadataV1_3,
   ItWalletSolutionEntityMetadata as ItWalletSolutionEntityMetadataV1_3,
+  SupportedCredentialMetadata as SupportedCredentialMetadataV1_3,
 } from "./v1.3";

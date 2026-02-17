@@ -32,7 +32,7 @@ describe("createCredentialRequest v1.0", () => {
     clientId: "test-client-id",
     config: new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
-    }) as CredentialRequestOptionsV1_0["config"],
+    }),
     credential_identifier: "test-credential-identifier",
     issuerIdentifier: "https://issuer.example.com",
     nonce: "test-nonce-123",

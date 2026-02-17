@@ -6,8 +6,8 @@ import { jsonWebKeySetSchema } from "../../../jwk";
  * Image metadata with integrity hash support
  * Follows IT Wallet v1.3 specification
  */
-type ImageMetadata = z.infer<typeof ImageMetadata>;
-const ImageMetadata = z.object({
+export type ImageMetadata = z.infer<typeof ImageMetadata>;
+export const ImageMetadata = z.object({
   alt_text: z.string().optional(),
   uri: z.string().url(),
   "uri#integrity": z.string().optional(),
@@ -17,8 +17,11 @@ const ImageMetadata = z.object({
  * Enhanced credential display metadata
  * Supports background images, watermarks, and colors
  */
-type CredentialDisplayMetadata = z.infer<typeof CredentialDisplayMetadata>;
-const CredentialDisplayMetadata = z.object({
+export type CredentialDisplayMetadata = z.infer<
+  typeof CredentialDisplayMetadata
+>;
+
+export const CredentialDisplayMetadata = z.object({
   background_color: z.string().optional(),
   background_image: ImageMetadata.optional(),
   description: z.string().optional(),
@@ -31,8 +34,8 @@ const CredentialDisplayMetadata = z.object({
 /**
  * Claim display metadata
  */
-type ClaimDisplayMetadata = z.infer<typeof ClaimDisplayMetadata>;
-const ClaimDisplayMetadata = z.object({
+export type ClaimDisplayMetadata = z.infer<typeof ClaimDisplayMetadata>;
+export const ClaimDisplayMetadata = z.object({
   description: z.string().optional(),
   locale: z.string(),
   name: z.string(),
@@ -41,8 +44,8 @@ const ClaimDisplayMetadata = z.object({
 /**
  * Enhanced claims metadata with selective disclosure and mandatory flags
  */
-type ClaimsMetadata = z.infer<typeof ClaimsMetadata>;
-const ClaimsMetadata = z.object({
+export type ClaimsMetadata = z.infer<typeof ClaimsMetadata>;
+export const ClaimsMetadata = z.object({
   display: z.array(ClaimDisplayMetadata).optional(),
   mandatory: z.boolean().optional(),
   path: z.array(z.union([z.string(), z.number(), z.null()])),
@@ -53,8 +56,8 @@ const ClaimsMetadata = z.object({
  * Complete credential metadata structure
  * This is the new mandatory field in credential_configurations_supported
  */
-type CredentialMetadata = z.infer<typeof CredentialMetadata>;
-const CredentialMetadata = z.object({
+export type CredentialMetadata = z.infer<typeof CredentialMetadata>;
+export const CredentialMetadata = z.object({
   claims: z.array(ClaimsMetadata).optional(),
   display: z.array(CredentialDisplayMetadata).optional(),
 });
@@ -63,8 +66,8 @@ const CredentialMetadata = z.object({
  * Enhanced proof types support with optional key attestations
  * References OpenID4VCI Appendix F.1 and Section 12.2
  */
-type ProofTypesSupported = z.infer<typeof ProofTypesSupported>;
-const ProofTypesSupported = z.object({
+export type ProofTypesSupported = z.infer<typeof ProofTypesSupported>;
+export const ProofTypesSupported = z.object({
   jwt: z.object({
     key_attestations_required: z.boolean().optional(),
     proof_signing_alg_values_supported: z.array(z.string()),
@@ -74,8 +77,8 @@ const ProofTypesSupported = z.object({
 /**
  * Authentic sources metadata linking to trusted data sources
  */
-type AuthenticSources = z.infer<typeof AuthenticSources>;
-const AuthenticSources = z.object({
+export type AuthenticSources = z.infer<typeof AuthenticSources>;
+export const AuthenticSources = z.object({
   dataset_id: z.string(),
   entity_id: z.string(),
 });
@@ -84,8 +87,11 @@ const AuthenticSources = z.object({
  * Enhanced metadata for a credential supported by an Issuer
  * Includes new mandatory credential_metadata, schema_id, and authentic_sources
  */
-type SupportedCredentialMetadata = z.infer<typeof SupportedCredentialMetadata>;
-const SupportedCredentialMetadata = z.intersection(
+export type SupportedCredentialMetadata = z.infer<
+  typeof SupportedCredentialMetadata
+>;
+
+export const SupportedCredentialMetadata = z.intersection(
   z.discriminatedUnion("format", [
     z.object({ format: z.literal("dc+sd-jwt"), vct: z.string() }),
     z.object({ doctype: z.string(), format: z.literal("mso_mdoc") }),

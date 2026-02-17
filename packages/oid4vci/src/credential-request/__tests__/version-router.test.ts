@@ -5,11 +5,6 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  CredentialRequestOptionsV1_0,
-  CredentialRequestOptionsV1_3,
-} from "../types";
-
 import { createCredentialRequest } from "../create-credential-request";
 
 const mockCallbacks = {
@@ -50,7 +45,7 @@ describe("createCredentialRequest Version Router", () => {
         issuerIdentifier: "https://issuer.example.com",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_0);
+      });
 
       // v1.0 returns singular `proof` object
       expect(result).toHaveProperty("proof");
@@ -74,7 +69,7 @@ describe("createCredentialRequest Version Router", () => {
         keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_3);
+      });
 
       // v1.3 returns plural `proofs` object with JWT array
       expect(result).toHaveProperty("proofs");
@@ -99,7 +94,7 @@ describe("createCredentialRequest Version Router", () => {
         issuerIdentifier: "https://issuer.example.com",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_0);
+      });
 
       // Type narrowing - TypeScript should infer this as CredentialRequestV1_0
       expect("proof" in result).toBe(true);
@@ -123,7 +118,7 @@ describe("createCredentialRequest Version Router", () => {
         keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig",
         nonce: "test-nonce",
         signer: mockSigner,
-      } as CredentialRequestOptionsV1_3);
+      });
 
       // Type narrowing - TypeScript should infer this as CredentialRequestV1_3
       expect("proofs" in result).toBe(true);
@@ -171,7 +166,7 @@ describe("createCredentialRequest Version Router", () => {
           issuerIdentifier: "https://issuer.example.com",
           nonce: "test-nonce",
           signer: mockSigner,
-        } as CredentialRequestOptionsV1_0),
+        }),
       ).resolves.toBeDefined();
     });
   });
