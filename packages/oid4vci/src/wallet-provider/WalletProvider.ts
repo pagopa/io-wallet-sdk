@@ -9,7 +9,11 @@ import {
 
 import { WalletProviderError } from "../errors";
 import { WalletAttestationOptions } from "./types";
-import { KeyAttestationStatus, KeyStorageLevel } from "./z-key-attestation";
+import {
+  KeyAttestationStatus,
+  keyAttestationTypeHeader,
+  KeyStorageLevel,
+} from "./z-key-attestation";
 
 function assertV1_0Options(
   options: WalletAttestationOptions,
@@ -124,7 +128,7 @@ export class WalletProvider {
     const header = {
       alg: options.signer.alg,
       kid: options.signer.kid,
-      typ: "key-attestation+jwt" as const,
+      typ: keyAttestationTypeHeader,
       x5c: options.signer.x5c,
       ...(options.trustChain && { trust_chain: options.trustChain }),
     };

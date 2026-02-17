@@ -44,3 +44,7 @@ export const zKeyAttestationPayload = z.object({
 });
 
 export type KeyAttestationPayload = z.infer<typeof zKeyAttestationPayload>;
+
+export const zKeyAttestationTypeHeader = z.literal("key-attestation+jwt");
+
+export const keyAttestationTypeHeader = zKeyAttestationTypeHeader.value;
