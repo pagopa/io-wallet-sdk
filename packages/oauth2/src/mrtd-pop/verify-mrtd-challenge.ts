@@ -1,8 +1,10 @@
 import {
   CallbackContext,
   type JwtPayload,
-  JwtSignerJwk,
+  JwtSigner,
   decodeJwt,
+  jwtSignerFromJwt,
+  verifyJwt,
 } from "@openid4vc/oauth2";
 
 import { MrtdPopError } from "../errors";
@@ -18,12 +20,18 @@ export interface VerifyMrtdChallengeOptions {
   challengeJwt: string;
   /** Expected client_id — must match JWT aud */
   clientId: string;
-  signer: JwtSignerJwk;
+
+  /**
+   * Optional custom signer for verifying the MRTD challenge JWT.
+   * If not provided, the library will attempt to verify using JWT header.
+   */
+  signer?: JwtSigner;
 }
 
 export interface VerifyMrtdChallengeResult {
   header: MrtdChallengeJwtHeader;
   payload: MrtdChallengeJwtPayload;
+  signer: JwtSigner;
 }
 
 /**
@@ -57,13 +65,19 @@ export async function verifyMrtdChallenge(
     );
   }
 
-  await callbacks.verifyJwt(options.signer, {
+  // MRTD spec uses `status` as a string literal, but upstream JwtPayload types it as an object.
+  // The cast is safe because verifyJwt only uses standard claims (exp, aud, iss, etc.).
+  const payload = jwt.payload as unknown as JwtPayload;
+
+  const { signer } = await verifyJwt({
     compact: challengeJwt,
+    errorMessage: "Error verifying MRTD challenge JWT",
     header: jwt.header,
-    // MRTD spec uses `status` as a string literal, but upstream JwtPayload types it as an object.
-    // The cast is safe because verifyJwt only uses standard claims (exp, aud, iss, etc.).
-    payload: jwt.payload as unknown as JwtPayload,
+    payload,
+
+    signer: options.signer ?? jwtSignerFromJwt({ header: jwt.header, payload }),
+    verifyJwtCallback: callbacks.verifyJwt,
   });
 
-  return { header: jwt.header, payload: jwt.payload };
+  return { header: jwt.header, payload: jwt.payload, signer };
 }

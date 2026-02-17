@@ -1,4 +1,10 @@
-import { CallbackContext, JwtSignerJwk, decodeJwt } from "@openid4vc/oauth2";
+import {
+  CallbackContext,
+  JwtSigner,
+  decodeJwt,
+  jwtSignerFromJwt,
+  verifyJwt,
+} from "@openid4vc/oauth2";
 import { createFetcher } from "@openid4vc/utils";
 import {
   CONTENT_TYPES,
@@ -23,8 +29,16 @@ export interface FetchMrtdPopInitOptions {
   mrtdPopJwtNonce: string;
   /** From challenge JWT payload htu */
   popInitEndpoint: string;
-  signer: JwtSignerJwk;
 
+  /**
+   * Optional custom signer for verifying the MRTD PoP init response JWT.
+   * If not provided, the library will attempt to verify using JWT header.
+   */
+  signer?: JwtSigner;
+
+  /**
+   * Attestation header value for the wallet's own attestation, to be included in the request.
+   */
   walletAttestation: string;
 }
 
@@ -34,6 +48,7 @@ export interface FetchMrtdPopInitResult {
   mrz?: string;
   /** htu from the init response — the verify endpoint */
   popVerifyEndpoint: string;
+  signer: JwtSigner;
 }
 
 /**
@@ -81,10 +96,15 @@ export async function fetchMrtdPopInit(
       payloadSchema: zMrtdPopInitResponseJwtPayload,
     });
 
-    await options.callbacks.verifyJwt(options.signer, {
+    const { signer } = await verifyJwt({
       compact: responseJwt,
+      errorMessage: "Error verifying MRTD PoP init response JWT",
       header: jwt.header,
       payload: jwt.payload,
+      signer:
+        options.signer ??
+        jwtSignerFromJwt({ header: jwt.header, payload: jwt.payload }),
+      verifyJwtCallback: options.callbacks.verifyJwt,
     });
 
     return {
@@ -92,6 +112,7 @@ export async function fetchMrtdPopInit(
       mrtdPopNonce: jwt.payload.mrtd_pop_nonce,
       mrz: jwt.payload.mrz,
       popVerifyEndpoint: jwt.payload.htu,
+      signer,
     };
   } catch (error) {
     if (
