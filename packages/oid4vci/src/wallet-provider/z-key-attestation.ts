@@ -40,7 +40,7 @@ export const zKeyAttestationPayload = z.object({
   iss: z.string(),
   key_storage: z.array(zKeyStorageLevel).nonempty(),
   status: zKeyAttestationStatus,
-  user_authentication: z.array(z.string()).nonempty(),
+  user_authentication: z.array(zKeyStorageLevel).nonempty(),
 });
 
 export type KeyAttestationPayload = z.infer<typeof zKeyAttestationPayload>;

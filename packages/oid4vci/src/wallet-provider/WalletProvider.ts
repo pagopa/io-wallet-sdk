@@ -9,7 +9,7 @@ import {
 
 import { WalletProviderError } from "../errors";
 import { WalletAttestationOptions } from "./types";
-import { KeyAttestationStatus } from "./z-key-attestation";
+import { KeyAttestationStatus, KeyStorageLevel } from "./z-key-attestation";
 
 function assertV1_0Options(
   options: WalletAttestationOptions,
@@ -60,9 +60,9 @@ export interface KeyAttestationOptions {
 
   /**
    * The levels of security for key storage as per ISO 18045 standards.
-   * @type {[string, ...string[]]}
+   * @type {[KeyStorageLevel, ...KeyStorageLevel[]]}
    */
-  keyStorage: [string, ...string[]];
+  keyStorage: [KeyStorageLevel, ...KeyStorageLevel[]];
 
   /**
    * The signer information containing the Key ID and the X.509 certificate chain.
@@ -81,9 +81,10 @@ export interface KeyAttestationOptions {
   trustChain?: [string, ...string[]];
 
   /**
-   * The levels of user authentication.
+   * The levels of user authentication as per ISO 18045 standards.
+   * @type {[KeyStorageLevel, ...KeyStorageLevel[]]}
    */
-  userAuthentication: [string, ...string[]];
+  userAuthentication: [KeyStorageLevel, ...KeyStorageLevel[]];
 }
 
 /**

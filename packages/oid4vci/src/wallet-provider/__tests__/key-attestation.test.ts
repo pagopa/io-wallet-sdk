@@ -15,7 +15,7 @@ import {
 
 import { WalletProviderError } from "../../errors";
 import { KeyAttestationOptions, WalletProvider } from "../WalletProvider";
-import { KeyAttestationStatus } from "../z-key-attestation";
+import { KeyAttestationStatus, KeyStorageLevel } from "../z-key-attestation";
 
 vi.mock("@openid4vc/utils", async () => {
   const actual = await vi.importActual("@openid4vc/utils");
@@ -244,7 +244,10 @@ describe("createItKeyAttestationJwt", () => {
   it("should support different key storage levels", async () => {
     const options = {
       ...mockKeyAttestationOptions,
-      keyStorage: ["iso_18045_high", "iso_18045_basic"] as [string, string],
+      keyStorage: ["iso_18045_high", "iso_18045_basic"] as [
+        KeyStorageLevel,
+        KeyStorageLevel,
+      ],
     };
 
     await provider.createItKeyAttestationJwt(options);
@@ -262,7 +265,7 @@ describe("createItKeyAttestationJwt", () => {
   it("should support different user authentication levels", async () => {
     const options = {
       ...mockKeyAttestationOptions,
-      userAuthentication: ["iso_18045_high"] as [string],
+      userAuthentication: ["iso_18045_high"] as [KeyStorageLevel],
     };
 
     await provider.createItKeyAttestationJwt(options);
