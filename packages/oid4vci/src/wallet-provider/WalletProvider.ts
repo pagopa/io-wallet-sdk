@@ -11,8 +11,8 @@ import { WalletProviderError } from "../errors";
 import { WalletAttestationOptions } from "./types";
 import {
   KeyAttestationStatus,
-  keyAttestationTypeHeader,
   KeyStorageLevel,
+  keyAttestationTypeHeader,
 } from "./z-key-attestation";
 
 function assertV1_0Options(
