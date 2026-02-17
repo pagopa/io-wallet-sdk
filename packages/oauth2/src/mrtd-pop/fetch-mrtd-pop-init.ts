@@ -98,7 +98,7 @@ export async function fetchMrtdPopInit(
 
     const { signer } = await verifyJwt({
       compact: responseJwt,
-      errorMessage: "Error verifiying MRTD PoP init response JWT",
+      errorMessage: "Error verifying MRTD PoP init response JWT",
       header: jwt.header,
       payload: jwt.payload,
       signer:
