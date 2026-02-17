@@ -53,5 +53,3 @@ export function credentialRequestRefiner(
     });
   }
 }
-
-export type BaseCredentialRequest = z.infer<typeof zBaseCredentialRequest>;
