@@ -19,6 +19,10 @@ import {
   zPartialIssuerMetadata,
 } from "./z-metadata-response";
 
+function ensureTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url : `${url}/`;
+}
+
 export interface FetchMetadataOptions {
   /** Callback providing the fetch implementation */
   callbacks: {
@@ -51,8 +55,8 @@ async function tryFederationDiscovery(
 ): Promise<MetadataResponse | undefined> {
   try {
     const federationUrl = new URL(
-      "/.well-known/openid-federation",
-      baseUrl,
+      ".well-known/openid-federation",
+      ensureTrailingSlash(baseUrl),
     ).toString();
     const response = await fetch(federationUrl);
 
@@ -100,19 +104,22 @@ async function tryFederationDiscovery(
 
 /**
  * Executes the fallback OID4VCI discovery path:
- *   1. GET /.well-known/openid-credential-issuer
- *   2a. If authorization_servers[] is present → GET the first URL
+ *   1. GET {baseUrl}/.well-known/openid-credential-issuer
+ *   2a. If authorization_servers[] is present → GET {authServerUrl}/.well-known/oauth-authorization-server
  *   2b. If absent → the issuer JSON already contains the auth-server claims inline
+ *
+ * Well-known paths are appended relative to the full base URL, preserving any
+ * path segment (e.g. "https://issuer.example.it/v1" → "https://issuer.example.it/v1/.well-known/...").
  */
 async function fallbackDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
 ): Promise<MetadataResponse> {
-  const issuerlUrl = new URL(
-    "/.well-known/openid-credential-issuer",
-    baseUrl,
+  const issuerUrl = new URL(
+    ".well-known/openid-credential-issuer",
+    ensureTrailingSlash(baseUrl),
   ).toString();
-  const issuerResponse = await fetch(issuerlUrl);
+  const issuerResponse = await fetch(issuerUrl);
 
   await hasStatusOrThrow(200, UnexpectedStatusCodeError)(issuerResponse);
 
@@ -130,8 +137,8 @@ async function fallbackDiscovery(
     }
 
     const authServerUrl = new URL(
-      "/.well-known/oauth-authorization-server",
-      parsedUrl.data,
+      ".well-known/oauth-authorization-server",
+      ensureTrailingSlash(parsedUrl.data),
     ).toString();
 
     const authServerResponse = await fetch(authServerUrl);
@@ -160,8 +167,12 @@ async function fallbackDiscovery(
  * Performs the OID4VCI discovery flow for a Credential Issuer using a federation-first strategy.
  *
  * Attempts {@link https://openid.net/specs/openid-federation-1_0.html | OpenID Federation}
- * discovery first (`/.well-known/openid-federation`). On failure, falls back to the standard
- * OID4VCI well-known endpoints `/.well-known/openid-credential-issuer`.
+ * discovery first (`.well-known/openid-federation` relative to `credentialIssuerUrl`). On failure,
+ * falls back to the standard OID4VCI well-known endpoint `.well-known/openid-credential-issuer`.
+ *
+ * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving any path
+ * segment (e.g. `"https://issuer.example.it/v1"` → `"https://issuer.example.it/v1/.well-known/..."`).
+ * This is compliant with the URL spec: the base URL is normalised to end with `/` before resolution.
  *
  * When federation discovery succeeds, the full entity statement claims are
  * preserved in `openid_federation_claims`.

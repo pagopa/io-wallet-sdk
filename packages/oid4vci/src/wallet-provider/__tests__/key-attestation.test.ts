@@ -1,6 +1,9 @@
 import { Jwk } from "@openid4vc/oauth2";
-import { Openid4vciWalletProviderOptions } from "@openid4vc/openid4vci";
 import { addSecondsToDate, dateToSeconds } from "@openid4vc/utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import {
   type MockedFunction,
   beforeEach,
@@ -83,8 +86,11 @@ describe("createItKeyAttestationJwt", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
 
-    const mockOptions = {} as Openid4vciWalletProviderOptions;
-    provider = new WalletProvider(mockOptions);
+    provider = new WalletProvider(
+      new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+      }),
+    );
 
     mockAttestedKeys = setupMockAttestedKeys();
 
