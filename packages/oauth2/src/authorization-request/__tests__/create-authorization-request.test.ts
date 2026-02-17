@@ -147,6 +147,25 @@ describe("createPushedAuthorizationRequest", () => {
     });
   });
 
+  it("should use provided issuedAt and expiresAt in JWT payload", async () => {
+    const issuedAt = new Date("2025-01-01T00:00:00.000Z");
+    const expiresAt = new Date("2025-01-01T00:05:00.000Z");
+
+    await createPushedAuthorizationRequest({
+      ...baseOptions,
+      expiresAt,
+      issuedAt,
+    });
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({
+        exp: Math.floor(expiresAt.getTime() / 1000),
+        iat: Math.floor(issuedAt.getTime() / 1000),
+      }),
+    });
+  });
+
   it("should use signer kid as issuer in JWT payload", async () => {
     const customSigner = {
       alg: "ES256",
