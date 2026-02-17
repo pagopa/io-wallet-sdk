@@ -58,8 +58,8 @@ export interface VerifyAuthorizationResponseFormPostJWTOptions {
   iss: string;
 
   /**
-   * Optional custom signer for verifying the MRTD PoP init response JWT.
-   * If not provided, the library will attempt to verify using JWT header.
+   * Optional custom signer for verifying the authorization response JWT.
+   * If not provided, the library will attempt to verify using information from the JWT header.
    */
   signer?: JwtSigner;
 
