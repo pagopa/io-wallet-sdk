@@ -34,7 +34,7 @@ export interface FetchMrtdPopInitOptions {
    * Optional custom signer for verifying the MRTD PoP init response JWT.
    * If not provided, the library will attempt to verify using JWT header.
    */
-  signer: JwtSigner;
+  signer?: JwtSigner;
 
   /**
    * Attestation header value for the wallet's own attestation, to be included in the request.
