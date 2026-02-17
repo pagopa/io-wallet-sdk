@@ -22,7 +22,7 @@ export interface VerifyMrtdChallengeOptions {
   clientId: string;
 
   /**
-   * Optional custom signer for verifying the MRTD PoP init response JWT.
+   * Optional custom signer for verifying the MRTD challenge JWT.
    * If not provided, the library will attempt to verify using JWT header.
    */
   signer?: JwtSigner;
