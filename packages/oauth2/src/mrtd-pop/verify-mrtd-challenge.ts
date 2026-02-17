@@ -71,7 +71,7 @@ export async function verifyMrtdChallenge(
 
   const { signer } = await verifyJwt({
     compact: challengeJwt,
-    errorMessage: "Error verifiying MRTD challenge JWT",
+    errorMessage: "Error verifying MRTD challenge JWT",
     header: jwt.header,
     payload,
 
