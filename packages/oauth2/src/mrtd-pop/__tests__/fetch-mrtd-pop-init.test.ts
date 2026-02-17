@@ -9,8 +9,29 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MrtdPopError } from "../../errors";
 import { fetchMrtdPopInit } from "../fetch-mrtd-pop-init";
 
-const mockFetch = vi.fn();
-const mockVerifyJwt = vi.fn();
+const { mockFetch, mockVerifyJwt, mockVerifyJwtFromOauth2 } = vi.hoisted(
+  () => ({
+    mockFetch: vi.fn(),
+    mockVerifyJwt: vi.fn(),
+    mockVerifyJwtFromOauth2: vi.fn(),
+  }),
+);
+
+vi.mock("@openid4vc/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@openid4vc/utils")>();
+  return {
+    ...actual,
+    createFetcher: () => mockFetch,
+  };
+});
+
+vi.mock("@openid4vc/oauth2", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@openid4vc/oauth2")>();
+  return {
+    ...actual,
+    verifyJwt: mockVerifyJwtFromOauth2,
+  };
+});
 
 const mockSigner = {
   alg: "ES256",
@@ -23,14 +44,6 @@ const mockSigner = {
     y: "test-y-value",
   },
 };
-
-vi.mock("@openid4vc/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/utils")>();
-  return {
-    ...actual,
-    createFetcher: () => mockFetch,
-  };
-});
 
 function makeJwt(
   header: Record<string, unknown>,
@@ -74,8 +87,8 @@ const baseOptions = {
 describe("fetchMrtdPopInit - successful requests", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    mockVerifyJwt.mockResolvedValue({
-      signerJwk: { kid: "server-key-1", kty: "EC" },
+    mockVerifyJwtFromOauth2.mockResolvedValue({
+      signer: mockSigner,
       verified: true,
     });
   });
@@ -98,6 +111,7 @@ describe("fetchMrtdPopInit - successful requests", () => {
       mrtdPopNonce: "nonce-xyz-789",
       mrz: undefined,
       popVerifyEndpoint: "https://pid-provider.example.com/edoc-proof/verify",
+      signer: mockSigner,
     });
   });
 
@@ -152,8 +166,8 @@ describe("fetchMrtdPopInit - successful requests", () => {
 describe("fetchMrtdPopInit - error handling", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    mockVerifyJwt.mockResolvedValue({
-      signerJwk: { kid: "server-key-1", kty: "EC" },
+    mockVerifyJwtFromOauth2.mockResolvedValue({
+      signer: mockSigner,
       verified: true,
     });
   });
