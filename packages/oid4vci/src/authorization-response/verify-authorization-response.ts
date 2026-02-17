@@ -1,4 +1,10 @@
-import { CallbackContext, JwtSignerJwk, decodeJwt } from "@openid4vc/oauth2";
+import {
+  CallbackContext,
+  JwtSigner,
+  decodeJwt,
+  jwtSignerFromJwt,
+  verifyJwt,
+} from "@openid4vc/oauth2";
 
 import { Oid4vciError } from "../errors";
 import {
@@ -52,9 +58,10 @@ export interface VerifyAuthorizationResponseFormPostJWTOptions {
   iss: string;
 
   /**
-   * Signer of the form POST returned jwt
+   * Optional custom signer for verifying the MRTD PoP init response JWT.
+   * If not provided, the library will attempt to verify using JWT header.
    */
-  signer: JwtSignerJwk;
+  signer: JwtSigner;
 
   /**
    * The state sent by the Wallet Instance at the start
@@ -99,14 +106,21 @@ export async function verifyAuthorizationResponseFormPostJWT(
 ): Promise<AuthorizationResponse> {
   try {
     const decodedJwt = options.authorizationResponseDecoded;
-    const result = await options.callbacks.verifyJwt(options.signer, {
-      compact: options.authorizationResponseCompact,
-      ...decodedJwt,
-    });
 
-    if (!result.verified) {
-      throw new Oid4vciError("Error verifying JWT signature");
-    }
+    await verifyJwt({
+      compact: options.authorizationResponseCompact,
+      errorMessage: "Error verifying JWT signature",
+      header: decodedJwt.header,
+      payload: decodedJwt.payload,
+
+      signer:
+        options.signer ??
+        jwtSignerFromJwt({
+          header: decodedJwt.header,
+          payload: decodedJwt.payload,
+        }),
+      verifyJwtCallback: options.callbacks.verifyJwt,
+    });
 
     return verifyAuthorizationResponse({
       authorizationResponse: options.authorizationResponseDecoded.payload,

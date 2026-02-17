@@ -3,6 +3,7 @@ import {
   JwtSigner,
   Oauth2JwtParseError,
   decodeJwt,
+  verifyJwt,
 } from "@openid4vc/oauth2";
 import { ValidationError } from "@openid4vc/utils";
 
@@ -161,16 +162,15 @@ export async function parseAuthorizeRequest(
         payload: decoded.payload,
       });
 
-      const verificationResult = await options.callbacks.verifyJwt(signer, {
+      await verifyJwt({
         compact: options.requestObjectJwt,
+        errorMessage: "Error verifying Request Object signature",
         header: decoded.header,
         payload: decoded.payload,
-      });
 
-      if (!verificationResult.verified)
-        throw new ParseAuthorizeRequestError(
-          "Error verifying Request Object signature",
-        );
+        signer,
+        verifyJwtCallback: options.callbacks.verifyJwt,
+      });
     }
 
     return {
