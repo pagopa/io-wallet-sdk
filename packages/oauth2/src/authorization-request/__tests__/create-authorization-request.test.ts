@@ -129,24 +129,6 @@ describe("createPushedAuthorizationRequest", () => {
     });
   });
 
-  it("should set correct JWT payload timestamps", async () => {
-    const mockNow = Date.now();
-    vi.spyOn(Date, "now").mockReturnValue(mockNow);
-
-    await createPushedAuthorizationRequest(baseOptions);
-
-    const expectedIat = Math.floor(mockNow / 1000);
-    const expectedExp = expectedIat + 3600;
-
-    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
-      header: expect.any(Object),
-      payload: expect.objectContaining({
-        exp: expectedExp,
-        iat: expectedIat,
-      }),
-    });
-  });
-
   it("should use signer kid as issuer in JWT payload", async () => {
     const customSigner = {
       alg: "ES256",
@@ -236,6 +218,93 @@ describe("createPushedAuthorizationRequest", () => {
       pkceCodeVerifier: "test-code-verifier",
       request: "test-jwt-token",
     });
+  });
+});
+
+describe("createPushedAuthorizationRequest - timestamp handling", () => {
+  beforeEach(setupMocks);
+
+  it("should set correct JWT payload timestamps", async () => {
+    const mockNow = Date.now();
+    vi.spyOn(Date, "now").mockReturnValue(mockNow);
+
+    await createPushedAuthorizationRequest(baseOptions);
+
+    const expectedIat = Math.floor(mockNow / 1000);
+    const expectedExp = expectedIat + 3600;
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({
+        exp: expectedExp,
+        iat: expectedIat,
+      }),
+    });
+  });
+
+  it("should use provided issuedAt and expiresAt in JWT payload", async () => {
+    const issuedAt = new Date("2025-01-01T00:00:00.000Z");
+    const expiresAt = new Date("2025-01-01T00:05:00.000Z");
+
+    await createPushedAuthorizationRequest({
+      ...baseOptions,
+      expiresAt,
+      issuedAt,
+    });
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({
+        exp: Math.floor(expiresAt.getTime() / 1000),
+        iat: Math.floor(issuedAt.getTime() / 1000),
+      }),
+    });
+  });
+
+  it("should default expiresAt to issuedAt plus one hour when only issuedAt is provided", async () => {
+    const issuedAt = new Date("2025-01-01T00:00:00.000Z");
+
+    await createPushedAuthorizationRequest({
+      ...baseOptions,
+      issuedAt,
+    });
+
+    const expectedIat = Math.floor(issuedAt.getTime() / 1000);
+    const expectedExp = expectedIat + 3600;
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({
+        exp: expectedExp,
+        iat: expectedIat,
+      }),
+    });
+  });
+
+  it("should default issuedAt to current time when only expiresAt is provided", async () => {
+    const mockDate = new Date("2025-01-01T01:00:00.000Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(mockDate);
+
+    const expiresAt = new Date("2025-01-01T02:00:00.000Z");
+
+    await createPushedAuthorizationRequest({
+      ...baseOptions,
+      expiresAt,
+    });
+
+    const expectedIat = Math.floor(mockDate.getTime() / 1000);
+    const expectedExp = Math.floor(expiresAt.getTime() / 1000);
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({
+        exp: expectedExp,
+        iat: expectedIat,
+      }),
+    });
+
+    vi.useRealTimers();
   });
 });
 
