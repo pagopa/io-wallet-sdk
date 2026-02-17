@@ -108,9 +108,10 @@ export class WalletProvider extends Openid4vciWalletProvider {
   ): Promise<string> {
     const { signJwt } = options.callbacks;
 
-    const issuedAt = options.issuedAt ?? new Date();
+    const now = new Date();
+    const issuedAt = options.issuedAt ?? now;
     const expiresAt =
-      options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 360);
+      options.expiresAt ?? addSecondsToDate(now, 3600 * 24 * 360);
 
     const header = {
       alg: options.signer.alg,
