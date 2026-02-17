@@ -224,6 +224,23 @@ Example from oauth2:
 - Each method wraps operations in try/catch and throws typed errors
 - Common errors from `@openid4vc/utils` (e.g., `JsonParseError`, `ValidationError`) can be reused
 
+#### HTTP Status Check Convention
+
+**Always use `hasStatusOrThrow` from `@pagopa/io-wallet-utils` to validate HTTP response status codes.** Never use `response.ok` or manual `if (!response.ok)` checks.
+
+```typescript
+// ✅ CORRECT
+import { UnexpectedStatusCodeError, hasStatusOrThrow } from "@pagopa/io-wallet-utils";
+
+const response = await fetch(url, init);
+await hasStatusOrThrow(200, UnexpectedStatusCodeError)(response);
+
+// ❌ WRONG
+if (!response.ok) {
+  throw new SomeCustomError(`Failed: ${response.status} ${response.statusText}`);
+}
+```
+
 ### CallbackContext Pattern
 
 The SDK uses a **callback injection pattern** via `CallbackContext` from `@openid4vc/oauth2` to remain crypto-agnostic and environment-agnostic. This allows consumers to provide their own implementations for cryptographic operations and HTTP requests.
