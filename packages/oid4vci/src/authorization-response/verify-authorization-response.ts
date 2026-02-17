@@ -61,7 +61,7 @@ export interface VerifyAuthorizationResponseFormPostJWTOptions {
    * Optional custom signer for verifying the MRTD PoP init response JWT.
    * If not provided, the library will attempt to verify using JWT header.
    */
-  signer: JwtSigner;
+  signer?: JwtSigner;
 
   /**
    * The state sent by the Wallet Instance at the start
