@@ -12,7 +12,7 @@ export const zBaseCredentialRequest = z.object({
     .string()
     .optional()
     .describe(
-      "REQUIRED if credential_identifiers param is absent. MUST NOT be used otherwise.",
+      "REQUIRED if credential_identifier param is absent. MUST NOT be used otherwise.",
     ),
 
   credential_identifier: z
