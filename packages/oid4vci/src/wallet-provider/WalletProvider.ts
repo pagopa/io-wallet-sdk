@@ -35,6 +35,12 @@ function assertV1_3Options(
   }
 }
 
+/**
+ * @interface KeyAttestationOptions
+ * @description Defines the options required to create a key attestation JWT.
+ * This attestation conveys information about the cryptographic keys managed by the wallet,
+ * their storage characteristics, user authentication level, and revocation status.
+ */
 export interface KeyAttestationOptions {
   /**
    * The array of JWKs representing the attested keys.

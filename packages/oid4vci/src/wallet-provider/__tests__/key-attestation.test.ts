@@ -195,22 +195,34 @@ describe("createItKeyAttestationJwt", () => {
   });
 
   it("should use default expiration when expiresAt is not provided", async () => {
-    const expectedExpiration = new Date("2024-12-31T23:59:59Z");
+    const fixedNow = new Date("2024-06-15T12:00:00Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedNow);
 
-    mockAddSecondsToDate.mockReturnValue(expectedExpiration);
+    try {
+      await provider.createItKeyAttestationJwt(mockKeyAttestationOptions);
 
-    await provider.createItKeyAttestationJwt(mockKeyAttestationOptions);
-
-    expect(mockAddSecondsToDate).toHaveBeenCalledWith(
-      expect.any(Date),
-      3600 * 24 * 360,
-    );
+      expect(mockAddSecondsToDate).toHaveBeenCalledWith(
+        fixedNow,
+        3600 * 24 * 360,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("should use default issuedAt when not provided", async () => {
-    await provider.createItKeyAttestationJwt(mockKeyAttestationOptions);
+    const fixedNow = new Date("2024-06-15T12:00:00Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedNow);
 
-    expect(mockDateToSeconds).toHaveBeenCalledWith(expect.any(Date));
+    try {
+      await provider.createItKeyAttestationJwt(mockKeyAttestationOptions);
+
+      expect(mockDateToSeconds).toHaveBeenCalledWith(fixedNow);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("should support multiple attested keys", async () => {
