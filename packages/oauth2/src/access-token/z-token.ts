@@ -1,3 +1,4 @@
+import { zJwtHeader, zJwtPayload } from "@openid4vc/oauth2";
 import { z } from "zod";
 
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
@@ -47,3 +48,32 @@ export const zAccessTokenResponse = z
   .passthrough();
 
 export type AccessTokenResponse = z.infer<typeof zAccessTokenResponse>;
+
+export const zAccessTokenProfileJwtHeader = z
+  .object({
+    ...zJwtHeader.shape,
+    typ: z.enum(["application/at+jwt", "at+jwt"]),
+  })
+  .passthrough();
+
+export type AccessTokenProfileJwtHeader = z.infer<
+  typeof zAccessTokenProfileJwtHeader
+>;
+
+export const zAccessTokenProfileJwtPayload = z
+  .object({
+    ...zJwtPayload.shape,
+    aud: z.string(),
+    client_id: z.string(),
+    exp: z.number(),
+    iat: z.number(),
+    iss: z.string(),
+    jti: z.string(),
+    nbf: z.number().optional(),
+    sub: z.string(),
+  })
+  .passthrough();
+
+export type AccessTokenProfileJwtPayload = z.infer<
+  typeof zAccessTokenProfileJwtPayload
+>;
