@@ -62,6 +62,16 @@ export class FetchTokenResponseError extends Oauth2Error {
   }
 }
 
+export class CreateTokenResponseError extends Oauth2Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "CreateTokenResponseError";
+  }
+}
+
 /**
  * Error thrown when an unexpected error occurs during client attestation (wallet attestation) creation.
  */

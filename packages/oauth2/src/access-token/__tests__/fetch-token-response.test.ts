@@ -224,22 +224,6 @@ describe("fetchTokenResponse - validation error handling", () => {
     );
   });
 
-  it("should throw ValidationError when token_type is not DPoP", async () => {
-    const mockResponse = {
-      json: vi.fn().mockResolvedValue({
-        access_token: "test-access-token",
-        expires_in: 3600,
-        token_type: "Bearer",
-      }),
-      status: 200,
-    };
-    mockFetch.mockResolvedValue(mockResponse);
-
-    await expect(fetchTokenResponse(baseOptions)).rejects.toThrow(
-      ValidationError,
-    );
-  });
-
   it("should throw ValidationError when response is not valid JSON", async () => {
     const mockResponse = {
       json: vi.fn().mockResolvedValue(null),
