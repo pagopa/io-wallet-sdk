@@ -40,17 +40,6 @@ export interface CreateAccessTokenResponseOptions {
   authorizationServer: string;
 
   /**
-   * Credential nonce returned to the wallet for proof binding in subsequent
-   * credential requests.
-   */
-  cNonce?: string;
-
-  /**
-   * Lifetime of the credential nonce in seconds.
-   */
-  cNonceExpiresIn?: number;
-
-  /**
    * Runtime callbacks used to generate random values, compute JWK thumbprints,
    * and sign the access token JWT.
    */
@@ -89,7 +78,8 @@ export interface CreateAccessTokenResponseOptions {
   refreshToken?: string;
 
   /**
-   * Authorized OAuth scope string (`scope` claim).
+   * Optional scope string included in both the access token JWT payload and token
+   * response envelope.
    */
   scope?: string;
 
@@ -104,14 +94,15 @@ export interface CreateAccessTokenResponseOptions {
   subject: string;
 
   /**
-   * Token type returned in the OAuth token response.
+   * Optional token type returned in the OAuth token response. If not provided, defaults to DPoP.
    */
-  tokenType: "DPoP";
+  tokenType?: "Bearer" | "DPoP";
 }
 
 /**
  * Creates an OAuth 2.0 access token response where `access_token` is a signed
- * JWT access token profile (`typ=at+jwt`) and `token_type` is `DPoP`.
+ * JWT access token profile (`typ=at+jwt`) and `token_type` is `DPoP` or `Bearer`.
+ * NOTE: When using `Bearer` it is supposed to be used only for PDND Interoperability API, not for credential issuance flows.
  *
  * The JWT payload always includes `aud`, `iss`, `sub`, `client_id`, `iat`,
  * `exp`, and a random `jti`. When `dpop` is provided, `cnf.jkt` is added using
@@ -126,6 +117,13 @@ export async function createAccessTokenResponse(
   } satisfies AccessTokenProfileJwtHeader);
 
   const now = options.now ?? new Date();
+
+  const tokenType = options.tokenType || "DPoP";
+  if (tokenType === "DPoP" && !options.dpop) {
+    throw new Error(
+      "token_type is DPoP but dpop option is not provided. Please provide a DPoP public key in the dpop option or set tokenType to 'Bearer'.",
+    );
+  }
 
   const payload = parseWithErrorHandling(zAccessTokenProfileJwtPayload, {
     aud: options.audience,
@@ -156,11 +154,9 @@ export async function createAccessTokenResponse(
 
   const accessTokenResponse = parseWithErrorHandling(zAccessTokenResponse, {
     access_token: jwt,
-    c_nonce: options.cNonce,
-    c_nonce_expires_in: options.cNonceExpiresIn,
     expires_in: options.expiresInSeconds,
     refresh_token: options.refreshToken,
-    token_type: options.tokenType,
+    token_type: tokenType,
     ...options.additionalPayload,
   } satisfies AccessTokenResponse);
 

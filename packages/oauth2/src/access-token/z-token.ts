@@ -43,7 +43,7 @@ export const zAccessTokenResponse = z
       .optional(),
     expires_in: z.optional(z.number().int()),
     refresh_token: z.optional(z.string()),
-    token_type: z.literal("DPoP"),
+    token_type: z.union([z.literal("Bearer"), z.literal("DPoP")]),
   })
   .passthrough();
 
@@ -65,11 +65,17 @@ export const zAccessTokenProfileJwtPayload = z
     ...zJwtPayload.shape,
     aud: z.string(),
     client_id: z.string(),
+    cnf: z
+      .object({
+        jkt: z.string(),
+      })
+      .optional(),
     exp: z.number(),
     iat: z.number(),
     iss: z.string(),
     jti: z.string(),
     nbf: z.number().optional(),
+    scope: z.string().optional(),
     sub: z.string(),
   })
   .passthrough();

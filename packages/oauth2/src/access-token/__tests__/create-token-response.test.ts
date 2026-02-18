@@ -35,7 +35,7 @@ const baseOptions: CreateAccessTokenResponseOptions = {
   now: fixedNow,
   signer: mockSigner,
   subject: "subject-id",
-  tokenType: "DPoP",
+  tokenType: "Bearer",
 };
 
 describe("createAccessTokenResponse", () => {
@@ -62,14 +62,12 @@ describe("createAccessTokenResponse", () => {
           },
         ],
       },
-      cNonce: "credential-nonce",
-      cNonceExpiresIn: 60,
       dpop: {
         jwk: mockSigner.publicJwk,
       },
       nbf: 1704067200,
       refreshToken: "refresh-token-value",
-      scope: "openid profile",
+      tokenType: "DPoP",
     });
 
     expect(result).toEqual({
@@ -80,8 +78,6 @@ describe("createAccessTokenResponse", () => {
           type: "openid_credential",
         },
       ],
-      c_nonce: "credential-nonce",
-      c_nonce_expires_in: 60,
       expires_in: 300,
       refresh_token: "refresh-token-value",
       token_type: "DPoP",
@@ -115,6 +111,7 @@ describe("createAccessTokenResponse", () => {
       dpop: {
         jwk: mockSigner.publicJwk,
       },
+      tokenType: "DPoP",
     });
 
     expect(mockCallbacks.hash).toHaveBeenCalledWith(
@@ -137,7 +134,7 @@ describe("createAccessTokenResponse", () => {
     expect(result).toEqual({
       access_token: "signed-access-token-jwt",
       expires_in: 300,
-      token_type: "DPoP",
+      token_type: "Bearer",
     });
 
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
