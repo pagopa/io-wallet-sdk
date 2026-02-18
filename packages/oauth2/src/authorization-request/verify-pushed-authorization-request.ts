@@ -54,8 +54,10 @@ export interface VerifyPushedAuthorizationRequestOptions
  * The verification process includes:
  * 1. JAR signing policy enforcement (per RFC 9101 Section 10.5) - validates require_signed_request_object
  * 2. JAR request object verification (if provided) - validates JWT signature and claims
- * 3. DPoP proof verification (if provided) - validates proof of possession
- * 4. Client attestation verification - validates client identity
+ * 3. RFC 9101 §4 claim validation - validates iss, aud, exp, iat claims
+ * 4. IT-Wallet specific validations - iat age limits and key binding with wallet attestation
+ * 5. DPoP proof verification (if provided) - validates proof of possession
+ * 6. Client attestation verification - validates client identity
  *
  * **JAR Signing Policy (RFC 9101):**
  * When `authorizationServerMetadata.require_signed_request_object` is true:
@@ -94,6 +96,12 @@ export interface VerifyPushedAuthorizationRequestOptions
  *
  * @throws {PushedAuthorizationRequestError} When require_signed_request_object is true but request is unsigned
  * @throws {PushedAuthorizationRequestError} When require_signed_request_object is true but JAR uses alg="none"
+ * @throws {PushedAuthorizationRequestError} When iss claim doesn't match client_id (RFC 9101 §4)
+ * @throws {PushedAuthorizationRequestError} When aud claim doesn't match authorization server issuer (RFC 9101 §4)
+ * @throws {PushedAuthorizationRequestError} When exp claim is missing or expired (RFC 9101 §4)
+ * @throws {PushedAuthorizationRequestError} When iat claim is missing, too old (>5 min), or in future (>60s)
+ * @throws {PushedAuthorizationRequestError} When kid doesn't match between JAR and wallet attestation cnf.jwk
+ * @throws {PushedAuthorizationRequestError} When cnf.jwk is missing from wallet attestation
  * @throws {Oauth2Error} When JAR JWT verification fails
  * @throws {Oauth2Error} When JAR client_id doesn't match request client_id
  * @throws {Oauth2Error} When JAR request object is encrypted (not supported)
@@ -153,6 +161,8 @@ export async function verifyPushedAuthorizationRequest(
     );
   }
 
+  const { clientAttestation, dpop } = await verifyAuthorizationRequest(options);
+
   let jar: VerifiedJarRequest | undefined;
 
   if (options.authorizationRequestJwt) {
@@ -172,10 +182,33 @@ export async function verifyPushedAuthorizationRequest(
       callbacks: options.callbacks,
       jarRequestParams: options.authorizationRequest,
       jwtSigner: options.authorizationRequestJwt.signer,
+      now: options.now,
     });
-  }
 
-  const { clientAttestation, dpop } = await verifyAuthorizationRequest(options);
+    // aud claim MUST identify this Authorization Server
+    const issuer = options.authorizationServerMetadata.issuer;
+    const aud = jar.jwt.payload.aud;
+    const audMatches =
+      aud === issuer || (Array.isArray(aud) && aud.includes(issuer));
+    if (!audMatches) {
+      throw new PushedAuthorizationRequestError(
+        "aud claim in request JWT does not match the authorization server issuer",
+      );
+    }
+
+    const cnfJwk = clientAttestation?.clientAttestation?.payload?.cnf?.jwk;
+    if (!cnfJwk) {
+      throw new PushedAuthorizationRequestError(
+        "Missing wallet attestation or cnf.jwk",
+      );
+    }
+    // Validate kid match if present in both JAR header and cnf.jwk
+    if (cnfJwk.kid !== undefined && jar.jwt.header.kid !== cnfJwk.kid) {
+      throw new PushedAuthorizationRequestError(
+        "kid in request JWT header does not match wallet attestation cnf.jwk kid",
+      );
+    }
+  }
 
   return {
     clientAttestation,

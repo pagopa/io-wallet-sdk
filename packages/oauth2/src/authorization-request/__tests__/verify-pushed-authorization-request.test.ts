@@ -288,6 +288,23 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
       );
 
+      const clientAttestationJwt = createMockWalletAttestationJwt({
+        aal: "high",
+        cnf: { jwk: mockJwk },
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
       const options: VerifyPushedAuthorizationRequestOptions = {
         authorizationRequest: mockAuthorizationRequest,
         authorizationRequestJwt: {
@@ -300,8 +317,8 @@ describe("verifyPushedAuthorizationRequest", () => {
         },
         callbacks: mockCallbacks,
         clientAttestation: {
-          clientAttestationPopJwt: "mock-client-attestation-pop-jwt",
-          walletAttestationJwt: "mock-client-attestation-jwt",
+          clientAttestationPopJwt,
+          walletAttestationJwt: clientAttestationJwt,
         },
         config: mockConfig,
         request: mockRequest,
@@ -357,6 +374,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -416,6 +434,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -528,6 +547,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -611,6 +631,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         scope: "openid",
@@ -675,6 +696,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -804,6 +826,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(customDate.getTime() / 1000),
         iss: "client-123",
       });
@@ -853,6 +876,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(customDate.getTime() / 1000),
         iss: "client-123",
       });
@@ -914,6 +938,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
+        exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
