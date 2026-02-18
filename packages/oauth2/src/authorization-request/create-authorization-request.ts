@@ -236,6 +236,11 @@ export async function createPushedAuthorizationRequest(
     client_id: options.clientId,
     code_challenge: pkce.codeChallenge,
     code_challenge_method: pkce.codeChallengeMethod,
+    jti:
+      options.jti ??
+      encodeToBase64Url(
+        await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
+      ),
     redirect_uri: options.redirectUri,
     response_mode: options.responseMode,
     response_type: "code",
@@ -273,11 +278,6 @@ export async function createPushedAuthorizationRequest(
         exp: dateToSeconds(exp),
         iat: dateToSeconds(iat),
         iss: dpop.signer.publicJwk.kid,
-        jti:
-          options.jti ??
-          encodeToBase64Url(
-            await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
-          ),
         ...authorizationRequest,
       },
     });
