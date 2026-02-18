@@ -113,10 +113,7 @@ export async function createAccessTokenResponse(
   options: CreateAccessTokenResponseOptions,
 ) {
   try {
-    const header = parseWithErrorHandling(zAccessTokenProfileJwtHeader, {
-      ...jwtHeaderFromJwtSigner(options.signer),
-      typ: "at+jwt",
-    } satisfies AccessTokenProfileJwtHeader);
+    const now = options.now ?? new Date();
 
     if (options.tokenType === "DPoP" && !options.dpop) {
       throw new CreateTokenResponseError(
@@ -124,7 +121,10 @@ export async function createAccessTokenResponse(
       );
     }
 
-    const now = options.now ?? new Date();
+    const header = parseWithErrorHandling(zAccessTokenProfileJwtHeader, {
+      ...jwtHeaderFromJwtSigner(options.signer),
+      typ: "at+jwt",
+    } satisfies AccessTokenProfileJwtHeader);
 
     const payload = parseWithErrorHandling(zAccessTokenProfileJwtPayload, {
       aud: options.audience,
