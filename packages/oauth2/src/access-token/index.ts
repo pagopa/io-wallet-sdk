@@ -1,4 +1,5 @@
 export * from "./create-token-request";
+export * from "./create-token-response";
 export * from "./fetch-token-response";
 export * from "./parse-token-request";
 export * from "./verify-access-token-request";
