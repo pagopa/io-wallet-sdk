@@ -13,6 +13,7 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
+import { CreateTokenResponseError } from "../errors";
 import {
   AccessTokenProfileJwtHeader,
   AccessTokenProfileJwtPayload,
@@ -111,54 +112,63 @@ export interface CreateAccessTokenResponseOptions {
 export async function createAccessTokenResponse(
   options: CreateAccessTokenResponseOptions,
 ) {
-  const header = parseWithErrorHandling(zAccessTokenProfileJwtHeader, {
-    ...jwtHeaderFromJwtSigner(options.signer),
-    typ: "at+jwt",
-  } satisfies AccessTokenProfileJwtHeader);
+  try {
+    const header = parseWithErrorHandling(zAccessTokenProfileJwtHeader, {
+      ...jwtHeaderFromJwtSigner(options.signer),
+      typ: "at+jwt",
+    } satisfies AccessTokenProfileJwtHeader);
 
-  const now = options.now ?? new Date();
+    const now = options.now ?? new Date();
 
-  const tokenType = options.tokenType || "DPoP";
-  if (tokenType === "DPoP" && !options.dpop) {
-    throw new Error(
-      "token_type is DPoP but dpop option is not provided. Please provide a DPoP public key in the dpop option or set tokenType to 'Bearer'.",
+    const tokenType = options.tokenType || "DPoP";
+    if (tokenType === "DPoP" && !options.dpop) {
+      throw new CreateTokenResponseError(
+        "token_type is DPoP but dpop option is not provided. Please provide a DPoP public key in the dpop option or set tokenType to 'Bearer'.",
+      );
+    }
+
+    const payload = parseWithErrorHandling(zAccessTokenProfileJwtPayload, {
+      aud: options.audience,
+      client_id: options.clientId,
+      cnf: options.dpop
+        ? {
+            jkt: await calculateJwkThumbprint({
+              hashAlgorithm: HashAlgorithm.Sha256,
+              hashCallback: options.callbacks.hash,
+              jwk: options.dpop.jwk,
+            }),
+          }
+        : undefined,
+      exp: dateToSeconds(addSecondsToDate(now, options.expiresInSeconds)),
+      iat: dateToSeconds(now),
+      iss: options.authorizationServer,
+      jti: encodeToBase64Url(await options.callbacks.generateRandom(32)),
+      nbf: options.nbf,
+      scope: options.scope,
+      sub: options.subject,
+      ...options.additionalPayload,
+    } satisfies AccessTokenProfileJwtPayload);
+
+    const { jwt } = await options.callbacks.signJwt(options.signer, {
+      header,
+      payload,
+    });
+
+    const accessTokenResponse = parseWithErrorHandling(zAccessTokenResponse, {
+      access_token: jwt,
+      expires_in: options.expiresInSeconds,
+      refresh_token: options.refreshToken,
+      token_type: tokenType,
+      ...options.additionalPayload,
+    } satisfies AccessTokenResponse);
+
+    return accessTokenResponse;
+  } catch (error) {
+    if (error instanceof CreateTokenResponseError) {
+      throw error;
+    }
+    throw new CreateTokenResponseError(
+      `Error creating access token JWT: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-
-  const payload = parseWithErrorHandling(zAccessTokenProfileJwtPayload, {
-    aud: options.audience,
-    client_id: options.clientId,
-    cnf: options.dpop
-      ? {
-          jkt: await calculateJwkThumbprint({
-            hashAlgorithm: HashAlgorithm.Sha256,
-            hashCallback: options.callbacks.hash,
-            jwk: options.dpop.jwk,
-          }),
-        }
-      : undefined,
-    exp: dateToSeconds(addSecondsToDate(now, options.expiresInSeconds)),
-    iat: dateToSeconds(now),
-    iss: options.authorizationServer,
-    jti: encodeToBase64Url(await options.callbacks.generateRandom(32)),
-    nbf: options.nbf,
-    scope: options.scope,
-    sub: options.subject,
-    ...options.additionalPayload,
-  } satisfies AccessTokenProfileJwtPayload);
-
-  const { jwt } = await options.callbacks.signJwt(options.signer, {
-    header,
-    payload,
-  });
-
-  const accessTokenResponse = parseWithErrorHandling(zAccessTokenResponse, {
-    access_token: jwt,
-    expires_in: options.expiresInSeconds,
-    refresh_token: options.refreshToken,
-    token_type: tokenType,
-    ...options.additionalPayload,
-  } satisfies AccessTokenResponse);
-
-  return accessTokenResponse;
 }
