@@ -185,6 +185,11 @@ export async function verifyPushedAuthorizationRequest(
 
     // aud claim MUST identify this Authorization Server
     const issuer = options.authorizationServerMetadata.issuer;
+    if (!issuer) {
+      throw new PushedAuthorizationRequestError(
+        "authorizationServerMetadata.issuer is required to validate the aud claim in the request JWT",
+      );
+    }
     const aud = jar.jwt.payload.aud;
     const audMatches =
       aud === issuer || (Array.isArray(aud) && aud.includes(issuer));
