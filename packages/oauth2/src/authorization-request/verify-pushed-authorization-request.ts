@@ -161,8 +161,6 @@ export async function verifyPushedAuthorizationRequest(
     );
   }
 
-  const { clientAttestation, dpop } = await verifyAuthorizationRequest(options);
-
   let jar: VerifiedJarRequest | undefined;
 
   if (options.authorizationRequestJwt) {
@@ -195,8 +193,12 @@ export async function verifyPushedAuthorizationRequest(
         "aud claim in request JWT does not match the authorization server issuer",
       );
     }
+  }
 
-    const cnfJwk = clientAttestation?.clientAttestation?.payload?.cnf?.jwk;
+  const { clientAttestation, dpop } = await verifyAuthorizationRequest(options);
+
+  if (jar && clientAttestation) {
+    const cnfJwk = clientAttestation.clientAttestation.payload.cnf.jwk;
     if (!cnfJwk) {
       throw new PushedAuthorizationRequestError(
         "Missing wallet attestation or cnf.jwk",
