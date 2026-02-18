@@ -128,6 +128,17 @@ describe("createAccessTokenResponse", () => {
     });
   });
 
+  it("throws when tokenType is DPoP but dpop option is missing", async () => {
+    await expect(
+      createAccessTokenResponse({
+        ...baseOptions,
+        tokenType: "DPoP",
+      }),
+    ).rejects.toThrow(
+      "token_type is DPoP but dpop option is not provided. Please provide a DPoP public key in the dpop option or set tokenType to 'Bearer'.",
+    );
+  });
+
   it("omits optional fields when not provided", async () => {
     const result = await createAccessTokenResponse(baseOptions);
 
