@@ -1,4 +1,4 @@
-import { zJwk, zJwtPayload } from "@openid4vc/oauth2";
+import { zJwk, zJwtPayload } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
 
 export const zVpFormatsSupported = z.record(

@@ -1,5 +1,6 @@
-import { CallbackContext, Jwk, Oauth2JwtParseError } from "@openid4vc/oauth2";
-import { ValidationError } from "@openid4vc/utils";
+import { CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
+import { Jwk } from "@pagopa/io-wallet-oauth2";
+import { ValidationError } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
 
 import { ParseAuthorizeRequestError } from "../../errors";
