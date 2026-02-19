@@ -206,7 +206,11 @@ function parseProofJwt(options: {
     );
   }
 
-  if (options.expected?.issuer && !payload.iss) {
+  if (
+    options.grantType === "authorization_code" &&
+    options.expected?.issuer &&
+    !payload.iss
+  ) {
     throw new ValidationError(
       "Credential proof JWT payload is missing expected issuer (iss)",
     );

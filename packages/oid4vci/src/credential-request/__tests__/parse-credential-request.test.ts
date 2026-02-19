@@ -164,6 +164,28 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs[0]?.payload.iss).toBeUndefined();
   });
 
+  it("allows missing iss for pre-authorized_code grant even when expected issuer is provided", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    });
+
+    const result = parseCredentialRequest({
+      config,
+      credentialRequest: {
+        credential_identifier: "education_degree",
+        proofs: {
+          jwt: [createProofJwt({ iss: undefined })],
+        },
+      },
+      expected: {
+        issuer: "test-client-id",
+      },
+      grantType: "pre-authorized_code",
+    });
+
+    expect(result.proofs[0]?.payload.iss).toBeUndefined();
+  });
+
   it("throws ValidationError when expected audience does not match", () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
