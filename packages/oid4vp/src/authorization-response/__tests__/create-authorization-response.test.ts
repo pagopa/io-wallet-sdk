@@ -104,8 +104,6 @@ describe("createAuthorizationResponseTests", () => {
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
         state: MOCK_STATE,
       },
       rpJwks: mockRpMetadata,
@@ -141,8 +139,6 @@ describe("createAuthorizationResponseTests", () => {
         requestObject: {
           client_id: MOCK_RP_CLIENT_ID,
           nonce: REQOBJ_MOCK_NONCE,
-          response_mode: "direct_post.jwt",
-          response_type: "vp_token",
           state: MOCK_STATE,
         },
         rpJwks: rpMetadataWithoutKeys,
@@ -161,8 +157,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
         state: MOCK_STATE,
       },
       rpJwks: mockRpMetadataV1_3,
@@ -182,8 +176,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
         state: MOCK_STATE,
       },
       rpJwks: mockRpMetadataV1_3,
@@ -211,8 +203,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
         state: MOCK_STATE,
       },
       rpJwks: metadataWith192GCM,
@@ -236,8 +226,6 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
         state: MOCK_STATE,
       },
       rpJwks: mockRpMetadata, // v1.0 metadata
@@ -261,8 +249,6 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
         requestObject: {
           client_id: "x509_hash:https://rp.example.org",
           nonce: REQOBJ_MOCK_NONCE,
-          response_mode: "direct_post.jwt",
-          response_type: "vp_token",
           state: MOCK_STATE,
         },
         rpJwks: mockRpMetadata,
@@ -295,8 +281,6 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
           vp_formats_supported: {},
         },
         nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
         state: MOCK_STATE,
       },
       rpJwks: mockRpMetadata,
@@ -323,8 +307,6 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
           vp_formats_supported: {},
         },
         nonce: REQOBJ_MOCK_NONCE,
-        response_mode: "direct_post.jwt",
-        response_type: "vp_token",
         state: MOCK_STATE,
       },
       rpJwks: mockRpMetadata,
