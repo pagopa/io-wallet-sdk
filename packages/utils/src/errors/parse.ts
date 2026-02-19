@@ -14,7 +14,7 @@ const constants = {
 };
 
 function escapeQuotes(str: string): string {
-  return str.replace(/"/g, '\\"');
+  return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function joinPath(path: (number | string)[]): string {
