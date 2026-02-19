@@ -7,7 +7,7 @@ export interface JwtSignerDid {
   alg: string;
   didUrl: string;
   /**
-   * The key id that should be used for signing. You need to make sure the kid actuall matches
+   * The key id that should be used for signing. You need to make sure the kid actually matches
    * with the key associated with the didUrl.
    */
   kid?: string;
@@ -18,7 +18,7 @@ export interface JwtSignerDid {
 export interface JwtSignerJwk {
   alg: string;
   /**
-   * The key id that should be used for signing. You need to make sure the kid actuall matches
+   * The key id that should be used for signing. You need to make sure the kid actually matches
    * with the key associated with the jwk.
    *
    * If not provided the kid can also be extracted from the `publicJwk`. Providing it here means the `kid` won't
@@ -33,7 +33,7 @@ export interface JwtSignerJwk {
 export interface JwtSignerX5c {
   alg: string;
   /**
-   * The key id that should be used for signing. You need to make sure the kid actuall matches
+   * The key id that should be used for signing. You need to make sure the kid actually matches
    * with the key associated with the leaf certificate.
    */
   kid?: string;
@@ -45,7 +45,7 @@ export interface JwtSignerX5c {
 export interface JwtSignerFederation {
   alg: string;
   /**
-   * The key id that should be used for signing. You need to make sure the kid actuall matches
+   * The key id that should be used for signing. You need to make sure the kid actually matches
    * with a key present in the federation.
    */
   kid: string;
