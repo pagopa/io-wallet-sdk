@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@openid-federation/core": "catalog:",
-    "@openid4vc/utils": "catalog:",
+    "@pagopa/io-wallet-utils": "workspace:",
     "zod": "catalog:"
   },
   "devDependencies": {
