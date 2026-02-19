@@ -3,10 +3,7 @@ import {
   dateToSeconds,
   parseWithErrorHandling,
 } from "@openid4vc/utils";
-import {
-  IoWalletSdkConfig,
-  ItWalletSpecsVersion,
-} from "@pagopa/io-wallet-utils";
+import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
 
 import { Oid4vciError } from "../../errors";
 import { BaseCredentialRequestOptions } from "../types";
@@ -18,11 +15,10 @@ import { CredentialRequestV1_3, zCredentialRequestV1_3 } from "./z-credential";
  */
 export interface CredentialRequestOptionsV1_3
   extends BaseCredentialRequestOptions {
-  config: {
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3;
-  } & IoWalletSdkConfig;
+  config: IoWalletSdkConfig;
   keyAttestation: string; // Required in v1.3
 }
+
 /**
  * Create a Credential Request for IT-Wallet v1.3
  *
