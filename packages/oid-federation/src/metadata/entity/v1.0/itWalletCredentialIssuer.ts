@@ -7,21 +7,26 @@ import { jsonWebKeySetSchema } from "../../../jwk";
  * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.1.0/en/credential-issuer-solution.html#metadata-for-openid-credential-issuer}
  *
  */
-type CredentialDisplayMetadata = z.infer<typeof CredentialDisplayMetadata>;
-const CredentialDisplayMetadata = z.object({
+export type CredentialDisplayMetadata = z.infer<
+  typeof CredentialDisplayMetadata
+>;
+export const CredentialDisplayMetadata = z.object({
   locale: z.string(),
   name: z.string(),
 });
 
-type ClaimsMetadata = z.infer<typeof ClaimsMetadata>;
-const ClaimsMetadata = z.object({
+export type ClaimsMetadata = z.infer<typeof ClaimsMetadata>;
+export const ClaimsMetadata = z.object({
   display: z.array(CredentialDisplayMetadata),
   path: z.array(z.union([z.string(), z.number(), z.null()])),
 });
 
 // Metadata for a credential which is supported by an Issuer
-type SupportedCredentialMetadata = z.infer<typeof SupportedCredentialMetadata>;
-const SupportedCredentialMetadata = z.intersection(
+export type SupportedCredentialMetadata = z.infer<
+  typeof SupportedCredentialMetadata
+>;
+
+export const SupportedCredentialMetadata = z.intersection(
   z.discriminatedUnion("format", [
     z.object({ format: z.literal("dc+sd-jwt"), vct: z.string() }),
     z.object({ doctype: z.string(), format: z.literal("mso_mdoc") }),
