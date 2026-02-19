@@ -46,7 +46,12 @@ export const zOpenid4vpAuthorizationRequestPayload = z
     wallet_nonce: z.string().optional(),
   })
   .passthrough()
-  .and(zJwtPayload);
+  .and(
+    z.object({
+      ...zJwtPayload.shape,
+      iss: z.string(),
+    }),
+  );
 
 export type AuthorizationRequestObject = z.infer<
   typeof zOpenid4vpAuthorizationRequestPayload
