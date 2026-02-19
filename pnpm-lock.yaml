@@ -10,17 +10,17 @@ catalogs:
       specifier: ^0.2.1
       version: 0.2.1
     '@openid4vc/oauth2':
-      specifier: 0.3.0-alpha-20250714110838
-      version: 0.3.0-alpha-20250714110838
+      specifier: 0.4.3
+      version: 0.4.3
     '@openid4vc/openid4vci':
-      specifier: 0.3.0-alpha-20250714110838
-      version: 0.3.0-alpha-20250714110838
+      specifier: 0.4.3
+      version: 0.4.3
     '@openid4vc/openid4vp':
-      specifier: 0.3.0-alpha-20250714110838
-      version: 0.3.0-alpha-20250714110838
+      specifier: 0.4.3
+      version: 0.4.3
     '@openid4vc/utils':
-      specifier: 0.3.0-alpha-20250714110838
-      version: 0.3.0-alpha-20250714110838
+      specifier: 0.4.3
+      version: 0.4.3
     jose:
       specifier: ^6.1.0
       version: 6.1.0
@@ -64,10 +64,10 @@ importers:
     dependencies:
       '@openid4vc/oauth2':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@openid4vc/utils':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@pagopa/io-wallet-utils':
         specifier: workspace:*
         version: link:../utils
@@ -83,9 +83,9 @@ importers:
       '@openid-federation/core':
         specifier: 'catalog:'
         version: 0.2.1
-      '@openid4vc/utils':
-        specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+      '@pagopa/io-wallet-utils':
+        specifier: 'workspace:'
+        version: link:../utils
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -101,13 +101,13 @@ importers:
         version: 0.2.1
       '@openid4vc/oauth2':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@openid4vc/openid4vci':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@openid4vc/utils':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@pagopa/io-wallet-oauth2':
         specifier: workspace:*
         version: link:../oauth2
@@ -132,13 +132,13 @@ importers:
     dependencies:
       '@openid4vc/oauth2':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@openid4vc/openid4vp':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@openid4vc/utils':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
       '@pagopa/io-wallet-oid-federation':
         specifier: 'workspace:'
         version: link:../oid-federation
@@ -160,7 +160,10 @@ importers:
     dependencies:
       '@openid4vc/utils':
         specifier: 'catalog:'
-        version: 0.3.0-alpha-20250714110838
+        version: 0.4.3
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
 
 packages:
 
@@ -481,17 +484,17 @@ packages:
   '@openid-federation/core@0.2.1':
     resolution: {integrity: sha512-vYAi8kDNZWo/910+Z2fWTU/8+/tolNIOFU2KJhGyjTDBcPUavGLiZF8NB86K0ERHDMAGqoMKq4ExA1E9WVYywA==}
 
-  '@openid4vc/oauth2@0.3.0-alpha-20250714110838':
-    resolution: {integrity: sha512-SR/HP818TCMBcr9Fpi+lS7xIA65AAFxhHsrjmxnxXQjWTBUEx6P4nhZbcw6T65AAuB8I0QzE3zzz+MRAFqunwQ==}
+  '@openid4vc/oauth2@0.4.3':
+    resolution: {integrity: sha512-XIcb6TayV7TJkkpUvEVdY1rqtz6etXje0pRcJqV0H2FdXlU/TfMkcrZOniS9lmjUBQXDShHerMgVHxLREIiYrA==}
 
-  '@openid4vc/openid4vci@0.3.0-alpha-20250714110838':
-    resolution: {integrity: sha512-Q6xCzapjacrmB2Tjk7rNrGsJbjTIVVIKn9ZvFZflfo8Imi18MXDLFmwQAyplwUMWIPy5J1AQ0nMeZNPdpWCTkQ==}
+  '@openid4vc/openid4vci@0.4.3':
+    resolution: {integrity: sha512-/r3l5rAaMBs76UEjl5rg68yzLaBvQqx173/VZa8VZy751YDlcJiTbhyXyWz4GmmxyTt0blitAkMvTeDSn1DPaw==}
 
-  '@openid4vc/openid4vp@0.3.0-alpha-20250714110838':
-    resolution: {integrity: sha512-lWrtQkUky4+CCJPmd8gHzpxxf8wRMZZvmsRoVcTBoq9biTXquCpJSkcGkl0V2OFF9cpxF7jDxOcUrIa/UQ5Crw==}
+  '@openid4vc/openid4vp@0.4.3':
+    resolution: {integrity: sha512-f9KKgeVekqpBwhHFmNc5V9n0kb0HvnmHcbMsqfWfMuJSc1VH8sibfYq2i7mUTdzdkCroO7iHrktI6CXGAkB4RA==}
 
-  '@openid4vc/utils@0.3.0-alpha-20250714110838':
-    resolution: {integrity: sha512-10TCSw/AMtgD4AIUob6kkFg6UdRv5kEYHovLJnfi5MHt4KdxSfSGfu2zc1cxJlKaBEg7su1BKiAT9j9WDmxSrA==}
+  '@openid4vc/utils@0.4.3':
+    resolution: {integrity: sha512-5HVZ30yWvZJk6k7cmIGuXlqdwzyVb23wosjLa7PDbjg3cU917zgAxgr/5ksiA3ny3huy3TEF3dTrfyTC5sjvYg==}
 
   '@pagopa/eslint-config@4.0.6':
     resolution: {integrity: sha512-2X32BElb8+K/7l58kLLWqwiLnOTaOq7deHCi0kjoedlwrGnRbLGj0lA4Eh/jC7eiAIGZhL6iudx2adbZ8Gfgvg==}
@@ -1112,6 +1115,7 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   globals@14.0.0:
@@ -1799,6 +1803,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.3.6:
+    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+
 snapshots:
 
   '@babel/runtime@7.28.2': {}
@@ -2141,27 +2148,27 @@ snapshots:
       buffer: 6.0.3
       zod: 3.25.76
 
-  '@openid4vc/oauth2@0.3.0-alpha-20250714110838':
+  '@openid4vc/oauth2@0.4.3':
     dependencies:
-      '@openid4vc/utils': 0.3.0-alpha-20250714110838
-      zod: 3.25.76
+      '@openid4vc/utils': 0.4.3
+      zod: 4.3.6
 
-  '@openid4vc/openid4vci@0.3.0-alpha-20250714110838':
+  '@openid4vc/openid4vci@0.4.3':
     dependencies:
-      '@openid4vc/oauth2': 0.3.0-alpha-20250714110838
-      '@openid4vc/utils': 0.3.0-alpha-20250714110838
-      zod: 3.25.76
+      '@openid4vc/oauth2': 0.4.3
+      '@openid4vc/utils': 0.4.3
+      zod: 4.3.6
 
-  '@openid4vc/openid4vp@0.3.0-alpha-20250714110838':
+  '@openid4vc/openid4vp@0.4.3':
     dependencies:
-      '@openid4vc/oauth2': 0.3.0-alpha-20250714110838
-      '@openid4vc/utils': 0.3.0-alpha-20250714110838
-      zod: 3.25.76
+      '@openid4vc/oauth2': 0.4.3
+      '@openid4vc/utils': 0.4.3
+      zod: 4.3.6
 
-  '@openid4vc/utils@0.3.0-alpha-20250714110838':
+  '@openid4vc/utils@0.4.3':
     dependencies:
       buffer: 6.0.3
-      zod: 3.25.76
+      zod: 4.3.6
 
   '@pagopa/eslint-config@4.0.6(eslint@9.36.0)(prettier@3.6.2)(vitest@3.2.4)':
     dependencies:
@@ -3422,3 +3429,5 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   zod@3.25.76: {}
+
+  zod@4.3.6: {}
