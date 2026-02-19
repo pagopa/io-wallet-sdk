@@ -36,7 +36,10 @@ export interface CreateAuthorizationResponseOptions {
   /**
    * Presentation's Request Object
    */
-  requestObject: AuthorizationRequestObject;
+  requestObject: Pick<
+    AuthorizationRequestObject,
+    "client_id" | "client_metadata" | "nonce" | "state"
+  >;
 
   /**
    * Relying Party metadata JWKS
