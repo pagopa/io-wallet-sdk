@@ -1,5 +1,7 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.0.0
+
 ## 0.7.7
 
 ### Patch Changes
