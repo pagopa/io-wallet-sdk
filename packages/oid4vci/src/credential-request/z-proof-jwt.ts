@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const zProofJwtHeader = z
   .object({
-    alg: z.string().nonempty(),
+    alg: z.string().min(1),
     typ: z.literal("openid4vci-proof+jwt"),
   })
   .passthrough();
