@@ -33,4 +33,30 @@ describe("zOpenid4vpAuthorizationRequestPayload", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("should fail when dcql_query is missing", () => {
+    const result = zOpenid4vpAuthorizationRequestPayload.safeParse({
+      client_id: basePayload.client_id,
+      iss: "https://verifier.example.com",
+      nonce: basePayload.nonce,
+      response_mode: basePayload.response_mode,
+      response_type: basePayload.response_type,
+      response_uri: basePayload.response_uri,
+      state: basePayload.state,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should fail when response_uri is missing", () => {
+    const result = zOpenid4vpAuthorizationRequestPayload.safeParse({
+      client_id: basePayload.client_id,
+      dcql_query: basePayload.dcql_query,
+      iss: "https://verifier.example.com",
+      nonce: basePayload.nonce,
+      response_mode: basePayload.response_mode,
+      response_type: basePayload.response_type,
+      state: basePayload.state,
+    });
+    expect(result.success).toBe(false);
+  });
 });
