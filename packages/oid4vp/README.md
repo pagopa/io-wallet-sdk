@@ -346,21 +346,28 @@ export type ClientMetadata = z.infer<typeof zClientMetadata>;
 
 export const zOpenid4vpAuthorizationRequestPayload = z
   .object({
-    response_type: z.literal('vp_token'),
     client_id: z.string(),
     client_metadata: zClientMetadata.optional(),
-    response_uri: z.string().url().optional(),
+    dcql_query: z.record(z.string(), z.any()),
+    nonce: z.string(),
     request_uri: z.string().url().optional(),
     request_uri_method: z.optional(z.string()),
     response_mode: z.literal("direct_post.jwt"),
-    nonce: z.string(),
-    wallet_nonce: z.string().optional(),
+    response_type: z.literal("vp_token"),
+    response_uri: z.string().url(),
     scope: z.string().optional(),
-    dcql_query: z.record(z.string(), z.any()).optional(),
-    state: z.string().optional(),
+    state: z.string(),
+    transaction_data: z.array(z.string()).nonempty().optional(),
     transaction_data_hashes_alg: z.array(z.string()).optional(),
+    wallet_nonce: z.string().optional(),
   })
-  .passthrough().and(zJwtPayload)
+  .passthrough()
+  .and(
+    z.object({
+      ...zJwtPayload.shape,
+      iss: z.string(),
+    }),
+  );
 
 export type AuthorizationRequestObject = z.infer<typeof zOpenid4vpAuthorizationRequestPayload>
 ```
