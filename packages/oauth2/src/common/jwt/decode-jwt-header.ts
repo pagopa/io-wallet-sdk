@@ -21,7 +21,7 @@ export interface DecodeJwtHeaderOptions<
   headerSchema?: HeaderSchema;
 
   /**
-   * The comapct encoded jwt
+   * The compact encoded jwt
    */
   jwt: string;
 }
