@@ -188,7 +188,10 @@ export async function fetchMetadata(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
   try {
-    const urlValidation = z.string().url().safeParse(options.credentialIssuerUrl);
+    const urlValidation = z
+      .string()
+      .url()
+      .safeParse(options.credentialIssuerUrl);
     if (!urlValidation.success || !urlValidation.data.startsWith("https://")) {
       throw new ValidationError(
         "credentialIssuerUrl must be a valid HTTPS URL",
