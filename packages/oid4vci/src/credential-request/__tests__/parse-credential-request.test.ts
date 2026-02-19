@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { Oauth2JwtParseError } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
@@ -9,11 +10,15 @@ import { describe, expect, it } from "vitest";
 
 import { parseCredentialRequest } from "../parse-credential-request";
 
-function createProofJwt(payload?: Record<string, unknown>): string {
+function createJwt(options?: {
+  header?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
+}): string {
   const header = Buffer.from(
     JSON.stringify({
       alg: "ES256",
       typ: "openid4vci-proof+jwt",
+      ...options?.header,
     }),
   ).toString("base64url");
 
@@ -23,11 +28,15 @@ function createProofJwt(payload?: Record<string, unknown>): string {
       iat: 1700000000,
       iss: "test-client-id",
       nonce: "test-nonce",
-      ...payload,
+      ...options?.payload,
     }),
   ).toString("base64url");
 
   return `${header}.${jwtPayload}.signature`;
+}
+
+function createProofJwt(payload?: Record<string, unknown>): string {
+  return createJwt({ payload });
 }
 
 describe("parseCredentialRequest", () => {
@@ -172,6 +181,139 @@ describe("parseCredentialRequest", () => {
         },
         expected: {
           audience: "https://wrong.example.com",
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError when expected nonce does not match", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "UniversityDegree",
+          proof: {
+            jwt: createProofJwt(),
+            proof_type: "jwt",
+          },
+        },
+        expected: {
+          nonce: "wrong-nonce",
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError when expected credential_identifier does not match", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "UniversityDegree",
+          proof: {
+            jwt: createProofJwt(),
+            proof_type: "jwt",
+          },
+        },
+        expected: {
+          credential_identifier: "WrongCredential",
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError when expected credential_configuration_id does not match", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_configuration_id: "PidCredential",
+          proofs: {
+            jwt: [createProofJwt()],
+          },
+        },
+        expected: {
+          credential_configuration_id: "WrongConfiguration",
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError when expected issuer does not match proof issuer", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "UniversityDegree",
+          proof: {
+            jwt: createProofJwt({ iss: "issuer-a" }),
+            proof_type: "jwt",
+          },
+        },
+        expected: {
+          issuer: "issuer-b",
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError when proof JWT header is invalid", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "UniversityDegree",
+          proof: {
+            jwt: createJwt({
+              header: {
+                typ: "invalid-typ",
+              },
+            }),
+            proof_type: "jwt",
+          },
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError when proof JWT payload is invalid", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "UniversityDegree",
+          proof: {
+            jwt: createJwt({
+              payload: {
+                aud: "",
+              },
+            }),
+            proof_type: "jwt",
+          },
         },
       }),
     ).toThrow(ValidationError);
