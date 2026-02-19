@@ -1,10 +1,11 @@
-import { CallbackContext, Jwk, JwtSignerX5c } from "@openid4vc/oauth2";
-import { addSecondsToDate, dateToSeconds } from "@openid4vc/utils";
-import { V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
+import { CallbackContext, JwtSignerX5c } from "@openid4vc/oauth2";
+import { Jwk, V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
+  addSecondsToDate,
+  dateToSeconds,
 } from "@pagopa/io-wallet-utils";
 
 import { WalletProviderError } from "../errors";

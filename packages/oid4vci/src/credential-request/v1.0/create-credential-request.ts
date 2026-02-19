@@ -1,11 +1,9 @@
 import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   ValidationError,
   dateToSeconds,
   parseWithErrorHandling,
-} from "@openid4vc/utils";
-import {
-  IoWalletSdkConfig,
-  ItWalletSpecsVersion,
 } from "@pagopa/io-wallet-utils";
 
 import { Oid4vciError } from "../../errors";
