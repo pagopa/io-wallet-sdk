@@ -1,5 +1,6 @@
 export * from "./create-credential-request";
 export * from "./fetch-credential-response";
+export * from "./parse-credential-request";
 export type * from "./types";
 
 // Re-export version-specific fetch types
@@ -18,3 +19,5 @@ export {
   zCredentialResponseV1_0,
   zCredentialResponseV1_3,
 } from "./z-credential-response";
+
+export * from "./z-proof-jwt";
