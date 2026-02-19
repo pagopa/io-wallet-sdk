@@ -23,6 +23,7 @@ describe("parsePushedAuthorizationRequest", () => {
     client_id: "test-client-id",
     code_challenge: "test-challenge",
     code_challenge_method: "S256",
+    jti: "test-jti",
     redirect_uri: "https://client.example.com/callback",
     response_mode: "form_post",
     response_type: "code",
@@ -50,6 +51,7 @@ describe("parsePushedAuthorizationRequest", () => {
         client_id: "test-client-id",
         code_challenge: "test-challenge",
         code_challenge_method: "S256",
+        jti: "test-jti",
         redirect_uri: "https://client.example.com/callback",
         response_mode: "form_post",
         response_type: "code",
@@ -105,7 +107,7 @@ describe("parsePushedAuthorizationRequest", () => {
   describe("JAR (JWT-secured Authorization Request)", () => {
     it("should parse a JAR request with request parameter (by value)", async () => {
       const mockJwt =
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCJ9.signature";
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCIsImp0aSI6InRlc3QtanRpIn0.signature";
 
       const jarRequest = {
         client_id: "test-client-id",
@@ -125,7 +127,7 @@ describe("parsePushedAuthorizationRequest", () => {
 
     it("should parse a JAR request with request_uri parameter (by reference)", async () => {
       const mockJwt =
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCJ9.signature";
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCIsImp0aSI6InRlc3QtanRpIn0.signature";
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -173,7 +175,7 @@ describe("parsePushedAuthorizationRequest", () => {
 
     it("should handle JAR request with both authorization_details and scope", async () => {
       const jarRequestJwt =
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJhdXRob3JpemF0aW9uX2RldGFpbHMiOlt7InR5cGUiOiJvcGVuaWRfY3JlZGVudGlhbCIsImNyZWRlbnRpYWxfY29uZmlndXJhdGlvbl9pZCI6InRlc3QtY29uZmlnIn1dLCJzY29wZSI6Im9wZW5pZCJ9.signature";
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJhdXRob3JpemF0aW9uX2RldGFpbHMiOlt7InR5cGUiOiJvcGVuaWRfY3JlZGVudGlhbCIsImNyZWRlbnRpYWxfY29uZmlndXJhdGlvbl9pZCI6InRlc3QtY29uZmlnIn1dLCJzY29wZSI6Im9wZW5pZCIsImp0aSI6InRlc3QtanRpIn0.signature";
 
       const jarRequest = {
         client_id: "test-client-id",
@@ -282,7 +284,7 @@ describe("parsePushedAuthorizationRequest", () => {
       };
 
       const mockJwt =
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCJ9.signature";
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCIsImp0aSI6InRlc3QtanRpIn0.signature";
 
       const jarRequest = {
         client_id: "test-client-id",

@@ -3,7 +3,11 @@ import {
   CallbackContext,
   RequestDpopOptions,
 } from "@openid4vc/oauth2";
-import { dateToSeconds, encodeToBase64Url } from "@openid4vc/utils";
+import {
+  addSecondsToDate,
+  dateToSeconds,
+  encodeToBase64Url,
+} from "@openid4vc/utils";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";
@@ -59,6 +63,16 @@ export interface CreatePushedAuthorizationRequestOptions {
    * unsigned path and can be omitted.
    */
   dpop?: RequestDpopOptions;
+
+  /**
+   * Expiration time of the JWT. If not provided 1 hour will be added to the `issuedAt`
+   */
+  expiresAt?: Date;
+
+  /**
+   * Creation time of the JWT. If not provided the current date will be used
+   */
+  issuedAt?: Date;
 
   /**
    * jti parameter to use for PAR. If not provided a value will generated automatically
@@ -126,6 +140,8 @@ export interface CreatePushedAuthorizationRequestOptions {
  * @param options.responseMode - Response mode (must be supported by Credential Issuer)
  * @param options.scope - OAuth 2.0 scope to request
  * @param options.state - Optional state parameter (auto-generated if not provided)
+ * @param options.expiresAt - Optional JWT expiration time (defaults to 1 hour from issuedAt)
+ * @param options.issuedAt - Optional JWT issued at time (defaults to current time)
  *
  * @returns A promise resolving to either:
  *   - `PushedAuthorizationRequestSigned` when JAR signing is required (contains `request` JWT)
@@ -220,6 +236,11 @@ export async function createPushedAuthorizationRequest(
     client_id: options.clientId,
     code_challenge: pkce.codeChallenge,
     code_challenge_method: pkce.codeChallengeMethod,
+    jti:
+      options.jti ??
+      encodeToBase64Url(
+        await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
+      ),
     redirect_uri: options.redirectUri,
     response_mode: options.responseMode,
     response_type: "code",
@@ -244,7 +265,8 @@ export async function createPushedAuthorizationRequest(
       );
     }
 
-    const iat = new Date();
+    const iat = options.issuedAt ?? new Date();
+    const exp = options.expiresAt ?? addSecondsToDate(iat, JWT_EXPIRY_SECONDS);
     const requestJwt = await options.callbacks.signJwt(dpop.signer, {
       header: {
         alg: dpop.signer.alg,
@@ -253,14 +275,9 @@ export async function createPushedAuthorizationRequest(
       },
       payload: {
         aud: options.audience,
-        exp: dateToSeconds(iat) + JWT_EXPIRY_SECONDS,
+        exp: dateToSeconds(exp),
         iat: dateToSeconds(iat),
         iss: dpop.signer.publicJwk.kid,
-        jti:
-          options.jti ??
-          encodeToBase64Url(
-            await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
-          ),
         ...authorizationRequest,
       },
     });

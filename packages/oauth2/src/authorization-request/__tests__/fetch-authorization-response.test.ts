@@ -251,6 +251,7 @@ describe("fetchPushedAuthorizationResponse - unsigned PAR", () => {
           client_id: "test-client-id",
           code_challenge: "test-code-challenge",
           code_challenge_method: "S256",
+          jti: "test-jti",
           redirect_uri: "https://client.example.com/callback",
           response_mode: "form_post",
           response_type: "code",
@@ -271,6 +272,7 @@ describe("fetchPushedAuthorizationResponse - unsigned PAR", () => {
           client_id: "test-client-id",
           code_challenge: "test-code-challenge",
           code_challenge_method: "S256",
+          jti: "test-jti",
           redirect_uri: "https://client.example.com/callback",
           response_mode: "form_post",
           response_type: "code",
@@ -322,6 +324,7 @@ describe("fetchPushedAuthorizationResponse - unsigned PAR", () => {
           client_id: "test-client-id",
           code_challenge: "test-code-challenge",
           code_challenge_method: "S256",
+          jti: "test-jti",
           redirect_uri: "https://client.example.com/callback",
           response_mode: "form_post",
           response_type: "code",
@@ -339,6 +342,7 @@ describe("fetchPushedAuthorizationResponse - unsigned PAR", () => {
     expectedParams.append("client_id", "test-client-id");
     expectedParams.append("code_challenge", "test-code-challenge");
     expectedParams.append("code_challenge_method", "S256");
+    expectedParams.append("jti", "test-jti");
     expectedParams.append(
       "redirect_uri",
       "https://client.example.com/callback",

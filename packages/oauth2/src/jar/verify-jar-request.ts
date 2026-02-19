@@ -23,6 +23,7 @@ export interface VerifyJarRequestOptions {
     client_id?: string;
   };
   jwtSigner: JwtSigner;
+  now?: Date;
 }
 
 export interface VerifiedJarRequest {
@@ -78,6 +79,40 @@ export async function verifyJarRequest(
     throw new Oauth2Error(
       "client_id does not match the request object client_id.",
     );
+  }
+
+  if (jwt.payload.iss !== authorizationRequestPayload.client_id) {
+    throw new Oauth2Error("iss claim in request JWT does not match client_id");
+  }
+
+  // RFC 9101 §4: exp claim MUST be present and not in the past
+  if (jwt.payload.exp === undefined) {
+    throw new Oauth2Error("exp claim in request JWT is missing");
+  }
+
+  const now = options.now ?? new Date();
+  const nowSeconds = Math.floor(now.getTime() / 1000);
+  if (nowSeconds > jwt.payload.exp) {
+    throw new Oauth2Error("exp claim in request JWT is expired");
+  }
+
+  // IT-Wallet requirement: iat MUST be present
+  if (jwt.payload.iat === undefined) {
+    throw new Oauth2Error("iat claim in request JWT is missing");
+  }
+
+  // IT-Wallet requirement: iat MUST not be more than 5 minutes in the past
+  const MAX_IAT_AGE_SECONDS = 5 * 60;
+  if (nowSeconds - jwt.payload.iat > MAX_IAT_AGE_SECONDS) {
+    throw new Oauth2Error(
+      "iat claim in request JWT is too old (must be within 5 minutes)",
+    );
+  }
+
+  // IT-Wallet requirement: iat MUST not be more than clock-skew tolerance in the future
+  const CLOCK_SKEW_TOLERANCE_SECONDS = 60;
+  if (jwt.payload.iat - nowSeconds > CLOCK_SKEW_TOLERANCE_SECONDS) {
+    throw new Oauth2Error("iat claim in request JWT is too far in the future");
   }
 
   return {
