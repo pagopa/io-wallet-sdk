@@ -17,6 +17,9 @@ function createJwt(options?: {
   const header = Buffer.from(
     JSON.stringify({
       alg: "ES256",
+      jwk: {
+        kty: "EC",
+      },
       typ: "openid4vci-proof+jwt",
       ...options?.header,
     }),
@@ -37,6 +40,18 @@ function createJwt(options?: {
 
 function createProofJwt(payload?: Record<string, unknown>): string {
   return createJwt({ payload });
+}
+
+function createProofJwtV1_3(options?: {
+  keyAttestation?: string;
+  payload?: Record<string, unknown>;
+}): string {
+  return createJwt({
+    header: {
+      key_attestation: options?.keyAttestation ?? "test-key-attestation",
+    },
+    payload: options?.payload,
+  });
 }
 
 describe("parseCredentialRequest", () => {
@@ -77,7 +92,10 @@ describe("parseCredentialRequest", () => {
       credentialRequest: {
         credential_identifier: "education_degree",
         proofs: {
-          jwt: [createProofJwt(), createProofJwt({ nonce: "test-nonce-2" })],
+          jwt: [
+            createProofJwtV1_3(),
+            createProofJwtV1_3({ payload: { nonce: "test-nonce-2" } }),
+          ],
         },
       },
     });
@@ -118,7 +136,7 @@ describe("parseCredentialRequest", () => {
         credentialRequest: {
           credential_identifier: "education_degree",
           proofs: {
-            jwt: [createProofJwt()],
+            jwt: [createProofJwtV1_3()],
           },
         },
         isDeferredFlow: true,
@@ -155,7 +173,7 @@ describe("parseCredentialRequest", () => {
       credentialRequest: {
         credential_identifier: "education_degree",
         proofs: {
-          jwt: [createProofJwt({ iss: undefined })],
+          jwt: [createProofJwtV1_3({ payload: { iss: undefined } })],
         },
       },
       grantType: "pre-authorized_code",
@@ -174,7 +192,7 @@ describe("parseCredentialRequest", () => {
       credentialRequest: {
         credential_identifier: "education_degree",
         proofs: {
-          jwt: [createProofJwt({ iss: undefined })],
+          jwt: [createProofJwtV1_3({ payload: { iss: undefined } })],
         },
       },
       expected: {
@@ -263,7 +281,7 @@ describe("parseCredentialRequest", () => {
         credentialRequest: {
           credential_configuration_id: "PidCredential",
           proofs: {
-            jwt: [createProofJwt()],
+            jwt: [createProofJwtV1_3()],
           },
         },
         expected: {
@@ -312,6 +330,42 @@ describe("parseCredentialRequest", () => {
               },
             }),
             proof_type: "jwt",
+          },
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError for v1.3 when key_attestation is missing in proof JWT header", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "education_degree",
+          proofs: {
+            jwt: [createProofJwt()],
+          },
+        },
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError for v1.3 when key_attestation is empty", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "education_degree",
+          proofs: {
+            jwt: [createProofJwtV1_3({ keyAttestation: "" })],
           },
         },
       }),

@@ -19,7 +19,8 @@ import {
 import {
   ProofJwtHeader,
   ProofJwtPayload,
-  zProofJwtHeader,
+  zProofJwtHeaderV1_0,
+  zProofJwtHeaderV1_3,
   zProofJwtPayload,
 } from "./z-proof-jwt";
 
@@ -159,10 +160,15 @@ function validateTransactionContext(options: {
 function parseProofJwt(options: {
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 | ItWalletSpecsVersion.V1_3;
   jwt: string;
 }): ParsedCredentialProof {
   const decoded = decodeJwt({ jwt: options.jwt });
-  const headerValidation = zProofJwtHeader.safeParse(decoded.header);
+  const headerValidation =
+    options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3
+      ? zProofJwtHeaderV1_3.safeParse(decoded.header)
+      : zProofJwtHeaderV1_0.safeParse(decoded.header);
+
   if (!headerValidation.success) {
     throw new ValidationError(
       "Credential proof JWT header is invalid or missing required claims",
@@ -231,12 +237,14 @@ function normalizeProofs(options: {
   credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 | ItWalletSpecsVersion.V1_3;
 }): ParsedCredentialProof[] {
   if ("proof" in options.credentialRequest) {
     return [
       parseProofJwt({
         expected: options.expected,
         grantType: options.grantType,
+        itWalletSpecsVersion: options.itWalletSpecsVersion,
         jwt: options.credentialRequest.proof.jwt,
       }),
     ];
@@ -246,6 +254,7 @@ function normalizeProofs(options: {
     parseProofJwt({
       expected: options.expected,
       grantType: options.grantType,
+      itWalletSpecsVersion: options.itWalletSpecsVersion,
       jwt,
     }),
   );
@@ -261,6 +270,7 @@ function toResult<
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
   isDeferredFlow: boolean;
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 | ItWalletSpecsVersion.V1_3;
 }): ParsedCredentialRequest {
   validateExpectedValues(options.credentialRequest, options.expected);
   validateTransactionContext({
@@ -272,6 +282,7 @@ function toResult<
     credentialRequest: options.credentialRequest,
     expected: options.expected,
     grantType: options.grantType,
+    itWalletSpecsVersion: options.itWalletSpecsVersion,
   });
 
   return {
@@ -325,6 +336,7 @@ export function parseCredentialRequest(
         expected: options.expected,
         grantType,
         isDeferredFlow,
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
       });
     }
 
@@ -340,6 +352,7 @@ export function parseCredentialRequest(
         expected: options.expected,
         grantType,
         isDeferredFlow,
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
       });
     }
 
