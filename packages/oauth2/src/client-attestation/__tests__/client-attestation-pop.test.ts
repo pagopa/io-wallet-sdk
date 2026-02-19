@@ -1,4 +1,4 @@
-import { encodeToBase64Url } from "@openid4vc/utils";
+import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error } from "../../errors";

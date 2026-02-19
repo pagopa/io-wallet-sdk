@@ -1,6 +1,7 @@
-import { decodeJwt, jwtSignerFromJwt, verifyJwt } from "@openid4vc/oauth2";
+import { jwtSignerFromJwt, verifyJwt } from "@openid4vc/oauth2";
 import { ZodType, z } from "zod";
 
+import { decodeJwt } from "../common/jwt/decode-jwt";
 import { BaseVerifyWalletAttestationJwtOptions } from "./types";
 
 export async function verifyWalletAttestationBase<

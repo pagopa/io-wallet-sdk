@@ -1,7 +1,8 @@
 import { type CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
-import { ValidationError, createFetcher } from "@openid4vc/utils";
 import {
   UnexpectedStatusCodeError,
+  ValidationError,
+  createFetcher,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 

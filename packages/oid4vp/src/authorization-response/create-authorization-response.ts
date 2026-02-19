@@ -3,9 +3,10 @@ import type {
   ItWalletCredentialVerifierMetadataV1_3,
 } from "@pagopa/io-wallet-oid-federation";
 
-import { CallbackContext, JweEncryptor, Jwk } from "@openid4vc/oauth2";
+import { CallbackContext, JweEncryptor } from "@openid4vc/oauth2";
 import { VpToken, extractEncryptionJwkFromJwks } from "@openid4vc/openid4vp";
-import { encodeToBase64Url } from "@openid4vc/utils";
+import { Jwk } from "@pagopa/io-wallet-oauth2";
+import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
 
 import {
   AuthorizationRequestObject,

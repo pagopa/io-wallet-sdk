@@ -1,4 +1,4 @@
-import { zJwk } from "@openid4vc/oauth2";
+import { zJwk } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
 
 export const zKeyStorageLevel = z.enum([

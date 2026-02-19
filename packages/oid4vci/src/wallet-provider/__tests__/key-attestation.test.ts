@@ -1,8 +1,9 @@
 import { Jwk } from "@openid4vc/oauth2";
-import { addSecondsToDate, dateToSeconds } from "@openid4vc/utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  addSecondsToDate,
+  dateToSeconds,
 } from "@pagopa/io-wallet-utils";
 import {
   type MockedFunction,

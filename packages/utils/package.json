@@ -30,6 +30,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "zod": "catalog:",
     "@openid4vc/utils": "catalog:"
   }
 }

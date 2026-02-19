@@ -1,7 +1,7 @@
-import { encodeToBase64Url } from "@openid4vc/utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 

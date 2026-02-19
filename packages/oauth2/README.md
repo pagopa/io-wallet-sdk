@@ -19,7 +19,8 @@ yarn add @pagopa/io-wallet-oauth2
 ### `createTokenDPoP`
 
 ```typescript
-import { JwtSignerJwk, createTokenDPoP, CreateTokenDPoPOptions, HttpMethod } from "@pagopa/io-wallet-oauth2"
+import { JwtSignerJwk, createTokenDPoP, CreateTokenDPoPOptions } from "@pagopa/io-wallet-oauth2"
+import { HttpMethod } from "@pagopa/io-wallet-utils"
 
 const signer: JwtSignerJwk = {
     method: 'jwk',

@@ -1,4 +1,4 @@
-import { createFetcher } from "@openid4vc/utils";
+import { createFetcher } from "@pagopa/io-wallet-utils";
 
 import type { ResolveCredentialOfferOptions } from "./types";
 

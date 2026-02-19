@@ -4,7 +4,7 @@ import {
   createJwtSignableInput,
   entityConfigurationHeaderSchema,
 } from "@openid-federation/core";
-import { parseWithErrorHandling } from "@openid4vc/utils";
+import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
 import { getUsedJsonWebKey } from "../jsonWeb/getUsedJsonWebKey";
 import { SignCallback } from "../utils";

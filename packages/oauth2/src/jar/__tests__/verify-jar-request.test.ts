@@ -1,8 +1,9 @@
 /* eslint-disable max-lines-per-function */
-import { CallbackContext, Jwk, JwtSigner } from "@openid4vc/oauth2";
-import { encodeToBase64Url } from "@openid4vc/utils";
+import { CallbackContext, JwtSigner } from "@openid4vc/oauth2";
+import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
+import { Jwk } from "../../common/jwk/z-jwk";
 import { Oauth2Error } from "../../errors";
 import {
   VerifyJarRequestOptions,

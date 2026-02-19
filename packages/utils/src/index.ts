@@ -3,21 +3,20 @@ export * from "./constants";
 export * from "./errors";
 export * from "./fetcher";
 export type * from "./globals";
+export * from "./parse";
+export * from "./validation";
 
 export {
   ContentType,
   type Fetch,
   JsonParseError,
-  ValidationError,
   addSecondsToDate,
   createFetcher,
   dateToSeconds,
+  decodeBase64,
   decodeUtf8String,
   encodeToBase64Url,
-  formatZodError,
-  parseWithErrorHandling,
+  encodeToUtf8String,
   setGlobalConfig,
-  zHttpMethod,
-  zHttpsUrl,
-  zInteger,
+  stringToJsonWithErrorHandling,
 } from "@openid4vc/utils";

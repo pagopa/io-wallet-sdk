@@ -1,11 +1,12 @@
 import { CallbackContext } from "@openid4vc/oauth2";
-import { createFetcher, parseWithErrorHandling } from "@openid4vc/utils";
 import {
   CONTENT_TYPES,
   HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,
+  createFetcher,
   hasStatusOrThrow,
+  parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
 import type { CredentialRequestV1_0 } from "./v1.0";

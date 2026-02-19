@@ -1,5 +1,5 @@
 import { jsonWebKeySchema } from "@openid-federation/core";
-import { parseWithErrorHandling } from "@openid4vc/utils";
+import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 import { jsonWebKeySetSchema } from "../jwk/jwk";

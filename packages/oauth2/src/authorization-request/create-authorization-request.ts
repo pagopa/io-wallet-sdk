@@ -7,7 +7,7 @@ import {
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
-} from "@openid4vc/utils";
+} from "@pagopa/io-wallet-utils";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";

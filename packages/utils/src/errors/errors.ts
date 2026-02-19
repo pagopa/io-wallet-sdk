@@ -1,3 +1,7 @@
+import type { ZodError, z } from "zod";
+
+import { formatZodError } from "./parse";
+
 // An error reason that supports both a string and a generic JSON object
 type GenericErrorReason = Record<string, unknown> | string;
 
@@ -84,5 +88,22 @@ export class ItWalletSpecsVersionError extends Error {
     if (typeof ErrorConstructor.captureStackTrace === "function") {
       ErrorConstructor.captureStackTrace(this, ItWalletSpecsVersionError);
     }
+  }
+}
+
+export class ValidationError extends Error {
+  public zodError: ZodError | undefined;
+
+  constructor(message: string, zodError?: z.ZodError) {
+    super(message);
+
+    const formattedError = formatZodError(zodError);
+    this.message = `${message}\n${formattedError}`;
+
+    Object.defineProperty(this, "zodError", {
+      enumerable: false,
+      value: zodError,
+      writable: false,
+    });
   }
 }

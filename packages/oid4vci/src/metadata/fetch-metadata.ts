@@ -1,16 +1,14 @@
-import {
-  CallbackContext,
-  VerifyJwtCallback,
-  decodeJwt,
-} from "@openid4vc/oauth2";
-import { createFetcher, parseWithErrorHandling } from "@openid4vc/utils";
+import { CallbackContext, VerifyJwtCallback } from "@openid4vc/oauth2";
+import { decodeJwt } from "@pagopa/io-wallet-oauth2";
 import { itWalletEntityStatementClaimsSchema } from "@pagopa/io-wallet-oid-federation";
 import {
   UnexpectedStatusCodeError,
   ValidationError,
+  createFetcher,
   hasStatusOrThrow,
-  zHttpsUrl,
+  parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
+import z from "zod";
 
 import { FetchMetadataError } from "../errors";
 import {
@@ -129,8 +127,8 @@ async function fallbackDiscovery(
   let oauthAuthorizationServer: Record<string, unknown>;
 
   if (authorizationServers && authorizationServers.length > 0) {
-    const parsedUrl = zHttpsUrl.safeParse(authorizationServers[0]);
-    if (!parsedUrl.success) {
+    const parsedUrl = z.string().url().safeParse(authorizationServers[0]);
+    if (!parsedUrl.success || !parsedUrl.data.startsWith("https://")) {
       throw new ValidationError(
         "authorization_servers[0] is not a valid HTTPS URL",
       );
@@ -190,8 +188,11 @@ export async function fetchMetadata(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
   try {
-    const urlValidation = zHttpsUrl.safeParse(options.credentialIssuerUrl);
-    if (!urlValidation.success) {
+    const urlValidation = z
+      .string()
+      .url()
+      .safeParse(options.credentialIssuerUrl);
+    if (!urlValidation.success || !urlValidation.data.startsWith("https://")) {
       throw new ValidationError(
         "credentialIssuerUrl must be a valid HTTPS URL",
       );

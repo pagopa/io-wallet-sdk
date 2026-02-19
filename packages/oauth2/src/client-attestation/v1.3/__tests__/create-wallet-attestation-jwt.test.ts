@@ -1,7 +1,7 @@
-import { dateToSeconds } from "@openid4vc/utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  dateToSeconds,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

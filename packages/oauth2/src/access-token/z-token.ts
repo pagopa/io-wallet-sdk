@@ -1,5 +1,6 @@
-import { zJwtHeader, zJwtPayload } from "@openid4vc/oauth2";
 import { z } from "zod";
+
+import { zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
   z.object({

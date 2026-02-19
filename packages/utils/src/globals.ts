@@ -1,4 +1,4 @@
-import { HttpMethod } from "@openid4vc/utils";
+import { HttpMethod } from "./validation";
 
 export type FetchHeaders = globalThis.Headers;
 

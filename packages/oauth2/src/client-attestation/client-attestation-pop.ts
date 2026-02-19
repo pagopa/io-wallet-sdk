@@ -2,17 +2,17 @@ import {
   CallbackContext,
   ClientAttestationPopJwtHeader,
   ClientAttestationPopJwtPayload,
-  Jwk,
   JwtSignerJwk,
-  decodeJwt,
   verifyJwt,
 } from "@openid4vc/oauth2";
 import {
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
-} from "@openid4vc/utils";
+} from "@pagopa/io-wallet-utils";
 
+import { Jwk } from "../common/jwk/z-jwk";
+import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
 
 export interface VerifyClientAttestationPopJwtOptions {

@@ -1,4 +1,4 @@
-import { ValidationError } from "@openid4vc/utils";
+import { ValidationError } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NonceRequestError } from "../../errors";

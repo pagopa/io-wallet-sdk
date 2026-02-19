@@ -2,10 +2,10 @@ import {
   CallbackContext,
   JwtSigner,
   Oauth2JwtParseError,
-  decodeJwt,
   verifyJwt,
 } from "@openid4vc/oauth2";
-import { ValidationError } from "@openid4vc/utils";
+import { decodeJwt } from "@pagopa/io-wallet-oauth2";
+import { ValidationError } from "@pagopa/io-wallet-utils";
 
 import { ParseAuthorizeRequestError } from "../errors";
 import {

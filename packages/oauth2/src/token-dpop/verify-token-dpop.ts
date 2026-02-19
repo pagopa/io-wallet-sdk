@@ -2,7 +2,6 @@ import {
   CallbackContext,
   HashAlgorithm,
   calculateJwkThumbprint,
-  decodeJwt,
   verifyJwt,
 } from "@openid4vc/oauth2";
 import {
@@ -11,6 +10,7 @@ import {
   encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
 
+import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
 import { htuFromRequestUrl } from "./dpop-utils";
 import { zDpopJwtHeader, zDpopJwtPayload } from "./z-dpop";
