@@ -16,7 +16,7 @@ export interface DecodeJwtHeaderOptions<
 > {
   /**
    * Schema to use for validating the header. If not provided the
-   * default `vJwtHeader` schema will be used
+   * default `zJwtHeader` schema will be used
    */
   headerSchema?: HeaderSchema;
 
