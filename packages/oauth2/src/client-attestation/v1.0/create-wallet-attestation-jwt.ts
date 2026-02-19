@@ -1,10 +1,10 @@
-import { decodeJwt } from "@openid4vc/oauth2";
 import {
   ValidationError,
   addSecondsToDate,
   dateToSeconds,
-} from "@openid4vc/utils";
+} from "@pagopa/io-wallet-utils";
 
+import { decodeJwt } from "../../common/jwt/decode-jwt";
 import { ClientAttestationError } from "../../errors";
 import { BaseWalletAttestationOptions } from "../types";
 import {

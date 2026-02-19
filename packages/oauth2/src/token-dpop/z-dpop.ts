@@ -1,14 +1,16 @@
-import { zJwk, zJwtHeader, zJwtPayload } from "@openid4vc/oauth2";
-import { zHttpMethod, zHttpsUrl, zInteger } from "@pagopa/io-wallet-utils";
+import { zHttpMethod } from "@pagopa/io-wallet-utils";
 import z from "zod";
+
+import { zJwk } from "../common/jwk/z-jwk";
+import { zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zDpopJwtPayload = z
   .object({
     ...zJwtPayload.shape,
     ath: z.optional(z.string()),
     htm: zHttpMethod,
-    htu: zHttpsUrl,
-    iat: zInteger,
+    htu: z.string().url(),
+    iat: z.number().int().nonnegative(),
 
     jti: z.string(),
   })

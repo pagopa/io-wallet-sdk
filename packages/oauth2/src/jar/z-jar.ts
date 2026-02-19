@@ -1,12 +1,12 @@
-import { zJwtPayload } from "@openid4vc/oauth2";
-import { zHttpsUrl } from "@pagopa/io-wallet-utils";
 import z from "zod";
+
+import { zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zJarAuthorizationRequest = z
   .object({
     client_id: z.optional(z.string()),
     request: z.optional(z.string()),
-    request_uri: z.optional(zHttpsUrl),
+    request_uri: z.string().url().optional(),
   })
   .passthrough();
 

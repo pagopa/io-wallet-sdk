@@ -1,5 +1,7 @@
-import { zJwk, zJwtHeader, zJwtPayload } from "@openid4vc/oauth2";
 import { z } from "zod";
+
+import { zJwk } from "../../common/jwk/z-jwk";
+import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
 
 /**
  * JWT Header schema for IT-Wallet v1.3 Wallet Attestation

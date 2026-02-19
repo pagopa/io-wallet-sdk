@@ -1,7 +1,6 @@
 import {
   CallbackContext,
   HashAlgorithm,
-  Jwk,
   JwtSigner,
   calculateJwkThumbprint,
   jwtHeaderFromJwtSigner,
@@ -13,6 +12,7 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
+import { Jwk } from "../common/jwk/z-jwk";
 import { CreateTokenResponseError } from "../errors";
 import {
   AccessTokenProfileJwtHeader,

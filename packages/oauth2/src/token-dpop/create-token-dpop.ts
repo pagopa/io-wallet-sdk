@@ -6,13 +6,13 @@ import {
   zCompactJwt,
 } from "@openid4vc/oauth2";
 import {
+  FetchHeaders,
   ValidationError,
   dateToSeconds,
   decodeUtf8String,
   encodeToBase64Url,
   parseWithErrorHandling,
-} from "@openid4vc/utils";
-import { FetchHeaders } from "@pagopa/io-wallet-utils";
+} from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 
 import { CreateTokenDPoPError } from "../errors";

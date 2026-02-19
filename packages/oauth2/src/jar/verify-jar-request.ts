@@ -7,6 +7,7 @@ import {
   zCompactJwe,
   zCompactJwt,
 } from "@openid4vc/oauth2";
+import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "../errors";
 import {
@@ -28,7 +29,9 @@ export interface VerifyJarRequestOptions {
 
 export interface VerifiedJarRequest {
   authorizationRequestPayload: JarRequestObjectPayload;
-  jwt: ReturnType<typeof decodeJwt<undefined, typeof zJarRequestObjectPayload>>;
+  jwt: {
+    payload: JarRequestObjectPayload;
+  } & Omit<ReturnType<typeof decodeJwt>, "payload">;
   signer: JwtSignerWithJwk;
 }
 
@@ -129,15 +132,16 @@ async function verifyJarRequestObject(options: {
 }) {
   const { authorizationRequestJwt, callbacks, jwtSigner } = options;
 
-  const jwt = decodeJwt({
-    jwt: authorizationRequestJwt,
-    payloadSchema: zJarRequestObjectPayload,
-  });
+  const jwt = decodeJwt({ jwt: authorizationRequestJwt });
+  const authorizationRequestPayload = parseWithErrorHandling(
+    zJarRequestObjectPayload,
+    jwt.payload,
+  );
 
   const { signer } = await verifyJwt({
     compact: authorizationRequestJwt,
     header: jwt.header,
-    payload: jwt.payload,
+    payload: authorizationRequestPayload,
     signer: jwtSigner,
 
     verifyJwtCallback: callbacks.verifyJwt,
@@ -154,8 +158,11 @@ async function verifyJarRequestObject(options: {
   }
 
   return {
-    authorizationRequestPayload: jwt.payload,
-    jwt,
+    authorizationRequestPayload,
+    jwt: {
+      ...jwt,
+      payload: authorizationRequestPayload,
+    },
     signer,
   };
 }

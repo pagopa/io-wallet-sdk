@@ -2,16 +2,16 @@
 import {
   AuthorizationServerMetadata,
   CallbackContext,
-  Jwk,
 } from "@openid4vc/oauth2";
-import { encodeToBase64Url } from "@openid4vc/utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   RequestLike,
+  encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
+import { Jwk } from "../../common/jwk/z-jwk";
 import { Oauth2Error } from "../../errors";
 import { PkceCodeChallengeMethod } from "../../pkce";
 import {

@@ -1,19 +1,19 @@
 import {
   CallbackContext,
   JwtSigner,
-  decodeJwt,
   jwtSignerFromJwt,
   verifyJwt,
 } from "@openid4vc/oauth2";
-import { createFetcher } from "@openid4vc/utils";
 import {
   CONTENT_TYPES,
   HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,
+  createFetcher,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
+import { decodeJwt } from "../common/jwt/decode-jwt";
 import { MrtdPopError } from "../errors";
 import {
   zMrtdPopInitResponseJwtHeader,

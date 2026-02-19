@@ -1,7 +1,6 @@
 import {
   AuthorizationServerMetadata,
   CallbackContext,
-  Jwk,
 } from "@openid4vc/oauth2";
 import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
@@ -11,6 +10,7 @@ import {
   VerifiedWalletAttestationJwt,
   verifyClientAttestation,
 } from "../client-attestation";
+import { Jwk } from "../common/jwk/z-jwk";
 import { Oauth2Error } from "../errors";
 import { PkceCodeChallengeMethod, verifyPkce } from "../pkce";
 import { verifyTokenDPoP } from "../token-dpop";
@@ -185,6 +185,10 @@ export async function verifyAccessTokenRequest(
     if (now.getTime() > options.codeExpiresAt.getTime()) {
       throw new Oauth2Error(`Expired 'code' provided`);
     }
+  }
+
+  if (!header.jwk) {
+    throw new Oauth2Error("DPoP header does not contain a JWK");
   }
 
   return {

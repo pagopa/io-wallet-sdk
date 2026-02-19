@@ -1,5 +1,5 @@
 import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
-import { dateToSeconds, parseWithErrorHandling } from "@openid4vc/utils";
+import { dateToSeconds, parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
 import { MrtdPopError } from "../errors";
 import {

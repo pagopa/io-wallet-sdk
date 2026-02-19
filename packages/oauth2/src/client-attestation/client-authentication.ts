@@ -1,9 +1,8 @@
 import {
   AuthorizationServerMetadata,
   CallbackContext,
-  HttpMethod,
 } from "@openid4vc/oauth2";
-import { ContentType, FetchHeaders } from "@pagopa/io-wallet-utils";
+import { ContentType, FetchHeaders, HttpMethod } from "@pagopa/io-wallet-utils";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
 import {

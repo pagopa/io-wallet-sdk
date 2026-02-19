@@ -1,5 +1,6 @@
-import { decodeJwt, zCompactJwt } from "@openid4vc/oauth2";
+import { zCompactJwt } from "@openid4vc/oauth2";
 
+import { decodeJwt } from "../common/jwt";
 import { MrtdPopError } from "../errors";
 import {
   MrtdChallengeJwtHeader,

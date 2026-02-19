@@ -1,7 +1,6 @@
 import {
   AuthorizationServerMetadata,
   CallbackContext,
-  Jwk,
 } from "@openid4vc/oauth2";
 import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
@@ -11,6 +10,7 @@ import {
   VerifiedWalletAttestationJwt,
   verifyClientAttestation,
 } from "../client-attestation";
+import { Jwk } from "../common/jwk/z-jwk";
 import { Oauth2Error } from "../errors";
 import { verifyTokenDPoP } from "../token-dpop";
 

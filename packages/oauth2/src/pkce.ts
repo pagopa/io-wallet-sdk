@@ -3,7 +3,7 @@ import {
   HashAlgorithm,
   HashCallback,
 } from "@openid4vc/oauth2";
-import { decodeUtf8String, encodeToBase64Url } from "@openid4vc/utils";
+import { decodeUtf8String, encodeToBase64Url } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "./errors";
 
