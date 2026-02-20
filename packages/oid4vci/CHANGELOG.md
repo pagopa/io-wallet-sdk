@@ -1,5 +1,18 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.1.0
+
+### Minor Changes
+
+- e033719: feat: add parseCredentialRequest utility function
+
+### Patch Changes
+
+- @pagopa/io-wallet-oauth2@1.1.0
+- @pagopa/io-wallet-oid-federation@1.1.0
+- @pagopa/io-wallet-oid4vp@1.1.0
+- @pagopa/io-wallet-utils@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
