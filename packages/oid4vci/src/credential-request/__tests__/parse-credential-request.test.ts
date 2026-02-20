@@ -415,16 +415,15 @@ describe("parseCredentialRequest", () => {
   });
 
   it("throws ItWalletSpecsVersionError for unsupported version", () => {
-    const unsafeParse = parseCredentialRequest as unknown as (options: {
-      config: { itWalletSpecsVersion: string };
-      credentialRequest: Record<string, unknown>;
-    }) => unknown;
+    const unsupportedConfig = new IoWalletSdkConfig({
+      itWalletSpecsVersion: "9.9.9" as unknown as ItWalletSpecsVersion,
+    });
 
     expect(() =>
-      unsafeParse({
-        config: { itWalletSpecsVersion: "9.9.9" },
+      parseCredentialRequest({
+        config: unsupportedConfig,
         credentialRequest: {},
-      }),
+      } as unknown as Parameters<typeof parseCredentialRequest>[0]),
     ).toThrow(ItWalletSpecsVersionError);
   });
 });

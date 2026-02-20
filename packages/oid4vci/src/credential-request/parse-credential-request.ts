@@ -93,14 +93,6 @@ export interface ParsedCredentialRequest {
   };
 }
 
-function isV1_0Options(options: ParseCredentialRequestOptions): boolean {
-  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
-}
-
-function isV1_3Options(options: ParseCredentialRequestOptions): boolean {
-  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
-}
-
 /**
  * Validates request body identifiers against optionally provided expected values.
  */
@@ -324,7 +316,7 @@ export function parseCredentialRequest(
   const { config } = options;
 
   try {
-    if (isV1_0Options(options)) {
+    if (options.config.isVersion(ItWalletSpecsVersion.V1_0)) {
       const credentialRequest = parseWithErrorHandling(
         zCredentialRequestV1_0,
         options.credentialRequest,
@@ -340,7 +332,7 @@ export function parseCredentialRequest(
       });
     }
 
-    if (isV1_3Options(options)) {
+    if (options.config.isVersion(ItWalletSpecsVersion.V1_3)) {
       const credentialRequest = parseWithErrorHandling(
         zCredentialRequestV1_3,
         options.credentialRequest,
