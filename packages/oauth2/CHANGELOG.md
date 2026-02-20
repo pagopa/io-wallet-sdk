@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.1.0
+
+### Patch Changes
+
+- @pagopa/io-wallet-utils@1.1.0
+
 ## 1.0.0
 
 ### Minor Changes
