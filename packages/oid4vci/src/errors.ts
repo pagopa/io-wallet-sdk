@@ -53,6 +53,19 @@ export class FetchCredentialResponseError extends Oid4vciError {
 }
 
 /**
+ * Error thrown when an unexpected error occurs during credential request parsing.
+ */
+export class ParseCredentialRequestError extends Oid4vciError {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "ParseCredentialRequestError";
+  }
+}
+
+/**
  * Error thrown when metadata fetching fails at all discovery endpoints.
  */
 export class FetchMetadataError extends Oid4vciError {

@@ -57,7 +57,7 @@ export class IoWalletSdkConfig {
    */
   isVersion<V extends ItWalletSpecsVersion>(
     version: V,
-  ): this is { itWalletSpecsVersion: V } & IoWalletSdkConfig {
+  ): this is { itWalletSpecsVersion: V } {
     return this.itWalletSpecsVersion === version;
   }
 }
