@@ -77,6 +77,19 @@ export class FetchMetadataError extends Oid4vciError {
 }
 
 /**
+ * Error thrown when an unexpected error occurs during credential request JWT proof verification.
+ */
+export class VerifyCredentialRequestJwtProofError extends Oid4vciError {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "VerifyCredentialRequestJwtProofError";
+  }
+}
+
+/**
  * Error thrown when an error occurs during credential offer operations.
  * This includes parsing, resolving, validating, and extracting grant details from credential offers.
  */
