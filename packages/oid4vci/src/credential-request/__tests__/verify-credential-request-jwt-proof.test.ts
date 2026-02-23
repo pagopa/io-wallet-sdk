@@ -2,6 +2,7 @@
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -372,8 +373,8 @@ describe("verifyCredentialRequestJwtProof", () => {
     it("should throw when key_attestation is missing from header", async () => {
       const jwt = createJwt();
 
-      await expect(
-        verifyCredentialRequestJwtProof({
+      await expect(async () => {
+        await verifyCredentialRequestJwtProof({
           callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
           config: configV1_3,
           credentialIssuer: TEST_CREDENTIAL_ISSUER,
@@ -381,8 +382,8 @@ describe("verifyCredentialRequestJwtProof", () => {
           jwt,
           nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
           trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
-        }),
-      ).rejects.toThrow();
+        });
+      }).rejects.toThrow(ValidationError);
     });
 
     it("should call fetchStatusList with key attestation status list reference", async () => {
