@@ -12,9 +12,7 @@ import {
 
 export interface VerifyWalletAttestationJwtOptionsV1_0
   extends BaseVerifyWalletAttestationJwtOptions {
-  config: {
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0;
-  } & IoWalletSdkConfig;
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_0>;
 }
 
 export type VerifiedWalletAttestationJwtV1_0 = Awaited<
