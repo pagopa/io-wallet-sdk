@@ -39,8 +39,6 @@ type WithVersionedConfig<
  * @param options - The options object containing the config to check
  * @param version - The version to check against
  * @returns True if the options' config version matches the provided version
- *
- * @internal
  */
 export function hasConfigVersion<
   T extends WithConfig,
