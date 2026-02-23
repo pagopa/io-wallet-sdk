@@ -9,19 +9,42 @@ export enum ItWalletSpecsVersion {
 /**
  * Configuration options for the IO Wallet SDK
  */
-export interface IoWalletSdkConfigOptions {
+export interface IoWalletSdkConfigOptions<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
+> {
   /**
    * The version of the Italian Wallet specification to use.
    * REQUIRED - must be explicitly set by the user.
    *
-   * Version differences:
-   * - V1_0: Uses singular `proof` object with explicit `proof_type` field
-   * - V1_3: Uses plural `proofs` object with JWT array and requires key attestation
-   *
    * @example
    * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
    */
-  itWalletSpecsVersion: ItWalletSpecsVersion;
+  itWalletSpecsVersion: V;
+}
+
+interface WithConfig {
+  config: IoWalletSdkConfig;
+}
+
+type WithVersionedConfig<
+  T extends WithConfig,
+  V extends ItWalletSpecsVersion,
+> = {
+  config: IoWalletSdkConfig<V>;
+} & T;
+
+/**
+ * Type guard to check if the provided options have a specific config version
+ *
+ * @param options - The options object containing the config to check
+ * @param version - The version to check against
+ * @returns True if the options' config version matches the provided version
+ */
+export function hasConfigVersion<
+  T extends WithConfig,
+  V extends ItWalletSpecsVersion,
+>(options: T, version: V): options is WithVersionedConfig<T, V> {
+  return options.config.itWalletSpecsVersion === version;
 }
 
 /**
@@ -40,10 +63,12 @@ export interface IoWalletSdkConfigOptions {
  *   // TypeScript narrows config.itWalletSpecsVersion to ItWalletSpecsVersion.V1_3
  * }
  */
-export class IoWalletSdkConfig {
-  public readonly itWalletSpecsVersion: ItWalletSpecsVersion;
+export class IoWalletSdkConfig<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
+> {
+  public readonly itWalletSpecsVersion: V;
 
-  constructor(options: IoWalletSdkConfigOptions) {
+  constructor(options: IoWalletSdkConfigOptions<V>) {
     this.itWalletSpecsVersion = options.itWalletSpecsVersion;
   }
 
@@ -55,9 +80,10 @@ export class IoWalletSdkConfig {
    *
    * @internal
    */
-  isVersion<V extends ItWalletSpecsVersion>(
-    version: V,
-  ): this is { itWalletSpecsVersion: V } {
-    return this.itWalletSpecsVersion === version;
+  isVersion<W extends ItWalletSpecsVersion>(
+    version: W,
+  ): this is IoWalletSdkConfig<W> {
+    const currentVersion: ItWalletSpecsVersion = this.itWalletSpecsVersion;
+    return currentVersion === version;
   }
 }
