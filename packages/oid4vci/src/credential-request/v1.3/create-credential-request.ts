@@ -1,5 +1,6 @@
 import {
   IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   ValidationError,
   dateToSeconds,
   parseWithErrorHandling,
@@ -15,7 +16,7 @@ import { CredentialRequestV1_3, zCredentialRequestV1_3 } from "./z-credential";
  */
 export interface CredentialRequestOptionsV1_3
   extends BaseCredentialRequestOptions {
-  config: IoWalletSdkConfig;
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   keyAttestation: string; // Required in v1.3
 }
 
