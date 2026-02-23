@@ -7,10 +7,7 @@ import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { VerifyCredentialRequestJwtProofError } from "../../errors";
-import {
-  type VerifyCredentialRequestJwtProofResultV1_3,
-  verifyCredentialRequestJwtProof,
-} from "../verify-credential-request-jwt-proof";
+import { verifyCredentialRequestJwtProof } from "../verify-credential-request-jwt-proof";
 
 const { mockCalculateJwkThumbprint, mockVerifyJwt } = vi.hoisted(() => ({
   mockCalculateJwkThumbprint: vi.fn(),
@@ -29,6 +26,11 @@ vi.mock("@openid4vc/oauth2", async (importOriginal) => {
 const TEST_CREDENTIAL_ISSUER = "https://issuer.example.com";
 const TEST_CLIENT_ID = "test-client-id";
 const TEST_NONCE = "test-c-nonce";
+const TEST_TRUSTED_WALLET_PROVIDER_ISSUER =
+  "https://wallet-provider.example.com";
+const DEFAULT_NONCE_EXPIRES_AT = new Date("2030-01-01T00:00:00Z");
+const TEST_NOW = new Date("2025-01-01T00:00:00Z");
+const TEST_NOW_SECONDS = Math.floor(TEST_NOW.getTime() / 1000);
 
 const configV1_0 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
@@ -68,7 +70,7 @@ function createJwt(options?: {
   const payload = Base64.encode(
     JSON.stringify({
       aud: TEST_CREDENTIAL_ISSUER,
-      iat: 1700000000,
+      iat: Math.floor(Date.now() / 1000),
       iss: TEST_CLIENT_ID,
       nonce: TEST_NONCE,
       ...options?.payload,
@@ -126,6 +128,7 @@ describe("verifyCredentialRequestJwtProof", () => {
         credentialIssuer: TEST_CREDENTIAL_ISSUER,
         expectedNonce: TEST_NONCE,
         jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
       });
 
       expect(result.header.typ).toBe("openid4vci-proof+jwt");
@@ -145,6 +148,7 @@ describe("verifyCredentialRequestJwtProof", () => {
         credentialIssuer: TEST_CREDENTIAL_ISSUER,
         expectedNonce: TEST_NONCE,
         jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
       });
 
       expect(mockVerifyJwt).toHaveBeenCalledWith(
@@ -157,14 +161,20 @@ describe("verifyCredentialRequestJwtProof", () => {
     });
 
     it("should pass now option to verifyJwt", async () => {
-      const jwt = createJwt();
       const now = new Date("2025-01-01T00:00:00Z");
+      const jwt = createJwt({
+        payload: {
+          iat: Math.floor(now.getTime() / 1000),
+        },
+      });
 
       await verifyCredentialRequestJwtProof({
         callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
         config: configV1_0,
         credentialIssuer: TEST_CREDENTIAL_ISSUER,
+        expectedNonce: TEST_NONCE,
         jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
         now,
       });
 
@@ -180,11 +190,87 @@ describe("verifyCredentialRequestJwtProof", () => {
         callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
         config: configV1_0,
         credentialIssuer: TEST_CREDENTIAL_ISSUER,
+        expectedNonce: TEST_NONCE,
         jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
       });
 
       expect(mockVerifyJwt).toHaveBeenCalledTimes(1);
       expect(mockCalculateJwkThumbprint).not.toHaveBeenCalled();
+    });
+
+    it("should ignore fetchStatusList when provided for v1.0", async () => {
+      const jwt = createJwt();
+      const fetchStatusList = vi.fn().mockResolvedValue(false);
+
+      const result = await verifyCredentialRequestJwtProof({
+        callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+        config: configV1_0,
+        credentialIssuer: TEST_CREDENTIAL_ISSUER,
+        expectedNonce: TEST_NONCE,
+        fetchStatusList,
+        jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+      });
+
+      expect(result.payload.nonce).toBe(TEST_NONCE);
+      expect(fetchStatusList).not.toHaveBeenCalled();
+    });
+
+    it("should throw when iat is older than 5 minutes", async () => {
+      const jwt = createJwt({
+        payload: { iat: TEST_NOW_SECONDS - 301 },
+      });
+
+      await expect(
+        verifyCredentialRequestJwtProof({
+          callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+          config: configV1_0,
+          credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
+          jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          now: TEST_NOW,
+        }),
+      ).rejects.toThrow(/iat claim in credential request proof JWT is too old/);
+    });
+
+    it("should not throw when iat is exactly 5 minutes old", async () => {
+      const jwt = createJwt({
+        payload: { iat: TEST_NOW_SECONDS - 300 },
+      });
+
+      const result = await verifyCredentialRequestJwtProof({
+        callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+        config: configV1_0,
+        credentialIssuer: TEST_CREDENTIAL_ISSUER,
+        expectedNonce: TEST_NONCE,
+        jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+        now: TEST_NOW,
+      });
+
+      expect(result.payload.iat).toBe(TEST_NOW_SECONDS - 300);
+    });
+
+    it("should throw when iat is more than 60 seconds in the future", async () => {
+      const jwt = createJwt({
+        payload: { iat: TEST_NOW_SECONDS + 61 },
+      });
+
+      await expect(
+        verifyCredentialRequestJwtProof({
+          callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+          config: configV1_0,
+          credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
+          jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          now: TEST_NOW,
+        }),
+      ).rejects.toThrow(
+        /iat claim in credential request proof JWT is too far in the future/,
+      );
     });
   });
 
@@ -202,12 +288,13 @@ describe("verifyCredentialRequestJwtProof", () => {
         credentialIssuer: TEST_CREDENTIAL_ISSUER,
         expectedNonce: TEST_NONCE,
         jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+        trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
       });
 
       expect(result.header.key_attestation).toBe(keyAttestationJwt);
-      const v1_3Result = result as VerifyCredentialRequestJwtProofResultV1_3;
-      expect(v1_3Result.keyAttestation).toBeDefined();
-      expect(v1_3Result.keyAttestation.payload.attested_keys).toEqual([
+      expect(result.keyAttestation).toBeDefined();
+      expect(result.keyAttestation.payload.attested_keys).toEqual([
         mockPublicJwk,
       ]);
       expect(mockVerifyJwt).toHaveBeenCalledTimes(2);
@@ -228,10 +315,57 @@ describe("verifyCredentialRequestJwtProof", () => {
           callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
           config: configV1_3,
           credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
           jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
         }),
       ).rejects.toThrow(
         /not signed with a key in the 'key_attestation' jwt payload 'attested_keys'/,
+      );
+    });
+
+    it("should throw when key_attestation issuer is not trusted", async () => {
+      const keyAttestationJwt = createKeyAttestationJwt();
+      const jwt = createJwt({
+        header: { key_attestation: keyAttestationJwt },
+      });
+
+      await expect(
+        verifyCredentialRequestJwtProof({
+          callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+          config: configV1_3,
+          credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
+          jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          trustedWalletProviderIssuers: [
+            "https://other-wallet-provider.example.com",
+          ],
+        }),
+      ).rejects.toThrow(
+        /Untrusted key attestation issuer: https:\/\/wallet-provider\.example\.com/,
+      );
+    });
+
+    it("should throw when trustedWalletProviderIssuers is empty", async () => {
+      const keyAttestationJwt = createKeyAttestationJwt();
+      const jwt = createJwt({
+        header: { key_attestation: keyAttestationJwt },
+      });
+
+      await expect(
+        verifyCredentialRequestJwtProof({
+          callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+          config: configV1_3,
+          credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
+          jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          trustedWalletProviderIssuers: [],
+        }),
+      ).rejects.toThrow(
+        /trustedWalletProviderIssuers must include at least one trusted wallet provider issuer/,
       );
     });
 
@@ -243,16 +377,88 @@ describe("verifyCredentialRequestJwtProof", () => {
           callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
           config: configV1_3,
           credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
           jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
         }),
       ).rejects.toThrow();
+    });
+
+    it("should call fetchStatusList with key attestation status list reference", async () => {
+      const keyAttestationJwt = createKeyAttestationJwt();
+      const jwt = createJwt({
+        header: { key_attestation: keyAttestationJwt },
+      });
+      const fetchStatusList = vi.fn().mockResolvedValue(false);
+
+      await verifyCredentialRequestJwtProof({
+        callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+        config: configV1_3,
+        credentialIssuer: TEST_CREDENTIAL_ISSUER,
+        expectedNonce: TEST_NONCE,
+        fetchStatusList,
+        jwt,
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+        trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
+      });
+
+      expect(fetchStatusList).toHaveBeenCalledWith({
+        index: 0,
+        uri: "https://status.example.com",
+      });
+    });
+
+    it("should throw when key attestation is revoked in status list", async () => {
+      const keyAttestationJwt = createKeyAttestationJwt();
+      const jwt = createJwt({
+        header: { key_attestation: keyAttestationJwt },
+      });
+
+      await expect(
+        verifyCredentialRequestJwtProof({
+          callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+          config: configV1_3,
+          credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
+          fetchStatusList: vi.fn().mockResolvedValue(true),
+          jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
+        }),
+      ).rejects.toThrow(/has been revoked/);
+    });
+
+    it("should throw when iat is older than 5 minutes", async () => {
+      const keyAttestationJwt = createKeyAttestationJwt();
+      const jwt = createJwt({
+        header: { key_attestation: keyAttestationJwt },
+        payload: { iat: TEST_NOW_SECONDS - 301 },
+      });
+
+      await expect(
+        verifyCredentialRequestJwtProof({
+          callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+          config: configV1_3,
+          credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
+          jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+          now: TEST_NOW,
+          trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
+        }),
+      ).rejects.toThrow(/iat claim in credential request proof JWT is too old/);
     });
   });
 
   describe("common", () => {
     it("should throw when nonce is expired", async () => {
-      const jwt = createJwt();
       const now = new Date("2025-01-01T00:00:00Z");
+      const jwt = createJwt({
+        payload: {
+          iat: Math.floor(now.getTime() / 1000),
+        },
+      });
       const nonceExpiresAt = new Date("2024-12-31T00:00:00Z");
 
       await expect(
@@ -260,6 +466,7 @@ describe("verifyCredentialRequestJwtProof", () => {
           callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
           config: configV1_0,
           credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
           jwt,
           nonceExpiresAt,
           now,
@@ -271,6 +478,7 @@ describe("verifyCredentialRequestJwtProof", () => {
           callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
           config: configV1_0,
           credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
           jwt,
           nonceExpiresAt,
           now,
@@ -287,20 +495,27 @@ describe("verifyCredentialRequestJwtProof", () => {
           callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
           config: configV1_0,
           credentialIssuer: TEST_CREDENTIAL_ISSUER,
+          expectedNonce: TEST_NONCE,
           jwt,
+          nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
         }),
       ).rejects.toThrow(VerifyCredentialRequestJwtProofError);
     });
 
     it("should not throw when nonce has not expired", async () => {
-      const jwt = createJwt();
       const now = new Date("2025-01-01T00:00:00Z");
+      const jwt = createJwt({
+        payload: {
+          iat: Math.floor(now.getTime() / 1000),
+        },
+      });
       const nonceExpiresAt = new Date("2025-01-02T00:00:00Z");
 
       const result = await verifyCredentialRequestJwtProof({
         callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
         config: configV1_0,
         credentialIssuer: TEST_CREDENTIAL_ISSUER,
+        expectedNonce: TEST_NONCE,
         jwt,
         nonceExpiresAt,
         now,

@@ -90,6 +90,19 @@ export class VerifyCredentialRequestJwtProofError extends Oid4vciError {
 }
 
 /**
+ * Error thrown when an error occurs during key attestation JWT verification.
+ */
+export class VerifyKeyAttestationJwtError extends Oid4vciError {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "VerifyKeyAttestationJwtError";
+  }
+}
+
+/**
  * Error thrown when an error occurs during credential offer operations.
  * This includes parsing, resolving, validating, and extracting grant details from credential offers.
  */
