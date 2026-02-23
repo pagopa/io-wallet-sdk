@@ -16,10 +16,6 @@ export interface IoWalletSdkConfigOptions<
    * The version of the Italian Wallet specification to use.
    * REQUIRED - must be explicitly set by the user.
    *
-   * Version differences:
-   * - V1_0: Uses singular `proof` object with explicit `proof_type` field
-   * - V1_3: Uses plural `proofs` object with JWT array and requires key attestation
-   *
    * @example
    * const config = new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
    */
