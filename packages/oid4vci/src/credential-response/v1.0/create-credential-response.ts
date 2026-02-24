@@ -43,6 +43,7 @@ export function createCredentialResponseV1_0(
 
     throw new CreateCredentialResponseError(
       `Unexpected error during create credential response v1.0: ${error instanceof Error ? error.message : String(error)}`,
+      error,
     );
   }
 }

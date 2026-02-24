@@ -174,6 +174,7 @@ export async function createCredentialResponse(
     }
     throw new CreateCredentialResponseError(
       `Unexpected error during create credential response: ${error instanceof Error ? error.message : String(error)}`,
+      error,
     );
   }
 }
