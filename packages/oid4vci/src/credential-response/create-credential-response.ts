@@ -4,6 +4,7 @@ import {
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
   ValidationError,
+  hasConfigVersion,
 } from "@pagopa/io-wallet-utils";
 
 import type {
@@ -184,11 +185,11 @@ function buildVersionedResponse(
 ): CredentialResponse {
   const version = options.config.itWalletSpecsVersion;
 
-  if (isCreateCredentialResponseOptionsV1_0(options)) {
+  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
     return V1_0.createCredentialResponseV1_0(options.flow);
   }
 
-  if (isCreateCredentialResponseOptionsV1_3(options)) {
+  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
     return V1_3.createCredentialResponseV1_3(options.flow);
   }
 
@@ -196,18 +197,6 @@ function buildVersionedResponse(
     ItWalletSpecsVersion.V1_0,
     ItWalletSpecsVersion.V1_3,
   ]);
-}
-
-function isCreateCredentialResponseOptionsV1_0(
-  options: CreateCredentialResponseOptions,
-): options is CreateCredentialResponseOptionsV1_0 {
-  return options.config.isVersion(ItWalletSpecsVersion.V1_0);
-}
-
-function isCreateCredentialResponseOptionsV1_3(
-  options: CreateCredentialResponseOptions,
-): options is CreateCredentialResponseOptionsV1_3 {
-  return options.config.isVersion(ItWalletSpecsVersion.V1_3);
 }
 
 async function encryptResponse(
