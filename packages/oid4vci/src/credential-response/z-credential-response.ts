@@ -26,7 +26,10 @@ export {
   zImmediateCredentialResponse,
 } from "./z-immediate-credential-response";
 
-export type { CredentialObject } from "./z-immediate-credential-response";
+export type {
+  CredentialObject,
+  ImmediateCredentialResponse,
+} from "./z-immediate-credential-response";
 import type { CredentialResponseV1_0 } from "./v1.0/z-credential-response";
 import type { CredentialResponseV1_3 } from "./v1.3/z-credential-response";
 
