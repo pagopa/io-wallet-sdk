@@ -1,4 +1,4 @@
-import { zJwk } from "@pagopa/io-wallet-oauth2";
+import { zAlgValueNotNone, zJwk } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
 
 export {
@@ -39,7 +39,7 @@ export type CredentialResponse =
 
 export const zCredentialResponseEncryption = z
   .object({
-    alg: z.string(),
+    alg: zAlgValueNotNone,
     enc: z.string(),
     jwk: zJwk,
   })
