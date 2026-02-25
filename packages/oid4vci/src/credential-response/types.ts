@@ -16,7 +16,7 @@ export interface ImmediateFlowOptions {
   notificationId?: string;
 }
 
-export interface DeferredFlowOptions {
+interface DeferredFlowOptions {
   transactionId: string;
 }
 
