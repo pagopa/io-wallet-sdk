@@ -244,7 +244,7 @@ export async function fetchMetadata(
       );
       if (!federationResult) {
         throw new FetchMetadataError(
-          "Federation discovery failed for IT Wallet v1.0; no fallback available",
+          `Federation discovery failed for IT Wallet v1.0; no fallback available for credentialIssuerUrl ${options.credentialIssuerUrl}`,
         );
       }
       return parseWithErrorHandling(
