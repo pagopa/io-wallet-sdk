@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-export const zCredentialObjectSchema = z.object({
+export const zCredentialObject = z.object({
   credential: z.string(),
 });
 
-export type CredentialObject = z.infer<typeof zCredentialObjectSchema>;
+export type CredentialObject = z.infer<typeof zCredentialObject>;
 
 export const zImmediateCredentialResponse = z
   .object({
     credentials: z
-      .array(zCredentialObjectSchema)
+      .array(zCredentialObject)
       .nonempty()
       .describe(
         "Conditional. Array of issued Digital Credentials as JSON objects with `credential` member containing encoded credential string. Present for immediate issuance (HTTP 200).",

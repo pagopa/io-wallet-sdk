@@ -22,7 +22,7 @@ export type {
 } from "./v1.3/z-credential-response";
 
 export {
-  zCredentialObjectSchema,
+  zCredentialObject,
   zImmediateCredentialResponse,
 } from "./z-immediate-credential-response";
 
