@@ -53,9 +53,8 @@ export interface FetchMetadataOptions {
 
   /**
    * SDK configuration used to route discovery logic by IT-Wallet specification version.
-   * If not provided, defaults to v1.3, enabling federation-first discovery with OID4VCI fallback.
    */
-  config?: IoWalletSdkConfig;
+  config: IoWalletSdkConfig;
 
   /**
    * Base URL of the Credential Issuer (e.g. "https://issuer.example.it").
@@ -219,9 +218,7 @@ async function fallbackDiscovery(
 export async function fetchMetadata(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
-  const config =
-    options.config ??
-    new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
+  const { config } = options; 
   try {
     const urlValidation = z
       .string()
