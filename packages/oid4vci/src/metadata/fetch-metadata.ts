@@ -218,7 +218,7 @@ async function fallbackDiscovery(
 export async function fetchMetadata(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
-  const { config } = options; 
+  const { config } = options;
   try {
     const urlValidation = z
       .string()
