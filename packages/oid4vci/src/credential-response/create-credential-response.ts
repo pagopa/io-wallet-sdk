@@ -1,4 +1,7 @@
-import type { CallbackContext, JweEncryptor } from "@pagopa/io-wallet-oauth2";
+import type {
+  EncryptJweCallback,
+  JweEncryptor,
+} from "@pagopa/io-wallet-oauth2";
 
 import {
   ItWalletSpecsVersion,
@@ -23,11 +26,11 @@ import type {
   DeferredCredentialResponseV1_0,
   DeferredCredentialResponseV1_3,
 } from "./z-credential-response";
+import type { ImmediateCredentialResponse } from "./z-immediate-credential-response";
 
 import { CreateCredentialResponseError, Oid4vciError } from "../errors";
 import * as V1_0 from "./v1.0/create-credential-response";
 import * as V1_3 from "./v1.3/create-credential-response";
-import { ImmediateCredentialResponse } from "./z-immediate-credential-response";
 
 export type {
   CreateCredentialResponseOptions,
@@ -155,14 +158,23 @@ export async function createCredentialResponse(
 ): Promise<CreateCredentialResponseResult> {
   try {
     const credentialResponse = buildVersionedResponse(options);
+    let credentialResponseJwt: string | undefined;
 
-    const credentialResponseJwt = options.credentialResponseEncryption
-      ? await encryptResponse(
-          credentialResponse,
-          options.credentialResponseEncryption,
-          options.callbacks,
-        )
-      : undefined;
+    if (options.credentialResponseEncryption) {
+      const encryptJwe = options.callbacks?.encryptJwe;
+
+      if (!encryptJwe) {
+        throw new Oid4vciError(
+          "'credentialResponseEncryption' was provided but 'callbacks.encryptJwe' is not defined...",
+        );
+      }
+
+      credentialResponseJwt = await encryptResponse(
+        credentialResponse,
+        options.credentialResponseEncryption,
+        encryptJwe,
+      );
+    }
 
     return { credentialResponse, credentialResponseJwt };
   } catch (error) {
@@ -202,14 +214,8 @@ function buildVersionedResponse(
 async function encryptResponse(
   credentialResponse: CredentialResponse,
   credentialResponseEncryption: CredentialResponseEncryption,
-  callbacks?: Pick<CallbackContext, "encryptJwe">,
+  encryptJwe: EncryptJweCallback,
 ): Promise<string> {
-  if (!callbacks?.encryptJwe) {
-    throw new Oid4vciError(
-      "'credentialResponseEncryption' was provided but 'callbacks.encryptJwe' is not defined. Provide the 'encryptJwe' callback to encrypt the credential response.",
-    );
-  }
-
   const jweEncryptor: JweEncryptor = {
     alg: credentialResponseEncryption.alg,
     enc: credentialResponseEncryption.enc,
@@ -217,7 +223,7 @@ async function encryptResponse(
     publicJwk: credentialResponseEncryption.jwk,
   };
 
-  const { jwe } = await callbacks.encryptJwe(
+  const { jwe } = await encryptJwe(
     jweEncryptor,
     JSON.stringify(credentialResponse),
   );
