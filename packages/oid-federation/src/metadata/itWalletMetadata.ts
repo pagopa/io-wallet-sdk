@@ -54,8 +54,9 @@ export const itWalletMetadataV1_3 = z
   .strict();
 
 // Union — used by entity statement / entity configuration claims
+// v1.3 is tried first so that v1.3-specific fields are preserved during parsing
 export const itWalletMetadataSchema =
-  itWalletMetadataV1_0.or(itWalletMetadataV1_3);
+  itWalletMetadataV1_3.or(itWalletMetadataV1_0);
 
 export type MetadataV1_0 = z.input<typeof itWalletMetadataV1_0>;
 export type MetadataV1_3 = z.input<typeof itWalletMetadataV1_3>;

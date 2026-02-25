@@ -1,4 +1,9 @@
-import { ValidationError } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
+  ValidationError,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FetchMetadataError } from "../../errors";
@@ -78,7 +83,8 @@ const credentialIssuerMetadata = {
   trust_frameworks_supported: ["it_wallet"],
 };
 
-const authorizationServerMetadata = {
+// v1.3 authorization server metadata (trust-anchor.eid-wallet URLs, dpop required)
+const authorizationServerMetadataV1_3 = {
   acr_values_supported: ["https://trust-anchor.eid-wallet.example.it/loa/low"],
   authorization_endpoint: "https://auth.example.it/authorize",
   authorization_signing_alg_values_supported: ["ES256"],
@@ -101,6 +107,31 @@ const authorizationServerMetadata = {
   token_endpoint_auth_signing_alg_values_supported: ["ES256"],
 };
 
+// Keep backward-compatible alias for existing tests
+const authorizationServerMetadata = authorizationServerMetadataV1_3;
+
+// v1.0 authorization server metadata (trust-registry.eid-wallet URLs, no dpop)
+const authorizationServerMetadataV1_0 = {
+  acr_values_supported: [
+    "https://trust-registry.eid-wallet.example.it/loa/low",
+  ],
+  authorization_endpoint: "https://auth.example.it/authorize",
+  authorization_signing_alg_values_supported: ["ES256"],
+  client_registration_types_supported: ["automatic"],
+  code_challenge_methods_supported: ["S256"],
+  grant_types_supported: ["authorization_code"],
+  issuer: "https://auth.example.it",
+  jwks: mockJwks,
+  pushed_authorization_request_endpoint: "https://auth.example.it/par",
+  request_object_signing_alg_values_supported: ["ES256"],
+  response_modes_supported: ["query"],
+  response_types_supported: ["code"],
+  scopes_supported: ["openid"],
+  token_endpoint: "https://auth.example.it/token",
+  token_endpoint_auth_methods_supported: ["attest_jwt_client_auth"],
+  token_endpoint_auth_signing_alg_values_supported: ["ES256"],
+};
+
 function base64UrlEncode(obj: unknown): string {
   const json = JSON.stringify(obj);
   return Buffer.from(json, "utf8").toString("base64url");
@@ -113,10 +144,27 @@ function buildFederationJwt(payload: Record<string, unknown>): string {
   return `${header}.${body}.${signature}`;
 }
 
+// --- Configs ---
+
+const configV1_3 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
+const configV1_0 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+});
+
 // --- Tests ---
 
 const baseOptions: FetchMetadataOptions = {
   callbacks: { fetch: mockFetch },
+  config: configV1_3,
+  credentialIssuerUrl: "https://issuer.example.it",
+};
+
+const baseOptionsV1_0: FetchMetadataOptions = {
+  callbacks: { fetch: mockFetch },
+  config: configV1_0,
   credentialIssuerUrl: "https://issuer.example.it",
 };
 
@@ -315,9 +363,148 @@ describe("fetchMetadata", () => {
   });
 });
 
+describe("fetchMetadata - v1.0", () => {
+  it("should return MetadataResponseV1_0 with discoveredVia federation on success", async () => {
+    const federationPayload = {
+      exp: 1_700_003_600,
+      iat: 1_700_000_000,
+      iss: "https://issuer.example.it",
+      jwks: mockJwks,
+      metadata: {
+        oauth_authorization_server: authorizationServerMetadataV1_0,
+        openid_credential_issuer: credentialIssuerMetadata,
+      },
+      sub: "https://issuer.example.it",
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+    });
+
+    const result = await fetchMetadata(baseOptionsV1_0);
+    expect(result.discoveredVia).toBe("federation");
+    expect(result.openid_federation_claims?.iss).toBe(
+      "https://issuer.example.it",
+    );
+    expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+      "https://auth.example.it",
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://issuer.example.it/.well-known/openid-federation",
+    );
+
+    const calledUrls = mockFetch.mock.calls.map(
+      (call) => (call as [string])[0],
+    );
+    expect(
+      calledUrls.some((url) => url.includes("openid-credential-issuer")),
+    ).toBe(false);
+  });
+
+  it("should throw FetchMetadataError when federation returns non-200 for v1.0", async () => {
+    mockFetch.mockResolvedValueOnce({
+      headers: new Headers(),
+      status: 404,
+      text: vi.fn().mockResolvedValue("Not Found"),
+      url: "https://issuer.example.it/.well-known/openid-federation",
+    });
+
+    await expect(fetchMetadata(baseOptionsV1_0)).rejects.toThrow(
+      FetchMetadataError,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should throw ValidationError when federation entity statement has invalid schema for v1.0", async () => {
+    // Valid JWT structure, but payload fails itWalletEntityStatementClaimsSchema validation
+    const invalidEntityStatementPayload = {
+      // Missing required fields like 'iss', 'sub', 'iat', 'exp', 'jwks', 'metadata'
+      invalid_field: "this is not a valid entity statement",
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      text: vi
+        .fn()
+        .mockResolvedValue(buildFederationJwt(invalidEntityStatementPayload)),
+    });
+
+    await expect(fetchMetadata(baseOptionsV1_0)).rejects.toThrow(
+      ValidationError,
+    );
+  });
+
+  it("should throw ValidationError when federation returns v1.3 metadata shape for v1.0", async () => {
+    // v1.3 metadata has trust-anchor.eid-wallet ACR URLs and dpop_signing_alg_values_supported
+    const federationPayload = {
+      exp: 1_700_003_600,
+      iat: 1_700_000_000,
+      iss: "https://issuer.example.it",
+      jwks: mockJwks,
+      metadata: {
+        oauth_authorization_server: authorizationServerMetadataV1_3,
+        openid_credential_issuer: credentialIssuerMetadata,
+      },
+      sub: "https://issuer.example.it",
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+    });
+
+    await expect(fetchMetadata(baseOptionsV1_0)).rejects.toThrow(
+      ValidationError,
+    );
+  });
+});
+
+describe("fetchMetadata - v1.3 rejects v1.0 metadata", () => {
+  it("should throw ValidationError when federation returns v1.0 metadata shape for v1.3", async () => {
+    // v1.0 metadata uses trust-registry.eid-wallet ACR URLs, no dpop
+    const federationPayload = {
+      exp: 1_700_003_600,
+      iat: 1_700_000_000,
+      iss: "https://issuer.example.it",
+      jwks: mockJwks,
+      metadata: {
+        oauth_authorization_server: authorizationServerMetadataV1_0,
+        openid_credential_issuer: credentialIssuerMetadata,
+      },
+      sub: "https://issuer.example.it",
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+    });
+
+    await expect(fetchMetadata(baseOptions)).rejects.toThrow(ValidationError);
+  });
+});
+
+describe("fetchMetadata - unsupported version", () => {
+  it("should throw ItWalletSpecsVersionError for an unknown version", async () => {
+    const unsupportedConfig = {
+      isVersion: () => false,
+      itWalletSpecsVersion: "V9_9" as ItWalletSpecsVersion,
+    } as unknown as IoWalletSdkConfig;
+
+    await expect(
+      fetchMetadata({
+        ...baseOptions,
+        config: unsupportedConfig,
+      }),
+    ).rejects.toThrow(ItWalletSpecsVersionError);
+  });
+});
+
 describe("fetchMetadata - base URL with path segment", () => {
   const pathBaseOptions: FetchMetadataOptions = {
     callbacks: { fetch: mockFetch },
+    config: configV1_3,
     credentialIssuerUrl: "https://issuer.example.it/v1",
   };
 

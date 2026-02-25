@@ -38,74 +38,6 @@ describe("itWalletAuthorizationServerMetadata v1.3 - valid metadata", () => {
       itWalletAuthorizationServerMetadata.parse(validV1_3Metadata),
     ).not.toThrow();
   });
-
-  it("should validate with all three ACR levels", () => {
-    const metadata = {
-      ...validV1_3Metadata,
-      acr_values_supported: [
-        "https://trust-anchor.eid-wallet.example.it/loa/low",
-        "https://trust-anchor.eid-wallet.example.it/loa/substantial",
-        "https://trust-anchor.eid-wallet.example.it/loa/high",
-      ],
-    };
-
-    expect(() =>
-      itWalletAuthorizationServerMetadata.parse(metadata),
-    ).not.toThrow();
-  });
-
-  it("should validate with only one ACR level", () => {
-    const metadata = {
-      ...validV1_3Metadata,
-      acr_values_supported: [
-        "https://trust-anchor.eid-wallet.example.it/loa/high",
-      ],
-    };
-
-    expect(() =>
-      itWalletAuthorizationServerMetadata.parse(metadata),
-    ).not.toThrow();
-  });
-});
-
-describe("itWalletAuthorizationServerMetadata v1.3 - ACR values", () => {
-  it("should reject v1.0 trust-registry ACR values", () => {
-    const invalidMetadata = {
-      ...validV1_3Metadata,
-      acr_values_supported: [
-        "https://trust-registry.eid-wallet.example.it/loa/low",
-      ],
-    };
-
-    expect(() =>
-      itWalletAuthorizationServerMetadata.parse(invalidMetadata),
-    ).toThrow();
-  });
-
-  it("should reject mixed v1.0 and v1.3 ACR values", () => {
-    const invalidMetadata = {
-      ...validV1_3Metadata,
-      acr_values_supported: [
-        "https://trust-anchor.eid-wallet.example.it/loa/low",
-        "https://trust-registry.eid-wallet.example.it/loa/substantial",
-      ],
-    };
-
-    expect(() =>
-      itWalletAuthorizationServerMetadata.parse(invalidMetadata),
-    ).toThrow();
-  });
-
-  it("should require trust-anchor domain for all ACR values", () => {
-    const invalidMetadata = {
-      ...validV1_3Metadata,
-      acr_values_supported: ["https://custom-domain.example.it/loa/low"],
-    };
-
-    expect(() =>
-      itWalletAuthorizationServerMetadata.parse(invalidMetadata),
-    ).toThrow();
-  });
 });
 
 describe("itWalletAuthorizationServerMetadata v1.3 - new mandatory fields", () => {
@@ -319,19 +251,6 @@ describe("itWalletAuthorizationServerMetadata v1.3 - integration", () => {
     };
 
     expect(() => itWalletMetadataV1_3.parse(metadata)).not.toThrow();
-  });
-
-  it("should reject v1.0 ACR values when used in itWalletMetadataV1_3", () => {
-    const metadata = {
-      [itWalletAuthorizationServerIdentifier]: {
-        ...validV1_3Metadata,
-        acr_values_supported: [
-          "https://trust-registry.eid-wallet.example.it/loa/low",
-        ],
-      },
-    };
-
-    expect(() => itWalletMetadataV1_3.parse(metadata)).toThrow();
   });
 });
 

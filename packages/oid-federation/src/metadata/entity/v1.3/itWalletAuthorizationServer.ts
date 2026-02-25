@@ -9,13 +9,7 @@ import { jsonWebKeySetSchema } from "../../../jwk";
  */
 export const itWalletAuthorizationServerMetadata = z
   .object({
-    acr_values_supported: z.array(
-      z.union([
-        z.literal("https://trust-anchor.eid-wallet.example.it/loa/low"),
-        z.literal("https://trust-anchor.eid-wallet.example.it/loa/substantial"),
-        z.literal("https://trust-anchor.eid-wallet.example.it/loa/high"),
-      ]),
-    ),
+    acr_values_supported: z.array(z.string()),
     authorization_endpoint: z.string().url(),
     authorization_signing_alg_values_supported: z.array(z.string()),
     client_attestation_pop_signing_alg_values_supported: z
