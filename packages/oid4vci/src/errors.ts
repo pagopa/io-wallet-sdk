@@ -77,6 +77,19 @@ export class FetchMetadataError extends Oid4vciError {
 }
 
 /**
+ * Error thrown when an unexpected error occurs during credential response creation.
+ */
+export class CreateCredentialResponseError extends Oid4vciError {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "CreateCredentialResponseError";
+  }
+}
+
+/**
  * Error thrown when an unexpected error occurs during credential request JWT proof verification.
  */
 export class VerifyCredentialRequestJwtProofError extends Oid4vciError {
