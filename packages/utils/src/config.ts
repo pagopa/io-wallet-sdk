@@ -26,12 +26,10 @@ interface WithConfig {
   config: IoWalletSdkConfig;
 }
 
-type WithVersionedConfig<
+type WithConfigVersion<
   T extends WithConfig,
   V extends ItWalletSpecsVersion,
-> = {
-  config: IoWalletSdkConfig<V>;
-} & T;
+> = T extends { config: IoWalletSdkConfig<V> } ? T : never;
 
 /**
  * Type guard to check if the provided options have a specific config version
@@ -43,7 +41,7 @@ type WithVersionedConfig<
 export function hasConfigVersion<
   T extends WithConfig,
   V extends ItWalletSpecsVersion,
->(options: T, version: V): options is WithVersionedConfig<T, V> {
+>(options: T, version: V): options is WithConfigVersion<T, V> {
   return options.config.itWalletSpecsVersion === version;
 }
 

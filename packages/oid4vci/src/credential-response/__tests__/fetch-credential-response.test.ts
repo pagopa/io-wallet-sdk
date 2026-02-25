@@ -6,8 +6,8 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CredentialRequestV1_0 } from "../../credential-request/v1.0/z-credential";
 import type { FetchCredentialResponseOptions } from "../fetch-credential-response";
-import type { CredentialRequestV1_0 } from "../v1.0/z-credential";
 
 import { FetchCredentialResponseError } from "../../errors";
 import { fetchCredentialResponse } from "../fetch-credential-response";
