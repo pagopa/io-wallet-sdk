@@ -1,6 +1,9 @@
 import { zAlgValueNotNone, zJwk } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
 
+import type { CredentialResponseV1_0 } from "./v1.0/z-credential-response";
+import type { CredentialResponseV1_3 } from "./v1.3/z-credential-response";
+
 export {
   zCredentialResponseV1_0,
   zDeferredCredentialResponseV1_0,
@@ -30,8 +33,6 @@ export type {
   CredentialObject,
   ImmediateCredentialResponse,
 } from "./z-immediate-credential-response";
-import type { CredentialResponseV1_0 } from "./v1.0/z-credential-response";
-import type { CredentialResponseV1_3 } from "./v1.3/z-credential-response";
 
 export type CredentialResponse =
   | CredentialResponseV1_0
