@@ -2,6 +2,9 @@ import { CallbackContext, VerifyJwtCallback } from "@openid4vc/oauth2";
 import { decodeJwt } from "@pagopa/io-wallet-oauth2";
 import { itWalletEntityStatementClaimsSchema } from "@pagopa/io-wallet-oid-federation";
 import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,
@@ -13,9 +16,24 @@ import z from "zod";
 import { FetchMetadataError } from "../errors";
 import {
   MetadataResponse,
-  zMetadataResponse,
+  zMetadataResponseV1_0,
+  zMetadataResponseV1_3,
   zPartialIssuerMetadata,
 } from "./z-metadata-response";
+
+interface RawFederationResult {
+  discoveredVia: "federation";
+  metadata: z.infer<typeof itWalletEntityStatementClaimsSchema>["metadata"];
+  openid_federation_claims: z.infer<typeof itWalletEntityStatementClaimsSchema>;
+}
+
+interface RawOid4vciResult {
+  discoveredVia: "oid4vci";
+  metadata: {
+    oauth_authorization_server: Record<string, unknown>;
+    openid_credential_issuer: z.infer<typeof zPartialIssuerMetadata>;
+  };
+}
 
 function ensureTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
@@ -34,6 +52,12 @@ export interface FetchMetadataOptions {
   } & Pick<CallbackContext, "fetch">;
 
   /**
+   * SDK configuration used to route discovery logic by IT-Wallet specification version.
+   * If not provided, defaults to v1.3, enabling federation-first discovery with OID4VCI fallback.
+   */
+  config?: IoWalletSdkConfig;
+
+  /**
    * Base URL of the Credential Issuer (e.g. "https://issuer.example.it").
    * The well-known paths are appended automatically.
    */
@@ -50,7 +74,7 @@ async function tryFederationDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
   verifyJwt?: VerifyJwtCallback,
-): Promise<MetadataResponse | undefined> {
+): Promise<RawFederationResult | undefined> {
   try {
     const federationUrl = new URL(
       ".well-known/openid-federation",
@@ -88,9 +112,8 @@ async function tryFederationDiscovery(
 
     return {
       discoveredVia: "federation",
-      metadata: payload.metadata as MetadataResponse["metadata"],
-      openid_federation_claims:
-        payload as MetadataResponse["openid_federation_claims"],
+      metadata: payload.metadata,
+      openid_federation_claims: payload,
     };
   } catch (error) {
     if (error instanceof ValidationError) {
@@ -112,7 +135,7 @@ async function tryFederationDiscovery(
 async function fallbackDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
-): Promise<MetadataResponse> {
+): Promise<RawOid4vciResult> {
   const issuerUrl = new URL(
     ".well-known/openid-credential-issuer",
     ensureTrailingSlash(baseUrl),
@@ -121,7 +144,11 @@ async function fallbackDiscovery(
 
   await hasStatusOrThrow(200, UnexpectedStatusCodeError)(issuerResponse);
 
-  const issuerJson = zPartialIssuerMetadata.parse(await issuerResponse.json());
+  const issuerJson = parseWithErrorHandling(
+    zPartialIssuerMetadata,
+    await issuerResponse.json(),
+    "Failed to parse credential issuer metadata",
+  );
   const authorizationServers = issuerJson.authorization_servers;
 
   let oauthAuthorizationServer: Record<string, unknown>;
@@ -153,40 +180,48 @@ async function fallbackDiscovery(
   return {
     discoveredVia: "oid4vci",
     metadata: {
-      oauth_authorization_server:
-        oauthAuthorizationServer as MetadataResponse["metadata"]["oauth_authorization_server"],
-      openid_credential_issuer:
-        issuerJson as MetadataResponse["metadata"]["openid_credential_issuer"],
+      oauth_authorization_server: oauthAuthorizationServer,
+      openid_credential_issuer: issuerJson,
     },
   };
 }
 
 /**
- * Performs the OID4VCI discovery flow for a Credential Issuer using a federation-first strategy.
+ * Performs the OID4VCI discovery flow for a Credential Issuer, routing discovery
+ * strategy and metadata schema validation based on the IT-Wallet specification version
+ * provided in `config`.
  *
- * Attempts {@link https://openid.net/specs/openid-federation-1_0.html | OpenID Federation}
- * discovery first (`.well-known/openid-federation` relative to `credentialIssuerUrl`). On failure,
- * falls back to the standard OID4VCI well-known endpoint `.well-known/openid-credential-issuer`.
+ * **v1.0**: Only `.well-known/openid-federation` is attempted. If federation discovery
+ * fails, a `FetchMetadataError` is thrown — there is no OID4VCI fallback in v1.0.
+ * Returns `MetadataResponseV1_0` with `discoveredVia: "federation"`.
  *
- * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving any path
- * segment (e.g. `"https://issuer.example.it/v1"` → `"https://issuer.example.it/v1/.well-known/..."`).
- * This is compliant with the URL spec: the base URL is normalised to end with `/` before resolution.
+ * **v1.3**: Federation discovery is attempted first (`.well-known/openid-federation`).
+ * On failure, falls back to `.well-known/openid-credential-issuer` + optional
+ * `.well-known/oauth-authorization-server`. Returns `MetadataResponseV1_3`.
+ *
+ * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving
+ * any path segment (e.g. `"https://issuer.example.it/v1"` →
+ * `"https://issuer.example.it/v1/.well-known/..."`).
  *
  * When federation discovery succeeds, the full entity statement claims are
  * preserved in `openid_federation_claims`.
- * Signature verification of the entity statement is optional: supply `callbacks.verifyJwt` to enable it.
- * When omitted, trust is derived from TLS alone (successful retrieval from the well-known endpoint).
- * NOTE: It is included from IT Wallet v1.3, so MetadataResponse is designed to accommodate v1.3 metadata shapes.
+ * Signature verification of the entity statement is optional: supply
+ * `callbacks.verifyJwt` to enable it. When omitted, trust is derived from TLS
+ * alone (successful retrieval from the well-known endpoint).
  *
- * @param options - Configuration for metadata fetching
+ * @param options - Configuration for metadata fetching, including `config` for version routing
  * @returns Normalised metadata with `discoveredVia` indicating the discovery path used
- * @throws {UnexpectedStatusCodeError} If a fallback endpoint returns a non-200 status
+ * @throws {UnexpectedStatusCodeError} If a fallback endpoint returns a non-200 status (v1.3 only)
  * @throws {ValidationError} If the response does not match the expected schema
- * @throws {FetchMetadataError} For any other unexpected error
+ * @throws {ItWalletSpecsVersionError} If `config.itWalletSpecsVersion` is not V1_0 or V1_3
+ * @throws {FetchMetadataError} If federation discovery fails for v1.0, or for any other unexpected error
  */
 export async function fetchMetadata(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
+  const config =
+    options.config ??
+    new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 });
   try {
     const urlValidation = z
       .string()
@@ -200,30 +235,58 @@ export async function fetchMetadata(
 
     const fetch = createFetcher(options.callbacks.fetch);
 
-    const federationResult = await tryFederationDiscovery(
-      fetch,
-      options.credentialIssuerUrl,
-      options.callbacks.verifyJwt,
-    );
+    if (config.isVersion(ItWalletSpecsVersion.V1_0)) {
+      // v1.0: federation ONLY — no OID4VCI fallback
+      const federationResult = await tryFederationDiscovery(
+        fetch,
+        options.credentialIssuerUrl,
+        options.callbacks.verifyJwt,
+      );
+      if (!federationResult) {
+        throw new FetchMetadataError(
+          "Federation discovery failed for IT Wallet v1.0; no fallback available",
+        );
+      }
+      return parseWithErrorHandling(
+        zMetadataResponseV1_0,
+        federationResult,
+        "Failed to parse v1.0 metadata response",
+      );
+    }
 
-    const raw =
-      federationResult ??
-      (await fallbackDiscovery(fetch, options.credentialIssuerUrl));
+    if (config.isVersion(ItWalletSpecsVersion.V1_3)) {
+      // v1.3: federation-first, OID4VCI fallback
+      const federationResult = await tryFederationDiscovery(
+        fetch,
+        options.credentialIssuerUrl,
+        options.callbacks.verifyJwt,
+      );
+      const raw =
+        federationResult ??
+        (await fallbackDiscovery(fetch, options.credentialIssuerUrl));
+      return parseWithErrorHandling(
+        zMetadataResponseV1_3,
+        raw,
+        "Failed to parse v1.3 metadata response",
+      );
+    }
 
-    return parseWithErrorHandling(
-      zMetadataResponse,
-      raw,
-      "Failed to parse metadata response",
+    throw new ItWalletSpecsVersionError(
+      "fetchMetadata",
+      config.itWalletSpecsVersion,
+      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
     );
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
-      error instanceof ValidationError
+      error instanceof ValidationError ||
+      error instanceof ItWalletSpecsVersionError ||
+      error instanceof FetchMetadataError
     ) {
       throw error;
     }
     throw new FetchMetadataError(
-      `Unexpected error during metadata fetch: ${error instanceof Error ? error.message : String(error)}`,
+      "Unexpected error during metadata fetch",
       error,
     );
   }
