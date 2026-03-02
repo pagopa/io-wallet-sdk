@@ -5,8 +5,8 @@ import {
 import { addSecondsToDate, dateToSeconds } from "@pagopa/io-wallet-utils";
 
 import type { Jwk } from "../common/jwk/z-jwk";
-import type { JweEncryptor, JwtPayload, JwtSigner } from "../common/jwt/z-jwt";
-import type { JarAuthorizationRequest } from "./z-jar";
+import type { JweEncryptor, JwtSigner } from "../common/jwt/z-jwt";
+import type { JarAuthorizationRequest, JarRequestObjectPayload } from "./z-jar";
 
 export interface CreateJarRequestOptions {
   /**
@@ -18,7 +18,7 @@ export interface CreateJarRequestOptions {
   /**
    * Authorization request claims used as JWT payload.
    */
-  authorizationRequestPayload: { client_id?: string } & JwtPayload;
+  authorizationRequestPayload: JarRequestObjectPayload;
 
   /**
    * Cryptographic callbacks used to sign and optionally encrypt the JAR.
