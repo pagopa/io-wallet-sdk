@@ -6,9 +6,13 @@ import { addSecondsToDate, dateToSeconds } from "@pagopa/io-wallet-utils";
 
 import type { Jwk } from "../common/jwk/z-jwk";
 import type { JweEncryptor, JwtSigner } from "../common/jwt/z-jwt";
-import type { JarAuthorizationRequest, JarRequestObjectPayload } from "./z-jar";
 
 import { Oauth2Error } from "../errors";
+import {
+  type JarAuthorizationRequest,
+  type JarRequestObjectPayload,
+  signedAuthorizationRequestJwtHeaderTyp,
+} from "./z-jar";
 
 export interface CreateJarRequestOptions {
   /**
@@ -94,7 +98,7 @@ export async function createJarRequest(options: CreateJarRequestOptions) {
   const { jwt, signerJwk } = await callbacks.signJwt(jwtSigner, {
     header: {
       ...jwtHeaderFromJwtSigner(jwtSigner),
-      typ: "oauth-authz-req+jwt",
+      typ: signedAuthorizationRequestJwtHeaderTyp,
     },
     payload: {
       ...options.additionalJwtPayload,
