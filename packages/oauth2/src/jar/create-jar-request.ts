@@ -8,6 +8,8 @@ import type { Jwk } from "../common/jwk/z-jwk";
 import type { JweEncryptor, JwtSigner } from "../common/jwt/z-jwt";
 import type { JarAuthorizationRequest, JarRequestObjectPayload } from "./z-jar";
 
+import { Oauth2Error } from "../errors";
+
 export interface CreateJarRequestOptions {
   /**
    * Additional claims merged into the request object payload before
@@ -23,7 +25,8 @@ export interface CreateJarRequestOptions {
   /**
    * Cryptographic callbacks used to sign and optionally encrypt the JAR.
    */
-  callbacks: Pick<CallbackContext, "encryptJwe" | "signJwt">;
+  callbacks: Partial<Pick<CallbackContext, "encryptJwe">> &
+    Pick<CallbackContext, "signJwt">;
 
   /**
    * Request object lifetime in seconds from `now`.
@@ -64,7 +67,7 @@ export interface CreateJarRequestOptions {
  * @param options - Parameters used to create the JAR request
  * @param options.additionalJwtPayload - Additional JWT claims merged before authorization claims
  * @param options.authorizationRequestPayload - Base authorization request JWT payload
- * @param options.callbacks - Callback context with `signJwt` and `encryptJwe`
+ * @param options.callbacks - Callback context with required `signJwt` and optional `encryptJwe`
  * @param options.expiresInSeconds - JWT expiration offset in seconds
  * @param options.jweEncryptor - Optional JWE encryptor to wrap the signed JWT
  * @param options.jwtSigner - JWT signer used for request object signing
@@ -104,6 +107,11 @@ export async function createJarRequest(options: CreateJarRequestOptions) {
   authorizationRequestJwt = jwt;
 
   if (jweEncryptor) {
+    if (!callbacks.encryptJwe) {
+      throw new Oauth2Error(
+        "callbacks.encryptJwe is required when jweEncryptor is provided",
+      );
+    }
     const encryptionResult = await callbacks.encryptJwe(
       jweEncryptor,
       authorizationRequestJwt,

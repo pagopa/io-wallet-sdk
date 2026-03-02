@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Jwk } from "../../common/jwk/z-jwk";
+import { Oauth2Error } from "../../errors";
 import {
   CreateJarRequestOptions,
   createJarRequest,
@@ -55,12 +56,15 @@ const baseOptions: CreateJarRequestOptions = {
 
 describe("createJarAuthorizationRequest", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
-    vi.spyOn(callbacks, "signJwt").mockResolvedValue({
+    vi.clearAllMocks();
+    vi.mocked(callbacks.signJwt).mockResolvedValue({
       jwt: "signed-jar-jwt",
       signerJwk,
     });
-    vi.spyOn(callbacks, "encryptJwe").mockResolvedValue({
+    if (!callbacks.encryptJwe) {
+      throw new Error("encryptJwe callback is not defined");
+    }
+    vi.mocked(callbacks.encryptJwe).mockResolvedValue({
       encryptionJwk,
       jwe: "encrypted-jar-jwe",
     });
@@ -128,5 +132,22 @@ describe("createJarAuthorizationRequest", () => {
       },
       signerJwk,
     });
+  });
+
+  it("throws when jweEncryptor is provided and encryptJwe callback is missing", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { encryptJwe, ...callbacksWithoutEncryptJwe } = callbacks;
+
+    await expect(
+      createJarRequest({
+        ...baseOptions,
+        callbacks: callbacksWithoutEncryptJwe,
+        jweEncryptor,
+      }),
+    ).rejects.toThrow(
+      new Oauth2Error(
+        "callbacks.encryptJwe is required when jweEncryptor is provided",
+      ),
+    );
   });
 });
