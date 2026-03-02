@@ -1,5 +1,10 @@
-import { Oauth2JwtParseError, decodeJwt } from "@openid4vc/oauth2";
 import {
+  Oauth2JwtParseError,
+  decodeJwt,
+  extractDpopJwtFromHeaders,
+} from "@pagopa/io-wallet-oauth2";
+import {
+  FetchHeaders,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
@@ -7,7 +12,7 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
-import { ParseCredentialRequestError } from "../errors";
+import { MissingDpopProofError, ParseCredentialRequestError } from "../errors";
 import {
   CredentialRequestV1_0,
   zCredentialRequestV1_0,
@@ -69,6 +74,8 @@ export interface ParseCredentialRequestOptions {
   expected?: ParseCredentialRequestExpectedValues;
   /** Grant type used to validate `iss` requirements in proof JWT payloads. */
   grantType?: GrantType;
+  /** HTTP headers of the credential request, used to extract the DPoP proof. */
+  headers: FetchHeaders;
   /** Whether the request is expected to be part of deferred issuance flow. */
   isDeferredFlow?: boolean;
 }
@@ -84,6 +91,8 @@ export interface ParsedCredentialRequest {
   };
   /** Version-specific validated credential request. */
   credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
+  /** DPoP proof JWT extracted from the request headers. */
+  dpopProof: string;
   /** Normalized list of parsed proof JWTs. */
   proofs: ParsedCredentialProof[];
   /** Transaction metadata derived from flow context and request payload. */
@@ -259,6 +268,7 @@ function toResult<
   TRequest extends CredentialRequestV1_0 | CredentialRequestV1_3,
 >(options: {
   credentialRequest: TRequest;
+  dpopProof: string;
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
   isDeferredFlow: boolean;
@@ -284,6 +294,7 @@ function toResult<
       credential_identifier: options.credentialRequest.credential_identifier,
     },
     credentialRequest: options.credentialRequest,
+    dpopProof: options.dpopProof,
     proofs,
     transaction: {
       isDeferredFlow: options.isDeferredFlow,
@@ -293,19 +304,49 @@ function toResult<
 }
 
 /**
+ * Extracts and validates the DPoP proof JWT from the request headers.
+ */
+function parseDpopProof(headers: FetchHeaders): string {
+  const extracted = extractDpopJwtFromHeaders(headers);
+
+  if (!extracted.valid) {
+    throw new MissingDpopProofError(
+      "Credential request contains a 'DPoP' header, but the value is not a valid JWT format",
+    );
+  }
+
+  if (!extracted.dpopJwt) {
+    throw new MissingDpopProofError();
+  }
+
+  return extracted.dpopJwt;
+}
+
+/**
  * Parses and validates a credential request for the configured IT-Wallet version.
  *
- * It validates the request body schema (v1.0 or v1.3), enforces semantic checks
- * (expected values, deferred flow rules, grant-type claim constraints), and
- * returns normalized decoded proof data for issuer-side processing.
+ * Performs the following validations in order:
+ * 1. **DPoP proof header** — asserts the `DPoP` HTTP header is present and contains a
+ *    compact JWT. The extracted JWT is returned as `dpopProof` for subsequent
+ *    cryptographic verification by the caller (e.g. via `verifyTokenDPoP`).
+ * 2. **Request body schema** — validates the body against the v1.0 or v1.3 schema.
+ * 3. **Semantic checks** — verifies optional expected values (`audience`, `nonce`,
+ *    `issuer`, `credential_identifier`, `credential_configuration_id`).
+ * 4. **Transaction context** — enforces `transaction_id` presence/absence rules
+ *    for deferred vs. immediate issuance flows.
+ * 5. **Proof JWT structure** — decodes each proof JWT and validates its header and
+ *    payload claims, including `iss` requirements for the `authorization_code` grant.
+ *    For v1.3, asserts the `key_attestation` header claim is present and non-empty.
  *
- * This function does not perform cryptographic signature verification on proof JWTs.
+ * This function does not perform cryptographic signature verification on proof JWTs
+ * or the DPoP proof. Both must be verified separately after parsing.
  *
  * @param options - Parsing options and validation context.
- * @returns Normalized parsed credential request.
+ * @returns Normalized parsed credential request including the extracted `dpopProof`.
+ * @throws {MissingDpopProofError} If the `DPoP` header is absent or not a valid compact JWT.
+ * @throws {ValidationError} If request body schema or semantic checks fail.
+ * @throws {Oauth2JwtParseError} If a proof JWT cannot be decoded.
  * @throws {ItWalletSpecsVersionError} If the configured specification version is unsupported.
- * @throws {ValidationError} If request structure or semantic checks fail.
- * @throws {Oauth2JwtParseError} If proof JWT decoding fails.
  * @throws {ParseCredentialRequestError} For unexpected parsing failures.
  */
 export function parseCredentialRequest(
@@ -316,6 +357,8 @@ export function parseCredentialRequest(
   const { config } = options;
 
   try {
+    const dpopProof = parseDpopProof(options.headers);
+
     if (options.config.isVersion(ItWalletSpecsVersion.V1_0)) {
       const credentialRequest = parseWithErrorHandling(
         zCredentialRequestV1_0,
@@ -325,6 +368,7 @@ export function parseCredentialRequest(
 
       return toResult({
         credentialRequest,
+        dpopProof,
         expected: options.expected,
         grantType,
         isDeferredFlow,
@@ -341,6 +385,7 @@ export function parseCredentialRequest(
 
       return toResult({
         credentialRequest,
+        dpopProof,
         expected: options.expected,
         grantType,
         isDeferredFlow,
@@ -357,7 +402,8 @@ export function parseCredentialRequest(
     if (
       error instanceof ItWalletSpecsVersionError ||
       error instanceof Oauth2JwtParseError ||
-      error instanceof ValidationError
+      error instanceof ValidationError ||
+      error instanceof MissingDpopProofError
     ) {
       throw error;
     }
