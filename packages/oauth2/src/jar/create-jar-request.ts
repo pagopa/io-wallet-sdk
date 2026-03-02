@@ -1,11 +1,12 @@
-import { jwtHeaderFromJwtSigner } from "@openid4vc/oauth2";
+import {
+  type CallbackContext,
+  jwtHeaderFromJwtSigner,
+} from "@openid4vc/oauth2";
 import { addSecondsToDate, dateToSeconds } from "@pagopa/io-wallet-utils";
 
 import type { Jwk } from "../common/jwk/z-jwk";
 import type { JweEncryptor, JwtPayload, JwtSigner } from "../common/jwt/z-jwt";
-
-import { CallbackContext } from "../index";
-import { JarAuthorizationRequest } from "./z-jar";
+import type { JarAuthorizationRequest } from "./z-jar";
 
 export interface CreateJarRequestOptions {
   /**
