@@ -340,6 +340,7 @@ function parseDpopProof(headers: FetchHeaders): string {
  *
  * This function does not perform cryptographic signature verification on proof JWTs
  * or the DPoP proof. Both must be verified separately after parsing.
+ * For DPoP proofs, the caller can use the `verifyTokenDPoP` function exported by io-wallet-oauth2.
  *
  * @param options - Parsing options and validation context.
  * @returns Normalized parsed credential request including the extracted `dpopProof`.
