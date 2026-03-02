@@ -12,7 +12,10 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
-import { MissingDpopProofError, ParseCredentialRequestError } from "../errors";
+import {
+  MissingDpopProofError as CredentialDpopProofError,
+  ParseCredentialRequestError,
+} from "../errors";
 import {
   CredentialRequestV1_0,
   zCredentialRequestV1_0,
@@ -310,13 +313,15 @@ function parseDpopProof(headers: FetchHeaders): string {
   const extracted = extractDpopJwtFromHeaders(headers);
 
   if (!extracted.valid) {
-    throw new MissingDpopProofError(
+    throw new CredentialDpopProofError(
       "Credential request contains a 'DPoP' header, but the value is not a valid JWT format",
     );
   }
 
   if (!extracted.dpopJwt) {
-    throw new MissingDpopProofError();
+    throw new CredentialDpopProofError(
+      "Credential request contains a 'DPoP' header, but the value is missing or empty",
+    );
   }
 
   return extracted.dpopJwt;
@@ -344,7 +349,7 @@ function parseDpopProof(headers: FetchHeaders): string {
  *
  * @param options - Parsing options and validation context.
  * @returns Normalized parsed credential request including the extracted `dpopProof`.
- * @throws {MissingDpopProofError} If the `DPoP` header is absent or not a valid compact JWT.
+ * @throws {CredentialDpopProofError} If the `DPoP` header is absent or not a valid compact JWT.
  * @throws {ValidationError} If request body schema or semantic checks fail.
  * @throws {Oauth2JwtParseError} If a proof JWT cannot be decoded.
  * @throws {ItWalletSpecsVersionError} If the configured specification version is unsupported.
@@ -404,7 +409,7 @@ export function parseCredentialRequest(
       error instanceof ItWalletSpecsVersionError ||
       error instanceof Oauth2JwtParseError ||
       error instanceof ValidationError ||
-      error instanceof MissingDpopProofError
+      error instanceof CredentialDpopProofError
     ) {
       throw error;
     }
