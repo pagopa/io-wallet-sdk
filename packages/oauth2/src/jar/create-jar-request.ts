@@ -60,6 +60,30 @@ export interface CreateJarRequestOptions {
   requestUri?: string;
 }
 
+export interface CreateJarRequestResult {
+  /**
+   * The signed (and optionally encrypted) JWT string representing the authorization request.
+   * This value is included in `jarAuthorizationRequest` when `requestUri` is not provided.
+   */
+  authorizationRequestJwt: string;
+
+  /**
+   * The JWK used for encryption when `jweEncryptor` is provided, otherwise undefined.
+   */
+  encryptionJwk?: Jwk;
+
+  /**
+   * The JAR authorization request parameters to be sent to the authorization endpoint.
+   * Contains either `request` or `request_uri` depending on the presence of `requestUri` in options.
+   */
+  jarAuthorizationRequest: JarAuthorizationRequest;
+
+  /**
+   * The JWK used for signing the request object JWT.
+   */
+  signerJwk: Jwk;
+}
+
 /**
  * Creates a JWT Secured Authorization Request (JAR) request payload.
  *
@@ -81,7 +105,9 @@ export interface CreateJarRequestOptions {
  * @returns Signed (and optionally encrypted) authorization request data, signer key material,
  * and JAR request parameters for transmission.
  */
-export async function createJarRequest(options: CreateJarRequestOptions) {
+export async function createJarRequest(
+  options: CreateJarRequestOptions,
+): Promise<CreateJarRequestResult> {
   const {
     authorizationRequestPayload,
     callbacks,
