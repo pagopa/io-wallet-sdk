@@ -64,7 +64,7 @@ export const createCredentialRequest = async (
 
     if (options.maxBatchSize && options.signers.length > options.maxBatchSize) {
       throw new ValidationError(
-        "The number of provided signers exceed the maximum batch size allowed by the Issuer",
+        "The number of provided signers exceeds the maximum batch size allowed",
       );
     }
 
