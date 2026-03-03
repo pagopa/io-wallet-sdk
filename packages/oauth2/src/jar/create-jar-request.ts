@@ -1,7 +1,4 @@
-import {
-  type CallbackContext,
-  jwtHeaderFromJwtSigner,
-} from "@openid4vc/oauth2";
+import { type CallbackContext } from "@openid4vc/oauth2";
 import { addSecondsToDate, dateToSeconds } from "@pagopa/io-wallet-utils";
 
 import type { Jwk } from "../common/jwk/z-jwk";
@@ -10,8 +7,8 @@ import type { JweEncryptor, JwtSigner } from "../common/jwt/z-jwt";
 import { Oauth2Error } from "../errors";
 import {
   type JarAuthorizationRequest,
+  JarRequestObjectHeader,
   type JarRequestObjectPayload,
-  signedAuthorizationRequestJwtHeaderTyp,
 } from "./z-jar";
 
 export interface CreateJarRequestOptions {
@@ -20,6 +17,11 @@ export interface CreateJarRequestOptions {
    * `authorizationRequestPayload`.
    */
   additionalJwtPayload?: Record<string, unknown>;
+
+  /**
+   * Authorization request claims used as JWT header parameters.
+   */
+  authorizationRequestHeader: JarRequestObjectHeader;
 
   /**
    * Authorization request claims used as JWT payload.
@@ -95,6 +97,7 @@ export interface CreateJarRequestResult {
  * @param options - Parameters used to create the JAR request
  * @param options.additionalJwtPayload - Additional JWT claims merged before authorization claims
  * @param options.authorizationRequestPayload - Base authorization request JWT payload
+ * @param options.authorizationRequestHeader - JWT header parameters for the request object
  * @param options.callbacks - Callback context with required `signJwt` and optional `encryptJwe`
  * @param options.expiresInSeconds - JWT expiration offset in seconds
  * @param options.jweEncryptor - Optional JWE encryptor to wrap the signed JWT
@@ -109,6 +112,7 @@ export async function createJarRequest(
   options: CreateJarRequestOptions,
 ): Promise<CreateJarRequestResult> {
   const {
+    authorizationRequestHeader,
     authorizationRequestPayload,
     callbacks,
     jweEncryptor,
@@ -122,10 +126,7 @@ export async function createJarRequest(
   const now = options.now ?? new Date();
 
   const { jwt, signerJwk } = await callbacks.signJwt(jwtSigner, {
-    header: {
-      ...jwtHeaderFromJwtSigner(jwtSigner),
-      typ: signedAuthorizationRequestJwtHeaderTyp,
-    },
+    header: authorizationRequestHeader,
     payload: {
       ...options.additionalJwtPayload,
       ...authorizationRequestPayload,

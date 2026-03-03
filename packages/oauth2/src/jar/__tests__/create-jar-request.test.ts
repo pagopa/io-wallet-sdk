@@ -42,6 +42,11 @@ const callbacks: CreateJarRequestOptions["callbacks"] = {
 const now = new Date("2025-01-01T00:00:00.000Z");
 
 const baseOptions: CreateJarRequestOptions = {
+  authorizationRequestHeader: {
+    alg: "ES256",
+    jwk: signerJwk,
+    typ: "oauth-authz-req+jwt",
+  },
   authorizationRequestPayload: {
     client_id: "wallet-client-id",
     nonce: "test-nonce",
