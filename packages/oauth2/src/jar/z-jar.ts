@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { zJwtPayload } from "../common/jwt/z-jwt";
+import { zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zJarAuthorizationRequest = z
   .object({
@@ -24,6 +24,16 @@ export type JarRequestObjectPayload = z.infer<typeof zJarRequestObjectPayload>;
 const zSignedAuthorizationRequestJwtHeaderTyp = z.literal(
   "oauth-authz-req+jwt",
 );
+
+export const zJarRequestObjectHeader = z
+  .object({
+    ...zJwtHeader.shape,
+    typ: zSignedAuthorizationRequestJwtHeaderTyp,
+  })
+  .passthrough();
+
+export type JarRequestObjectHeader = z.infer<typeof zJarRequestObjectHeader>;
+
 export const signedAuthorizationRequestJwtHeaderTyp =
   zSignedAuthorizationRequestJwtHeaderTyp.value;
 
