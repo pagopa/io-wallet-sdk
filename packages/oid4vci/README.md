@@ -116,7 +116,7 @@ const request = await createCredentialRequest({
   issuerIdentifier: "https://issuer.example.com",
   keyAttestation: "eyJhbGciOiJFUzI1NiJ9...", // Required in v1.3
   nonce: "c_nonce_value",
-  signer: myJwtSigner
+  signers: [myJwtSigner]
 });
 
 // Returns: { 
