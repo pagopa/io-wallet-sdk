@@ -8,7 +8,19 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
 
+import { MissingDpopProofError } from "../../errors";
 import { parseCredentialRequest } from "../parse-credential-request";
+
+const VALID_DPOP_JWT =
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0In0.eyJodG0iOiJQT1NUIiwiaHR1IjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZS5jb20vY3JlZGVudGlhbCIsImlhdCI6MTcwMDAwMDAwMH0.signature";
+
+function createHeaders(dpop?: string): Headers {
+  const headers = new Headers();
+  if (dpop !== undefined) {
+    headers.set("DPoP", dpop);
+  }
+  return headers;
+}
 
 function createJwt(options?: {
   header?: Record<string, unknown>;
@@ -70,9 +82,11 @@ describe("parseCredentialRequest", () => {
           proof_type: "jwt",
         },
       },
+      headers: createHeaders(VALID_DPOP_JWT),
     });
 
     expect(result.credential.credential_identifier).toBe("UniversityDegree");
+    expect(result.dpopProof).toBe(VALID_DPOP_JWT);
     expect(result.proofs).toHaveLength(1);
     expect(result.proofs[0]).toEqual(
       expect.objectContaining({
@@ -98,11 +112,72 @@ describe("parseCredentialRequest", () => {
           ],
         },
       },
+      headers: createHeaders(VALID_DPOP_JWT),
     });
 
+    expect(result.dpopProof).toBe(VALID_DPOP_JWT);
     expect(result.proofs).toHaveLength(2);
     expect(result.proofs[0]?.payload.aud).toBe("https://issuer.example.com");
     expect(result.proofs[1]?.payload.nonce).toBe("test-nonce-2");
+  });
+
+  it("throws MissingDpopProofError when DPoP header is absent (v1.0)", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "UniversityDegree",
+          proof: {
+            jwt: createProofJwt(),
+            proof_type: "jwt",
+          },
+        },
+        headers: createHeaders(),
+      }),
+    ).toThrow(MissingDpopProofError);
+  });
+
+  it("throws MissingDpopProofError when DPoP header is absent (v1.3)", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "education_degree",
+          proofs: {
+            jwt: [createProofJwtV1_3()],
+          },
+        },
+        headers: createHeaders(),
+      }),
+    ).toThrow(MissingDpopProofError);
+  });
+
+  it("throws MissingDpopProofError when DPoP header value is not a valid JWT", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+    });
+
+    expect(() =>
+      parseCredentialRequest({
+        config,
+        credentialRequest: {
+          credential_identifier: "UniversityDegree",
+          proof: {
+            jwt: createProofJwt(),
+            proof_type: "jwt",
+          },
+        },
+        headers: createHeaders("not-a-jwt"),
+      }),
+    ).toThrow(MissingDpopProofError);
   });
 
   it("throws ValidationError when transaction_id is present in immediate flow", () => {
@@ -121,6 +196,7 @@ describe("parseCredentialRequest", () => {
           },
           transaction_id: "tx-1",
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -139,6 +215,7 @@ describe("parseCredentialRequest", () => {
             jwt: [createProofJwtV1_3()],
           },
         },
+        headers: createHeaders(VALID_DPOP_JWT),
         isDeferredFlow: true,
       }),
     ).toThrow(ValidationError);
@@ -159,6 +236,7 @@ describe("parseCredentialRequest", () => {
             proof_type: "jwt",
           },
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -177,6 +255,7 @@ describe("parseCredentialRequest", () => {
         },
       },
       grantType: "pre-authorized_code",
+      headers: createHeaders(VALID_DPOP_JWT),
     });
 
     expect(result.proofs[0]?.payload.iss).toBeUndefined();
@@ -199,6 +278,7 @@ describe("parseCredentialRequest", () => {
         issuer: "test-client-id",
       },
       grantType: "pre-authorized_code",
+      headers: createHeaders(VALID_DPOP_JWT),
     });
 
     expect(result.proofs[0]?.payload.iss).toBeUndefined();
@@ -222,6 +302,7 @@ describe("parseCredentialRequest", () => {
         expected: {
           audience: "https://wrong.example.com",
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -244,6 +325,7 @@ describe("parseCredentialRequest", () => {
         expected: {
           nonce: "wrong-nonce",
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -266,6 +348,7 @@ describe("parseCredentialRequest", () => {
         expected: {
           credential_identifier: "WrongCredential",
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -287,6 +370,7 @@ describe("parseCredentialRequest", () => {
         expected: {
           credential_configuration_id: "WrongConfiguration",
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -309,6 +393,7 @@ describe("parseCredentialRequest", () => {
         expected: {
           issuer: "issuer-b",
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -332,6 +417,7 @@ describe("parseCredentialRequest", () => {
             proof_type: "jwt",
           },
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -350,6 +436,7 @@ describe("parseCredentialRequest", () => {
             jwt: [createProofJwt()],
           },
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -368,6 +455,7 @@ describe("parseCredentialRequest", () => {
             jwt: [createProofJwtV1_3({ keyAttestation: "" })],
           },
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -391,6 +479,7 @@ describe("parseCredentialRequest", () => {
             proof_type: "jwt",
           },
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(ValidationError);
   });
@@ -410,6 +499,7 @@ describe("parseCredentialRequest", () => {
             proof_type: "jwt",
           },
         },
+        headers: createHeaders(VALID_DPOP_JWT),
       }),
     ).toThrow(Oauth2JwtParseError);
   });
@@ -423,6 +513,7 @@ describe("parseCredentialRequest", () => {
       parseCredentialRequest({
         config: unsupportedConfig,
         credentialRequest: {},
+        headers: createHeaders(VALID_DPOP_JWT),
       } as unknown as Parameters<typeof parseCredentialRequest>[0]),
     ).toThrow(ItWalletSpecsVersionError);
   });
