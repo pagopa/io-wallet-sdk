@@ -20,15 +20,15 @@ export interface CredentialRequestOptionsV1_3
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   keyAttestation: string; // Required in v1.3
   /**
-   * The list of signers to generate JWT proofs.
-   * Multiple unique signers must be used for batch issuance.
-   */
-  signers: JwtSignerJwk[];
-  /**
    * The maximum size for a single credential issuance request.
    * It is extracted from the Issuer Metadata: `batch_credential_issuance.batch_size`.
    */
   maxBatchSize?: number;
+  /**
+   * The list of signers to generate JWT proofs.
+   * Multiple unique signers must be used for batch issuance.
+   */
+  signers: JwtSignerJwk[];
 }
 
 /**
@@ -63,7 +63,9 @@ export const createCredentialRequest = async (
     const { signJwt } = options.callbacks;
 
     if (options.maxBatchSize && options.signers.length > options.maxBatchSize) {
-      throw new ValidationError("The number of provided signers exceed the maximum batch size allowed by the Issuer")
+      throw new ValidationError(
+        "The number of provided signers exceed the maximum batch size allowed by the Issuer",
+      );
     }
 
     const proofJwts = await Promise.all(

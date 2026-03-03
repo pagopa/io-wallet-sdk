@@ -62,7 +62,6 @@ describe("createCredentialRequest v1.3", () => {
     keyAttestation: "eyJhbGciOiJFUzI1NiJ9.test-key-attestation.signature",
     nonce: "test-nonce-123",
     signers: [mockSigner],
-    maxBatchSize: 3,
   };
 
   beforeEach(() => {
@@ -265,17 +264,21 @@ describe("createCredentialRequest v1.3", () => {
   it("should throw when the max batch size is exceeded", async () => {
     const customOptions: CredentialRequestOptionsV1_3 = {
       ...baseOptions,
+      maxBatchSize: 2,
       signers: [mockSigner, mockSigner2, mockSigner3],
-      maxBatchSize: 2
     };
-    await expect(createCredentialRequest(customOptions)).rejects.toThrowError(ValidationError)
-  })
+    await expect(createCredentialRequest(customOptions)).rejects.toThrowError(
+      ValidationError,
+    );
+  });
 
   it("should throw when JWT proofs are not unique", async () => {
     const customOptions: CredentialRequestOptionsV1_3 = {
       ...baseOptions,
-      signers: [mockSigner, mockSigner, mockSigner2]
+      signers: [mockSigner, mockSigner, mockSigner2],
     };
-    await expect(createCredentialRequest(customOptions)).rejects.toThrowError(ValidationError)
-  })
+    await expect(createCredentialRequest(customOptions)).rejects.toThrowError(
+      ValidationError,
+    );
+  });
 });
