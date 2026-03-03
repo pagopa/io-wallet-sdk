@@ -125,3 +125,15 @@ export class CredentialOfferError extends Oid4vciError {
     this.name = "CredentialOfferError";
   }
 }
+
+/**
+ * Error thrown when a credential request is missing the required DPoP proof header.
+ */
+export class MissingDpopProofError extends Oid4vciError {
+  constructor(
+    message = "Credential request is missing required 'DPoP' proof header",
+  ) {
+    super(message);
+    this.name = "MissingDpopProofError";
+  }
+}
