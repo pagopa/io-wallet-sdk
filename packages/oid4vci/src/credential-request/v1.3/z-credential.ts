@@ -34,6 +34,16 @@ export const zCredentialRequestV1_3 = zBaseCredentialRequest
     ),
   })
   .superRefine((data, ctx) => {
+    if (data.proofs.jwt.length > 1) {
+      const uniqueProofs = new Set(data.proofs.jwt)
+      if (uniqueProofs.size !== data.proofs.jwt.length) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Each JWT proof must be unique and linked to a different credential key pair",
+          path: ["proofs", "jwt"],
+        })
+      }
+    }
     credentialRequestRefiner(data, ctx);
   });
 

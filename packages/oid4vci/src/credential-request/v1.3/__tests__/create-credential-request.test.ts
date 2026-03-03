@@ -2,6 +2,7 @@
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -26,6 +27,28 @@ const mockSigner = {
     y: "test-y-value",
   },
 };
+const mockSigner2 = {
+  alg: "ES256" as const,
+  method: "jwk" as const,
+  publicJwk: {
+    crv: "P-256",
+    kid: "test-kid-2",
+    kty: "EC",
+    x: "test-x-value-2",
+    y: "test-y-value-2",
+  },
+};
+const mockSigner3 = {
+  alg: "ES256" as const,
+  method: "jwk" as const,
+  publicJwk: {
+    crv: "P-256",
+    kid: "test-kid-3",
+    kty: "EC",
+    x: "test-x-value-3",
+    y: "test-y-value-3",
+  },
+};
 
 describe("createCredentialRequest v1.3", () => {
   const baseOptions: CredentialRequestOptionsV1_3 = {
@@ -39,6 +62,7 @@ describe("createCredentialRequest v1.3", () => {
     keyAttestation: "eyJhbGciOiJFUzI1NiJ9.test-key-attestation.signature",
     nonce: "test-nonce-123",
     signers: [mockSigner],
+    maxBatchSize: 3,
   };
 
   beforeEach(() => {
@@ -61,31 +85,7 @@ describe("createCredentialRequest v1.3", () => {
         "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-2_test-signature",
         "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-3_test-signature",
       ],
-      signers: [
-        mockSigner,
-        {
-          alg: "ES256" as const,
-          method: "jwk" as const,
-          publicJwk: {
-            crv: "P-256",
-            kid: "test-kid-2",
-            kty: "EC",
-            x: "test-x-value-2",
-            y: "test-y-value-2",
-          },
-        },
-        {
-          alg: "ES256" as const,
-          method: "jwk" as const,
-          publicJwk: {
-            crv: "P-256",
-            kid: "test-kid-3",
-            kty: "EC",
-            x: "test-x-value-3",
-            y: "test-y-value-3",
-          },
-        },
-      ],
+      signers: [mockSigner, mockSigner2, mockSigner3],
     },
   ])(
     "should successfully create a credential request with $signers.length proof(s)",
@@ -261,4 +261,21 @@ describe("createCredentialRequest v1.3", () => {
     // Valid options should be defined
     expect(validOptions).toBeDefined();
   });
+
+  it("should throw when the max batch size is exceeded", async () => {
+    const customOptions: CredentialRequestOptionsV1_3 = {
+      ...baseOptions,
+      signers: [mockSigner, mockSigner2, mockSigner3],
+      maxBatchSize: 2
+    };
+    await expect(createCredentialRequest(customOptions)).rejects.toThrowError(ValidationError)
+  })
+
+  it("should throw when JWT proofs are not unique", async () => {
+    const customOptions: CredentialRequestOptionsV1_3 = {
+      ...baseOptions,
+      signers: [mockSigner, mockSigner, mockSigner2]
+    };
+    await expect(createCredentialRequest(customOptions)).rejects.toThrowError(ValidationError)
+  })
 });
