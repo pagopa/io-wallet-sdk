@@ -68,7 +68,7 @@ describe("createCredentialRequest Version Router", () => {
         issuerIdentifier: "https://issuer.example.com",
         keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig",
         nonce: "test-nonce",
-        signer: mockSigner,
+        signers: [mockSigner],
       });
 
       // v1.3 returns plural `proofs` object with JWT array
@@ -117,7 +117,7 @@ describe("createCredentialRequest Version Router", () => {
         issuerIdentifier: "https://issuer.example.com",
         keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig",
         nonce: "test-nonce",
-        signer: mockSigner,
+        signers: [mockSigner],
       });
 
       // Type narrowing - TypeScript should infer this as CredentialRequestV1_3

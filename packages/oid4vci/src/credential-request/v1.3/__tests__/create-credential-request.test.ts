@@ -50,12 +50,17 @@ describe("createCredentialRequest v1.3", () => {
 
   it.each([
     {
-      signers: [mockSigner],
       jwts: [
         "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid_test-signature",
       ],
+      signers: [mockSigner],
     },
     {
+      jwts: [
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid_test-signature",
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-2_test-signature",
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-3_test-signature",
+      ],
       signers: [
         mockSigner,
         {
@@ -81,15 +86,10 @@ describe("createCredentialRequest v1.3", () => {
           },
         },
       ],
-      jwts: [
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid_test-signature",
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-2_test-signature",
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-3_test-signature",
-      ],
     },
   ])(
     "should successfully create a credential request with $signers.length proof(s)",
-    async ({ signers, jwts }) => {
+    async ({ jwts, signers }) => {
       const customOptions = {
         ...baseOptions,
         signers,

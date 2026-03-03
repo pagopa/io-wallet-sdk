@@ -56,7 +56,7 @@ function isV1_3Options(
  *   issuerIdentifier: "https://issuer.example.com",
  *   keyAttestation: 'eyJ...', // Required for v1.3
  *   nonce: "c_nonce_value",
- *   signer: myJwtSigner
+ *   signers: [myJwtSigner]
  * });
  * // Returns: { credential_identifier: "...", proofs: { jwt: ["..."] } }
  */
