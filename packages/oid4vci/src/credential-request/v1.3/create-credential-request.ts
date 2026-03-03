@@ -20,7 +20,7 @@ export interface CredentialRequestOptionsV1_3
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   keyAttestation: string; // Required in v1.3
   /**
-   * The maximum size for a single credential issuance request.
+   * The maximum size for a single credential batch issuance request.
    * It is extracted from the Issuer Metadata: `batch_credential_issuance.batch_size`.
    */
   maxBatchSize?: number;
