@@ -62,28 +62,30 @@ export type AuthorizationRequestObject = z.infer<
   typeof zOpenid4vpAuthorizationRequestPayload
 >;
 
-export const zOpenid4vpAuthorizationRequestHeaderV1_0 = z
-  .object({
-    alg: zAlgValueNotNone,
-    kid: z.string(),
-    trust_chain: z.array(z.string()).nonempty(),
-    typ: zSignedAuthorizationRequestJwtHeaderTyp,
-  })
-  .passthrough();
+const zOpenid4vpAuthorizationRequestHeaderBase = z.object({
+  alg: zAlgValueNotNone,
+  kid: z.string(),
+  typ: zSignedAuthorizationRequestJwtHeaderTyp,
+});
+
+export const zOpenid4vpAuthorizationRequestHeaderV1_0 =
+  zOpenid4vpAuthorizationRequestHeaderBase
+    .extend({
+      trust_chain: z.array(z.string()).nonempty(),
+    })
+    .passthrough();
 
 export type Openid4vpAuthorizationRequestHeaderV1_0 = z.infer<
   typeof zOpenid4vpAuthorizationRequestHeaderV1_0
 >;
 
-export const zOpenid4vpAuthorizationRequestHeaderV1_3 = z
-  .object({
-    alg: zAlgValueNotNone,
-    kid: z.string(),
-    trust_chain: z.array(z.string()).nonempty().optional(),
-    typ: zSignedAuthorizationRequestJwtHeaderTyp,
-    x5c: z.array(z.string()).nonempty(),
-  })
-  .passthrough();
+export const zOpenid4vpAuthorizationRequestHeaderV1_3 =
+  zOpenid4vpAuthorizationRequestHeaderBase
+    .extend({
+      trust_chain: z.array(z.string()).nonempty().optional(),
+      x5c: z.array(z.string()).nonempty(),
+    })
+    .passthrough();
 
 export type Openid4vpAuthorizationRequestHeaderV1_3 = z.infer<
   typeof zOpenid4vpAuthorizationRequestHeaderV1_3
