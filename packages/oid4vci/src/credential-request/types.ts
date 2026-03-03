@@ -1,4 +1,4 @@
-import { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
+import { CallbackContext } from "@openid4vc/oauth2";
 
 import type { CredentialRequestOptionsV1_0 } from "./v1.0";
 import type { CredentialRequestV1_0 } from "./v1.0/z-credential";
@@ -17,7 +17,6 @@ export interface BaseCredentialRequestOptions {
   credential_identifier: string;
   issuerIdentifier: string;
   nonce: string;
-  signer: JwtSignerJwk;
 }
 
 /**

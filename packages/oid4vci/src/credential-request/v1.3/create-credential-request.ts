@@ -1,3 +1,4 @@
+import { type JwtSignerJwk } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -18,6 +19,7 @@ export interface CredentialRequestOptionsV1_3
   extends BaseCredentialRequestOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   keyAttestation: string; // Required in v1.3
+  signers: JwtSignerJwk[]; // Multiple signers to support batch issuance
 }
 
 /**
@@ -41,7 +43,7 @@ export interface CredentialRequestOptionsV1_3
  *   issuerIdentifier: "https://issuer.example.com",
  *   keyAttestation: "eyJ...", // Required in v1.3
  *   nonce: "c_nonce_value",
- *   signer: myJwtSigner
+ *   signers: [myJwtSigner]
  * });
  * // Returns: { credential_identifier: "...", proofs: { jwt: ["..."] } }
  */
@@ -51,25 +53,29 @@ export const createCredentialRequest = async (
   try {
     const { signJwt } = options.callbacks;
 
-    const proofJwt = await signJwt(options.signer, {
-      header: {
-        alg: options.signer.alg,
-        jwk: options.signer.publicJwk,
-        key_attestation: options.keyAttestation,
-        typ: "openid4vci-proof+jwt",
-      },
-      payload: {
-        aud: options.issuerIdentifier,
-        iat: dateToSeconds(new Date()),
-        iss: options.clientId,
-        nonce: options.nonce,
-      },
-    });
+    const proofJwts = await Promise.all(
+      options.signers.map((signer) =>
+        signJwt(signer, {
+          header: {
+            alg: signer.alg,
+            jwk: signer.publicJwk,
+            key_attestation: options.keyAttestation,
+            typ: "openid4vci-proof+jwt",
+          },
+          payload: {
+            aud: options.issuerIdentifier,
+            iat: dateToSeconds(new Date()),
+            iss: options.clientId,
+            nonce: options.nonce,
+          },
+        }),
+      ),
+    );
 
     return parseWithErrorHandling(zCredentialRequestV1_3, {
       credential_identifier: options.credential_identifier,
       proofs: {
-        jwt: [proofJwt.jwt], // Array for batch support
+        jwt: proofJwts.map((proofJwt) => proofJwt.jwt), // Array for batch support
       },
     } satisfies CredentialRequestV1_3);
   } catch (error) {

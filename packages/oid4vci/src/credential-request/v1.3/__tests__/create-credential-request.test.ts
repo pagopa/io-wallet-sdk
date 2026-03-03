@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -37,28 +38,71 @@ describe("createCredentialRequest v1.3", () => {
     issuerIdentifier: "https://issuer.example.com",
     keyAttestation: "eyJhbGciOiJFUzI1NiJ9.test-key-attestation.signature",
     nonce: "test-nonce-123",
-    signer: mockSigner,
+    signers: [mockSigner],
   };
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    mockCallbacks.signJwt.mockResolvedValue({
-      jwt: "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-signature",
-    });
+    mockCallbacks.signJwt.mockImplementation((signer) => ({
+      jwt: `eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.${signer.publicJwk.kid}_test-signature`,
+    }));
   });
 
-  it("should successfully create a credential request", async () => {
-    const result = await createCredentialRequest(baseOptions);
-
-    expect(result).toEqual({
-      credential_identifier: "test-credential-identifier",
-      proofs: {
-        jwt: [
-          "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-signature",
-        ],
-      },
-    });
-  });
+  it.each([
+    {
+      signers: [mockSigner],
+      jwts: [
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid_test-signature",
+      ],
+    },
+    {
+      signers: [
+        mockSigner,
+        {
+          alg: "ES256" as const,
+          method: "jwk" as const,
+          publicJwk: {
+            crv: "P-256",
+            kid: "test-kid-2",
+            kty: "EC",
+            x: "test-x-value-2",
+            y: "test-y-value-2",
+          },
+        },
+        {
+          alg: "ES256" as const,
+          method: "jwk" as const,
+          publicJwk: {
+            crv: "P-256",
+            kid: "test-kid-3",
+            kty: "EC",
+            x: "test-x-value-3",
+            y: "test-y-value-3",
+          },
+        },
+      ],
+      jwts: [
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid_test-signature",
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-2_test-signature",
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid-3_test-signature",
+      ],
+    },
+  ])(
+    "should successfully create a credential request with $signers.length proof(s)",
+    async ({ signers, jwts }) => {
+      const customOptions = {
+        ...baseOptions,
+        signers,
+      };
+      const result = await createCredentialRequest(customOptions);
+      expect(result).toEqual({
+        credential_identifier: "test-credential-identifier",
+        proofs: {
+          jwt: jwts,
+        },
+      });
+    },
+  );
 
   it("should return plural proofs object (not proof)", async () => {
     const result = await createCredentialRequest(baseOptions);
@@ -73,7 +117,7 @@ describe("createCredentialRequest v1.3", () => {
     expect(result.proofs.jwt).toBeInstanceOf(Array);
     expect(result.proofs.jwt).toHaveLength(1);
     expect(result.proofs.jwt[0]).toBe(
-      "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-signature",
+      "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test-kid_test-signature",
     );
   });
 
@@ -211,7 +255,7 @@ describe("createCredentialRequest v1.3", () => {
       issuerIdentifier: "https://issuer.example.com",
       keyAttestation: "eyJhbGciOiJFUzI1NiJ9.key-attestation.sig", // Required
       nonce: "test-nonce-123",
-      signer: mockSigner,
+      signers: [mockSigner],
     };
 
     // Valid options should be defined
