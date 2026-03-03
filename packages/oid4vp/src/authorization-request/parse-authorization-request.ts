@@ -5,13 +5,18 @@ import {
   verifyJwt,
 } from "@openid4vc/oauth2";
 import { decodeJwt } from "@pagopa/io-wallet-oauth2";
-import { ValidationError } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  ValidationError,
+} from "@pagopa/io-wallet-utils";
 
 import { ParseAuthorizeRequestError } from "../errors";
 import {
   AuthorizationRequestObject,
   Openid4vpAuthorizationRequestHeader,
-  zOpenid4vpAuthorizationRequestHeader,
+  zOpenid4vpAuthorizationRequestHeaderV1_0,
+  zOpenid4vpAuthorizationRequestHeaderV1_3,
   zOpenid4vpAuthorizationRequestPayload,
 } from "./z-request-object";
 
@@ -51,17 +56,17 @@ export function extractClientIdPrefix(clientId: string): ClientIdPrefix {
  * @returns The JWK to use for signature verification
  * @throws {ParseAuthorizeRequestError} When no valid public key can be found
  */
-async function getPublicKeyForVerification(options: {
+function getPublicKeyForVerification(options: {
   header: Openid4vpAuthorizationRequestHeader;
   payload: AuthorizationRequestObject;
-}): Promise<JwtSigner> {
+}): JwtSigner {
   const { header, payload } = options;
 
   const clientIdPrefix = extractClientIdPrefix(payload.client_id);
 
   // Priority 1: x509_hash prefix - use x5c certificate chain from header
   if (clientIdPrefix === ClientIdPrefix.X509_HASH) {
-    if (!header.x5c || header.x5c.length === 0) {
+    if (!Array.isArray(header.x5c) || header.x5c.length === 0) {
       throw new ParseAuthorizeRequestError(
         "x5c is required in JWT header for x509_hash client_id",
       );
@@ -112,6 +117,8 @@ export interface ParseAuthorizeRequestOptions {
    */
   callbacks?: Pick<CallbackContext, "verifyJwt">;
 
+  config: IoWalletSdkConfig;
+
   /**
    * The Authorization Request Object JWT.
    */
@@ -150,14 +157,18 @@ export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,
 ): Promise<ParsedAuthorizeRequestResult> {
   try {
+    const headerSchema = options.config.isVersion(ItWalletSpecsVersion.V1_0)
+      ? zOpenid4vpAuthorizationRequestHeaderV1_0
+      : zOpenid4vpAuthorizationRequestHeaderV1_3;
+
     const decoded = decodeJwt({
-      headerSchema: zOpenid4vpAuthorizationRequestHeader,
+      headerSchema,
       jwt: options.requestObjectJwt,
       payloadSchema: zOpenid4vpAuthorizationRequestPayload,
     });
 
-    if (options.callbacks && options.callbacks.verifyJwt) {
-      const signer = await getPublicKeyForVerification({
+    if (options.callbacks?.verifyJwt) {
+      const signer = getPublicKeyForVerification({
         header: decoded.header,
         payload: decoded.payload,
       });
@@ -167,7 +178,6 @@ export async function parseAuthorizeRequest(
         errorMessage: "Error verifying Request Object signature",
         header: decoded.header,
         payload: decoded.payload,
-
         signer,
         verifyJwtCallback: options.callbacks.verifyJwt,
       });
