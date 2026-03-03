@@ -3,13 +3,13 @@ import { addSecondsToDate, dateToSeconds } from "@pagopa/io-wallet-utils";
 
 import type { Jwk } from "../common/jwk/z-jwk";
 import type { JweEncryptor, JwtSigner } from "../common/jwt/z-jwt";
+import type {
+  JarAuthorizationRequest,
+  JarRequestObjectHeader,
+  JarRequestObjectPayload,
+} from "./z-jar";
 
 import { Oauth2Error } from "../errors";
-import {
-  type JarAuthorizationRequest,
-  JarRequestObjectHeader,
-  type JarRequestObjectPayload,
-} from "./z-jar";
 
 export interface CreateJarRequestOptions {
   /**
