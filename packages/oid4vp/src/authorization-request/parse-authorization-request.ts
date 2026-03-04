@@ -13,12 +13,12 @@ import {
 
 import { ParseAuthorizeRequestError } from "../errors";
 import {
-  AuthorizationRequestObject,
   Openid4vpAuthorizationRequestHeader,
+  Openid4vpAuthorizationRequestPayload,
   zOpenid4vpAuthorizationRequestHeaderV1_0,
   zOpenid4vpAuthorizationRequestHeaderV1_3,
   zOpenid4vpAuthorizationRequestPayload,
-} from "./z-request-object";
+} from "./z-authorization-request";
 
 /**
  * Enum representing the client_id prefix types according to IT Wallet specifications
@@ -58,7 +58,7 @@ export function extractClientIdPrefix(clientId: string): ClientIdPrefix {
  */
 function getPublicKeyForVerification(options: {
   header: Openid4vpAuthorizationRequestHeader;
-  payload: AuthorizationRequestObject;
+  payload: Openid4vpAuthorizationRequestPayload;
 }): JwtSigner {
   const { header, payload } = options;
 
@@ -133,7 +133,7 @@ export interface ParsedAuthorizeRequestResult {
   /**
    * The parsed authorization request object.
    */
-  payload: AuthorizationRequestObject;
+  payload: Openid4vpAuthorizationRequestPayload;
 }
 
 /**

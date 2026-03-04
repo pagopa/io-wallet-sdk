@@ -17,11 +17,11 @@ import {
 
 import { Oid4vpError } from "../errors";
 import {
-  AuthorizationRequestObject,
+  Openid4vpAuthorizationRequestPayload,
   zOpenid4vpAuthorizationRequestHeaderV1_0,
   zOpenid4vpAuthorizationRequestHeaderV1_3,
   zOpenid4vpAuthorizationRequestPayload,
-} from "./z-request-object";
+} from "./z-authorization-request";
 
 type JarOptions = Pick<
   CreateJarRequestOptions,
@@ -39,7 +39,7 @@ export interface CreateAuthorizationRequestOptions {
   /**
    * Authorization request payload to be validated and serialized.
    */
-  authorizationRequestPayload: AuthorizationRequestObject;
+  authorizationRequestPayload: Openid4vpAuthorizationRequestPayload;
 
   /**
    * Required callbacks used to create a signed/encrypted Request Object.
@@ -65,7 +65,7 @@ export interface CreateAuthorizationRequestOptions {
 export interface CreateAuthorizationRequestResult {
   authorizationRequest: string;
   authorizationRequestObject: JarAuthorizationRequest;
-  authorizationRequestPayload: AuthorizationRequestObject;
+  authorizationRequestPayload: Openid4vpAuthorizationRequestPayload;
   jar: CreateJarRequestResult & JarOptions;
 }
 

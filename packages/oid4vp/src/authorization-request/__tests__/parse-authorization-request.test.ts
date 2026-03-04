@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import { ParseAuthorizeRequestError } from "../../errors";
 import { parseAuthorizeRequest } from "../parse-authorization-request";
-import { AuthorizationRequestObject } from "../z-request-object";
+import { Openid4vpAuthorizationRequestPayload } from "../z-authorization-request";
 
 const publicKey = {
   alg: "ES256",
@@ -28,7 +28,7 @@ const configV1_3 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
 });
 
-const correctRequestObject: AuthorizationRequestObject = {
+const correctRequestObject: Openid4vpAuthorizationRequestPayload = {
   client_id: "test-client-id",
   client_metadata: {
     jwks: {
@@ -120,7 +120,7 @@ const invalidHeaderTypJwt =
 /**
  * Test data for x509_hash client_id prefix
  */
-const x509RequestObject: AuthorizationRequestObject = {
+const x509RequestObject: Openid4vpAuthorizationRequestPayload = {
   client_id: "x509_hash:test-client-id",
   client_metadata: {
     jwks: {

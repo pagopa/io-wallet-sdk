@@ -19,6 +19,8 @@ export type VpFormatsSupported = z.infer<typeof zVpFormatsSupported>;
 
 export const zClientMetadata = z
   .object({
+    authorization_encrypted_response_alg: z.string().optional(),
+    authorization_encrypted_response_enc: z.string().optional(),
     client_name: z.string().optional(),
     encrypted_response_enc_values_supported: z.array(z.string()).optional(),
     jwks: z.object({ keys: z.array(zJwk) }).passthrough(),
@@ -58,7 +60,7 @@ export const zOpenid4vpAuthorizationRequestPayload = z
     }),
   );
 
-export type AuthorizationRequestObject = z.infer<
+export type Openid4vpAuthorizationRequestPayload = z.infer<
   typeof zOpenid4vpAuthorizationRequestPayload
 >;
 

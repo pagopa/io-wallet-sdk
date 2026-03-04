@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { zOpenid4vpAuthorizationRequestPayload } from "../z-request-object";
+import { zOpenid4vpAuthorizationRequestPayload } from "../z-authorization-request";
 
 const basePayload = {
   client_id: "https://verifier.example.com",

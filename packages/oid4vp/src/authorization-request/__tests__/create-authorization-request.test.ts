@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Oid4vpError } from "../../errors";
 import { createAuthorizationRequest } from "../create-authorization-request";
-import { AuthorizationRequestObject } from "../z-request-object";
+import { Openid4vpAuthorizationRequestPayload } from "../z-authorization-request";
 
 vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
   const actual =
@@ -26,7 +26,7 @@ const configV1_3 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
 });
 
-const authorizationRequestPayload: AuthorizationRequestObject = {
+const authorizationRequestPayload: Openid4vpAuthorizationRequestPayload = {
   client_id: "client-123",
   dcql_query: {},
   iss: "client-123",

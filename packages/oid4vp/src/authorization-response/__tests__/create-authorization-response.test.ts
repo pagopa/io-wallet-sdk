@@ -43,7 +43,9 @@ const mockRpMetadata = {
   },
 };
 
-const MOCK_VP_TOKEN = ["vp_token1"];
+const MOCK_VP_TOKEN = {
+  pid: ["vp_token1"] as [string],
+};
 const MOCK_STATE = "TEST_STATE";
 const MOCK_RP_CLIENT_ID = "TEST_RP_CLIENT";
 const MOCK_NONCE = "TEST_NONCE";
