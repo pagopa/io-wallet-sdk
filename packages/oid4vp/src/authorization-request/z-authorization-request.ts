@@ -1,35 +1,10 @@
 import {
   zAlgValueNotNone,
-  zJwk,
   zJwtPayload,
   zSignedAuthorizationRequestJwtHeaderTyp,
 } from "@pagopa/io-wallet-oauth2";
+import { itWalletCredentialVerifierMetadataV1_3 } from "@pagopa/io-wallet-oid-federation";
 import { z } from "zod";
-
-export const zVpFormatsSupported = z.record(
-  z.string(),
-  z
-    .object({
-      alg_values_supported: z.optional(z.array(z.string())),
-    })
-    .passthrough(),
-);
-
-export type VpFormatsSupported = z.infer<typeof zVpFormatsSupported>;
-
-export const zClientMetadata = z
-  .object({
-    authorization_encrypted_response_alg: z.string().optional(),
-    authorization_encrypted_response_enc: z.string().optional(),
-    client_name: z.string().optional(),
-    encrypted_response_enc_values_supported: z.array(z.string()).optional(),
-    jwks: z.object({ keys: z.array(zJwk) }).passthrough(),
-    logo_uri: z.string().url().optional(),
-    vp_formats_supported: zVpFormatsSupported,
-  })
-  .passthrough();
-
-export type ClientMetadata = z.infer<typeof zClientMetadata>;
 
 /**
  * Zod parser that describes a JWT payload
@@ -38,7 +13,7 @@ export type ClientMetadata = z.infer<typeof zClientMetadata>;
 export const zOpenid4vpAuthorizationRequestPayload = z
   .object({
     client_id: z.string(),
-    client_metadata: zClientMetadata.optional(),
+    client_metadata: itWalletCredentialVerifierMetadataV1_3.optional(),
     dcql_query: z.record(z.string(), z.any()),
     nonce: z.string(),
     request_uri: z.string().url().optional(),

@@ -30,13 +30,6 @@ export enum JarmMode {
   SignedEncrypted = "SignedEncrypted",
 }
 
-/**
- * The client decrypts the JWT using the default key for the respective issuer or,
- * if applicable, determined by the kid JWT header parameter.
- * The key might be a private key, where the corresponding public key is registered
- * with the expected issuer of the response ("use":"enc" via the client's metadata jwks or jwks_uri)
- * or a key derived from its client secret (see Section 2.2).
- */
 const decryptJarmAuthorizationResponseJwt = async (options: {
   authorizationRequestPayload: Openid4vpAuthorizationRequestPayload;
   callbacks: Pick<CallbackContext, "decryptJwe">;
@@ -53,21 +46,10 @@ const decryptJarmAuthorizationResponseJwt = async (options: {
     jwt: jarmAuthorizationResponseJwt,
   });
 
-  if (authorizationRequestPayload.client_metadata?.jwks) {
-    encryptionJwk = extractEncryptionJwkFromJwks(
-      authorizationRequestPayload.client_metadata.jwks,
-      {
-        kid: header.kid,
-        // This value was removed in draft 26, but if it's still provided, we can use it to determine the key to use
-        supportedAlgValues: authorizationRequestPayload.client_metadata
-          .authorization_encrypted_response_alg
-          ? [
-              authorizationRequestPayload.client_metadata
-                .authorization_encrypted_response_alg,
-            ]
-          : undefined,
-      },
-    );
+  const jwks = authorizationRequestPayload.client_metadata?.jwks;
+
+  if (jwks) {
+    encryptionJwk = extractEncryptionJwkFromJwks(jwks, { kid: header.kid });
   }
 
   const result = await callbacks.decryptJwe(jarmAuthorizationResponseJwt, {
