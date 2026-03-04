@@ -40,7 +40,7 @@ export const zCredentialRequestV1_3 = zBaseCredentialRequest
         ctx.addIssue({
           code: "custom",
           message:
-            "Each JWT proof must be unique and linked to a different credential key pair",
+            "Each JWT proof must be unique (no duplicate JWTs are allowed in the proofs array)",
           path: ["proofs", "jwt"],
         });
       }
