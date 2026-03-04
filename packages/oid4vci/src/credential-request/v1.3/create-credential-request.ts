@@ -62,10 +62,21 @@ export const createCredentialRequest = async (
   try {
     const { signJwt } = options.callbacks;
 
-    if (options.maxBatchSize && options.signers.length > options.maxBatchSize) {
-      throw new ValidationError(
-        "The number of provided signers exceeds the maximum batch size allowed",
-      );
+    if (options.maxBatchSize !== undefined) {
+      if (
+        !Number.isInteger(options.maxBatchSize) ||
+        options.maxBatchSize <= 0
+      ) {
+        throw new ValidationError(
+          "Invalid maxBatchSize: it must be a positive integer",
+        );
+      }
+
+      if (options.signers.length > options.maxBatchSize) {
+        throw new ValidationError(
+          "The number of provided signers exceeds the maximum batch size allowed",
+        );
+      }
     }
 
     const proofJwts = await Promise.all(
