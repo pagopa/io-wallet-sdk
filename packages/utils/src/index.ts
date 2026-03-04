@@ -17,6 +17,7 @@ export {
   decodeUtf8String,
   encodeToBase64Url,
   encodeToUtf8String,
+  objectToQueryParams,
   setGlobalConfig,
   stringToJsonWithErrorHandling,
 } from "@openid4vc/utils";

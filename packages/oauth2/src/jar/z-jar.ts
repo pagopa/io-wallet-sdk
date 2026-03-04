@@ -21,7 +21,7 @@ export const zJarRequestObjectPayload = z
 
 export type JarRequestObjectPayload = z.infer<typeof zJarRequestObjectPayload>;
 
-const zSignedAuthorizationRequestJwtHeaderTyp = z.literal(
+export const zSignedAuthorizationRequestJwtHeaderTyp = z.literal(
   "oauth-authz-req+jwt",
 );
 

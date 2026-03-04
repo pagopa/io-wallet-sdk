@@ -1,6 +1,10 @@
 import { CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { Jwk } from "@pagopa/io-wallet-oauth2";
-import { ValidationError } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  ValidationError,
+} from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
 
 import { ParseAuthorizeRequestError } from "../../errors";
@@ -15,6 +19,14 @@ const publicKey = {
   x: "GOVegGwq0WVkJNCFR9QTEDp6bh7P3JEdNmDViLlm4uM",
   y: "AZYh0LPvXb2U6Oxlzc6HhMsT1yh_N-qhNKZ2Q6kCpOM",
 };
+
+const configV1_0 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+});
+
+const configV1_3 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
 
 const correctRequestObject: AuthorizationRequestObject = {
   client_id: "test-client-id",
@@ -146,17 +158,17 @@ const x509RequestObject: AuthorizationRequestObject = {
 
 /**
  * JWT with x509_hash client_id prefix and x5c in header
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","x5c":["MIIBxxx..."]}
+ * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid","x5c":["MIIBxxx..."]}
  */
 const x509RequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJ4NWMiOlsiTUlJQnh4eC4uLiJdfQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.valid_x509_signature";
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsIng1YyI6WyJNSUlCeHh4Li4uIl19.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.valid_x509_signature";
 
 /**
  * JWT with x509_hash client_id prefix but missing x5c in header
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
+ * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid"}
  */
 const x509RequestObjectMissingX5cJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.some_signature";
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCJ9.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.some_signature";
 
 const callbacks: Pick<CallbackContext, "verifyJwt"> = {
   verifyJwt: async (signer, { compact }) => {
@@ -193,6 +205,10 @@ const callbacks: Pick<CallbackContext, "verifyJwt"> = {
     if (signer.method === "x5c") {
       const parts = compact.split(".");
       const signature = parts[2];
+
+      if (!Array.isArray(signer.x5c) || signer.x5c.length === 0) {
+        return { verified: false };
+      }
 
       // Reject empty or invalid signatures
       if (
@@ -237,6 +253,7 @@ describe("parseAuthorizationRequest tests", () => {
   it("should parse and verify the request object correctly", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
       callbacks,
+      config: configV1_0,
       requestObjectJwt: correctRequestObjectJwt,
     });
     expect(actualRequestObject.payload).toEqual(correctRequestObject);
@@ -251,6 +268,7 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
+          config: configV1_0,
           requestObjectJwt: missingMandatoryFieldRequestObjectJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -261,6 +279,7 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
+          config: configV1_0,
           requestObjectJwt: nonConformingRequestObjectJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -269,6 +288,7 @@ describe("parseAuthorizationRequest tests", () => {
   it("should parse and verify the request object correctly since expiration is not checked", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
       callbacks,
+      config: configV1_0,
       requestObjectJwt: expiredRequestObjectJwt,
     });
     expect(actualRequestObject.payload).toEqual(expiredRequestObject);
@@ -282,6 +302,7 @@ describe("parseAuthorizationRequest tests", () => {
     await expect(async () =>
       parseAuthorizeRequest({
         callbacks,
+        config: configV1_0,
         requestObjectJwt: "this is not a JWT",
       }),
     ).rejects.toThrow(Oauth2JwtParseError);
@@ -292,6 +313,7 @@ describe("parseAuthorizationRequest tests", () => {
       const [head, payload] = correctRequestObjectJwt.split(".");
       await parseAuthorizeRequest({
         callbacks,
+        config: configV1_0,
         requestObjectJwt: `${head}.${payload}.this_is_not_a_signature`,
       });
     }).rejects.toThrow(ParseAuthorizeRequestError);
@@ -302,6 +324,7 @@ describe("parseAuthorizationRequest tests", () => {
       const [head, payload] = correctRequestObjectJwt.split(".");
       await parseAuthorizeRequest({
         callbacks,
+        config: configV1_0,
         requestObjectJwt: `${head}.${payload}.`,
       });
     }).rejects.toThrow(ParseAuthorizeRequestError);
@@ -311,6 +334,7 @@ describe("parseAuthorizationRequest tests", () => {
     await expect(async () => {
       await parseAuthorizeRequest({
         callbacks,
+        config: configV1_0,
         requestObjectJwt: wrongSignedRequestObjectJwt,
       });
     }).rejects.toThrow(ParseAuthorizeRequestError);
@@ -321,6 +345,7 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
+          config: configV1_0,
           requestObjectJwt: invalidHeaderTypJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -335,6 +360,7 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
+          config: configV1_0,
           requestObjectJwt: missingAlgJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -349,6 +375,7 @@ describe("parseAuthorizationRequest tests", () => {
       async () =>
         await parseAuthorizeRequest({
           callbacks,
+          config: configV1_0,
           requestObjectJwt: jwtWithEmptyTrustChain,
         }),
     ).rejects.toThrow(ValidationError);
@@ -357,20 +384,22 @@ describe("parseAuthorizationRequest tests", () => {
   it("should parse and verify the request object with x509_hash client_id correctly", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
       callbacks,
+      config: configV1_3,
       requestObjectJwt: x509RequestObjectJwt,
     });
     expect(actualRequestObject.payload).toEqual(x509RequestObject);
     expect(actualRequestObject.header.x5c).toBeDefined();
   });
 
-  it("should throw a ParseAuthorizeRequestError for x509_hash client_id with missing x5c in header", async () => {
+  it("should throw a ValidationError for x509_hash client_id with missing x5c in header", async () => {
     await expect(
       async () =>
         await parseAuthorizeRequest({
           callbacks,
+          config: configV1_3,
           requestObjectJwt: x509RequestObjectMissingX5cJwt,
         }),
-    ).rejects.toThrow(ParseAuthorizeRequestError);
+    ).rejects.toThrow(ValidationError);
   });
 });
 
@@ -385,6 +414,7 @@ const requestObjectWithTransactionDataJwt =
 describe("parseAuthorizeRequest - transaction_data support", () => {
   it("should parse request object with transaction_data field", async () => {
     const result = await parseAuthorizeRequest({
+      config: configV1_0,
       requestObjectJwt: requestObjectWithTransactionDataJwt,
     });
 
@@ -398,6 +428,7 @@ describe("parseAuthorizeRequest - transaction_data support", () => {
 describe("parseAuthorizeRequest - optional verification", () => {
   it("should parse request object without verification when callbacks is undefined", async () => {
     const result = await parseAuthorizeRequest({
+      config: configV1_0,
       requestObjectJwt: correctRequestObjectJwt,
     });
 
@@ -409,6 +440,7 @@ describe("parseAuthorizeRequest - optional verification", () => {
 
   it("should parse x509_hash request without verification when callbacks is not provided", async () => {
     const result = await parseAuthorizeRequest({
+      config: configV1_3,
       requestObjectJwt: x509RequestObjectJwt,
     });
 
@@ -419,6 +451,7 @@ describe("parseAuthorizeRequest - optional verification", () => {
   it("should accept wrongly signed JWT when verification is disabled", async () => {
     // This JWT has an invalid signature, but should parse successfully without verification
     const result = await parseAuthorizeRequest({
+      config: configV1_0,
       requestObjectJwt: wrongSignedRequestObjectJwt,
     });
 
@@ -433,6 +466,7 @@ describe("parseAuthorizeRequest - optional verification", () => {
     await expect(
       async () =>
         await parseAuthorizeRequest({
+          config: configV1_0,
           requestObjectJwt: malformedJwt,
         }),
     ).rejects.toThrow(Oauth2JwtParseError);
@@ -443,6 +477,7 @@ describe("parseAuthorizeRequest - optional verification", () => {
     await expect(
       async () =>
         await parseAuthorizeRequest({
+          config: configV1_0,
           requestObjectJwt: missingMandatoryFieldRequestObjectJwt,
         }),
     ).rejects.toThrow(ValidationError);
@@ -453,6 +488,7 @@ describe("parseAuthorizeRequest - optional verification", () => {
     await expect(
       async () =>
         await parseAuthorizeRequest({
+          config: configV1_0,
           requestObjectJwt: invalidHeaderTypJwt,
         }),
     ).rejects.toThrow(ValidationError);
