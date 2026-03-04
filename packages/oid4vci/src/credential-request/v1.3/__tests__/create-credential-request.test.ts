@@ -12,7 +12,16 @@ import {
   createCredentialRequest,
 } from "../create-credential-request";
 
+vi.mock("@openid4vc/oauth2", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@openid4vc/oauth2")>();
+  return {
+    ...actual,
+    calculateJwkThumbprint: vi.fn(({ jwk }) => jwk.kid),
+  };
+});
+
 const mockCallbacks = {
+  hash: vi.fn(),
   signJwt: vi.fn(),
 };
 

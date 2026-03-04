@@ -1,4 +1,9 @@
-import { type JwtSignerJwk } from "@openid4vc/oauth2";
+import {
+  CallbackContext,
+  HashAlgorithm,
+  type JwtSignerJwk,
+  calculateJwkThumbprint,
+} from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -17,6 +22,7 @@ import { CredentialRequestV1_3, zCredentialRequestV1_3 } from "./z-credential";
  */
 export interface CredentialRequestOptionsV1_3
   extends BaseCredentialRequestOptions {
+  callbacks: Pick<CallbackContext, "hash" | "signJwt">;
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   keyAttestation: string; // Required in v1.3
   /**
@@ -46,7 +52,7 @@ export interface CredentialRequestOptionsV1_3
  *
  * @example
  * const request = await createCredentialRequest({
- *   callbacks: { signJwt: mySignJwtCallback },
+ *   callbacks: { signJwt: mySignJwtCallback, hash: myHashCallback },
  *   clientId: "my-client-id",
  *   credential_identifier: "UniversityDegree",
  *   issuerIdentifier: "https://issuer.example.com",
@@ -60,27 +66,45 @@ export const createCredentialRequest = async (
   options: CredentialRequestOptionsV1_3,
 ): Promise<CredentialRequestV1_3> => {
   try {
-    const { signJwt } = options.callbacks;
+    const { maxBatchSize, signers } = options;
 
-    if (options.maxBatchSize !== undefined) {
-      if (
-        !Number.isInteger(options.maxBatchSize) ||
-        options.maxBatchSize <= 0
-      ) {
+    if (maxBatchSize !== undefined) {
+      if (!Number.isInteger(maxBatchSize) || maxBatchSize <= 0) {
         throw new ValidationError(
           "Invalid maxBatchSize: it must be a positive integer",
         );
       }
 
-      if (options.signers.length > options.maxBatchSize) {
+      if (signers.length > maxBatchSize) {
         throw new ValidationError(
           "The number of provided signers exceeds the maximum batch size allowed",
         );
       }
     }
 
+    const { hash, signJwt } = options.callbacks;
+
+    // Ensure all keys are unique for batch issuance
+    if (signers.length > 1) {
+      const allThumbprints = await Promise.all(
+        signers.map((signer) =>
+          calculateJwkThumbprint({
+            hashAlgorithm: HashAlgorithm.Sha256,
+            hashCallback: hash,
+            jwk: signer.publicJwk,
+          }),
+        ),
+      );
+      const uniqueThumbprints = new Set(allThumbprints);
+      if (uniqueThumbprints.size !== allThumbprints.length) {
+        throw new ValidationError(
+          "Found multiple signers with the same JWK: each JWT proof must be unique and linked to a different credential key pair",
+        );
+      }
+    }
+
     const proofJwts = await Promise.all(
-      options.signers.map((signer) =>
+      signers.map((signer) =>
         signJwt(signer, {
           header: {
             alg: signer.alg,

@@ -110,7 +110,7 @@ const config = new IoWalletSdkConfig({
 
 const request = await createCredentialRequest({
   config,
-  callbacks: { signJwt: mySignJwtCallback },
+  callbacks: { signJwt: mySignJwtCallback, hash: myHashCallback },
   clientId: "my-client-id",
   credential_identifier: "education_degree_unibo_2017_l31_informatica",
   issuerIdentifier: "https://issuer.example.com",

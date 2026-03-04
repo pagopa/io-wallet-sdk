@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createCredentialRequest } from "../create-credential-request";
 
 const mockCallbacks = {
+  hash: vi.fn(),
   signJwt: vi.fn(),
 };
 
