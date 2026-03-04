@@ -192,9 +192,7 @@ describe("createAuthorizationRequest", () => {
         config: configV1_0,
         jar,
       }),
-    ).rejects.toThrow(
-      "Invalid authorization request. Could not parse openid4vp authorization request.",
-    );
+    ).rejects.toThrow();
   });
 
   it("throws Oid4vpError for invalid v1.0 header", async () => {

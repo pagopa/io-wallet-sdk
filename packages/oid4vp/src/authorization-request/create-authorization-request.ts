@@ -123,9 +123,7 @@ export async function createAuthorizationRequest(
     };
   } catch (error) {
     if (error instanceof ValidationError) {
-      throw new Oid4vpError(
-        "Invalid authorization request. Could not parse openid4vp authorization request.",
-      );
+      throw new Oid4vpError(`Invalid authorization request: ${error.message}`);
     }
     throw error;
   }

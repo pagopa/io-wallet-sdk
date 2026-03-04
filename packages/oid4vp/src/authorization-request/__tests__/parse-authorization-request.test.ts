@@ -28,9 +28,44 @@ const configV1_3 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
 });
 
+const encodeJwtPart = (value: unknown): string =>
+  Buffer.from(JSON.stringify(value), "utf8")
+    .toString("base64")
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/u, "");
+
+const createJwt = (options: {
+  header: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  signature: string;
+}) =>
+  `${encodeJwtPart(options.header)}.${encodeJwtPart(options.payload)}.${options.signature}`;
+
+const validFederationHeader = {
+  alg: "ES256",
+  kid: "test-kid",
+  trust_chain: ["entity-statement-jwt"],
+  typ: "oauth-authz-req+jwt",
+};
+
+const validX5cHeader = {
+  alg: "ES256",
+  kid: "test-kid",
+  typ: "oauth-authz-req+jwt",
+  x5c: ["MIIBxxx..."],
+};
+
+const wrongSignature =
+  "hz5ipVxKrKozy-QFaer1E_5GowddzQr-wtAiKv_GQpSKj6ySi7UklVw4TXjur_FvpqK_uh37xrPdUsW4qQ3YdQ";
+
 const correctRequestObject: Openid4vpAuthorizationRequestPayload = {
   client_id: "test-client-id",
   client_metadata: {
+    application_type: "web",
+    client_id: "https://relying-party.example.org",
+    client_name: "Example Relying Party",
+    encrypted_response_enc_values_supported: ["A256GCM"],
     jwks: {
       keys: [
         {
@@ -43,9 +78,13 @@ const correctRequestObject: Openid4vpAuthorizationRequestPayload = {
         },
       ],
     },
+    logo_uri: "https://relying-party.example.org/public/compact-logo.svg",
+    request_uris: ["https://relying-party.example.org/request_uri"],
+    response_uris: ["https://relying-party.example.org/response_uri"],
     vp_formats_supported: {
-      jwt_vp_json: {
-        alg_values_supported: ["ES256"],
+      "dc+sd-jwt": {
+        "kb-jwt_alg_values": ["ES256"],
+        "sd-jwt_alg_values": ["ES256"],
       },
     },
   },
@@ -54,164 +93,126 @@ const correctRequestObject: Openid4vpAuthorizationRequestPayload = {
   iat: new Date("2025-09-15").getTime(),
   iss: "test-client-id",
   nonce: "test_nonce",
-  request_uri: "uri://request.example.com",
+  request_uri: "https://request.example.com",
   request_uri_method: "POST",
   response_mode: "direct_post.jwt",
   response_type: "vp_token",
-  response_uri: "uri://response.example.com",
+  response_uri: "https://response.example.com",
   scope: "test_presentation_scope",
   state: "test_state",
   wallet_nonce: "Test wallet nonce",
 };
-
-/**
- * JWT with correct header containing trust_chain and kid for federation verification
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid","trust_chain":[...]}
- */
-const correctRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImV5SmhiR2NpT2lKRlV6STFOaUlzSW5SNWNDSTZJbVZ1ZEdsMGVTMXpkR0YwWlcxbGJuUXJhbmQwSWl3aWEybGtJam9pZEdWemRDMXJhV1FpZlEuZXlKcGMzTWlPaUowWlhOMExXTnNhV1Z1ZEMxcFpDSXNJbk4xWWlJNkluUmxjM1F0WTJ4cFpXNTBMV2xrSWl3aWFXRjBJam94TnpZME16SXlOak00TENKbGVIQWlPakl3TnprMk9ESTJNemdzSW0xbGRHRmtZWFJoSWpwN0ltOXdaVzVwWkY5amNtVmtaVzUwYVdGc1gzWmxjbWxtYVdWeUlqcDdJbXAzYTNNaU9uc2lhMlY1Y3lJNlczc2lhM1I1SWpvaVJVTWlMQ0o0SWpvaVIwOVdaV2RIZDNFd1YxWnJTazVEUmxJNVVWUkZSSEEyWW1nM1VETktSV1JPYlVSV2FVeHNiVFIxVFNJc0lua2lPaUpCV2xsb01FeFFkbGhpTWxVMlQzaHNlbU0yU0doTmMxUXhlV2hmVGkxeGFFNUxXakpSTm10RGNFOU5JaXdpWTNKMklqb2lVQzB5TlRZaUxDSmhiR2NpT2lKRlV6STFOaUlzSW10cFpDSTZJblJsYzNRdGEybGtJbjFkZlN3aWRuQmZabTl5YldGMGMxOXpkWEJ3YjNKMFpXUWlPbnNpYW5kMFgzWndYMnB6YjI0aU9uc2lZV3huWDNaaGJIVmxjMTl6ZFhCd2IzSjBaV1FpT2xzaVJWTXlOVFlpWFgxOWZYMTkuSmEzU25OMllaVXdxamZLdWtkVDR0UzNZTnk2MnJvUk9uTGtiaWV3Nkh5cEY0Vjl2OGk1cXM3aHpBdDM2T1RXaExLMW1lei1xdGlPSjQ2elRLa2F6bmciXX0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9tZXRhZGF0YSI6eyJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwieCI6IkdPVmVnR3dxMFdWa0pOQ0ZSOVFURURwNmJoN1AzSkVkTm1EVmlMbG00dU0iLCJ5IjoiQVpZaDBMUHZYYjJVNk94bHpjNkhoTXNUMXloX04tcWhOS1oyUTZrQ3BPTSIsImNydiI6IlAtMjU2IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJ0ZXN0LWtpZCJ9XX0sInZwX2Zvcm1hdHNfc3VwcG9ydGVkIjp7Imp3dF92cF9qc29uIjp7ImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il19fX0sInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.7l7lPk5SM2X6ygs4e_2NAE78bvQgNnZW2ngiB-nMQZJIA9KrX7Ry2iEvl5lheXADA1Qq5s372l7TodtK9pAgZQ";
-
-/**
- * The missingMandatoryFieldRequestObjectJwt is obtained by signing the missingMandatoryFieldRequestObject defined below
- * const {response_type : _ , ...missingMandatoryFieldRequestObject} = correctRequestObject
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
- */
-const missingMandatoryFieldRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.rQWRpNGrtH1VhwMhXoHrDncK0ojb4r2BVjr8WI0ZFUjBYrXst0PETd9r4fFl08lCSDOA_iOKm3Oyjz5cy6scHg";
-
-/**
- * The nonConformingRequestObjectJwt is obtained by signing this object
- * const nonConformingRequestObject = {
- *     ...correctRequestObject,
- *     response_type : 3,
- *     response_uri : 'this is not a uri',
- *     request_uri : undefined,
- *     response_mode : 'direct_post',
- *     dcql_query : [],
- * }
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt"}
- */
-const nonConformingRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ.eyJyZXNwb25zZV90eXBlIjozLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InRoaXMgaXMgbm90IGEgdXJpIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdCIsIm5vbmNlIjoidGVzdF9ub25jZSIsIndhbGxldF9ub25jZSI6IlRlc3Qgd2FsbGV0IG5vbmNlIiwic2NvcGUiOiJ0ZXN0X3ByZXNlbnRhdGlvbl9zY29wZSIsInN0YXRlIjoidGVzdF9zdGF0ZSIsImRjcWxfcXVlcnkiOltdLCJpc3MiOiJ0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.zZkKLkuGUl0iBZRuGTPBVtoXvQxwcgj5eH_K-B_wvcKkLYBsAGMILB-OE-sAGkIYAb12CEl0DcMbYCERKQ96ug";
 
 const expiredRequestObject = {
   ...correctRequestObject,
   exp: new Date("2025-09-16").getTime(),
 };
 
-/**
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid","trust_chain":[...]}
- */
-const expiredRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImV5SmhiR2NpT2lKRlV6STFOaUlzSW5SNWNDSTZJbVZ1ZEdsMGVTMXpkR0YwWlcxbGJuUXJhbmQwSWl3aWEybGtJam9pZEdWemRDMXJhV1FpZlEuZXlKcGMzTWlPaUowWlhOMExXTnNhV1Z1ZEMxcFpDSXNJbk4xWWlJNkluUmxjM1F0WTJ4cFpXNTBMV2xrSWl3aWFXRjBJam94TnpZME16SXlOak00TENKbGVIQWlPakl3TnprMk9ESTJNemdzSW0xbGRHRmtZWFJoSWpwN0ltOXdaVzVwWkY5amNtVmtaVzUwYVdGc1gzWmxjbWxtYVdWeUlqcDdJbXAzYTNNaU9uc2lhMlY1Y3lJNlczc2lhM1I1SWpvaVJVTWlMQ0o0SWpvaVIwOVdaV2RIZDNFd1YxWnJTazVEUmxJNVVWUkZSSEEyWW1nM1VETktSV1JPYlVSV2FVeHNiVFIxVFNJc0lua2lPaUpCV2xsb01FeFFkbGhpTWxVMlQzaHNlbU0yU0doTmMxUXhlV2hmVGkxeGFFNUxXakpSTm10RGNFOU5JaXdpWTNKMklqb2lVQzB5TlRZaUxDSmhiR2NpT2lKRlV6STFOaUlzSW10cFpDSTZJblJsYzNRdGEybGtJbjFkZlN3aWRuQmZabTl5YldGMGMxOXpkWEJ3YjNKMFpXUWlPbnNpYW5kMFgzWndYMnB6YjI0aU9uc2lZV3huWDNaaGJIVmxjMTl6ZFhCd2IzSjBaV1FpT2xzaVJWTXlOVFlpWFgxOWZYMTkuSmEzU25OMllaVXdxamZLdWtkVDR0UzNZTnk2MnJvUk9uTGtiaWV3Nkh5cEY0Vjl2OGk1cXM3aHpBdDM2T1RXaExLMW1lei1xdGlPSjQ2elRLa2F6bmciXX0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9tZXRhZGF0YSI6eyJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwieCI6IkdPVmVnR3dxMFdWa0pOQ0ZSOVFURURwNmJoN1AzSkVkTm1EVmlMbG00dU0iLCJ5IjoiQVpZaDBMUHZYYjJVNk94bHpjNkhoTXNUMXloX04tcWhOS1oyUTZrQ3BPTSIsImNydiI6IlAtMjU2IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJ0ZXN0LWtpZCJ9XX0sInZwX2Zvcm1hdHNfc3VwcG9ydGVkIjp7Imp3dF92cF9qc29uIjp7ImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il19fX0sInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MTc1Nzk4MDgwMDAwMH0.QTInFJg32qcOrYJkn0UkhmTO-3-IHYTffrXF9rZFomKTN2UQfeahqkhHBzSP3eil_ULIR3y6XdPZ--gmXB0_Yg";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { response_type: _, ...missingMandatoryFieldRequestObject } =
+  correctRequestObject;
 
-/**
- * JWT signed with a different key (signature doesn't match the public key in the trust chain)
- */
-const wrongSignedRequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImV5SmhiR2NpT2lKRlV6STFOaUlzSW5SNWNDSTZJbVZ1ZEdsMGVTMXpkR0YwWlcxbGJuUXJhbmQwSWl3aWEybGtJam9pZEdWemRDMXJhV1FpZlEuZXlKcGMzTWlPaUowWlhOMExXTnNhV1Z1ZEMxcFpDSXNJbk4xWWlJNkluUmxjM1F0WTJ4cFpXNTBMV2xrSWl3aWFXRjBJam94TnpZME16SXlOak00TENKbGVIQWlPakl3TnprMk9ESTJNemdzSW0xbGRHRmtZWFJoSWpwN0ltOXdaVzVwWkY5amNtVmtaVzUwYVdGc1gzWmxjbWxtYVdWeUlqcDdJbXAzYTNNaU9uc2lhMlY1Y3lJNlczc2lhM1I1SWpvaVJVTWlMQ0o0SWpvaVIwOVdaV2RIZDNFd1YxWnJTazVEUmxJNVVWUkZSSEEyWW1nM1VETktSV1JPYlVSV2FVeHNiVFIxVFNJc0lua2lPaUpCV2xsb01FeFFkbGhpTWxVMlQzaHNlbU0yU0doTmMxUXhlV2hmVGkxeGFFNUxXakpSTm10RGNFOU5JaXdpWTNKMklqb2lVQzB5TlRZaUxDSmhiR2NpT2lKRlV6STFOaUlzSW10cFpDSTZJblJsYzNRdGEybGtJbjFkZlN3aWRuQmZabTl5YldGMGMxOXpkWEJ3YjNKMFpXUWlPbnNpYW5kMFgzWndYMnB6YjI0aU9uc2lZV3huWDNaaGJIVmxjMTl6ZFhCd2IzSjBaV1FpT2xzaVJWTXlOVFlpWFgxOWZYMTkuSmEzU25OMllaVXdxamZLdWtkVDR0UzNZTnk2MnJvUk9uTGtiaWV3Nkh5cEY0Vjl2OGk1cXM3aHpBdDM2T1RXaExLMW1lei1xdGlPSjQ2elRLa2F6bmciXX0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9tZXRhZGF0YSI6eyJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwieCI6IkdPVmVnR3dxMFdWa0pOQ0ZSOVFURURwNmJoN1AzSkVkTm1EVmlMbG00dU0iLCJ5IjoiQVpZaDBMUHZYYjJVNk94bHpjNkhoTXNUMXloX04tcWhOS1oyUTZrQ3BPTSIsImNydiI6IlAtMjU2IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJ0ZXN0LWtpZCJ9XX0sInZwX2Zvcm1hdHNfc3VwcG9ydGVkIjp7Imp3dF92cF9qc29uIjp7ImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il19fX0sInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.hz5ipVxKrKozy-QFaer1E_5GowddzQr-wtAiKv_GQpSKj6ySi7UklVw4TXjur_FvpqK_uh37xrPdUsW4qQ3YdQ";
-
-/**
- * JWT with invalid header typ field: {"alg":"ES256","typ":"jwt"}
- */
-const invalidHeaderTypJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.xbxwjLKeP4AJRqUwSq3e47i4QPmCs3aELuSWTH5Ad6bgu1OxG5Dlt1S6pqc9z95B_t98134H9KDowF_7NLRSGA";
-
-/**
- * Test data for x509_hash client_id prefix
- */
-const x509RequestObject: Openid4vpAuthorizationRequestPayload = {
-  client_id: "x509_hash:test-client-id",
-  client_metadata: {
-    jwks: {
-      keys: [
-        {
-          alg: "ES256",
-          crv: "P-256",
-          kid: "test-kid",
-          kty: "EC",
-          x: "GOVegGwq0WVkJNCFR9QTEDp6bh7P3JEdNmDViLlm4uM",
-          y: "AZYh0LPvXb2U6Oxlzc6HhMsT1yh_N-qhNKZ2Q6kCpOM",
-        },
-      ],
-    },
-    vp_formats_supported: {
-      jwt_vp_json: {
-        alg_values_supported: ["ES256"],
-      },
-    },
-  },
-  dcql_query: {},
-  exp: new Date("2035-09-15").getTime(),
-  iat: new Date("2025-09-15").getTime(),
-  iss: "x509_hash:test-client-id",
-  nonce: "test_nonce",
-  request_uri: "uri://request.example.com",
-  request_uri_method: "POST",
-  response_mode: "direct_post.jwt",
-  response_type: "vp_token",
-  response_uri: "uri://response.example.com",
-  scope: "test_presentation_scope",
-  state: "test_state",
-  wallet_nonce: "Test wallet nonce",
+const nonConformingRequestObject = {
+  ...correctRequestObject,
+  dcql_query: [],
+  request_uri: undefined,
+  response_mode: "direct_post",
+  response_type: 3,
+  response_uri: "this is not a uri",
 };
 
-/**
- * JWT with x509_hash client_id prefix and x5c in header
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid","x5c":["MIIBxxx..."]}
- */
-const x509RequestObjectJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsIng1YyI6WyJNSUlCeHh4Li4uIl19.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.valid_x509_signature";
+const x509RequestObject: Openid4vpAuthorizationRequestPayload = {
+  ...correctRequestObject,
+  client_id: "x509_hash:test-client-id",
+  iss: "x509_hash:test-client-id",
+};
 
-/**
- * JWT with x509_hash client_id prefix but missing x5c in header
- * Header: {"alg":"ES256","typ":"oauth-authz-req+jwt","kid":"test-kid"}
- */
-const x509RequestObjectMissingX5cJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCJ9.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ4NTA5X2hhc2g6dGVzdC1jbGllbnQtaWQiLCJjbGllbnRfbWV0YWRhdGEiOnsiandrcyI6eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJHT1ZlZ0d3cTBXVmtKTkNGUjlRVEVEcDZiaDdQM0pFZE5tRFZpTGxtNHVNIiwieSI6IkFaWWgwTFB2WGIyVTZPeGx6YzZIaE1zVDF5aF9OLXFoTktaMlE2a0NwT00iLCJjcnYiOiJQLTI1NiIsImFsZyI6IkVTMjU2Iiwia2lkIjoidGVzdC1raWQifV19LCJ2cF9mb3JtYXRzX3N1cHBvcnRlZCI6eyJqd3RfdnBfanNvbiI6eyJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19LCJyZXNwb25zZV91cmkiOiJ1cmk6Ly9yZXNwb25zZS5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpIjoidXJpOi8vcmVxdWVzdC5leGFtcGxlLmNvbSIsInJlcXVlc3RfdXJpX21ldGhvZCI6IlBPU1QiLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3Quand0Iiwibm9uY2UiOiJ0ZXN0X25vbmNlIiwid2FsbGV0X25vbmNlIjoiVGVzdCB3YWxsZXQgbm9uY2UiLCJzY29wZSI6InRlc3RfcHJlc2VudGF0aW9uX3Njb3BlIiwic3RhdGUiOiJ0ZXN0X3N0YXRlIiwiZGNxbF9xdWVyeSI6e30sImlzcyI6Ing1MDlfaGFzaDp0ZXN0LWNsaWVudC1pZCIsImlhdCI6MTc1Nzg5NDQwMDAwMCwiZXhwIjoyMDczNDI3MjAwMDAwfQ.some_signature";
+const correctRequestObjectJwt = createJwt({
+  header: validFederationHeader,
+  payload: correctRequestObject,
+  signature: "valid_signature",
+});
+
+const missingMandatoryFieldRequestObjectJwt = createJwt({
+  header: validFederationHeader,
+  payload: missingMandatoryFieldRequestObject,
+  signature: "valid_signature",
+});
+
+const nonConformingRequestObjectJwt = createJwt({
+  header: validFederationHeader,
+  payload: nonConformingRequestObject,
+  signature: "valid_signature",
+});
+
+const expiredRequestObjectJwt = createJwt({
+  header: validFederationHeader,
+  payload: expiredRequestObject,
+  signature: "valid_signature",
+});
+
+const wrongSignedRequestObjectJwt = createJwt({
+  header: validFederationHeader,
+  payload: correctRequestObject,
+  signature: wrongSignature,
+});
+
+const invalidHeaderTypJwt = createJwt({
+  header: { ...validFederationHeader, typ: "jwt" },
+  payload: correctRequestObject,
+  signature: "valid_signature",
+});
+
+const x509RequestObjectJwt = createJwt({
+  header: validX5cHeader,
+  payload: x509RequestObject,
+  signature: "valid_x509_signature",
+});
+
+const x509RequestObjectMissingX5cJwt = createJwt({
+  header: {
+    alg: "ES256",
+    kid: "test-kid",
+    typ: "oauth-authz-req+jwt",
+  },
+  payload: x509RequestObject,
+  signature: "some_signature",
+});
+
+const requestObjectWithTransactionDataJwt = createJwt({
+  header: validFederationHeader,
+  payload: {
+    ...correctRequestObject,
+    transaction_data: ["ZXhhbXBsZV90cmFuc2FjdGlvbl9kYXRh"],
+  },
+  signature: "valid_transaction_data_signature",
+});
 
 const callbacks: Pick<CallbackContext, "verifyJwt"> = {
   verifyJwt: async (signer, { compact }) => {
-    // For federation method, verify using the trust chain
+    const parts = compact.split(".");
+    const signature = parts[2];
+
     if (signer.method === "federation") {
-      // Extract signature from JWT
-      const parts = compact.split(".");
-      const signature = parts[2];
-
-      // Reject empty or invalid signatures
       if (
         !signature ||
         signature === "invalid_signature" ||
-        signature === "this_is_not_a_signature"
+        signature === "this_is_not_a_signature" ||
+        signature === wrongSignature
       ) {
         return { verified: false };
       }
 
-      // Check for wrong signature (different from the expected ones)
-      const wrongSignature =
-        "hz5ipVxKrKozy-QFaer1E_5GowddzQr-wtAiKv_GQpSKj6ySi7UklVw4TXjur_FvpqK_uh37xrPdUsW4qQ3YdQ";
-      if (signature === wrongSignature) {
-        return { verified: false };
-      }
-
-      // For valid JWTs, return the public key from the expected test data
       return {
         signerJwk: publicKey as Jwk,
         verified: true,
       };
     }
 
-    // For x5c method (x509_hash client_id)
     if (signer.method === "x5c") {
-      const parts = compact.split(".");
-      const signature = parts[2];
-
-      if (!Array.isArray(signer.x5c) || signer.x5c.length === 0) {
-        return { verified: false };
-      }
-
-      // Reject empty or invalid signatures
       if (
+        !Array.isArray(signer.x5c) ||
+        signer.x5c.length === 0 ||
         !signature ||
         signature === "invalid_signature" ||
         signature === "this_is_not_a_signature"
@@ -219,18 +220,13 @@ const callbacks: Pick<CallbackContext, "verifyJwt"> = {
         return { verified: false };
       }
 
-      // For valid x5c JWTs, return verified
       return {
         signerJwk: publicKey as Jwk,
         verified: true,
       };
     }
 
-    // For jwk method
     if (signer.method === "jwk") {
-      const parts = compact.split(".");
-      const signature = parts[2];
-
       if (
         !signature ||
         signature === "invalid_signature" ||
@@ -352,9 +348,15 @@ describe("parseAuthorizationRequest tests", () => {
   });
 
   it("should throw a ValidationError for missing alg field in header", async () => {
-    // JWT with missing alg field in header: {"typ":"oauth-authz-req+jwt"}
-    const missingAlgJwt =
-      "eyJ0eXAiOiJvYXV0aC1hdXRoei1yZXErand0In0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.invalid_signature";
+    const missingAlgJwt = createJwt({
+      header: {
+        kid: "test-kid",
+        trust_chain: ["entity-statement-jwt"],
+        typ: "oauth-authz-req+jwt",
+      },
+      payload: correctRequestObject,
+      signature: "invalid_signature",
+    });
 
     await expect(
       async () =>
@@ -367,9 +369,16 @@ describe("parseAuthorizationRequest tests", () => {
   });
 
   it("should throw a ValidationError for empty trust_chain array", async () => {
-    // JWT with empty trust_chain field: {"alg":"ES256","typ":"oauth-authz-req+jwt","trust_chain":[]}
-    const jwtWithEmptyTrustChain =
-      "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJ0cnVzdF9jaGFpbiI6W119.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMH0.invalid_signature";
+    const jwtWithEmptyTrustChain = createJwt({
+      header: {
+        alg: "ES256",
+        kid: "test-kid",
+        trust_chain: [],
+        typ: "oauth-authz-req+jwt",
+      },
+      payload: correctRequestObject,
+      signature: "invalid_signature",
+    });
 
     await expect(
       async () =>
@@ -402,14 +411,6 @@ describe("parseAuthorizationRequest tests", () => {
     ).rejects.toThrow(ValidationError);
   });
 });
-
-/**
- * JWT with trust_chain+kid header and payload including transaction_data.
- * Payload extends correctRequestObject with:
- *   "transaction_data": ["ZXhhbXBsZV90cmFuc2FjdGlvbl9kYXRh"]
- */
-const requestObjectWithTransactionDataJwt =
-  "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsInRydXN0X2NoYWluIjpbImV5SmhiR2NpT2lKRlV6STFOaUlzSW5SNWNDSTZJbVZ1ZEdsMGVTMXpkR0YwWlcxbGJuUXJhbmQwSWl3aWEybGtJam9pZEdWemRDMXJhV1FpZlEuZXlKcGMzTWlPaUowWlhOMExXTnNhV1Z1ZEMxcFpDSXNJbk4xWWlJNkluUmxjM1F0WTJ4cFpXNTBMV2xrSWl3aWFXRjBJam94TnpZME16SXlOak00TENKbGVIQWlPakl3TnprMk9ESTJNemdzSW0xbGRHRmtZWFJoSWpwN0ltOXdaVzVwWkY5amNtVmtaVzUwYVdGc1gzWmxjbWxtYVdWeUlqcDdJbXAzYTNNaU9uc2lhMlY1Y3lJNlczc2lhM1I1SWpvaVJVTWlMQ0o0SWpvaVIwOVdaV2RIZDNFd1YxWnJTazVEUmxJNVVWUkZSSEEyWW1nM1VETktSV1JPYlVSV2FVeHNiVFIxVFNJc0lua2lPaUpCV2xsb01FeFFkbGhpTWxVMlQzaHNlbU0yU0doTmMxUXhlV2hmVGkxeGFFNUxXakpSTm10RGNFOU5JaXdpWTNKMklqb2lVQzB5TlRZaUxDSmhiR2NpT2lKRlV6STFOaUlzSW10cFpDSTZJblJsYzNRdGEybGtJbjFkZlN3aWRuQmZabTl5YldGMGMxOXpkWEJ3YjNKMFpXUWlPbnNpYW5kMFgzWndYMnB6YjI0aU9uc2lZV3huWDNaaGJIVmxjMTl6ZFhCd2IzSjBaV1FpT2xzaVJWTXlOVFlpWFgxOWZYMTkuSmEzU25OMllaVXdxamZLdWtkVDR0UzNZTnk2MnJvUk9uTGtiaWV3Nkh5cEY0Vjl2OGk1cXM3aHpBdDM2T1RXaExLMW1lei1xdGlPSjQ2elRLa2F6bmciXX0.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9tZXRhZGF0YSI6eyJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwieCI6IkdPVmVnR3dxMFdWa0pOQ0ZSOVFURURwNmJoN1AzSkVkTm1EVmlMbG00dU0iLCJ5IjoiQVpZaDBMUHZYYjJVNk94bHpjNkhoTXNUMXloX04tcWhOS1oyUTZrQ3BPTSIsImNydiI6IlAtMjU2IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJ0ZXN0LWtpZCJ9XX0sInZwX2Zvcm1hdHNfc3VwcG9ydGVkIjp7Imp3dF92cF9qc29uIjp7ImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il19fX0sInJlc3BvbnNlX3VyaSI6InVyaTovL3Jlc3BvbnNlLmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmkiOiJ1cmk6Ly9yZXF1ZXN0LmV4YW1wbGUuY29tIiwicmVxdWVzdF91cmlfbWV0aG9kIjoiUE9TVCIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdC5qd3QiLCJub25jZSI6InRlc3Rfbm9uY2UiLCJ3YWxsZXRfbm9uY2UiOiJUZXN0IHdhbGxldCBub25jZSIsInNjb3BlIjoidGVzdF9wcmVzZW50YXRpb25fc2NvcGUiLCJzdGF0ZSI6InRlc3Rfc3RhdGUiLCJkY3FsX3F1ZXJ5Ijp7fSwiaXNzIjoidGVzdC1jbGllbnQtaWQiLCJpYXQiOjE3NTc4OTQ0MDAwMDAsImV4cCI6MjA3MzQyNzIwMDAwMCwidHJhbnNhY3Rpb25fZGF0YSI6WyJaWGhoYlhCc1pWOTBjbUZ1YzJGamRHbHZibDlrWVhSaCJdfQ.valid_transaction_data_signature";
 
 describe("parseAuthorizeRequest - transaction_data support", () => {
   it("should parse request object with transaction_data field", async () => {
@@ -449,7 +450,6 @@ describe("parseAuthorizeRequest - optional verification", () => {
   });
 
   it("should accept wrongly signed JWT when verification is disabled", async () => {
-    // This JWT has an invalid signature, but should parse successfully without verification
     const result = await parseAuthorizeRequest({
       config: configV1_0,
       requestObjectJwt: wrongSignedRequestObjectJwt,
@@ -460,7 +460,6 @@ describe("parseAuthorizeRequest - optional verification", () => {
   });
 
   it("should still validate JWT structure even without verification", async () => {
-    // Malformed JWT should still throw Oauth2JwtParseError
     const malformedJwt = "not.a.valid.jwt.structure";
 
     await expect(
@@ -473,7 +472,6 @@ describe("parseAuthorizeRequest - optional verification", () => {
   });
 
   it("should still validate payload schema even without verification", async () => {
-    // Missing mandatory fields should still throw ValidationError
     await expect(
       async () =>
         await parseAuthorizeRequest({
@@ -484,7 +482,6 @@ describe("parseAuthorizeRequest - optional verification", () => {
   });
 
   it("should still validate header schema even without verification", async () => {
-    // Invalid header typ should still throw ValidationError
     await expect(
       async () =>
         await parseAuthorizeRequest({
