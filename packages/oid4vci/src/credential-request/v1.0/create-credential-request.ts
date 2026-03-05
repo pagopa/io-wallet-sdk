@@ -1,4 +1,5 @@
-import { type JwtSignerJwk } from "@openid4vc/oauth2";
+import type { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
+
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -17,6 +18,7 @@ import { CredentialRequestV1_0, zCredentialRequestV1_0 } from "./z-credential";
  */
 export interface CredentialRequestOptionsV1_0
   extends BaseCredentialRequestOptions {
+  callbacks: Pick<CallbackContext, "signJwt">;
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_0>;
   signer: JwtSignerJwk;
   // keyAttestation is NOT accepted in v1.0
