@@ -68,6 +68,10 @@ export const createCredentialRequest = async (
   try {
     const { maxBatchSize, signers } = options;
 
+    if (signers.length === 0) {
+      throw new ValidationError("At least one signer is required");
+    }
+
     if (maxBatchSize !== undefined) {
       if (!Number.isInteger(maxBatchSize) || maxBatchSize <= 0) {
         throw new ValidationError(
