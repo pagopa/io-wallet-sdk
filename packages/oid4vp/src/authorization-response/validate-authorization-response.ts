@@ -18,7 +18,7 @@ export interface ValidateOpenid4vpAuthorizationResponseOptions {
 /**
  * Result of authorization response validation.
  */
-export interface ValidateOpenid4VpAuthorizationResponseResult {
+export interface ValidateOpenid4vpAuthorizationResponseResult {
   presentations: ReturnType<typeof parseVpToken>;
   query: Openid4vpAuthorizationRequestPayload["dcql_query"];
 }

@@ -8,7 +8,7 @@ import {
   parseJarmAuthorizationResponse,
 } from "../jarm";
 import {
-  ValidateOpenid4VpAuthorizationResponseResult,
+  ValidateOpenid4vpAuthorizationResponseResult,
   validateOpenid4vpAuthorizationResponsePayload,
 } from "./validate-authorization-response";
 import {
@@ -40,7 +40,7 @@ export type ParseAuthorizationResponseResult = {
   jarm?: {
     jarmHeader: JarmHeader;
   } & VerifiedJarmAuthorizationResponse;
-} & ValidateOpenid4VpAuthorizationResponseResult;
+} & ValidateOpenid4vpAuthorizationResponseResult;
 
 /**
  * Parses an OpenID4VP authorization response and validates it against the request.
