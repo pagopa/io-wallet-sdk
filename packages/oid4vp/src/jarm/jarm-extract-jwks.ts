@@ -20,8 +20,9 @@ export function extractEncryptionJwkFromJwks(
   if (algFiltered.length === 0) algFiltered = jwks.keys;
 
   let encFiltered = algFiltered.filter((key) => key.use === "enc");
-  if (!encFiltered)
+  if (encFiltered.length === 0) {
     encFiltered = algFiltered.filter((key) => key.use !== "sig");
+  }
 
   return encFiltered.length > 0 ? encFiltered[0] : jwks.keys[0];
 }
