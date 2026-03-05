@@ -1,5 +1,16 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.1.0
+
+### Minor Changes
+
+- 1eda2cf: Enhance fetch metadata to support for IT-Wallet v1.0
+
+### Patch Changes
+
+- Updated dependencies [e4eca58]
+  - @pagopa/io-wallet-utils@1.1.0
+
 ## 1.0.0
 
 ### Patch Changes
