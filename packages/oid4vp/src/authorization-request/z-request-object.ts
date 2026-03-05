@@ -1,4 +1,9 @@
-import { zJwk, zJwtPayload } from "@pagopa/io-wallet-oauth2";
+import {
+  zAlgValueNotNone,
+  zJwk,
+  zJwtPayload,
+  zSignedAuthorizationRequestJwtHeaderTyp,
+} from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
 
 export const zVpFormatsSupported = z.record(
@@ -57,16 +62,35 @@ export type AuthorizationRequestObject = z.infer<
   typeof zOpenid4vpAuthorizationRequestPayload
 >;
 
-export const zOpenid4vpAuthorizationRequestHeader = z
-  .object({
-    alg: z.string(),
-    kid: z.string().optional(),
-    trust_chain: z.array(z.string()).nonempty().optional(),
-    typ: z.literal("oauth-authz-req+jwt"),
-    x5c: z.array(z.string()).optional(),
-  })
-  .passthrough();
+const zOpenid4vpAuthorizationRequestHeaderBase = z.object({
+  alg: zAlgValueNotNone,
+  kid: z.string(),
+  typ: zSignedAuthorizationRequestJwtHeaderTyp,
+});
 
-export type Openid4vpAuthorizationRequestHeader = z.infer<
-  typeof zOpenid4vpAuthorizationRequestHeader
+export const zOpenid4vpAuthorizationRequestHeaderV1_0 =
+  zOpenid4vpAuthorizationRequestHeaderBase
+    .extend({
+      trust_chain: z.array(z.string()).nonempty(),
+    })
+    .passthrough();
+
+export type Openid4vpAuthorizationRequestHeaderV1_0 = z.infer<
+  typeof zOpenid4vpAuthorizationRequestHeaderV1_0
 >;
+
+export const zOpenid4vpAuthorizationRequestHeaderV1_3 =
+  zOpenid4vpAuthorizationRequestHeaderBase
+    .extend({
+      trust_chain: z.array(z.string()).nonempty().optional(),
+      x5c: z.array(z.string()).nonempty(),
+    })
+    .passthrough();
+
+export type Openid4vpAuthorizationRequestHeaderV1_3 = z.infer<
+  typeof zOpenid4vpAuthorizationRequestHeaderV1_3
+>;
+
+export type Openid4vpAuthorizationRequestHeader =
+  | Openid4vpAuthorizationRequestHeaderV1_0
+  | Openid4vpAuthorizationRequestHeaderV1_3;
