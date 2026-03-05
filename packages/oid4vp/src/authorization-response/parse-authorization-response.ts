@@ -16,25 +16,6 @@ import {
   zOpenid4vpAuthorizationResponse,
 } from "./z-authorization-response";
 
-export interface ParseJarmAuthorizationResponseOptions {
-  /**
-   * Parsed authorization request payload used to validate response parameters.
-   */
-  authorizationRequestPayload: Openid4vpAuthorizationRequestPayload;
-  /**
-   * Callbacks required to decrypt and verify JARM content.
-   */
-  callbacks: Pick<CallbackContext, "decryptJwe" | "verifyJwt">;
-  /**
-   * RP client identifier expected in the JARM payload.
-   */
-  expectedClientId: string;
-  /**
-   * Compact JARM token from the `response` parameter.
-   */
-  jarmResponseJwt: string;
-}
-
 export interface ParseAuthorizationResponseOptions {
   /**
    * Parsed authorization request payload used to validate response parameters.
