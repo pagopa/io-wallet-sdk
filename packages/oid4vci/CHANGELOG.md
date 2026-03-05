@@ -1,5 +1,25 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.1.0
+
+### Minor Changes
+
+- c140b3e: feat: add verifyCredentialRequestJwtProof utility function
+- 3ec48ea: feat: add createCredentialResponse utility function
+- e033719: feat: add parseCredentialRequest utility function
+- 1eda2cf: Enhance fetch metadata to support for IT-Wallet v1.0
+
+### Patch Changes
+
+- Updated dependencies [8707488]
+- Updated dependencies [8278fb5]
+- Updated dependencies [e4eca58]
+- Updated dependencies [1eda2cf]
+  - @pagopa/io-wallet-oid4vp@1.1.0
+  - @pagopa/io-wallet-oauth2@1.1.0
+  - @pagopa/io-wallet-utils@1.1.0
+  - @pagopa/io-wallet-oid-federation@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
