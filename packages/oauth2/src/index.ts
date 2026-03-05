@@ -25,5 +25,4 @@ export {
   type SignJwtCallback,
   type VerifyJwtCallback,
   verifyJwt,
-  zCompactJwt,
 } from "@openid4vc/oauth2";

@@ -3,18 +3,19 @@ import type {
   ItWalletCredentialVerifierMetadataV1_3,
 } from "@pagopa/io-wallet-oid-federation";
 
-import { CallbackContext, JweEncryptor } from "@openid4vc/oauth2";
-import { VpToken, extractEncryptionJwkFromJwks } from "@openid4vc/openid4vp";
+import { CallbackContext, JweEncryptor } from "@pagopa/io-wallet-oauth2";
 import { Jwk } from "@pagopa/io-wallet-oauth2";
 import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
 
 import {
-  AuthorizationRequestObject,
   ClientIdPrefix,
+  Openid4vpAuthorizationRequestPayload,
   extractClientIdPrefix,
 } from "../authorization-request";
 import { CreateAuthorizationResponseError } from "../errors";
-import { AuthorizationResponse } from "./z-authorization-response";
+import { extractEncryptionJwkFromJwks } from "../jarm";
+import { VpToken } from "../vp-token";
+import { Openid4vpAuthorizationResponse } from "./z-authorization-response";
 
 export interface CreateAuthorizationResponseOptions {
   /**
@@ -38,7 +39,7 @@ export interface CreateAuthorizationResponseOptions {
    * Presentation's Request Object
    */
   requestObject: Pick<
-    AuthorizationRequestObject,
+    Openid4vpAuthorizationRequestPayload,
     "client_id" | "client_metadata" | "nonce" | "state"
   >;
 
@@ -64,7 +65,7 @@ export interface CreateAuthorizationResponseOptions {
  * Contains the generated JARM payload and the encrypted response to send to the verifier
  */
 export interface CreateAuthorizationResponseResult {
-  authorizationResponsePayload: AuthorizationResponse;
+  authorizationResponsePayload: Openid4vpAuthorizationResponse;
   jarm: {
     encryptionJwk: Jwk;
     responseJwe: string;
@@ -123,7 +124,7 @@ export async function createAuthorizationResponse(
         ? undefined
         : clientMetadata;
 
-    const authorizationResponsePayload: AuthorizationResponse = {
+    const authorizationResponsePayload: Openid4vpAuthorizationResponse = {
       state: requestObject.state,
       vp_token: options.vp_token,
     };
