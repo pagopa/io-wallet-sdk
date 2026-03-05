@@ -29,6 +29,11 @@ export interface ParseJarmAuthorizationResponseOptions {
    * Compact JARM authorization response (`response` parameter value).
    */
   jarmResponseJwt: string;
+  /**
+   * Current time used for temporal claim validation (`exp`, `nbf`).
+   * Defaults to current date-time when omitted.
+   */
+  now?: Date;
 }
 
 /**
@@ -44,7 +49,8 @@ export interface ParseJarmAuthorizationResponseOptions {
 export async function parseJarmAuthorizationResponse(
   options: ParseJarmAuthorizationResponseOptions,
 ): Promise<ParseAuthorizationResponseResult> {
-  const { authorizationRequestPayload, callbacks, jarmResponseJwt } = options;
+  const { authorizationRequestPayload, callbacks, jarmResponseJwt, now } =
+    options;
 
   const jarmAuthorizationResponseJwt = parseWithErrorHandling(
     z.union([zCompactJwt, zCompactJwe]),
@@ -56,6 +62,7 @@ export async function parseJarmAuthorizationResponse(
     authorizationRequestPayload,
     callbacks,
     jarmAuthorizationResponseJwt,
+    now,
   });
 
   const { header: jarmHeader } = decodeJwtHeader({

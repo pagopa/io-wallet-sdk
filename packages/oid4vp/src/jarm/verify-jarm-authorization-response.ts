@@ -79,6 +79,11 @@ export interface VerifyJarmAuthorizationResponseOptions {
    * Compact serialized JARM response received from the verifier.
    */
   jarmAuthorizationResponseJwt: string;
+  /**
+   * Current time used for temporal claim validation (`exp`, `nbf`).
+   * Defaults to current date-time when omitted.
+   */
+  now?: Date;
 }
 
 /**
@@ -152,6 +157,30 @@ export async function verifyJarmAuthorizationResponse(
 
     if (!verificationResult.verified) {
       throw new Oauth2Error("Jarm Auth Response is not valid.");
+    }
+
+    const expectedAudience = authorizationRequestPayload.client_id;
+    const expectedIssuer = authorizationRequestPayload.iss;
+    if (!response.aud.includes(expectedAudience)) {
+      throw new Oauth2Error(
+        `Jarm Auth Response contains 'aud' value '${Array.isArray(response.aud) ? response.aud.join(",") : response.aud}', but expected '${expectedAudience}'.`,
+      );
+    }
+
+    if (response.iss !== expectedIssuer) {
+      throw new Oauth2Error(
+        `Jarm Auth Response contains 'iss' value '${response.iss}', but expected '${expectedIssuer}'.`,
+      );
+    }
+
+    const now = options.now ?? new Date();
+    const nowSeconds = Math.floor(now.getTime() / 1000);
+    if (response.exp < nowSeconds) {
+      throw new Oauth2Error("Jarm Auth Response has expired.");
+    }
+
+    if (response.nbf !== undefined && response.nbf > nowSeconds) {
+      throw new Oauth2Error("Jarm Auth Response is not active yet.");
     }
 
     jarmAuthorizationResponse = response;
