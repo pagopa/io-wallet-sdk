@@ -1,10 +1,8 @@
 ## @pagopa/io-wallet-oid4vp
 
-This package provides functionalities to manage the **OpenID for Verifiable Presentations (OID4VP)** protocol flow, specifically tailored for the Italian Wallet ecosystem, simplifying QEAA credentials issuance and credentials presentations.
+This package provides utilities for the **OpenID for Verifiable Presentations (OID4VP)** flow in the Italian Wallet ecosystem.
 
 ## Installation
-
-To install the package, use your preferred package manager:
 
 ```bash
 # Using pnpm
@@ -16,505 +14,193 @@ yarn add @pagopa/io-wallet-oid4vp
 
 ## Usage
 
-### Verifying a received Request object
-
-The `parseAuthorizeRequest` function verifies a JWT containing a Request Object and determines the correct public key for signature verification based on the IT Wallet specifications.
-
-#### Public Key Resolution Priority
-
-The function follows this priority order to determine which public key to use for JWT verification:
-
-1. **`x509_hash#` prefix in `client_id`** - Uses `x5c` certificate chain from header
-2. **`openid_federation#` prefix or no prefix in `client_id`** (default method) - Extracts RP metadata from the `trust_chain` array in the JWT header
-
-**Important**: 
-- When the `client_id` uses the `openid_federation#` prefix or has no prefix, the `trust_chain` MUST be present in the JWT header
-- Any `client_metadata` present in the request object MUST be ignored when using `openid_federation#` prefix
-- The RP metadata is automatically extracted from the first JWT in the `trust_chain` array
+### 1) Fetch authorization request data from QR code / deep link
 
 ```typescript
-import { parseAuthorizeRequest } from '@pagopa/io-wallet-oid4vp';
-import { ItWalletCredentialVerifierMetadata } from '@pagopa/io-wallet-oid-federation';
-
-// Request Object JWT containing the requested credentials obtained from the RP
-const requestObjectJwt = "ey..." 
-
-// Prepare the callbacks
-const callbacks = {
-    verifyJwt : async (signer, {header, payload, compact}) => {
-        const result = //signature verification
-        return {
-            verified : result,
-            signerJwk : signer.publicJwk //Mandatory only if signature is verified correctly
-        }
-    }
-}
-
-// Decode, verify and return the Request Object
-// The RP metadata is automatically extracted from the trust_chain in the JWT header
-// when client_id has openid_federation# prefix or no prefix
-const parsedRequestObject = await parseAuthorizeRequest({
-    requestObjectJwt,
-    callbacks
-});
-```
-
-#### Specific Scenarios
-
-##### Scenario 1: x509_hash# prefix - Using client_metadata
-
-When the `client_id` uses the `x509_hash#` prefix, the public key is obtained from the `client_metadata.jwks` field in the Request Object:
-
-```typescript
-// Request Object with:
-// - client_id = "x509_hash#abc123..."
-// - x5c included jwt
-const parsedRequestObject = await parseAuthorizeRequest({
-    requestObjectJwt,
-    callbacks,
-});
-```
-
-##### Scenario 2: openid_federation# prefix - Using Trust Chain
-
-When the `client_id` uses the `openid_federation#` prefix, the RP metadata is automatically extracted from the `trust_chain` array in the JWT header. Any `client_metadata` in the Request Object is ignored:
-
-```typescript
-// Request Object with:
-// - client_id = "openid_federation#https://rp.example.org"
-// - header.trust_chain = ["<RP Entity Configuration JWT>", ...]
-const parsedRequestObject = await parseAuthorizeRequest({
-    requestObjectJwt,
-    callbacks,
-});
-// RP metadata is automatically extracted from trust_chain[0]
-```
-
-### Fetching Authorization Requests
-
-The `fetchAuthorizationRequest` function handles authorization requests from QR codes or deep links, supporting both transmission modes defined in IT-Wallet specifications.
-
-#### Transmission Modes
-
-**By Value** (IT-Wallet v1.3+): Request Object JWT embedded directly in URL
-
-```typescript
-import { fetchAuthorizationRequest } from '@pagopa/io-wallet-oid4vp';
+import { fetchAuthorizationRequest } from "@pagopa/io-wallet-oid4vp";
 
 const qrCodeUrl =
   "https://wallet.example.org/authorize?" +
-  "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
-  "&request=eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ...";
-
-const result = await fetchAuthorizationRequest({
-  authorizeRequestUrl: qrCodeUrl,
-  callbacks: {
-    fetch: globalThis.fetch,
-    verifyJwt: myJwtVerifier,
-  },
-});
-
-console.log(result.sendBy); // "value"
-console.log(result.parsedAuthorizeRequest); // Parsed request
-```
-
-**By Reference with GET** (IT-Wallet v1.0+): Request Object fetched from separate endpoint
-
-```typescript
-const qrCodeUrl =
-  "https://wallet.example.org/authorize?" +
-  "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
-  "&request_uri=https%3A%2F%2Frp.example.org%2Frequest";
-
-const result = await fetchAuthorizationRequest({
-  authorizeRequestUrl: qrCodeUrl,
-  callbacks: {
-    fetch: globalThis.fetch,
-    verifyJwt: myJwtVerifier,
-  },
-});
-
-console.log(result.sendBy); // "reference"
-console.log(result.parsedQrCode.requestUriMethod); // "get" (default when request_uri_method is omitted)
-```
-
-**By Reference with POST and Wallet Metadata** (IT-Wallet v1.3+): Sends wallet capabilities
-
-```typescript
-const qrCodeUrl =
-  "https://wallet.example.org/authorize?" +
-  "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
+  "client_id=openid_federation%3Ahttps%3A%2F%2Frp.example.org" +
   "&request_uri=https%3A%2F%2Frp.example.org%2Frequest" +
   "&request_uri_method=post";
 
-const result = await fetchAuthorizationRequest({
+const requestData = await fetchAuthorizationRequest({
   authorizeRequestUrl: qrCodeUrl,
   callbacks: {
     fetch: globalThis.fetch,
-    verifyJwt: myJwtVerifier,
   },
-  // Optional: Send wallet capabilities per IT-Wallet v1.3 spec
   walletMetadata: {
     authorization_endpoint: "https://wallet.example.org/authorize",
     response_types_supported: ["vp_token"],
     response_modes_supported: ["direct_post.jwt"],
-    vp_formats_supported: {
-      jwt_vc_json: {
-        alg_values_supported: ["ES256", "ES384"]
-      }
-    }
   },
-  // Optional: Nonce for replay attack prevention
-  walletNonce: "random-nonce-value",
+  walletNonce: "random-wallet-nonce",
 });
 
-console.log(result.sendBy); // "reference"
-console.log(result.parsedQrCode.requestUriMethod); // "post"
-// POST body sent: wallet_metadata={"authorization_endpoint"...}&wallet_nonce=random-nonce-value
+console.log(requestData.sendBy); // "value" | "reference"
+console.log(requestData.requestObjectJwt); // JWT request object
+console.log(requestData.parsedQrCode.requestUriMethod); // "get" | "post" | undefined
 ```
 
-#### API Reference
+### 2) Parse (and optionally verify) the Request Object JWT
+
+`parseAuthorizeRequest` always parses and validates JWT structure. Signature verification runs only when `callbacks.verifyJwt` is provided.
+
+Public key resolution for verification:
+1. `client_id` with `x509_hash:` prefix: requires `header.x5c`
+2. `client_id` with `openid_federation:` prefix or no prefix: requires `header.trust_chain` and `header.kid`
 
 ```typescript
-export interface FetchAuthorizationRequestOptions {
-  /**
-   * The authorization URL from the QR code
-   * Should contain `client_id` and either `request` or `request_uri` query parameters
-   */
-  authorizeRequestUrl: string;
+import { parseAuthorizeRequest } from "@pagopa/io-wallet-oid4vp";
+import { IoWalletSdkConfig, ItWalletSpecsVersion } from "@pagopa/io-wallet-utils";
 
-  /**
-   * Callback functions for making HTTP requests and JWT verification
-   */
-  callbacks: Pick<CallbackContext, "fetch" | "verifyJwt">;
+const config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
 
-  /**
-   * Optional wallet metadata to send when request_uri_method=post.
-   * Per IT-Wallet v1.3.3 spec, the Wallet Instance SHOULD transmit
-   * its capabilities to allow dynamic request adjustment.
-   */
-  walletMetadata?: {
-    authorization_endpoint?: string;
-    response_types_supported?: string[];
-    response_modes_supported?: string[];
-    vp_formats_supported?: Record<string, unknown>;
-    request_object_signing_alg_values_supported?: string[];
-    client_id_prefixes_supported?: string[];
-  };
+const parsedRequest = await parseAuthorizeRequest({
+  config,
+  requestObjectJwt: requestData.requestObjectJwt,
+  callbacks: {
+    verifyJwt: myVerifyJwtCallback,
+  },
+});
 
-  /**
-   * Optional wallet nonce for replay attack prevention.
-   * RECOMMENDED per IT-Wallet v1.3.3 specification.
-   */
-  walletNonce?: string;
-}
-
-export interface FetchAuthorizationRequestResult {
-  /**
-   * Parsed and verified authorization request object
-   */
-  parsedAuthorizeRequest: ParsedAuthorizeRequestResult;
-
-  /**
-   * Parsed QR code data including clientId, requestUri, and requestUriMethod
-   */
-  parsedQrCode: ParsedQrCode;
-
-  /**
-   * Transmission mode indicator
-   * - "value": Request Object JWT passed inline via `request` parameter
-   * - "reference": Request Object JWT fetched from `request_uri`
-   */
-  sendBy: "reference" | "value";
-}
+console.log(parsedRequest.header.alg);
+console.log(parsedRequest.payload.client_id);
 ```
 
-#### Error Handling
+### 3) Create encrypted authorization response (JARM)
 
 ```typescript
-import {
-  fetchAuthorizationRequest,
-  InvalidRequestUriMethodError,
-  Oid4vpError,
-  ParseAuthorizeRequestError
-} from '@pagopa/io-wallet-oid4vp';
-import { ValidationError } from '@openid4vc/utils';
+import { createAuthorizationResponse } from "@pagopa/io-wallet-oid4vp";
 
-try {
-  const result = await fetchAuthorizationRequest({
-    authorizeRequestUrl: url,
-    callbacks: { fetch, verifyJwt },
-  });
-} catch (error) {
-  if (error instanceof InvalidRequestUriMethodError) {
-    // Invalid request_uri_method value (not "get" or "post")
-    console.error("Invalid HTTP method:", error.message);
-  } else if (error instanceof Oid4vpError) {
-    // URL parsing, parameter validation, or HTTP fetch errors
-    console.error("Request fetch failed:", error.message);
-  } else if (error instanceof ParseAuthorizeRequestError) {
-    // JWT verification or signature validation errors
-    console.error("JWT verification failed:", error.message);
-  } else if (error instanceof ValidationError) {
-    // JWT structure validation errors (Zod schema)
-    console.error("Invalid structure:", error.message);
-  }
-}
-```
-
-**Error Types:**
-- `InvalidRequestUriMethodError`: Thrown when `request_uri_method` is not "get" or "post"
-- `Oid4vpError`: URL parsing, mutual exclusivity, or HTTP fetch failures
-- `ParseAuthorizeRequestError`: JWT signature verification failures
-- `ValidationError`: Zod schema validation failures (JWT structure, URL parameters)
-
-### Generating an Authorization Response
-
-```typescript
-import { createAuthorizationResponse, AuthorizationRequestObject } from '@pagopa/io-wallet-oid4vp';
-import {
-  ItWalletCredentialVerifierMetadata,
-  ItWalletCredentialVerifierMetadataV1_3
-} from "@pagopa/io-wallet-oid-federation";
-
-// Obtain a decoded Request Object from, e.g., parseAuthorizeRequest invocation
-const requestObject: AuthorizationRequestObject = {
-  ...
-}
-
-// Build rpJwks from the RP's resolved metadata (e.g. from the trust chain)
-const rpJwks = {
-  jwks: rpMetadata.jwks,
-  encrypted_response_enc_values_supported: rpMetadata.encrypted_response_enc_values_supported,
-}
-
-// Obtain the vp_token
-const vp_token = {
-  ... // VP token containing the attributes to disclose
-}
-
-// Prepare the callbacks
-const callbacks = {
-    encryptJwe: async (jweEncryptor, data) => {
-        const jwe = await encrypt(data, jweEncryptor)
-        return {
-            encryptionJwk: jweEncryptor.publicJwk,
-            jwe
-        }
-    },
-    generateRandom: async (number) => crypto.getRandomValues(new Uint8Array(number)),
-}
-
-// Create the response
 const { authorizationResponsePayload, jarm } = await createAuthorizationResponse({
-  callbacks,
-  requestObject,
-  rpJwks,
-  vp_token,
-})
+  callbacks: {
+    encryptJwe: myEncryptJweCallback,
+    generateRandom: myGenerateRandomCallback,
+  },
+  requestObject: {
+    client_id: parsedRequest.payload.client_id,
+    client_metadata: parsedRequest.payload.client_metadata,
+    nonce: parsedRequest.payload.nonce,
+    state: parsedRequest.payload.state,
+  },
+  rpJwks: {
+    jwks: rpMetadata.jwks,
+    encrypted_response_enc_values_supported:
+      rpMetadata.encrypted_response_enc_values_supported,
+  },
+  vp_token: myVpToken,
+});
 
-// jarm.responseJwe is the encrypted JWE to POST to the response_uri
-// jarm.encryptionJwk is the JWK used for encryption
+console.log(authorizationResponsePayload.state);
+console.log(jarm.responseJwe); // Send this to response_uri
+```
+
+### 4) Send authorization response
+
+```typescript
+import { fetchAuthorizationResponse } from "@pagopa/io-wallet-oid4vp";
+
+const responseResult = await fetchAuthorizationResponse({
+  authorizationResponseJarm: jarm.responseJwe,
+  callbacks: { fetch: globalThis.fetch },
+  presentationResponseUri: parsedRequest.payload.response_uri,
+});
+
+console.log(responseResult.redirect_uri);
 ```
 
 ## API Reference
 
-### AuthorizationRequestObject type and Zod parser
+### `fetchAuthorizationRequest`
+
 ```typescript
-export const zVpFormatsSupported = z.record(
-  z.string(),
-  z
-    .object({
-      alg_values_supported: z.optional(z.array(z.string())),
-    })
-    .passthrough(),
-);
+export interface FetchAuthorizationRequestOptions {
+  authorizeRequestUrl: string;
+  callbacks: Pick<CallbackContext, "fetch">;
+  walletMetadata?: {
+    authorization_endpoint?: string;
+    client_id_prefixes_supported?: string[];
+    request_object_signing_alg_values_supported?: string[];
+    response_modes_supported?: string[];
+    response_types_supported?: string[];
+    vp_formats_supported?: Record<string, unknown>;
+  };
+  walletNonce?: string;
+}
 
-export type VpFormatsSupported = z.infer<typeof zVpFormatsSupported>;
-
-export const zClientMetadata = z
-  .object({
-    client_name: z.string().optional(),
-    encrypted_response_enc_values_supported: z.array(z.string()).optional(),
-    jwks: z.object({ keys: z.array(zJwk) }).passthrough(),
-    logo_uri: z.string().url().optional(),
-    vp_formats_supported: zVpFormatsSupported,
-  })
-  .passthrough();
-
-export type ClientMetadata = z.infer<typeof zClientMetadata>;
-
-export const zOpenid4vpAuthorizationRequestPayload = z
-  .object({
-    client_id: z.string(),
-    client_metadata: zClientMetadata.optional(),
-    dcql_query: z.record(z.string(), z.any()),
-    nonce: z.string(),
-    request_uri: z.string().url().optional(),
-    request_uri_method: z.optional(z.string()),
-    response_mode: z.literal("direct_post.jwt"),
-    response_type: z.literal("vp_token"),
-    response_uri: z.string().url(),
-    scope: z.string().optional(),
-    state: z.string(),
-    transaction_data: z.array(z.string()).nonempty().optional(),
-    transaction_data_hashes_alg: z.array(z.string()).optional(),
-    wallet_nonce: z.string().optional(),
-  })
-  .passthrough()
-  .and(
-    z.object({
-      ...zJwtPayload.shape,
-      iss: z.string(),
-    }),
-  );
-
-export type AuthorizationRequestObject = z.infer<typeof zOpenid4vpAuthorizationRequestPayload>
+export interface FetchAuthorizationRequestResult {
+  parsedQrCode: {
+    clientId: string;
+    requestUri?: string;
+    requestUriMethod?: "get" | "post";
+  };
+  requestObjectJwt: string;
+  sendBy: "reference" | "value";
+}
 ```
 
-### parseAuthorizeRequest
+### `parseAuthorizeRequest`
+
 ```typescript
 export interface ParseAuthorizeRequestOptions {
-    /**
-     * The Authorization Request Object JWT.
-     */
-    requestObjectJwt : string ;
-
-    /**
-     * Callback context for signature verification.
-     */
-    callbacks : Pick<CallbackContext, 'verifyJwt'>
-
-    /**
-     * DPoP options
-     */
-    dpop: RequestDpopOptions
+  callbacks?: Pick<CallbackContext, "verifyJwt">;
+  config: IoWalletSdkConfig;
+  requestObjectJwt: string;
 }
 
-export async function parseAuthorizeRequest(options: ParseAuthorizeRequestOptions) : Promise<AuthorizationRequestObject> {
-    ...
+export interface ParsedAuthorizeRequestResult {
+  header: Openid4vpAuthorizationRequestHeader;
+  payload: Openid4vpAuthorizationRequestPayload;
 }
 ```
-This method receives a Request Object in JWT format, verifies the signature and returns the decoded Request Object.
 
-### createAuthorizationResponse
+### `createAuthorizationResponse`
+
 ```typescript
 export interface CreateAuthorizationResponseOptions {
-  /**
-   * JARM encryption algorithm (JWE alg), should be one of the values supported by the verifier's metadata.
-   * Falls back to "ECDH-ES" if not provided.
-   */
   authorization_encrypted_response_alg?: string;
-
-  /**
-   * JARM encryption encoding (JWE enc), should be one of the values supported by the verifier's metadata.
-   * Falls back to the first value in encrypted_response_enc_values_supported, or "A256GCM" if not provided.
-   */
   authorization_encrypted_response_enc?: string;
-
-  /**
-   * Callbacks for authorization response generation
-   */
   callbacks: Pick<CallbackContext, "encryptJwe" | "generateRandom">;
-
-  /**
-   * Presentation's Request Object
-   */
-  requestObject: AuthorizationRequestObject;
-
-  /**
-   * Relying Party JWKS and optional enc values.
-   * The jwks field is used to locate the encryption key.
-   * encrypted_response_enc_values_supported drives enc algorithm selection when
-   * authorization_encrypted_response_enc is not explicitly provided.
-   */
+  requestObject: Pick<
+    Openid4vpAuthorizationRequestPayload,
+    "client_id" | "client_metadata" | "nonce" | "state"
+  >;
   rpJwks: {
     encrypted_response_enc_values_supported?: string[];
   } & Pick<
     ItWalletCredentialVerifierMetadata | ItWalletCredentialVerifierMetadataV1_3,
     "jwks"
   >;
-
-  /**
-   * Array containing the vp_tokens of the credentials to present
-   */
   vp_token: VpToken;
 }
 
 export interface CreateAuthorizationResponseResult {
-  /**
-   * The plain authorization response payload (before encryption)
-   */
-  authorizationResponsePayload: AuthorizationResponse;
-
+  authorizationResponsePayload: Openid4vpAuthorizationResponse;
   jarm: {
-    /**
-     * The JWK used for encryption
-     */
     encryptionJwk: Jwk;
-
-    /**
-     * The encrypted JARM response (JWE compact serialization) to POST to the response_uri
-     */
     responseJwe: string;
   };
 }
-
-export async function createAuthorizationResponse(
-  options: CreateAuthorizationResponseOptions,
-): Promise<CreateAuthorizationResponseResult> {
-  ...
-}
 ```
-This method receives the Request Object, the resolved VP tokens and cryptographic configuration, and returns an encrypted JARM authorization response (JWE compact serialization) to be sent to the verifier's `response_uri`.
 
-### Errors
+### `fetchAuthorizationResponse`
 
 ```typescript
-export class Oid4vpError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "Oid4vpError";
-  }
+export interface FetchAuthorizationResponseOptions {
+  authorizationResponseJarm: string;
+  callbacks: Pick<CallbackContext, "fetch">;
+  presentationResponseUri: string;
 }
 ```
-Generic package level error class which every other package error should extend.
 
-```typescript
-export class ParseAuthorizeRequestError extends Oid4vpError {
-  constructor(
-    message: string,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "ParseAuthorizeRequestError";
-  }
-}
-```
-Error thrown by `parseAuthorizeRequest` when the passed request object has an invalid signature or unexpected errors are thrown.
+## Error Types
 
-```typescript
-export class CreateAuthorizationResponseError extends Oid4vpError {
-  constructor(
-    message: string,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "CreateAuthorizationResponseError";
-  }
-}
-```
-Error thrown by `createAuthorizationResponse` in case there are unexpected errors.
-
-```typescript
-export class InvalidRequestUriMethodError extends Oid4vpError {
-  constructor(message: string) {
-    super(message);
-    this.name = "InvalidRequestUriMethodError";
-  }
-}
-```
-Error thrown when `request_uri_method` parameter has an invalid value. Valid values are "get" or "post" (case-insensitive).
+- `Oid4vpError`: base package error
+- `ParseAuthorizeRequestError`: parse/verification errors in `parseAuthorizeRequest`
+- `CreateAuthorizationResponseError`: authorization response creation errors
+- `FetchAuthorizationResponseError`: errors when POSTing the response to `response_uri`
+- `InvalidRequestUriMethodError`: invalid `request_uri_method` value

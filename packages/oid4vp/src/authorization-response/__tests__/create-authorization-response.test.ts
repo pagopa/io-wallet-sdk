@@ -43,7 +43,9 @@ const mockRpMetadata = {
   },
 };
 
-const MOCK_VP_TOKEN = ["vp_token1"];
+const MOCK_VP_TOKEN = {
+  pid: ["vp_token1"] as [string],
+};
 const MOCK_STATE = "TEST_STATE";
 const MOCK_RP_CLIENT_ID = "TEST_RP_CLIENT";
 const MOCK_NONCE = "TEST_NONCE";
@@ -276,9 +278,8 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
       requestObject: {
         client_id: "openid_federation:https://rp.example.org",
         client_metadata: {
-          // Different JWKs than rpJwks to verify they are ignored
+          ...mockRpMetadataV1_3,
           jwks: differentJwks,
-          vp_formats_supported: {},
         },
         nonce: REQOBJ_MOCK_NONCE,
         state: MOCK_STATE,
@@ -302,9 +303,9 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
       requestObject: {
         client_id: "x509_hash:https://rp.example.org",
         client_metadata: {
+          ...mockRpMetadataV1_3,
           encrypted_response_enc_values_supported: ["A192GCM"],
           jwks: mockRpMetadata.jwks,
-          vp_formats_supported: {},
         },
         nonce: REQOBJ_MOCK_NONCE,
         state: MOCK_STATE,
