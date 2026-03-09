@@ -31,7 +31,7 @@ export interface ValidateOpenid4vpAuthorizationResponseResult {
  */
 export function validateOpenid4vpAuthorizationResponsePayload(
   options: ValidateOpenid4vpAuthorizationResponseOptions,
-) {
+): ValidateOpenid4vpAuthorizationResponseResult {
   const { authorizationRequestPayload, authorizationResponsePayload } = options;
 
   if (
