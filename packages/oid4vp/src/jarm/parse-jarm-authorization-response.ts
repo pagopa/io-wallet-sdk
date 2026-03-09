@@ -8,11 +8,9 @@ import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
-import {
-  ParseAuthorizationResponseResult,
-  validateOpenid4vpAuthorizationResponsePayload,
-  zOpenid4vpAuthorizationResponse,
-} from "../authorization-response";
+import { ParseAuthorizationResponseResult } from "../authorization-response/parse-authorization-response";
+import { validateOpenid4vpAuthorizationResponsePayload } from "../authorization-response/validate-authorization-response";
+import { zOpenid4vpAuthorizationResponse } from "../authorization-response/z-authorization-response";
 import { verifyJarmAuthorizationResponse } from "./verify-jarm-authorization-response";
 import { zJarmHeader } from "./z-jarm";
 
