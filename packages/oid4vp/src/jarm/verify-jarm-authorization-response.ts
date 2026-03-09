@@ -17,6 +17,7 @@ import { extractEncryptionJwkFromJwks } from "./jarm-extract-jwks";
 import {
   JarmAuthorizationResponse,
   JarmAuthorizationResponseEncryptedOnly,
+  zEncryptedJarmHeader,
   zJarmAuthorizationResponse,
   zJarmAuthorizationResponseEncryptedOnly,
 } from "./z-jarm";
@@ -43,6 +44,7 @@ const decryptJarmAuthorizationResponseJwt = async (options: {
 
   let encryptionJwk: Jwk | undefined;
   const { header } = decodeJwtHeader({
+    headerSchema: zEncryptedJarmHeader,
     jwt: jarmAuthorizationResponseJwt,
   });
 

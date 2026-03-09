@@ -176,12 +176,12 @@ describe("verifyJarmAuthorizationResponse", () => {
     ).rejects.toThrow("Jarm Auth Response is not active yet.");
   });
 
-  it("keeps encrypted-only JARM path unaffected", async () => {
+  it("accepts an encrypted-only JARM response when the outer JWE header contains kid", async () => {
     const callbacks = buildCallbacks({
       decryptedPayload: JSON.stringify({
         iss: authorizationRequestPayload.iss,
         state: authorizationRequestPayload.state,
-        vp_token: {},
+        vp_token: { presentation: "token" },
       }),
     });
 
@@ -197,5 +197,54 @@ describe("verifyJarmAuthorizationResponse", () => {
     });
 
     expect(result.type).toBe(JarmMode.Encrypted);
+  });
+
+  it("rejects encrypted-only JARM when the outer JWE header is missing kid", async () => {
+    const callbacks = buildCallbacks({
+      decryptedPayload: JSON.stringify({
+        iss: authorizationRequestPayload.iss,
+        state: authorizationRequestPayload.state,
+        vp_token: { presentation: "token" },
+      }),
+    });
+
+    await expect(
+      verifyJarmAuthorizationResponse({
+        authorizationRequestPayload,
+        callbacks,
+        jarmAuthorizationResponseJwt: createJwe({
+          alg: "ECDH-ES",
+          enc: "A256GCM",
+        }),
+        now,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects signed and encrypted JARM when the outer JWE header is missing kid", async () => {
+    const callbacks = buildCallbacks({
+      decryptedPayload: createJwt({
+        header: { alg: "ES256", kid: "test-kid" },
+        payload: {
+          aud: authorizationRequestPayload.client_id,
+          exp: nowSeconds + 60,
+          iss: authorizationRequestPayload.iss,
+          state: authorizationRequestPayload.state,
+          vp_token: { presentation: "token" },
+        },
+      }),
+    });
+
+    await expect(
+      verifyJarmAuthorizationResponse({
+        authorizationRequestPayload,
+        callbacks,
+        jarmAuthorizationResponseJwt: createJwe({
+          alg: "ECDH-ES",
+          enc: "A256GCM",
+        }),
+        now,
+      }),
+    ).rejects.toThrow();
   });
 });

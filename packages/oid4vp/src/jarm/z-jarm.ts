@@ -10,6 +10,16 @@ export const zJarmHeader = z.object({
 
 export type JarmHeader = z.infer<typeof zJarmHeader>;
 
+export const zEncryptedJarmHeader = z.object({
+  ...zJwtHeader.shape,
+  apu: z.string().optional(),
+  apv: z.string().optional(),
+  enc: z.string().optional(),
+  kid: z.string(),
+});
+
+export type EncryptedJarmHeader = z.infer<typeof zEncryptedJarmHeader>;
+
 export const zJarmAuthorizationResponse = z
   .object({
     /**
