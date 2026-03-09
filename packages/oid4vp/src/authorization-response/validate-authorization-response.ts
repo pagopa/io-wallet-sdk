@@ -1,6 +1,5 @@
-import { Oauth2Error } from "@openid4vc/oauth2";
-
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
+import { Oid4vpError } from "../errors";
 import { parseVpToken } from "../vp-token";
 import { Openid4vpAuthorizationResponse } from "./z-authorization-response";
 
@@ -28,7 +27,7 @@ export interface ValidateOpenid4vpAuthorizationResponseResult {
  *
  * @param options {@link ValidateOpenid4vpAuthorizationResponseOptions}
  * @returns Presentations and query extracted from the validated flow.
- * @throws {Oauth2Error} If `state` is present in the request and does not match the response.
+ * @throws {Oid4vpError} If `state` is present in the request and does not match the response.
  */
 export function validateOpenid4vpAuthorizationResponsePayload(
   options: ValidateOpenid4vpAuthorizationResponseOptions,
@@ -39,7 +38,7 @@ export function validateOpenid4vpAuthorizationResponsePayload(
     authorizationRequestPayload.state &&
     authorizationRequestPayload.state !== authorizationResponsePayload.state
   ) {
-    throw new Oauth2Error("OpenId4Vp Authorization Response state mismatch.");
+    throw new Oid4vpError("OpenId4Vp Authorization Response state mismatch.");
   }
 
   const presentations = parseVpToken(authorizationResponsePayload.vp_token);
