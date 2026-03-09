@@ -4,7 +4,7 @@ import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
 import {
   JarmHeader,
-  VerifiedJarmAuthorizationResponse,
+  VerifyJarmAuthorizationResponseResult,
   parseJarmAuthorizationResponse,
 } from "../jarm";
 import {
@@ -39,7 +39,7 @@ export type ParseAuthorizationResponseResult = {
   expectedNonce: string;
   jarm?: {
     jarmHeader: JarmHeader;
-  } & VerifiedJarmAuthorizationResponse;
+  } & VerifyJarmAuthorizationResponseResult;
 } & ValidateOpenid4vpAuthorizationResponseResult;
 
 /**

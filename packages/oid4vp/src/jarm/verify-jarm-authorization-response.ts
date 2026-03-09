@@ -89,9 +89,26 @@ export interface VerifyJarmAuthorizationResponseOptions {
 /**
  * Verified JARM authorization response data returned by {@link verifyJarmAuthorizationResponse}.
  */
-export type VerifiedJarmAuthorizationResponse = Awaited<
-  ReturnType<typeof verifyJarmAuthorizationResponse>
->;
+export interface VerifyJarmAuthorizationResponseResult {
+  /**
+   * JWK used for decryption when the response is encrypted, or `undefined` if the response was not encrypted.
+   */
+  decryptionJwk: Jwk | undefined;
+  /**
+   * The `iss` claim from the JARM response, representing the issuer of the response.
+   */
+  issuer: string;
+  /**
+   * The parsed JARM authorization response body, containing claims like `iss`, `aud`, `exp`, etc.
+   */
+  jarmAuthorizationResponse:
+    | JarmAuthorizationResponse
+    | JarmAuthorizationResponseEncryptedOnly;
+  /**
+   * Detected JARM processing mode indicating whether the response was signed, encrypted, or both.
+   */
+  type: JarmMode;
+}
 
 /**
  * Verifies a JARM authorization response in signed, encrypted, or signed+encrypted mode.
