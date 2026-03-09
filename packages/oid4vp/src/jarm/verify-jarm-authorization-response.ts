@@ -161,9 +161,9 @@ export async function verifyJarmAuthorizationResponse(
 
     const expectedAudience = authorizationRequestPayload.client_id;
     const expectedIssuer = authorizationRequestPayload.iss;
-    if (!response.aud.includes(expectedAudience)) {
+    if (response.aud !== expectedAudience) {
       throw new Oauth2Error(
-        `Jarm Auth Response contains 'aud' value '${Array.isArray(response.aud) ? response.aud.join(",") : response.aud}', but expected '${expectedAudience}'.`,
+        `Jarm Auth Response contains 'aud' value '${response.aud}', but expected '${expectedAudience}'.`,
       );
     }
 
