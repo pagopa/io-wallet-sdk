@@ -1,5 +1,21 @@
 # @pagopa/io-wallet-oid4vp
 
+## 1.1.0
+
+### Minor Changes
+
+- 8707488: feat: add createAuthorizationRequest utility function
+- 6e681d7: feat: add oid4vp parseAuthorizationResponse utility function
+
+### Patch Changes
+
+- Updated dependencies [8278fb5]
+- Updated dependencies [e4eca58]
+- Updated dependencies [1eda2cf]
+  - @pagopa/io-wallet-oauth2@1.1.0
+  - @pagopa/io-wallet-utils@1.1.0
+  - @pagopa/io-wallet-oid-federation@1.1.0
+
 ## 1.0.0
 
 ### Patch Changes
