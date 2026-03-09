@@ -2,6 +2,7 @@ import { CallbackContext } from "@pagopa/io-wallet-oauth2";
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
+import { Oid4vpError } from "../errors";
 import {
   JarmHeader,
   VerifyJarmAuthorizationResponseResult,
@@ -58,10 +59,16 @@ export async function parseAuthorizationResponse(
     options;
 
   if (authorizationResponse.response) {
+    if (typeof authorizationResponse.response !== "string") {
+      throw new Oid4vpError(
+        "Invalid jarm authorization response: 'response' parameter must be a jwt string.",
+      );
+    }
+
     return parseJarmAuthorizationResponse({
       authorizationRequestPayload,
       callbacks,
-      jarmResponseJwt: authorizationResponse.response as string,
+      jarmResponseJwt: authorizationResponse.response,
     });
   }
 
