@@ -35,7 +35,6 @@ export function validateOpenid4vpAuthorizationResponsePayload(
   const { authorizationRequestPayload, authorizationResponsePayload } = options;
 
   if (
-    authorizationRequestPayload.state &&
     authorizationRequestPayload.state !== authorizationResponsePayload.state
   ) {
     throw new Oid4vpError("OpenId4Vp Authorization Response state mismatch.");
