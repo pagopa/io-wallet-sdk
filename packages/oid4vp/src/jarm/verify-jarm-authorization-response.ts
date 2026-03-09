@@ -218,6 +218,7 @@ export async function verifyJarmAuthorizationResponse(
         : JarmMode.Signed;
 
   const issuer = jarmAuthorizationResponse.iss;
+
   return {
     decryptionJwk: decryptedRequestData.decryptionJwk,
     issuer,

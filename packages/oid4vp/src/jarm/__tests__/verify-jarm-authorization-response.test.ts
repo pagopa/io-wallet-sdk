@@ -179,6 +179,7 @@ describe("verifyJarmAuthorizationResponse", () => {
   it("keeps encrypted-only JARM path unaffected", async () => {
     const callbacks = buildCallbacks({
       decryptedPayload: JSON.stringify({
+        iss: authorizationRequestPayload.iss,
         state: authorizationRequestPayload.state,
         vp_token: {},
       }),
