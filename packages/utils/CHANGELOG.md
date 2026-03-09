@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-utils
 
+## 1.1.0
+
+### Patch Changes
+
+- e4eca58: refactor(utils): Improve type safety and type parameterization to IoWalletSdkConfig
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,5 +1,16 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.1.0
+
+### Minor Changes
+
+- 8278fb5: feat: add createJarRequest utility function
+
+### Patch Changes
+
+- Updated dependencies [e4eca58]
+  - @pagopa/io-wallet-utils@1.1.0
+
 ## 1.0.0
 
 ### Minor Changes
