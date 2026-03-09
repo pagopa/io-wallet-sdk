@@ -99,7 +99,7 @@ export interface VerifyJarmAuthorizationResponseResult {
   /**
    * The `iss` claim from the JARM response, representing the issuer of the response.
    */
-  issuer: string;
+  issuer: string | undefined;
   /**
    * The parsed JARM authorization response body, containing claims like `iss`, `aud`, `exp`, etc.
    */

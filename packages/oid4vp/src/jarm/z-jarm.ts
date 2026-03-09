@@ -40,7 +40,6 @@ export type JarmAuthorizationResponse = z.infer<
 export const zJarmAuthorizationResponseEncryptedOnly = z
   .object({
     ...zJwtPayload.shape,
-    iss: z.string(),
     state: z.optional(z.string()),
   })
   .passthrough();
