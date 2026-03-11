@@ -5,13 +5,13 @@ import { createEntity } from "../../utils";
 
 export const federationEntityMetadata = createEntity({
   additionalValidation: {
-    federation_fetch_endpoint: z.string().url().optional(),
-    federation_historical_keys_endpoint: z.string().url().optional(),
-    federation_list_endpoint: z.string().url().optional(),
-    federation_resolve_endpoint: z.string().url().optional(),
-    federation_trust_mark_endpoint: z.string().url().optional(),
-    federation_trust_mark_list_endpoint: z.string().url().optional(),
-    federation_trust_mark_status_endpoint: z.string().url().optional(),
+    federation_fetch_endpoint: z.url().optional(),
+    federation_historical_keys_endpoint: z.url().optional(),
+    federation_list_endpoint: z.url().optional(),
+    federation_resolve_endpoint: z.url().optional(),
+    federation_trust_mark_endpoint: z.url().optional(),
+    federation_trust_mark_list_endpoint: z.url().optional(),
+    federation_trust_mark_status_endpoint: z.url().optional(),
   },
   identifier: "federation_entity",
 });
@@ -28,9 +28,9 @@ export type FederationEntityMetadata = z.input<
 export const itWalletFederationEntityMetadata = federationEntityMetadata.schema
   .extend({
     jwks: jsonWebKeySetSchema.optional(),
-    tos_uri: z.string().url().optional(),
+    tos_uri: z.url().optional(),
   })
-  .passthrough();
+  .loose();
 
 export type ItWalletFederationEntityMetadata = z.input<
   typeof itWalletFederationEntityMetadata

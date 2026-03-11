@@ -7,6 +7,6 @@ catalog:
   "@openid4vc/openid4vci": 0.4.3
   "@openid4vc/openid4vp": 0.4.3
   buffer: ^6.0.3
-  zod: ^3.24.2
+  zod: ^4.3.6
   js-base64: ^3.7.8
   jose: ^6.1.0

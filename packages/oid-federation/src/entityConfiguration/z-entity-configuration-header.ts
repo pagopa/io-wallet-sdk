@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-export const entityConfigurationHeaderSchema = z
-  .object({
-    kid: z.string(),
-    typ: z.literal("entity-statement+jwt"),
-  })
-  .passthrough();
+export const entityConfigurationHeaderSchema = z.looseObject({
+  kid: z.string(),
+  typ: z.literal("entity-statement+jwt"),
+});
 
 export type EntityConfigurationHeaderOptions = z.input<
   typeof entityConfigurationHeaderSchema

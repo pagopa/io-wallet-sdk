@@ -21,7 +21,7 @@ export const essentialOperator = createPolicyOperatorSchema({
     z.string(),
     z.number(),
     z.boolean(),
-    z.record(z.string().or(z.number())),
+    z.record(z.string().or(z.number()), z.unknown()),
     z.unknown(),
     z.array(z.unknown()),
   ],

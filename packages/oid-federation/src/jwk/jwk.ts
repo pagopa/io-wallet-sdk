@@ -1,18 +1,16 @@
 import { z } from "zod";
 
-export const jsonWebKeySchema = z
-  .object({
-    alg: z.string().optional(),
-    key_ops: z.array(z.string()).optional(),
-    kid: z.string(),
-    kty: z.string(),
-    use: z.string().optional(),
-    x5c: z.array(z.string()).optional(),
-    x5t: z.string().optional(),
-    "x5t#S256": z.string().optional(),
-    x5u: z.string().optional(),
-  })
-  .passthrough();
+export const jsonWebKeySchema = z.looseObject({
+  alg: z.string().optional(),
+  key_ops: z.array(z.string()).optional(),
+  kid: z.string(),
+  kty: z.string(),
+  use: z.string().optional(),
+  x5c: z.array(z.string()).optional(),
+  x5t: z.string().optional(),
+  "x5t#S256": z.string().optional(),
+  x5u: z.string().optional(),
+});
 
 export type JsonWebKey = z.input<typeof jsonWebKeySchema>;
 

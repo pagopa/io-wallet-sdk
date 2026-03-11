@@ -8,20 +8,17 @@ export const getUsedJsonWebKey = (
   claims: Record<string, unknown>,
 ) => {
   const validatedHeader = parseWithErrorHandling(
-    z
-      .object({
-        kid: z.string(),
-      })
-      .passthrough(),
+    z.looseObject({
+      kid: z.string(),
+    }),
     header,
     "invalid header claims. Should contain a key id",
   );
+
   const validatedClaims = parseWithErrorHandling(
-    z
-      .object({
-        jwks: jsonWebKeySetSchema,
-      })
-      .passthrough(),
+    z.looseObject({
+      jwks: jsonWebKeySetSchema,
+    }),
     claims,
     "Invalid payload claims. Should contain a json web key set",
   );
