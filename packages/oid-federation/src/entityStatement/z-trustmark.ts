@@ -2,9 +2,17 @@ import { z } from "zod";
 
 import { jsonWebKeySetSchema } from "../jwk";
 
+/**
+ * @example https://<federation_authority_domain>/trust_marks/<purpose>/<entity_type>
+ */
+export const trustMarkUrlSchema = z
+  .string()
+  .url()
+  .regex(/^https:\/\/[^/]+\/trust_marks\/[^/]+\/[^/]+$/);
+
 export const trustMarkSchema = z.object({
-  id: z.string(),
   trust_mark: z.string(),
+  trust_mark_type: trustMarkUrlSchema,
 });
 
 export type TrustMark = z.output<typeof trustMarkSchema>;
