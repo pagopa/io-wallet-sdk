@@ -37,13 +37,13 @@ export const metadataPolicySchema = z
   .and(z.record(z.string(), z.any()))
   .superRefine((data, ctx) => {
     const dataKeys = Object.keys(data);
+    const supportedDataKeys = dataKeys.filter(isExistingPolicyKey);
 
-    for (const dataKey of dataKeys) {
-      if (!isExistingPolicyKey(dataKey)) continue;
+    for (const dataKey of supportedDataKeys) {
       const { operator } = allSupportedPolicies[dataKey];
 
       if (
-        dataKeys.some(
+        supportedDataKeys.some(
           (key) =>
             key !== operator.key && !operator.canBeCombinedWith.includes(key),
         )
