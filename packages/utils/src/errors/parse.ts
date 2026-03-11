@@ -1,7 +1,5 @@
 import type z from "zod";
 
-import { type ZodIssue, ZodIssueCode } from "zod";
-
 /**
  * Some code comes from `zod-validation-error` package (MIT License) and
  * was slightly simplified to fit our needs.
@@ -16,15 +14,21 @@ function escapeQuotes(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
-function joinPath(path: (number | string)[]): string {
+type ZodIssue = z.ZodError["issues"][number];
+
+function joinPath(path: PropertyKey[]): string {
   if (path.length === 1 && path[0] !== undefined) {
-    return path[0].toString();
+    return String(path[0]);
   }
 
   return path.reduce<string>((acc, item) => {
     // handle numeric indices
     if (typeof item === "number") {
       return `${acc}[${item.toString()}]`;
+    }
+
+    if (typeof item === "symbol") {
+      return `${acc}[${JSON.stringify(String(item))}]`;
     }
 
     // handle quoted values
@@ -43,26 +47,8 @@ function joinPath(path: (number | string)[]): string {
   }, "");
 }
 function getMessageFromZodIssue(issue: ZodIssue): string {
-  if (issue.code === ZodIssueCode.invalid_union) {
-    return getMessageFromUnionErrors(issue.unionErrors);
-  }
-
-  if (issue.code === ZodIssueCode.invalid_arguments) {
-    return [
-      issue.message,
-      ...issue.argumentsError.issues.map((issue) =>
-        getMessageFromZodIssue(issue),
-      ),
-    ].join(constants.issueSeparator);
-  }
-
-  if (issue.code === ZodIssueCode.invalid_return_type) {
-    return [
-      issue.message,
-      ...issue.returnTypeError.issues.map((issue) =>
-        getMessageFromZodIssue(issue),
-      ),
-    ].join(constants.issueSeparator);
+  if (issue.code === "invalid_union") {
+    return getMessageFromUnionErrors(issue.errors);
   }
 
   if (issue.path.length !== 0) {
@@ -81,10 +67,10 @@ function getMessageFromZodIssue(issue: ZodIssue): string {
   return issue.message;
 }
 
-function getMessageFromUnionErrors(unionErrors: z.ZodError[]): string {
+function getMessageFromUnionErrors(unionErrors: ZodIssue[][]): string {
   return unionErrors
-    .reduce<string[]>((acc, zodError) => {
-      const newIssues = zodError.issues
+    .reduce<string[]>((acc, issues) => {
+      const newIssues = issues
         .map((issue) => getMessageFromZodIssue(issue))
         .join(constants.issueSeparator);
 

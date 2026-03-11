@@ -60,7 +60,7 @@ export type SendAuthorizationResponseAndExtractCodeOptions =
  */
 export async function completeAuthorization(
   options: CompleteAuthorizationOptions,
-): ReturnType<typeof getJwtFromFormPost<typeof zAuthorizationResponse>> {
+) {
   try {
     const fetch = createFetcher(options.callbacks.fetch);
     const authorizationResponseResult = await fetch(options.response_uri);
