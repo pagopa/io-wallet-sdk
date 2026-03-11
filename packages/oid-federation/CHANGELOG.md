@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.1.1
+
+### Patch Changes
+
+- 88300a3: refactor: refactors the oid-federation package to remove dependencies on @openid-federation/core by re-implementing schemas, types, and utility functions locally
+  - @pagopa/io-wallet-utils@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes
