@@ -20,29 +20,25 @@ export const zEncryptedJarmHeader = z.object({
 
 export type EncryptedJarmHeader = z.infer<typeof zEncryptedJarmHeader>;
 
-export const zJarmAuthorizationResponse = z
-  .object({
-    /**
-     * iss: The issuer URL of the authorization server that created the response
-     * aud: The client_id of the client the response is intended for
-     * exp: The expiration time of the JWT. A maximum JWT lifetime of 10 minutes is RECOMMENDED.
-     */
-    ...zJwtPayload.shape,
-    ...zJwtPayload.pick({ aud: true, exp: true, iss: true }).required().shape,
-    state: z.optional(z.string()),
-  })
-  .passthrough();
+export const zJarmAuthorizationResponse = z.looseObject({
+  /**
+   * iss: The issuer URL of the authorization server that created the response
+   * aud: The client_id of the client the response is intended for
+   * exp: The expiration time of the JWT. A maximum JWT lifetime of 10 minutes is RECOMMENDED.
+   */
+  ...zJwtPayload.shape,
+  ...zJwtPayload.pick({ aud: true, exp: true, iss: true }).required().shape,
+  state: z.optional(z.string()),
+});
 
 export type JarmAuthorizationResponse = z.infer<
   typeof zJarmAuthorizationResponse
 >;
 
-export const zJarmAuthorizationResponseEncryptedOnly = z
-  .object({
-    ...zJwtPayload.shape,
-    state: z.optional(z.string()),
-  })
-  .passthrough();
+export const zJarmAuthorizationResponseEncryptedOnly = z.looseObject({
+  ...zJwtPayload.shape,
+  state: z.optional(z.string()),
+});
 
 export type JarmAuthorizationResponseEncryptedOnly = z.infer<
   typeof zJarmAuthorizationResponseEncryptedOnly
