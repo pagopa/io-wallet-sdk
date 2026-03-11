@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@pagopa/io-wallet-utils": "workspace:",
-    "buffer": "^6.0.3",
+    "buffer": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
