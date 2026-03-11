@@ -7,7 +7,6 @@ import { type ZodIssue, ZodIssueCode } from "zod";
  * was slightly simplified to fit our needs.
  */
 const constants = {
-  // biome-ignore lint/suspicious/noMisleadingCharacterClass: expected
   identifierRegex: /[$_\p{ID_Start}][$\u200c\u200d\p{ID_Continue}]*/u,
   issueSeparator: "\n\t- ",
   unionSeparator: ", or ",

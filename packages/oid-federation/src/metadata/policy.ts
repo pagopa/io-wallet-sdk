@@ -23,12 +23,11 @@ export const allSupportedPolicies = {
 export type SupportedPolicyKey = keyof typeof allSupportedPolicies;
 
 export const isExistingPolicyKey = (key: string): key is SupportedPolicyKey =>
-  key in allSupportedPolicies;
+  Object.hasOwn(allSupportedPolicies, key);
 
 export const metadataPolicySchema = z
   .object(
     Object.entries(allSupportedPolicies).reduce(
-      // biome-ignore lint/performance/noAccumulatingSpread: In this case we want to use the spread operator
       (acc, [key, policy]) => ({ ...acc, [key]: policy.operatorSchema }),
       {} as {
         [key in keyof typeof allSupportedPolicies]: (typeof allSupportedPolicies)[key]["operatorSchema"];
