@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { zJwk } from "../../common/jwk/z-jwk";
-import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
+import { zJwtHeader, zJwtPayload, zTrustChain } from "../../common/jwt/z-jwt";
 
 /**
  * JWT Header schema for IT-Wallet v1.3 Wallet Attestation
@@ -10,14 +10,12 @@ import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
  * - x5c is REQUIRED
  * - trust_chain is OPTIONAL
  */
-export const zWalletAttestationJwtHeaderV1_3 = z
-  .object({
-    ...zJwtHeader.shape,
-    trust_chain: z.array(z.string()).nonempty().optional(), // OPTIONAL in v1.3
-    typ: z.literal("oauth-client-attestation+jwt"),
-    x5c: z.array(z.string()).nonempty(), // REQUIRED in v1.3
-  })
-  .passthrough();
+export const zWalletAttestationJwtHeaderV1_3 = z.looseObject({
+  ...zJwtHeader.shape,
+  trust_chain: zTrustChain.optional(), // OPTIONAL in v1.3
+  typ: z.literal("oauth-client-attestation+jwt"),
+  x5c: z.array(z.string()).nonempty(), // REQUIRED in v1.3
+});
 
 /**
  * JWT Payload schema for IT-Wallet v1.3 Wallet Attestation
@@ -26,29 +24,27 @@ export const zWalletAttestationJwtHeaderV1_3 = z
  * - Supports nbf (not before) claim
  * - Supports status claim for revocation mechanisms
  */
-export const zWalletAttestationJwtPayloadV1_3 = z
-  .object({
-    ...zJwtPayload.shape,
-    cnf: z.object({
-      jwk: zJwk,
-    }),
-    exp: z.number(),
-    iat: z.number(),
-    iss: z.string(),
-    nbf: z.number().optional(), // NEW in v1.3
-    status: z
-      .object({
-        status_list: z.object({
-          idx: z.number().int(),
-          uri: z.string(),
-        }),
-      })
-      .optional(), // NEW in v1.3 - status object for revocation
-    sub: z.string(),
-    wallet_link: z.string().url().optional(),
-    wallet_name: z.string().optional(),
-  })
-  .passthrough();
+export const zWalletAttestationJwtPayloadV1_3 = z.looseObject({
+  ...zJwtPayload.shape,
+  cnf: z.object({
+    jwk: zJwk,
+  }),
+  exp: z.number(),
+  iat: z.number(),
+  iss: z.string(),
+  nbf: z.number().optional(), // NEW in v1.3
+  status: z
+    .object({
+      status_list: z.object({
+        idx: z.number().int(),
+        uri: z.string(),
+      }),
+    })
+    .optional(), // NEW in v1.3 - status object for revocation
+  sub: z.string(),
+  wallet_link: z.url().optional(),
+  wallet_name: z.string().optional(),
+});
 
 /**
  * Wallet Attestation JWT type for v1.3

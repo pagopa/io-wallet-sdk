@@ -28,58 +28,50 @@ export type RefreshTokenGrantType = Extract<
   { grant_type: "refresh_token" }
 >;
 
-export const zAccessTokenResponse = z
-  .object({
-    access_token: z.string(),
-    authorization_details: z
-      .array(
-        z
-          .object({
-            credential_configuration_id: z.optional(z.string()),
-            credential_identifiers: z.optional(z.array(z.string())),
-            type: z.literal("openid_credential"),
-          })
-          .passthrough(),
-      )
-      .optional(),
-    expires_in: z.optional(z.number().int()),
-    refresh_token: z.optional(z.string()),
-    token_type: z.union([z.literal("Bearer"), z.literal("DPoP")]),
-  })
-  .passthrough();
+export const zAccessTokenResponse = z.looseObject({
+  access_token: z.string(),
+  authorization_details: z
+    .array(
+      z.looseObject({
+        credential_configuration_id: z.optional(z.string()),
+        credential_identifiers: z.optional(z.array(z.string())),
+        type: z.literal("openid_credential"),
+      }),
+    )
+    .optional(),
+  expires_in: z.optional(z.number().int()),
+  refresh_token: z.optional(z.string()),
+  token_type: z.union([z.literal("Bearer"), z.literal("DPoP")]),
+});
 
 export type AccessTokenResponse = z.infer<typeof zAccessTokenResponse>;
 
-export const zAccessTokenProfileJwtHeader = z
-  .object({
-    ...zJwtHeader.shape,
-    typ: z.enum(["application/at+jwt", "at+jwt"]),
-  })
-  .passthrough();
+export const zAccessTokenProfileJwtHeader = z.looseObject({
+  ...zJwtHeader.shape,
+  typ: z.enum(["application/at+jwt", "at+jwt"]),
+});
 
 export type AccessTokenProfileJwtHeader = z.infer<
   typeof zAccessTokenProfileJwtHeader
 >;
 
-export const zAccessTokenProfileJwtPayload = z
-  .object({
-    ...zJwtPayload.shape,
-    aud: z.string(),
-    client_id: z.string(),
-    cnf: z
-      .object({
-        jkt: z.string(),
-      })
-      .optional(),
-    exp: z.number(),
-    iat: z.number(),
-    iss: z.string(),
-    jti: z.string(),
-    nbf: z.number().optional(),
-    scope: z.string().optional(),
-    sub: z.string(),
-  })
-  .passthrough();
+export const zAccessTokenProfileJwtPayload = z.looseObject({
+  ...zJwtPayload.shape,
+  aud: z.string(),
+  client_id: z.string(),
+  cnf: z
+    .object({
+      jkt: z.string(),
+    })
+    .optional(),
+  exp: z.number(),
+  iat: z.number(),
+  iss: z.string(),
+  jti: z.string(),
+  nbf: z.number().optional(),
+  scope: z.string().optional(),
+  sub: z.string(),
+});
 
 export type AccessTokenProfileJwtPayload = z.infer<
   typeof zAccessTokenProfileJwtPayload

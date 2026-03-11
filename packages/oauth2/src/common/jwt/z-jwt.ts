@@ -88,55 +88,45 @@ export type JweEncryptor = {
   enc: string;
 } & JwtSignerJwk;
 
+export const zTrustChain = z.tuple([z.string()], z.string());
+
 export const zCompactJwt = z
   .string()
   .regex(/^([a-zA-Z0-9-_]+)\.([a-zA-Z0-9-_]+)\.([a-zA-Z0-9-_]+)$/, {
     message: "Not a valid compact jwt",
   });
 
-export const zJwtConfirmationPayload = z
-  .object({
-    // RFC9449. jwk thumbprint of the dpop public key to which the access token is bound
-    jkt: z.string().optional(),
+export const zJwtConfirmationPayload = z.looseObject({
+  // RFC9449. jwk thumbprint of the dpop public key to which the access token is bound
+  jkt: z.string().optional(),
+  jwk: zJwk.optional(),
+});
 
-    jwk: zJwk.optional(),
-  })
-  .passthrough();
-
-export const zJwtPayload = z
-  .object({
-    aud: z.string().optional(),
-    cnf: zJwtConfirmationPayload.optional(),
-    exp: z.number().int().optional(),
-    iat: z.number().int().optional(),
-    iss: z.string().optional(),
-    jti: z.string().optional(),
-    nbf: z.number().int().optional(),
-
-    nonce: z.string().optional(),
-
-    // Reserved for status parameters
-    status: z.record(z.string(), z.any()).optional(),
-
-    // Reserved for OpenID Federation
-    trust_chain: z.array(z.string()).nonempty().optional(),
-  })
-  .passthrough();
+export const zJwtPayload = z.looseObject({
+  aud: z.string().optional(),
+  cnf: zJwtConfirmationPayload.optional(),
+  exp: z.number().int().optional(),
+  iat: z.number().int().optional(),
+  iss: z.string().optional(),
+  jti: z.string().optional(),
+  nbf: z.number().int().optional(),
+  nonce: z.string().optional(),
+  // Reserved for status parameters
+  status: z.record(z.string(), z.any()).optional(),
+  // Reserved for OpenID Federation
+  trust_chain: zTrustChain.optional(),
+});
 
 export type JwtPayload = z.infer<typeof zJwtPayload>;
 
-export const zJwtHeader = z
-  .object({
-    alg: zAlgValueNotNone,
-    jwk: zJwk.optional(),
-
-    kid: z.string().optional(),
-    // Reserved for OpenID Federation
-    trust_chain: z.array(z.string()).nonempty().optional(),
-    typ: z.string().optional(),
-
-    x5c: z.array(z.string()).optional(),
-  })
-  .passthrough();
+export const zJwtHeader = z.looseObject({
+  alg: zAlgValueNotNone,
+  jwk: zJwk.optional(),
+  kid: z.string().optional(),
+  // Reserved for OpenID Federation
+  trust_chain: zTrustChain.optional(),
+  typ: z.string().optional(),
+  x5c: z.array(z.string()).optional(),
+});
 
 export type JwtHeader = z.infer<typeof zJwtHeader>;

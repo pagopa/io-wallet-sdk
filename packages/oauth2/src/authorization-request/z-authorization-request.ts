@@ -7,13 +7,13 @@ const zOpenidCredentialAuthorizationDetails = z.object({
 
 const zItL2DocumentProofAuthorizationDetails = z.object({
   challenge_method: z.literal("mrtd+ias"),
-  challenge_redirect_uri: z.string().url(),
-  idphinting: z.string().url(),
+  challenge_redirect_uri: z.url(),
+  idphinting: z.url(),
   type: z.literal("it_l2+document_proof"),
 });
 
 export const zAuthorizationRequest = z
-  .object({
+  .looseObject({
     authorization_details: z
       .array(
         z.discriminatedUnion("type", [
@@ -27,13 +27,12 @@ export const zAuthorizationRequest = z
     code_challenge_method: z.string(),
     issuer_state: z.optional(z.string()),
     jti: z.string(),
-    redirect_uri: z.string().url(),
+    redirect_uri: z.url(),
     response_mode: z.string(),
     response_type: z.string(),
     scope: z.string().optional(),
     state: z.string(),
   })
-  .passthrough()
   .refine(
     (data) =>
       data.authorization_details !== undefined || data.scope !== undefined,
@@ -44,47 +43,42 @@ export const zAuthorizationRequest = z
   );
 export type AuthorizationRequest = z.infer<typeof zAuthorizationRequest>;
 
-export const zPushedAuthorizationRequestSigned = z
-  .object({
-    client_id: z
-      .string()
-      .describe(
-        "MUST be set to the thumbprint of the jwk value in the cnf parameter inside the Wallet Attestation.",
-      ),
-    pkceCodeVerifier: z
-      .string()
-      .describe(
-        "Code verifier for PKCE. If not provided in CreatePushedAuthorizationRequestOptions, SDK will generate one.",
-      ),
-    request: z
-      .string()
-      .describe(
-        "It MUST be a signed JWT. The private key corresponding to the public one in the cnf parameter inside the Wallet Attestation MUST be used for signing the Request Object.",
-      ),
-  })
-  .passthrough();
+export const zPushedAuthorizationRequestSigned = z.looseObject({
+  client_id: z
+    .string()
+    .describe(
+      "MUST be set to the thumbprint of the jwk value in the cnf parameter inside the Wallet Attestation.",
+    ),
+  pkceCodeVerifier: z
+    .string()
+    .describe(
+      "Code verifier for PKCE. If not provided in CreatePushedAuthorizationRequestOptions, SDK will generate one.",
+    ),
+  request: z
+    .string()
+    .describe(
+      "It MUST be a signed JWT. The private key corresponding to the public one in the cnf parameter inside the Wallet Attestation MUST be used for signing the Request Object.",
+    ),
+});
+
 export type PushedAuthorizationRequestSigned = z.infer<
   typeof zPushedAuthorizationRequestSigned
 >;
 
-export const zPushedAuthorizationRequestUnsigned = z
-  .object({
-    authorizationRequest: zAuthorizationRequest.describe(
-      "The authorization request parameters as a plain object. " +
-        "Used when require_signed_request_object is false.",
+export const zPushedAuthorizationRequestUnsigned = z.looseObject({
+  authorizationRequest: zAuthorizationRequest.describe(
+    "The authorization request parameters as a plain object. " +
+      "Used when require_signed_request_object is false.",
+  ),
+  client_id: z
+    .string()
+    .describe(
+      "Thumbprint of the jwk value in the cnf parameter inside Wallet Attestation.",
     ),
-    client_id: z
-      .string()
-      .describe(
-        "Thumbprint of the jwk value in the cnf parameter inside Wallet Attestation.",
-      ),
-    pkceCodeVerifier: z
-      .string()
-      .describe(
-        "PKCE code verifier. Auto-generated if not provided in options.",
-      ),
-  })
-  .passthrough();
+  pkceCodeVerifier: z
+    .string()
+    .describe("PKCE code verifier. Auto-generated if not provided in options."),
+});
 export type PushedAuthorizationRequestUnsigned = z.infer<
   typeof zPushedAuthorizationRequestUnsigned
 >;
@@ -109,12 +103,10 @@ export function isPushedAuthorizationRequestUnsigned(
   return "authorizationRequest" in par;
 }
 
-export const zPushedAuthorizationResponse = z
-  .object({
-    expires_in: z.number().int(),
-    request_uri: z.string(),
-  })
-  .passthrough();
+export const zPushedAuthorizationResponse = z.looseObject({
+  expires_in: z.number().int(),
+  request_uri: z.string(),
+});
 export type PushedAuthorizationResponse = z.infer<
   typeof zPushedAuthorizationResponse
 >;

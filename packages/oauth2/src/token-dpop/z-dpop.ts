@@ -4,24 +4,22 @@ import z from "zod";
 import { zJwk } from "../common/jwk/z-jwk";
 import { zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
-export const zDpopJwtPayload = z
-  .object({
-    ...zJwtPayload.shape,
-    ath: z.optional(z.string()),
-    htm: zHttpMethod,
-    htu: z.string().url(),
-    iat: z.number().int().nonnegative(),
+export const zDpopJwtPayload = z.looseObject({
+  ...zJwtPayload.shape,
+  ath: z.optional(z.string()),
+  htm: zHttpMethod,
+  htu: z.url(),
+  iat: z.number().int().nonnegative(),
 
-    jti: z.string(),
-  })
-  .passthrough();
+  jti: z.string(),
+});
+
 export type DpopJwtPayload = z.infer<typeof zDpopJwtPayload>;
 
-export const zDpopJwtHeader = z
-  .object({
-    ...zJwtHeader.shape,
-    jwk: zJwk,
-    typ: z.literal("dpop+jwt"),
-  })
-  .passthrough();
+export const zDpopJwtHeader = z.looseObject({
+  ...zJwtHeader.shape,
+  jwk: zJwk,
+  typ: z.literal("dpop+jwt"),
+});
+
 export type DpopJwtHeader = z.infer<typeof zDpopJwtHeader>;
