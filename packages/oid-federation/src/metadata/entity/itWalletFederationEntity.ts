@@ -1,7 +1,24 @@
-import { federationEntityMetadata } from "@openid-federation/core";
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../jwk/jwk";
+import { jsonWebKeySetSchema } from "../../jwk";
+import { createEntity } from "../../utils";
+
+export const federationEntityMetadata = createEntity({
+  additionalValidation: {
+    federation_fetch_endpoint: z.string().url().optional(),
+    federation_historical_keys_endpoint: z.string().url().optional(),
+    federation_list_endpoint: z.string().url().optional(),
+    federation_resolve_endpoint: z.string().url().optional(),
+    federation_trust_mark_endpoint: z.string().url().optional(),
+    federation_trust_mark_list_endpoint: z.string().url().optional(),
+    federation_trust_mark_status_endpoint: z.string().url().optional(),
+  },
+  identifier: "federation_entity",
+});
+
+export type FederationEntityMetadata = z.input<
+  (typeof federationEntityMetadata)["schema"]
+>;
 
 /**
  *

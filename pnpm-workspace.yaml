@@ -2,7 +2,6 @@ packages:
   - packages/**
 
 catalog:
-  "@openid-federation/core": ^0.2.1
   "@openid4vc/oauth2": 0.4.3
   "@openid4vc/utils": 0.4.3
   "@openid4vc/openid4vci": 0.4.3
@@ -10,3 +9,4 @@ catalog:
   zod: ^3.24.2
   js-base64: ^3.7.8
   jose: ^6.1.0
+
