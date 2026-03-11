@@ -1,8 +1,7 @@
-import { jsonWebKeySchema } from "@openid-federation/core";
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { jsonWebKeySetSchema } from "../jwk/jwk";
+import { jsonWebKeySchema, jsonWebKeySetSchema } from "../jwk";
 
 export const getUsedJsonWebKey = (
   header: Record<string, unknown>,

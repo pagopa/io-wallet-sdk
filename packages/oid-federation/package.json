@@ -29,8 +29,8 @@
     "build": "tsup src/index.ts --format cjs,esm --dts --sourcemap"
   },
   "dependencies": {
-    "@openid-federation/core": "catalog:",
     "@pagopa/io-wallet-utils": "workspace:",
+    "buffer": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
