@@ -27,8 +27,6 @@ export type MetadataResponseV1_3 = z.infer<typeof zMetadataResponseV1_3>;
 export type MetadataResponse = MetadataResponseV1_0 | MetadataResponseV1_3;
 
 // For intermediate parsing in fallbackDiscovery:
-export const zPartialIssuerMetadata = z
-  .object({
-    authorization_servers: z.array(z.string()).optional(),
-  })
-  .passthrough();
+export const zPartialIssuerMetadata = z.looseObject({
+  authorization_servers: z.array(z.string()).optional(),
+});

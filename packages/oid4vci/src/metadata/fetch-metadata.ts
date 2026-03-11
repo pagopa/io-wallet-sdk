@@ -153,7 +153,7 @@ async function fallbackDiscovery(
   let oauthAuthorizationServer: Record<string, unknown>;
 
   if (authorizationServers && authorizationServers.length > 0) {
-    const parsedUrl = z.string().url().safeParse(authorizationServers[0]);
+    const parsedUrl = z.url().safeParse(authorizationServers[0]);
     if (!parsedUrl.success || !parsedUrl.data.startsWith("https://")) {
       throw new ValidationError(
         "authorization_servers[0] is not a valid HTTPS URL",
@@ -220,10 +220,7 @@ export async function fetchMetadata(
 ): Promise<MetadataResponse> {
   const { config } = options;
   try {
-    const urlValidation = z
-      .string()
-      .url()
-      .safeParse(options.credentialIssuerUrl);
+    const urlValidation = z.url().safeParse(options.credentialIssuerUrl);
     if (!urlValidation.success || !urlValidation.data.startsWith("https://")) {
       throw new ValidationError(
         "credentialIssuerUrl must be a valid HTTPS URL",

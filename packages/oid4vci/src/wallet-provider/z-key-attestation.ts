@@ -1,4 +1,4 @@
-import { zJwk } from "@pagopa/io-wallet-oauth2";
+import { zJwk, zTrustChain } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
 
 export const zKeyStorageLevel = z.enum([
@@ -11,7 +11,7 @@ export type KeyStorageLevel = z.infer<typeof zKeyStorageLevel>;
 
 export const zStatusList = z.object({
   idx: z.number(),
-  uri: z.string().url(),
+  uri: z.url(),
 });
 
 export type StatusList = z.infer<typeof zStatusList>;
@@ -25,7 +25,7 @@ export type KeyAttestationStatus = z.infer<typeof zKeyAttestationStatus>;
 export const zKeyAttestationHeader = z.object({
   alg: z.literal("ES256"),
   kid: z.string(),
-  trust_chain: z.array(z.string()).nonempty().optional(),
+  trust_chain: zTrustChain.optional(),
   typ: z.literal("key-attestation+jwt"),
   x5c: z.array(z.string()).nonempty(),
 });

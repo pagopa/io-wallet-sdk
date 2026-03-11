@@ -13,7 +13,7 @@ export const zAuthorizationCodeGrant = z.object({
    * REQUIRED only when the Credential Issuer uses multiple Authorization Servers.
    * If present, MUST match one of the authorization_servers in the Credential Issuer metadata.
    */
-  authorization_server: z.string().url().optional(),
+  authorization_server: z.url().optional(),
 
   /**
    * OPTIONAL. String value representing the issuer state.
@@ -60,7 +60,7 @@ export const zCredentialOffer = z.object({
    * REQUIRED. HTTPS URL of the Credential Issuer.
    * The Credential Issuer from which the wallet will request credentials.
    */
-  credential_issuer: z.string().url(),
+  credential_issuer: z.url(),
 
   /**
    * REQUIRED. Grant information for the credential offer.
@@ -94,7 +94,7 @@ export const zCredentialOfferUri = z
      * OPTIONAL. URL pointing to the credential offer JSON (by reference).
      * HTTPS URL where the credential offer can be fetched.
      */
-    credential_offer_uri: z.string().url().optional(),
+    credential_offer_uri: z.url().optional(),
 
     /**
      * URL scheme used for the credential offer.
