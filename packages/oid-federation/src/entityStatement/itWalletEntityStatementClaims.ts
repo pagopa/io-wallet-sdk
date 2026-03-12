@@ -1,14 +1,14 @@
-import {
-  constraintSchema,
-  metadataPolicySchema,
-  trustMarkIssuerSchema,
-  trustMarkOwnerSchema,
-  trustMarkSchema,
-} from "@openid-federation/core";
 import { z } from "zod";
 
 import { jsonWebKeySetSchema } from "../jwk/jwk";
 import { itWalletMetadataSchema } from "../metadata/itWalletMetadata";
+import { metadataPolicySchema } from "../metadata/policy";
+import { constraintSchema } from "./z-constraint";
+import {
+  trustMarkIssuerSchema,
+  trustMarkOwnerSchema,
+  trustMarkSchema,
+} from "./z-trustmark";
 
 const baseSchema = z.object({
   authority_hints: z.array(z.string().url()).optional(),

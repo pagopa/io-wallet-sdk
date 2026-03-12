@@ -1,7 +1,23 @@
-import { jsonWebKeySchema } from "@openid-federation/core";
 import { z } from "zod";
+
+export const jsonWebKeySchema = z
+  .object({
+    alg: z.string().optional(),
+    key_ops: z.array(z.string()).optional(),
+    kid: z.string(),
+    kty: z.string(),
+    use: z.string().optional(),
+    x5c: z.array(z.string()).optional(),
+    x5t: z.string().optional(),
+    "x5t#S256": z.string().optional(),
+    x5u: z.string().optional(),
+  })
+  .passthrough();
+
+export type JsonWebKey = z.input<typeof jsonWebKeySchema>;
 
 export const jsonWebKeySetSchema = z.object({
   keys: z.array(jsonWebKeySchema),
 });
+
 export type jsonWebKeySet = z.infer<typeof jsonWebKeySetSchema>;

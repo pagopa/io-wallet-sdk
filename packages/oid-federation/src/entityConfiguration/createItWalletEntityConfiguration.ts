@@ -1,17 +1,16 @@
-import {
-  EntityConfigurationHeaderOptions,
-  createJsonWebToken,
-  createJwtSignableInput,
-  entityConfigurationHeaderSchema,
-} from "@openid-federation/core";
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
+import { Buffer } from "buffer";
 
 import { getUsedJsonWebKey } from "../jsonWeb/getUsedJsonWebKey";
-import { SignCallback } from "../utils";
+import { SignCallback, base64ToBase64URL } from "../utils";
 import {
   ItWalletEntityConfigurationClaimsOptions,
   itWalletEntityConfigurationClaimsSchema,
 } from "./itWalletEntityConfigurationClaims";
+import {
+  EntityConfigurationHeaderOptions,
+  entityConfigurationHeaderSchema,
+} from "./z-entity-configuration-header";
 
 export interface CreateEntityConfigurationOptions {
   claims: ItWalletEntityConfigurationClaimsOptions;
@@ -50,3 +49,46 @@ export const createItWalletEntityConfiguration = async ({
 
   return createJsonWebToken(header, claims, signature);
 };
+
+function createJsonWebToken(
+  header: Record<string, unknown>,
+  payload: Record<string, unknown>,
+  signature: Uint8Array,
+) {
+  const encodedHeader = base64ToBase64URL(
+    Buffer.from(JSON.stringify(header)).toString("base64"),
+  );
+  const encodedPayload = base64ToBase64URL(
+    Buffer.from(JSON.stringify(payload)).toString("base64"),
+  );
+
+  const encodedSignature = base64ToBase64URL(
+    Buffer.from(signature).toString("base64"),
+  );
+
+  return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
+}
+
+function createJwtSignableInput(
+  header: Record<string, unknown>,
+  payload: Record<string, unknown>,
+) {
+  if (Object.keys(header).length === 0) {
+    throw new Error("Can not create JWT with an empty header");
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error("Can not create JWT with an empty payload");
+  }
+
+  const encodedHeader = base64ToBase64URL(
+    Buffer.from(JSON.stringify(header)).toString("base64"),
+  );
+  const encodedPayload = base64ToBase64URL(
+    Buffer.from(JSON.stringify(payload)).toString("base64"),
+  );
+
+  const toBeSignedString = `${encodedHeader}.${encodedPayload}`;
+
+  return new Uint8Array(Buffer.from(toBeSignedString));
+}
