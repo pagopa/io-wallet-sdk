@@ -1,4 +1,8 @@
-import { createFetcher } from "@pagopa/io-wallet-utils";
+import {
+  UnexpectedStatusCodeError,
+  createFetcher,
+  hasStatusOrThrow,
+} from "@pagopa/io-wallet-utils";
 
 import type { ResolveCredentialOfferOptions } from "./types";
 
@@ -83,12 +87,7 @@ export async function resolveCredentialOffer(
           method: "GET",
         });
 
-        if (!response.ok) {
-          throw new CredentialOfferError(
-            `Failed to fetch credential offer from ${parsed.credential_offer_uri}: HTTP ${response.status} ${response.statusText}`,
-            response.status,
-          );
-        }
+        await hasStatusOrThrow(200, UnexpectedStatusCodeError)(response);
 
         const offerJson = await response.json();
         return zCredentialOffer.parse(offerJson);
@@ -99,8 +98,8 @@ export async function resolveCredentialOffer(
     const offerJson = JSON.parse(credentialOffer);
     return zCredentialOffer.parse(offerJson);
   } catch (error) {
-    // Re-throw CredentialOfferError as-is
-    if (error instanceof CredentialOfferError) {
+    // Re-throw CredentialOfferError and UnexpectedStatusCodeError as-is
+    if (error instanceof CredentialOfferError || error instanceof UnexpectedStatusCodeError) {
       throw error;
     }
 
