@@ -12,7 +12,7 @@ export const defaultOperator = createPolicyOperatorSchema({
     z.string(),
     z.number(),
     z.boolean(),
-    z.record(z.string().or(z.number()), z.unknown()),
+    z.record(z.string(), z.string().or(z.number())),
     z.array(z.unknown()),
   ],
   orderOfApplication: MetadataOrderOfApplication.AfterAdd,
@@ -20,7 +20,7 @@ export const defaultOperator = createPolicyOperatorSchema({
     z.string(),
     z.number(),
     z.boolean(),
-    z.record(z.string().or(z.number()), z.unknown()),
+    z.record(z.string(), z.string().or(z.number())),
     z.array(z.unknown()),
   ],
 });
