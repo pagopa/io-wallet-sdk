@@ -99,7 +99,10 @@ export async function resolveCredentialOffer(
     return zCredentialOffer.parse(offerJson);
   } catch (error) {
     // Re-throw CredentialOfferError and UnexpectedStatusCodeError as-is
-    if (error instanceof CredentialOfferError || error instanceof UnexpectedStatusCodeError) {
+    if (
+      error instanceof CredentialOfferError ||
+      error instanceof UnexpectedStatusCodeError
+    ) {
       throw error;
     }
 

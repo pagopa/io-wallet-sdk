@@ -1,5 +1,8 @@
 /* eslint-disable max-lines-per-function */
-import { RequestLike, UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
+import {
+  RequestLike,
+  UnexpectedStatusCodeError,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error } from "../../errors";
@@ -130,8 +133,8 @@ describe("parsePushedAuthorizationRequest", () => {
         "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInJlc3BvbnNlX21vZGUiOiJmb3JtX3Bvc3QiLCJzdGF0ZSI6InRlc3Qtc3RhdGUiLCJzY29wZSI6Im9wZW5pZCIsImp0aSI6InRlc3QtanRpIn0.signature";
 
       mockFetch.mockResolvedValueOnce({
-        status: 200,
         ok: true,
+        status: 200,
         text: async () => mockJwt,
       });
 
@@ -196,28 +199,28 @@ describe("parsePushedAuthorizationRequest", () => {
 
   describe("Error handling", () => {
     it("should throw error when request_uri fetch fails", async () => {
-      const request_uri = "https://issuer.example.com/request/invalid"
+      const request_uri = "https://issuer.example.com/request/invalid";
       const mockResponse = {
         headers: {
           get: vi.fn().mockReturnValue("text/plain"),
         },
+        ok: false,
         status: 404,
         text: vi.fn().mockResolvedValue("Not Found"),
         url: request_uri,
-        ok: false
       };
       mockFetch.mockResolvedValueOnce(mockResponse);
 
       const jarRequest = {
         client_id: "test-client-id",
-        request_uri
+        request_uri,
       };
 
       const promise = parsePushedAuthorizationRequest({
         authorizationRequest: jarRequest,
         callbacks: { fetch: mockFetch },
         request: mockRequest,
-      })
+      });
 
       await expect(promise).rejects.toThrow(UnexpectedStatusCodeError);
 

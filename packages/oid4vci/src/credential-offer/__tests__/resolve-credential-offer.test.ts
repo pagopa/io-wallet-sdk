@@ -1,11 +1,11 @@
 /* eslint-disable max-lines-per-function */
+import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CredentialOffer } from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
 import { resolveCredentialOffer } from "../resolve-credential-offer";
-import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
 
 const mockFetch = vi.fn();
 
