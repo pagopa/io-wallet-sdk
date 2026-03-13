@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import { zJwk } from "../../common/jwk/z-jwk";
-import { zJwtHeader, zJwtPayload, zTrustChain } from "../../common/jwt/z-jwt";
+import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
+import { zTrustChain } from "../../common/z-common";
 
 /**
  * JWT Header schema for IT-Wallet v1.0 Wallet Attestation

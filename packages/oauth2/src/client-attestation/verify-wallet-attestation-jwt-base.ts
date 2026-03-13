@@ -21,16 +21,13 @@ export async function verifyWalletAttestationBase<
     payloadSchema,
   });
 
-  const jwtHeader: JwtHeader = header;
-  const jwtPayload: JwtPayload = payload;
-
   const { signer } = await verifyJwt({
     compact: options.walletAttestationJwt,
     errorMessage: "wallet attestation verification failed.",
-    header: jwtHeader,
+    header,
     now: options.now,
-    payload: jwtPayload,
-    signer: jwtSignerFromJwt({ header: jwtHeader, payload: jwtPayload }),
+    payload,
+    signer: jwtSignerFromJwt({ header, payload }),
     verifyJwtCallback: options.callbacks.verifyJwt,
   });
 
