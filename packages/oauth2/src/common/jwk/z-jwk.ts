@@ -1,5 +1,7 @@
 import z from "zod";
 
+import { zCertificateChain } from "../z-common";
+
 export const zJwk = z.looseObject({
   alg: z.optional(z.string()),
   crv: z.optional(z.string()),
@@ -27,7 +29,7 @@ export const zJwk = z.looseObject({
   qi: z.optional(z.string()),
   use: z.optional(z.string()),
   x: z.optional(z.string()),
-  x5c: z.optional(z.array(z.string())),
+  x5c: z.optional(zCertificateChain),
   x5t: z.optional(z.string()),
   "x5t#S256": z.optional(z.string()),
   x5u: z.optional(z.string()),

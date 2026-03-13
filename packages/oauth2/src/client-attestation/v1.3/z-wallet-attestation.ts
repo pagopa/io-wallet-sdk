@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import { zJwk } from "../../common/jwk/z-jwk";
-import { zJwtHeader, zJwtPayload, zTrustChain } from "../../common/jwt/z-jwt";
+import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
+import { zCertificateChain, zTrustChain } from "../../common/z-common";
 
 /**
  * JWT Header schema for IT-Wallet v1.3 Wallet Attestation
@@ -14,7 +15,7 @@ export const zWalletAttestationJwtHeaderV1_3 = z.looseObject({
   ...zJwtHeader.shape,
   trust_chain: zTrustChain.optional(), // OPTIONAL in v1.3
   typ: z.literal("oauth-client-attestation+jwt"),
-  x5c: z.array(z.string()).nonempty(), // REQUIRED in v1.3
+  x5c: zCertificateChain, // REQUIRED in v1.3
 });
 
 /**

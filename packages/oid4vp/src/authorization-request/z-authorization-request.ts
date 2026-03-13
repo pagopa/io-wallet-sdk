@@ -1,5 +1,6 @@
 import {
   zAlgValueNotNone,
+  zCertificateChain,
   zJwtPayload,
   zSignedAuthorizationRequestJwtHeaderTyp,
   zTrustChain,
@@ -60,7 +61,7 @@ export const zOpenid4vpAuthorizationRequestHeaderV1_3 =
   zOpenid4vpAuthorizationRequestHeaderBase
     .extend({
       trust_chain: zTrustChain.optional(),
-      x5c: z.array(z.string()).nonempty(),
+      x5c: zCertificateChain,
     })
     .loose();
 

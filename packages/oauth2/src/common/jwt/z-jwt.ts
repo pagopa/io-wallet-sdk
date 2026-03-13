@@ -1,7 +1,7 @@
 import z from "zod";
 
 import { Jwk, zJwk } from "../jwk/z-jwk";
-import { zAlgValueNotNone } from "../z-common";
+import { zAlgValueNotNone, zCertificateChain, zTrustChain } from "../z-common";
 
 export interface JwtSignerDid {
   alg: string;
@@ -88,8 +88,6 @@ export type JweEncryptor = {
   enc: string;
 } & JwtSignerJwk;
 
-export const zTrustChain = z.tuple([z.string()], z.string());
-
 export const zCompactJwt = z
   .string()
   .regex(/^([a-zA-Z0-9-_]+)\.([a-zA-Z0-9-_]+)\.([a-zA-Z0-9-_]+)$/, {
@@ -126,7 +124,7 @@ export const zJwtHeader = z.looseObject({
   // Reserved for OpenID Federation
   trust_chain: zTrustChain.optional(),
   typ: z.string().optional(),
-  x5c: z.array(z.string()).optional(),
+  x5c: zCertificateChain.optional(),
 });
 
 export type JwtHeader = z.infer<typeof zJwtHeader>;
