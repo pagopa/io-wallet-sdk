@@ -22,8 +22,23 @@ export const zKeyAttestationStatus = z.object({
 
 export type KeyAttestationStatus = z.infer<typeof zKeyAttestationStatus>;
 
+/**
+ * For the moment, these are all the supported algorithms in both
+ * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/algorithms.html#cryptographic-algorithms|v1.3.3} and
+ * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.0.2/en/algorithms.html#cryptographic-algorithms|v1.0.2},
+ * and in both specifications the `alg` field MUST be one of those values.
+ */
+export const zKeyAttestationAlg = z.enum([
+  "ES256",
+  "ES384",
+  "ES512",
+  "PS256",
+  "PS384",
+  "PS512",
+]);
+
 export const zKeyAttestationHeader = z.object({
-  alg: z.literal("ES256"),
+  alg: zKeyAttestationAlg,
   kid: z.string(),
   trust_chain: zTrustChain.optional(),
   typ: z.literal("key-attestation+jwt"),
