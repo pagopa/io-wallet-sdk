@@ -58,7 +58,10 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
       format: "dc+sd-jwt",
       proof_types_supported: {
         jwt: {
-          key_attestations_required: true,
+          key_attestations_required: {
+            key_storage: ["iso_18045_high"],
+            user_authentication: ["iso_18045_high"],
+          },
           proof_signing_alg_values_supported: ["ES256"],
         },
       },
@@ -197,7 +200,10 @@ describe("itWalletCredentialIssuerMetadata v1.3 metadata", () => {
           ...validMetadata.credential_configurations_supported.UniversityDegree,
           proof_types_supported: {
             jwt: {
-              key_attestations_required: true,
+              key_attestations_required: {
+                key_storage: ["iso_18045_high"],
+                user_authentication: ["iso_18045_high"],
+              },
               proof_signing_alg_values_supported: ["ES256"],
             },
           },

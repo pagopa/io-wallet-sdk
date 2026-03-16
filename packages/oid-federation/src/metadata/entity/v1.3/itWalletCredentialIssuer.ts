@@ -62,6 +62,14 @@ export const CredentialMetadata = z.object({
   display: z.array(CredentialDisplayMetadata).optional(),
 });
 
+export const zKeyStorageLevel = z.enum([
+  "iso_18045_high",
+  "iso_18045_moderate",
+  "iso_18045_basic",
+]);
+
+export type KeyStorageLevel = z.infer<typeof zKeyStorageLevel>;
+
 /**
  * Enhanced proof types support with optional key attestations
  * References OpenID4VCI Appendix F.1 and Section 12.2
@@ -69,7 +77,10 @@ export const CredentialMetadata = z.object({
 export type ProofTypesSupported = z.infer<typeof ProofTypesSupported>;
 export const ProofTypesSupported = z.object({
   jwt: z.object({
-    key_attestations_required: z.boolean().optional(),
+    key_attestations_required: z.object({
+      key_storage: z.array(zKeyStorageLevel).nonempty(),
+      user_authentication: z.array(zKeyStorageLevel).nonempty(),
+    }).optional(),
     proof_signing_alg_values_supported: z.array(z.string()),
   }),
 });
@@ -134,7 +145,6 @@ export const itWalletCredentialIssuerMetadata = z
     jwks: jsonWebKeySetSchema,
     nonce_endpoint: z.string().url().optional(),
     notification_endpoint: z.string().url().optional(),
-    status_attestation_endpoint: z.string().url().optional(),
     status_list_aggregation_endpoint: z.string().url().optional(),
     trust_frameworks_supported: z.array(
       z.union([
