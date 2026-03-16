@@ -70,6 +70,9 @@ export const zKeyStorageLevel = z.enum([
 
 export type KeyStorageLevel = z.infer<typeof zKeyStorageLevel>;
 
+export const zUserAuthenticationLevel = zKeyStorageLevel;
+export type UserAuthenticationLevel = KeyStorageLevel;
+
 /**
  * Enhanced proof types support with optional key attestations
  * References OpenID4VCI Appendix F.1 and Section 12.2
@@ -80,7 +83,7 @@ export const ProofTypesSupported = z.object({
     key_attestations_required: z
       .object({
         key_storage: z.array(zKeyStorageLevel).nonempty(),
-        user_authentication: z.array(zKeyStorageLevel).nonempty(),
+        user_authentication: z.array(zUserAuthenticationLevel).nonempty(),
       })
       .optional(),
     proof_signing_alg_values_supported: z.array(z.string()),
