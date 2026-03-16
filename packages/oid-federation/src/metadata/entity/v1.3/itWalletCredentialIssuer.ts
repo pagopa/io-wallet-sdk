@@ -83,8 +83,11 @@ export const ProofTypesSupported = z.object({
   jwt: z.object({
     key_attestations_required: z
       .object({
-        key_storage: z.array(zKeyStorageLevel).min(1),
-        user_authentication: z.array(zUserAuthenticationLevel).min(1),
+        key_storage: z.array(zKeyStorageLevel).min(1).optional(),
+        user_authentication: z
+          .array(zUserAuthenticationLevel)
+          .min(1)
+          .optional(),
       })
       .optional(),
     proof_signing_alg_values_supported: z.array(z.string()),
