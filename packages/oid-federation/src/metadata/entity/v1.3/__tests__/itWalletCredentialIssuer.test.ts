@@ -58,7 +58,10 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
       format: "dc+sd-jwt",
       proof_types_supported: {
         jwt: {
-          key_attestations_required: true,
+          key_attestations_required: {
+            key_storage: ["iso_18045_high"],
+            user_authentication: ["iso_18045_high"],
+          },
           proof_signing_alg_values_supported: ["ES256"],
         },
       },
@@ -90,7 +93,6 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
   },
   nonce_endpoint: "https://issuer.example.com/nonce",
   notification_endpoint: "https://issuer.example.com/notification",
-  status_attestation_endpoint: "https://issuer.example.com/status",
   status_list_aggregation_endpoint: "https://issuer.example.com/status-list",
   trust_frameworks_supported: ["it_wallet"],
 };
@@ -197,7 +199,10 @@ describe("itWalletCredentialIssuerMetadata v1.3 metadata", () => {
           ...validMetadata.credential_configurations_supported.UniversityDegree,
           proof_types_supported: {
             jwt: {
-              key_attestations_required: true,
+              key_attestations_required: {
+                key_storage: ["iso_18045_high"],
+                user_authentication: ["iso_18045_high"],
+              },
               proof_signing_alg_values_supported: ["ES256"],
             },
           },

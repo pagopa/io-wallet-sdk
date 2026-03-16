@@ -1,4 +1,5 @@
 import { Jwk } from "@openid4vc/oauth2";
+import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -16,7 +17,7 @@ import {
 
 import { WalletProviderError } from "../../errors";
 import { KeyAttestationOptions, WalletProvider } from "../WalletProvider";
-import { KeyAttestationStatus, KeyStorageLevel } from "../z-key-attestation";
+import { KeyAttestationStatus } from "../z-key-attestation";
 
 vi.mock("@openid4vc/utils", async () => {
   const actual = await vi.importActual("@openid4vc/utils");
@@ -258,8 +259,8 @@ describe("createItKeyAttestationJwt", () => {
     const options = {
       ...mockKeyAttestationOptions,
       keyStorage: ["iso_18045_high", "iso_18045_basic"] as [
-        KeyStorageLevel,
-        KeyStorageLevel,
+        KeyStorageLevelV1_3,
+        KeyStorageLevelV1_3,
       ],
     };
 
@@ -278,7 +279,7 @@ describe("createItKeyAttestationJwt", () => {
   it("should support different user authentication levels", async () => {
     const options = {
       ...mockKeyAttestationOptions,
-      userAuthentication: ["iso_18045_high"] as [KeyStorageLevel],
+      userAuthentication: ["iso_18045_high"] as [KeyStorageLevelV1_3],
     };
 
     await provider.createItKeyAttestationJwt(options);
