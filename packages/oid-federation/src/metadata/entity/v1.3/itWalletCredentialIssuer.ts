@@ -77,10 +77,12 @@ export type KeyStorageLevel = z.infer<typeof zKeyStorageLevel>;
 export type ProofTypesSupported = z.infer<typeof ProofTypesSupported>;
 export const ProofTypesSupported = z.object({
   jwt: z.object({
-    key_attestations_required: z.object({
-      key_storage: z.array(zKeyStorageLevel).nonempty(),
-      user_authentication: z.array(zKeyStorageLevel).nonempty(),
-    }).optional(),
+    key_attestations_required: z
+      .object({
+        key_storage: z.array(zKeyStorageLevel).nonempty(),
+        user_authentication: z.array(zKeyStorageLevel).nonempty(),
+      })
+      .optional(),
     proof_signing_alg_values_supported: z.array(z.string()),
   }),
 });
