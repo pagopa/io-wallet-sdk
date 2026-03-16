@@ -1,14 +1,6 @@
 import { zJwk } from "@pagopa/io-wallet-oauth2";
+import { zKeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import { z } from "zod";
-
-export const zKeyStorageLevel = z.enum([
-  "iso_18045_high",
-  "iso_18045_moderate",
-  "iso_18045_enhanced-basic",
-  "iso_18045_basic",
-]);
-
-export type KeyStorageLevel = z.infer<typeof zKeyStorageLevel>;
 
 export const zStatusList = z.object({
   idx: z.number(),
@@ -39,9 +31,9 @@ export const zKeyAttestationPayload = z.object({
   exp: z.number(),
   iat: z.number(),
   iss: z.string(),
-  key_storage: z.array(zKeyStorageLevel).nonempty(),
+  key_storage: z.array(zKeyStorageLevelV1_3).nonempty(),
   status: zKeyAttestationStatus,
-  user_authentication: z.array(zKeyStorageLevel).nonempty(),
+  user_authentication: z.array(zKeyStorageLevelV1_3).nonempty(),
 });
 
 export type KeyAttestationPayload = z.infer<typeof zKeyAttestationPayload>;

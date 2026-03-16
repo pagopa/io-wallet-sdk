@@ -1,5 +1,6 @@
 import { CallbackContext, JwtSignerX5c } from "@openid4vc/oauth2";
 import { Jwk, V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
+import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -12,7 +13,6 @@ import { WalletProviderError } from "../errors";
 import { WalletAttestationOptions } from "./types";
 import {
   KeyAttestationStatus,
-  KeyStorageLevel,
   keyAttestationTypeHeader,
 } from "./z-key-attestation";
 
@@ -71,9 +71,9 @@ export interface KeyAttestationOptions {
 
   /**
    * The levels of security for key storage as per ISO 18045 standards.
-   * @type {[KeyStorageLevel, ...KeyStorageLevel[]]}
+   * @type {[KeyStorageLevelV1_3, ...KeyStorageLevelV1_3[]]}
    */
-  keyStorage: [KeyStorageLevel, ...KeyStorageLevel[]];
+  keyStorage: [KeyStorageLevelV1_3, ...KeyStorageLevelV1_3[]];
 
   /**
    * The signer information containing the Key ID and the X.509 certificate chain.
@@ -95,7 +95,7 @@ export interface KeyAttestationOptions {
    * The levels of user authentication as per ISO 18045 standards.
    * @type {[KeyStorageLevel, ...KeyStorageLevel[]]}
    */
-  userAuthentication: [KeyStorageLevel, ...KeyStorageLevel[]];
+  userAuthentication: [KeyStorageLevelV1_3, ...KeyStorageLevelV1_3[]];
 }
 
 /**
