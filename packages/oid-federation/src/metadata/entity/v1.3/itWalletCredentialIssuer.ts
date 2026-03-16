@@ -65,6 +65,7 @@ export const CredentialMetadata = z.object({
 export const zKeyStorageLevel = z.enum([
   "iso_18045_high",
   "iso_18045_moderate",
+  "iso_18045_enhanced-basic",
   "iso_18045_basic",
 ]);
 
