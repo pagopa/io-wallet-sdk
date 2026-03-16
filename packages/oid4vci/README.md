@@ -308,13 +308,11 @@ Generic error thrown on Oid4vci operations
 
 Error thrown in case the DPoP key passed to the `WalletProvider.createItWalletAttestationJwt` method doesn't contain a kid
 ```typescript
-export class WalletProviderError extends Oid {
-  constructor(
-    message: string,
-    public readonly originalError?: unknown,
-  ) {
+export class WalletProviderError extends Oid4vciError {
+  constructor(message: string, cause?: unknown) {
     super(message);
     this.name = "WalletProviderError";
+    this.cause = cause;
   }
 }
 ```
