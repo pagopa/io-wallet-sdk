@@ -93,7 +93,6 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
   },
   nonce_endpoint: "https://issuer.example.com/nonce",
   notification_endpoint: "https://issuer.example.com/notification",
-  status_attestation_endpoint: "https://issuer.example.com/status",
   status_list_aggregation_endpoint: "https://issuer.example.com/status-list",
   trust_frameworks_supported: ["it_wallet"],
 };
