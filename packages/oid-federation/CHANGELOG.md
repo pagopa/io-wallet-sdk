@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.1.2
+
+### Patch Changes
+
+- a76b6ab: Fix key_attestations_required structure
+  - @pagopa/io-wallet-utils@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes
