@@ -76,11 +76,9 @@ export class CreateTokenResponseError extends Oauth2Error {
  * Error thrown when an unexpected error occurs during client attestation (wallet attestation) creation.
  */
 export class ClientAttestationError extends Oauth2Error {
-  constructor(
-    message: string,
-    public readonly originalError?: unknown,
-  ) {
+  constructor(message: string, cause?: unknown) {
     super(message);
     this.name = "ClientAttestationError";
+    this.cause = cause;
   }
 }
