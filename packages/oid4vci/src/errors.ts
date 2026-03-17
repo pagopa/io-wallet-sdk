@@ -125,3 +125,15 @@ export class MissingDpopProofError extends Oid4vciError {
     this.name = "MissingDpopProofError";
   }
 }
+
+/**
+ * Error thrown when a credential request has a missing or invalid Authorization header.
+ */
+export class CredentialAuthorizationHeaderError extends Oid4vciError {
+  constructor(
+    message = "Credential request is missing required 'Authorization' header with DPoP scheme",
+  ) {
+    super(message);
+    this.name = "CredentialAuthorizationHeaderError";
+  }
+}
