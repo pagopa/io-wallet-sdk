@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function */
+import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CredentialOffer } from "../z-credential-offer";
@@ -163,14 +164,16 @@ describe("resolveCredentialOffer", () => {
       );
     });
 
-    it("should throw CredentialOfferError when HTTP fetch fails", async () => {
-      const uri =
-        "openid-credential-offer://?credential_offer_uri=https://issuer.example.com/offers/123";
+    it("should throw UnexpectedStatusCodeError when HTTP fetch fails", async () => {
+      const offerUri = "https://issuer.example.com/offers/123";
+      const uri = `openid-credential-offer://?credential_offer_uri=${offerUri}`;
 
       mockFetch.mockResolvedValue({
+        headers: { get: vi.fn().mockReturnValue("text/plain") },
         ok: false,
         status: 404,
-        statusText: "Not Found",
+        text: vi.fn().mockResolvedValue("Not Found"),
+        url: offerUri,
       });
 
       await expect(
@@ -178,14 +181,16 @@ describe("resolveCredentialOffer", () => {
           credentialOffer: uri,
           ...baseOptions,
         }),
-      ).rejects.toThrow(CredentialOfferError);
+      ).rejects.toThrow(UnexpectedStatusCodeError);
 
       await expect(
         resolveCredentialOffer({
           credentialOffer: uri,
           ...baseOptions,
         }),
-      ).rejects.toThrow("HTTP 404 Not Found");
+      ).rejects.toThrow(
+        `message=Http request failed. Expected 200, got 404, url: ${offerUri} reason=Not Found statusCode=404`,
+      );
     });
 
     it("should throw CredentialOfferError when fetch returns non-JSON", async () => {

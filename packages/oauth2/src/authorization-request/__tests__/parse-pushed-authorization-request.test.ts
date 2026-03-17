@@ -1,5 +1,8 @@
 /* eslint-disable max-lines-per-function */
-import { RequestLike } from "@pagopa/io-wallet-utils";
+import {
+  RequestLike,
+  UnexpectedStatusCodeError,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error } from "../../errors";
@@ -131,6 +134,7 @@ describe("parsePushedAuthorizationRequest", () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        status: 200,
         text: async () => mockJwt,
       });
 
@@ -195,23 +199,34 @@ describe("parsePushedAuthorizationRequest", () => {
 
   describe("Error handling", () => {
     it("should throw error when request_uri fetch fails", async () => {
-      mockFetch.mockResolvedValueOnce({
+      const request_uri = "https://issuer.example.com/request/invalid";
+      const mockResponse = {
+        headers: {
+          get: vi.fn().mockReturnValue("text/plain"),
+        },
         ok: false,
         status: 404,
-      });
+        text: vi.fn().mockResolvedValue("Not Found"),
+        url: request_uri,
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const jarRequest = {
         client_id: "test-client-id",
-        request_uri: "https://issuer.example.com/request/invalid",
+        request_uri,
       };
 
-      await expect(
-        parsePushedAuthorizationRequest({
-          authorizationRequest: jarRequest,
-          callbacks: { fetch: mockFetch },
-          request: mockRequest,
-        }),
-      ).rejects.toThrow(Oauth2Error);
+      const promise = parsePushedAuthorizationRequest({
+        authorizationRequest: jarRequest,
+        callbacks: { fetch: mockFetch },
+        request: mockRequest,
+      });
+
+      await expect(promise).rejects.toThrow(UnexpectedStatusCodeError);
+
+      await expect(promise).rejects.toThrow(
+        `message=Http request failed. Expected 200, got 404, url: ${request_uri} reason=Not Found statusCode=404`,
+      );
     });
 
     it("should throw error for invalid authorization request structure", async () => {

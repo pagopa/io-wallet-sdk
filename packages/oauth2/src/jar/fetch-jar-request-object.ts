@@ -1,7 +1,9 @@
 import {
   ContentType,
   type Fetch,
+  UnexpectedStatusCodeError,
   createFetcher,
+  hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "../errors";
@@ -33,11 +35,7 @@ export async function fetchJarRequestObject(options: {
     );
   });
 
-  if (!response.ok) {
-    throw new Oauth2Error(
-      `Fetching request_object from request_uri '${requestUri}' failed with status code '${response.status}'.`,
-    );
-  }
+  await hasStatusOrThrow(200, UnexpectedStatusCodeError)(response);
 
   return await response.text();
 }
