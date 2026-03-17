@@ -20,29 +20,27 @@ import { jsonWebKeySetSchema } from "../../../jwk";
  *
  * @see {@link https://italia.github.io/eidas-it-wallet-docs/versioned_docs/version-1.3.3/en/relying-party-metadata.html}
  */
-export const itWalletCredentialVerifierMetadata = z
-  .object({
-    application_type: z.literal("web"),
-    client_id: z.string().url(),
-    client_name: z.string(),
-    encrypted_response_enc_values_supported: z.array(z.string()).min(1),
-    erasure_endpoint: z.string().url().optional(),
-    jwks: jsonWebKeySetSchema,
-    logo_uri: z.string().url(),
-    request_uris: z.array(z.string().url()),
-    response_uris: z.array(z.string().url()),
-    vp_formats_supported: z.record(
-      z.string(),
-      z.object({
-        alg: z.array(z.string()).optional(),
-        deviceauth_alg_values: z.array(z.number()).optional(),
-        issuerauth_alg_values: z.array(z.number()).optional(),
-        "kb-jwt_alg_values": z.array(z.string()).optional(),
-        "sd-jwt_alg_values": z.array(z.string()).optional(),
-      }),
-    ),
-  })
-  .passthrough();
+export const itWalletCredentialVerifierMetadata = z.looseObject({
+  application_type: z.literal("web"),
+  client_id: z.url(),
+  client_name: z.string(),
+  encrypted_response_enc_values_supported: z.array(z.string()).min(1),
+  erasure_endpoint: z.url().optional(),
+  jwks: jsonWebKeySetSchema,
+  logo_uri: z.url(),
+  request_uris: z.array(z.url()),
+  response_uris: z.array(z.url()),
+  vp_formats_supported: z.record(
+    z.string(),
+    z.object({
+      alg: z.array(z.string()).optional(),
+      deviceauth_alg_values: z.array(z.number()).optional(),
+      issuerauth_alg_values: z.array(z.number()).optional(),
+      "kb-jwt_alg_values": z.array(z.string()).optional(),
+      "sd-jwt_alg_values": z.array(z.string()).optional(),
+    }),
+  ),
+});
 
 export type ItWalletCredentialVerifierMetadata = z.input<
   typeof itWalletCredentialVerifierMetadata

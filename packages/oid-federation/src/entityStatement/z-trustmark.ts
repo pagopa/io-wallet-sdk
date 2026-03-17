@@ -6,7 +6,6 @@ import { jsonWebKeySetSchema } from "../jwk";
  * @example https://<federation_authority_domain>/trust_marks/<purpose>/<entity_type>
  */
 export const trustMarkUrlSchema = z
-  .string()
   .url()
   .regex(/^https:\/\/[^/]+\/trust_marks\/[^/]+\/[^/]+$/);
 

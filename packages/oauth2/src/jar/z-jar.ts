@@ -2,22 +2,18 @@ import z from "zod";
 
 import { zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
-export const zJarAuthorizationRequest = z
-  .object({
-    client_id: z.optional(z.string()),
-    request: z.optional(z.string()),
-    request_uri: z.string().url().optional(),
-  })
-  .passthrough();
+export const zJarAuthorizationRequest = z.looseObject({
+  client_id: z.optional(z.string()),
+  request: z.optional(z.string()),
+  request_uri: z.url().optional(),
+});
 
 export type JarAuthorizationRequest = z.infer<typeof zJarAuthorizationRequest>;
 
-export const zJarRequestObjectPayload = z
-  .object({
-    ...zJwtPayload.shape,
-    client_id: z.string(),
-  })
-  .passthrough();
+export const zJarRequestObjectPayload = z.looseObject({
+  ...zJwtPayload.shape,
+  client_id: z.string(),
+});
 
 export type JarRequestObjectPayload = z.infer<typeof zJarRequestObjectPayload>;
 
@@ -25,12 +21,10 @@ export const zSignedAuthorizationRequestJwtHeaderTyp = z.literal(
   "oauth-authz-req+jwt",
 );
 
-export const zJarRequestObjectHeader = z
-  .object({
-    ...zJwtHeader.shape,
-    typ: zSignedAuthorizationRequestJwtHeaderTyp,
-  })
-  .passthrough();
+export const zJarRequestObjectHeader = z.looseObject({
+  ...zJwtHeader.shape,
+  typ: zSignedAuthorizationRequestJwtHeaderTyp,
+});
 
 export type JarRequestObjectHeader = z.infer<typeof zJarRequestObjectHeader>;
 

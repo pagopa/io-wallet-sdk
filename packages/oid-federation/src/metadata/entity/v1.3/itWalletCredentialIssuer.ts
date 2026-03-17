@@ -9,7 +9,7 @@ import { jsonWebKeySetSchema } from "../../../jwk";
 export type ImageMetadata = z.infer<typeof ImageMetadata>;
 export const ImageMetadata = z.object({
   alt_text: z.string().optional(),
-  uri: z.string().url(),
+  uri: z.url(),
   "uri#integrity": z.string().optional(),
 });
 
@@ -138,33 +138,34 @@ export const SupportedCredentialMetadata = z.intersection(
  *
  * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.3.0/en/credential-issuer-solution.html#metadata-for-openid-credential-issuer}
  */
-export const itWalletCredentialIssuerMetadata = z
-  .object({
-    authorization_servers: z.array(z.string().url()).optional(),
-    batch_credential_issuance: z
-      .object({
-        batch_size: z.number().int().positive(),
-      })
-      .optional(),
-    credential_configurations_supported: z.record(SupportedCredentialMetadata),
-    credential_endpoint: z.string().url(),
-    credential_issuer: z.string().url(),
-    deferred_credential_endpoint: z.string().url().optional(),
-    display: z.array(CredentialDisplayMetadata).optional(),
-    jwks: jsonWebKeySetSchema,
-    nonce_endpoint: z.string().url().optional(),
-    notification_endpoint: z.string().url().optional(),
-    status_list_aggregation_endpoint: z.string().url().optional(),
-    trust_frameworks_supported: z.array(
-      z.union([
-        z.literal("eudi_wallet"),
-        z.literal("it_cie"),
-        z.literal("it_wallet"),
-        z.literal("it_l2+document_proof"),
-      ]),
-    ),
-  })
-  .passthrough();
+export const itWalletCredentialIssuerMetadata = z.looseObject({
+  authorization_servers: z.array(z.url()).optional(),
+  batch_credential_issuance: z
+    .object({
+      batch_size: z.number().int().positive(),
+    })
+    .optional(),
+  credential_configurations_supported: z.record(
+    z.string(),
+    SupportedCredentialMetadata,
+  ),
+  credential_endpoint: z.url(),
+  credential_issuer: z.url(),
+  deferred_credential_endpoint: z.url().optional(),
+  display: z.array(CredentialDisplayMetadata).optional(),
+  jwks: jsonWebKeySetSchema,
+  nonce_endpoint: z.url().optional(),
+  notification_endpoint: z.url().optional(),
+  status_list_aggregation_endpoint: z.url().optional(),
+  trust_frameworks_supported: z.array(
+    z.union([
+      z.literal("eudi_wallet"),
+      z.literal("it_cie"),
+      z.literal("it_wallet"),
+      z.literal("it_l2+document_proof"),
+    ]),
+  ),
+});
 
 export type ItWalletCredentialIssuerMetadata = z.input<
   typeof itWalletCredentialIssuerMetadata

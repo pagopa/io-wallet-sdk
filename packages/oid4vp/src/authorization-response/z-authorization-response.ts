@@ -12,7 +12,7 @@ export type Openid4vpAuthorizationResponse = z.infer<
 >;
 
 export const zOpenid4vpAuthorizationResponseResult = z.object({
-  redirect_uri: z.string().url().optional(),
+  redirect_uri: z.url().optional(),
 });
 
 export type Openid4vpAuthorizationResponseResult = z.infer<

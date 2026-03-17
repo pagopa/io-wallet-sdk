@@ -38,13 +38,11 @@ export type CredentialResponse =
   | CredentialResponseV1_0
   | CredentialResponseV1_3;
 
-export const zCredentialResponseEncryption = z
-  .object({
-    alg: zAlgValueNotNone,
-    enc: z.string(),
-    jwk: zJwk,
-  })
-  .passthrough();
+export const zCredentialResponseEncryption = z.looseObject({
+  alg: zAlgValueNotNone,
+  enc: z.string(),
+  jwk: zJwk,
+});
 
 export type CredentialResponseEncryption = z.infer<
   typeof zCredentialResponseEncryption

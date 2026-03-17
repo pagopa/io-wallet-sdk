@@ -45,38 +45,39 @@ export const SupportedCredentialMetadata = z.intersection(
   }),
 );
 
-export const itWalletCredentialIssuerMetadata = z
-  .object({
-    authorization_servers: z.array(z.string().url()).optional(),
-    batch_credential_issuance: z.object({
-      batch_size: z.number().int(),
+export const itWalletCredentialIssuerMetadata = z.looseObject({
+  authorization_servers: z.array(z.url()).optional(),
+  batch_credential_issuance: z.object({
+    batch_size: z.number().int(),
+  }),
+  credential_configurations_supported: z.record(
+    z.string(),
+    SupportedCredentialMetadata,
+  ),
+  credential_endpoint: z.url(),
+  credential_hash_alg_supported: z.string(),
+  credential_issuer: z.url(),
+  deferred_credential_endpoint: z.url(),
+  display: z.array(CredentialDisplayMetadata),
+  evidence_supported: z
+    .array(z.string())
+    .refine((arr) => arr.includes("vouch"), {
+      message: "The evidence_supported array MUST include 'vouch'.",
     }),
-    credential_configurations_supported: z.record(SupportedCredentialMetadata),
-    credential_endpoint: z.string().url(),
-    credential_hash_alg_supported: z.string(),
-    credential_issuer: z.string().url(),
-    deferred_credential_endpoint: z.string().url(),
-    display: z.array(CredentialDisplayMetadata),
-    evidence_supported: z
-      .array(z.string())
-      .refine((arr) => arr.includes("vouch"), {
-        message: "The evidence_supported array MUST include 'vouch'.",
-      }),
-    jwks: jsonWebKeySetSchema,
-    nonce_endpoint: z.string().url(),
-    notification_endpoint: z.string().url(),
-    revocation_endpoint: z.string().url(),
-    status_assertion_endpoint: z.string().url(),
-    status_attestation_endpoint: z.string().url(),
-    trust_frameworks_supported: z.array(
-      z.union([
-        z.literal("it_cie"),
-        z.literal("it_wallet"),
-        z.literal("eudi_wallet"),
-      ]),
-    ),
-  })
-  .passthrough();
+  jwks: jsonWebKeySetSchema,
+  nonce_endpoint: z.url(),
+  notification_endpoint: z.url(),
+  revocation_endpoint: z.url(),
+  status_assertion_endpoint: z.url(),
+  status_attestation_endpoint: z.url(),
+  trust_frameworks_supported: z.array(
+    z.union([
+      z.literal("it_cie"),
+      z.literal("it_wallet"),
+      z.literal("eudi_wallet"),
+    ]),
+  ),
+});
 
 export type ItWalletCredentialIssuerMetadata = z.input<
   typeof itWalletCredentialIssuerMetadata

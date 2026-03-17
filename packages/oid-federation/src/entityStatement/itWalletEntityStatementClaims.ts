@@ -11,7 +11,7 @@ import {
 } from "./z-trustmark";
 
 const baseSchema = z.object({
-  authority_hints: z.array(z.string().url()).optional(),
+  authority_hints: z.array(z.url()).optional(),
   constraints: constraintSchema.optional(),
   crit: z.array(z.string()).optional(),
   exp: z
@@ -24,10 +24,10 @@ const baseSchema = z.object({
   jwks: jsonWebKeySetSchema,
   metadata: itWalletMetadataSchema.optional(),
   metadata_policy: z
-    .record(z.record(metadataPolicySchema).optional())
+    .record(z.string(), z.record(z.string(), metadataPolicySchema).optional())
     .optional(),
   metadata_policy_crit: z.array(z.string()).optional(),
-  source_endpoint: z.string().url().optional(),
+  source_endpoint: z.url().optional(),
   sub: z.string(),
   trust_mark_issuers: trustMarkIssuerSchema.optional(),
   trust_mark_owners: trustMarkOwnerSchema.optional(),
@@ -38,12 +38,7 @@ type ItWalletEntityStatementClaimsOptions = z.input<typeof baseSchema>;
 
 type ItWalletEntityStatementClaims = z.output<typeof baseSchema>;
 
-// The explicit type annotation here is necessary to avoid this node exceeds the maximum length the compiler will serialize.
-export const itWalletEntityStatementClaimsSchema: z.ZodType<
-  ItWalletEntityStatementClaims,
-  z.ZodTypeDef,
-  ItWalletEntityStatementClaimsOptions
-> = baseSchema.passthrough().refine(
+const entityStatementClaimsSchema = baseSchema.loose().refine(
   (data) => {
     const keyIds = data.jwks.keys.map((key) => key.kid);
     const uniqueKeyIds = new Set(keyIds);
@@ -54,3 +49,9 @@ export const itWalletEntityStatementClaimsSchema: z.ZodType<
     path: ["jwks", "keys"],
   },
 );
+
+// The explicit type annotation here is necessary to avoid this node exceeds the maximum length the compiler will serialize.
+export const itWalletEntityStatementClaimsSchema: z.ZodType<
+  ItWalletEntityStatementClaims,
+  ItWalletEntityStatementClaimsOptions
+> = entityStatementClaimsSchema;

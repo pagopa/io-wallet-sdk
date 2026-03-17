@@ -17,6 +17,6 @@ export const createEntity = <T extends string, S extends z.ZodRawShape>({
   return {
     identifier,
     policySchema: swapValidators(schema, metadataPolicySchema.optional()),
-    schema: passThroughUnknownProperties ? schema.passthrough() : schema,
+    schema: passThroughUnknownProperties ? schema.loose() : schema,
   };
 };

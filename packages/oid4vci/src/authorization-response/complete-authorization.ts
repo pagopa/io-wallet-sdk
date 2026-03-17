@@ -44,6 +44,10 @@ export type SendAuthorizationResponseAndExtractCodeOptions =
     > &
     Omit<CompleteAuthorizationOptions, "response_uri">;
 
+export type CompleteAuthorizationResult = Awaited<
+  ReturnType<typeof getJwtFromFormPost<AuthorizationResponse>>
+>;
+
 /**
  * Method that completes the form_post.jwt based authorization
  * process for credentials issuance following the ITWallet
@@ -60,7 +64,7 @@ export type SendAuthorizationResponseAndExtractCodeOptions =
  */
 export async function completeAuthorization(
   options: CompleteAuthorizationOptions,
-): ReturnType<typeof getJwtFromFormPost<typeof zAuthorizationResponse>> {
+): Promise<CompleteAuthorizationResult> {
   try {
     const fetch = createFetcher(options.callbacks.fetch);
     const authorizationResponseResult = await fetch(options.response_uri);

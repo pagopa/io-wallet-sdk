@@ -49,7 +49,7 @@ export const metadataPolicySchema = z
         )
       ) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `policy operator '${
             operator.key
           }' can only be combined with one of: [${operator.canBeCombinedWith.join(
@@ -58,8 +58,6 @@ export const metadataPolicySchema = z
         });
       }
     }
-
-    return data;
   });
 
 export type MetadataPolicyOperator = z.input<typeof metadataPolicySchema>;

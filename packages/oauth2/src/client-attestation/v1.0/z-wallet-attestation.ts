@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { zJwk } from "../../common/jwk/z-jwk";
 import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
+import { zTrustChain } from "../../common/z-common";
 
 /**
  * JWT Header schema for IT-Wallet v1.0 Wallet Attestation
@@ -10,13 +11,11 @@ import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
  * - trust_chain is REQUIRED
  * - x5c is NOT supported
  */
-export const zWalletAttestationJwtHeaderV1_0 = z
-  .object({
-    ...zJwtHeader.shape,
-    trust_chain: z.array(z.string()).nonempty(), // REQUIRED in v1.0
-    typ: z.literal("oauth-client-attestation+jwt"),
-  })
-  .passthrough();
+export const zWalletAttestationJwtHeaderV1_0 = z.looseObject({
+  ...zJwtHeader.shape,
+  trust_chain: zTrustChain, // REQUIRED in v1.0
+  typ: z.literal("oauth-client-attestation+jwt"),
+});
 
 /**
  * JWT Payload schema for IT-Wallet v1.0 Wallet Attestation
@@ -25,21 +24,19 @@ export const zWalletAttestationJwtHeaderV1_0 = z
  * - Standard claims only
  * - No nbf or status support
  */
-export const zWalletAttestationJwtPayloadV1_0 = z
-  .object({
-    ...zJwtPayload.shape,
-    aal: z.string(),
-    cnf: z.object({
-      jwk: zJwk,
-    }),
-    exp: z.number(),
-    iat: z.number(),
-    iss: z.string(),
-    sub: z.string(),
-    wallet_link: z.string().url().optional(),
-    wallet_name: z.string().optional(),
-  })
-  .passthrough();
+export const zWalletAttestationJwtPayloadV1_0 = z.looseObject({
+  ...zJwtPayload.shape,
+  aal: z.string(),
+  cnf: z.object({
+    jwk: zJwk,
+  }),
+  exp: z.number(),
+  iat: z.number(),
+  iss: z.string(),
+  sub: z.string(),
+  wallet_link: z.url().optional(),
+  wallet_name: z.string().optional(),
+});
 
 /**
  * Wallet Attestation JWT type for v1.0

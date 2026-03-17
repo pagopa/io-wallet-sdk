@@ -1,21 +1,20 @@
+import type { ZodType } from "zod";
+
 import { jwtSignerFromJwt, verifyJwt } from "@openid4vc/oauth2";
-import { ZodType, z } from "zod";
+
+import type { JwtHeader, JwtPayload } from "../common/jwt/z-jwt";
+import type { BaseVerifyWalletAttestationJwtOptions } from "./types";
 
 import { decodeJwt } from "../common/jwt/decode-jwt";
-import { BaseVerifyWalletAttestationJwtOptions } from "./types";
 
 export async function verifyWalletAttestationBase<
-  THeader extends ZodType,
-  TPayload extends ZodType,
+  THeader extends ZodType<JwtHeader>,
+  TPayload extends ZodType<JwtPayload>,
 >(
   options: BaseVerifyWalletAttestationJwtOptions,
   headerSchema: THeader,
   payloadSchema: TPayload,
-): Promise<{
-  header: z.infer<THeader>;
-  payload: z.infer<TPayload>;
-  signer: Awaited<ReturnType<typeof verifyJwt>>["signer"];
-}> {
+) {
   const { header, payload } = decodeJwt({
     headerSchema,
     jwt: options.walletAttestationJwt,

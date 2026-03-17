@@ -1,7 +1,9 @@
 import {
   zAlgValueNotNone,
+  zCertificateChain,
   zJwtPayload,
   zSignedAuthorizationRequestJwtHeaderTyp,
+  zTrustChain,
 } from "@pagopa/io-wallet-oauth2";
 import { itWalletCredentialVerifierMetadataV1_3 } from "@pagopa/io-wallet-oid-federation";
 import { z } from "zod";
@@ -11,23 +13,22 @@ import { z } from "zod";
  * containing an OID4VP Request Object
  */
 export const zOpenid4vpAuthorizationRequestPayload = z
-  .object({
+  .looseObject({
     client_id: z.string(),
     client_metadata: itWalletCredentialVerifierMetadataV1_3.optional(),
     dcql_query: z.record(z.string(), z.any()),
     nonce: z.string(),
-    request_uri: z.string().url().optional(),
+    request_uri: z.url().optional(),
     request_uri_method: z.optional(z.string()),
     response_mode: z.literal("direct_post.jwt"),
     response_type: z.literal("vp_token"),
-    response_uri: z.string().url(),
+    response_uri: z.url(),
     scope: z.string().optional(),
     state: z.string(),
     transaction_data: z.array(z.string()).nonempty().optional(),
     transaction_data_hashes_alg: z.array(z.string()).optional(),
     wallet_nonce: z.string().optional(),
   })
-  .passthrough()
   .and(
     z.object({
       ...zJwtPayload.shape,
@@ -48,9 +49,9 @@ const zOpenid4vpAuthorizationRequestHeaderBase = z.object({
 export const zOpenid4vpAuthorizationRequestHeaderV1_0 =
   zOpenid4vpAuthorizationRequestHeaderBase
     .extend({
-      trust_chain: z.array(z.string()).nonempty(),
+      trust_chain: zTrustChain,
     })
-    .passthrough();
+    .loose();
 
 export type Openid4vpAuthorizationRequestHeaderV1_0 = z.infer<
   typeof zOpenid4vpAuthorizationRequestHeaderV1_0
@@ -59,10 +60,10 @@ export type Openid4vpAuthorizationRequestHeaderV1_0 = z.infer<
 export const zOpenid4vpAuthorizationRequestHeaderV1_3 =
   zOpenid4vpAuthorizationRequestHeaderBase
     .extend({
-      trust_chain: z.array(z.string()).nonempty().optional(),
-      x5c: z.array(z.string()).nonempty(),
+      trust_chain: zTrustChain.optional(),
+      x5c: zCertificateChain,
     })
-    .passthrough();
+    .loose();
 
 export type Openid4vpAuthorizationRequestHeaderV1_3 = z.infer<
   typeof zOpenid4vpAuthorizationRequestHeaderV1_3
