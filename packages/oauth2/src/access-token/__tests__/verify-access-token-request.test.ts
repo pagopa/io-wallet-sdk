@@ -445,8 +445,18 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       const customDate = new Date("2024-06-01T12:00:00Z");
       const codeExpiresAt = new Date("2024-06-01T11:00:00Z"); // 1 hour before
 
+      const dpopJwt = createMockDpopJwt({
+        htm: "POST",
+        htu: "https://auth.example.com/token",
+        iat: Math.floor(customDate.getTime() / 1000),
+        jti: "test-jti",
+      });
+
       const options = createValidOptions({
         codeExpiresAt,
+        dpop: {
+          jwt: dpopJwt,
+        },
         now: customDate,
       });
 
@@ -511,8 +521,18 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       const now = new Date("2024-06-01T12:00:00.000Z");
       const codeExpiresAt = new Date("2024-06-01T12:00:00.000Z"); // Same time
 
+      const dpopJwt = createMockDpopJwt({
+        htm: "POST",
+        htu: "https://auth.example.com/token",
+        iat: Math.floor(now.getTime() / 1000),
+        jti: "test-jti",
+      });
+
       const options = createValidOptions({
         codeExpiresAt,
+        dpop: {
+          jwt: dpopJwt,
+        },
         now,
       });
 
@@ -526,8 +546,18 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       const now = new Date("2024-06-01T12:00:00.001Z");
       const codeExpiresAt = new Date("2024-06-01T12:00:00.000Z");
 
+      const dpopJwt = createMockDpopJwt({
+        htm: "POST",
+        htu: "https://auth.example.com/token",
+        iat: Math.floor(now.getTime() / 1000),
+        jti: "test-jti",
+      });
+
       const options = createValidOptions({
         codeExpiresAt,
+        dpop: {
+          jwt: dpopJwt,
+        },
         now,
       });
 

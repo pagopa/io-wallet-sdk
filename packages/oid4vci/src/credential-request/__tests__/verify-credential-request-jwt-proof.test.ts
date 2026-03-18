@@ -233,7 +233,9 @@ describe("verifyCredentialRequestJwtProof", () => {
           nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
           now: TEST_NOW,
         }),
-      ).rejects.toThrow(/iat claim in credential request proof JWT is too old/);
+      ).rejects.toThrow(
+        /Invalid iat claim in credential request proof JWT: iat claim in JWT is too old/,
+      );
     });
 
     it("should not throw when iat is exactly 5 minutes old", async () => {
@@ -270,7 +272,7 @@ describe("verifyCredentialRequestJwtProof", () => {
           now: TEST_NOW,
         }),
       ).rejects.toThrow(
-        /iat claim in credential request proof JWT is too far in the future/,
+        /Invalid iat claim in credential request proof JWT: iat claim in JWT is too far in the future/,
       );
     });
   });
@@ -448,7 +450,9 @@ describe("verifyCredentialRequestJwtProof", () => {
           now: TEST_NOW,
           trustedWalletProviderIssuers: [TEST_TRUSTED_WALLET_PROVIDER_ISSUER],
         }),
-      ).rejects.toThrow(/iat claim in credential request proof JWT is too old/);
+      ).rejects.toThrow(
+        /Invalid iat claim in credential request proof JWT: iat claim in JWT is too old/,
+      );
     });
   });
 
