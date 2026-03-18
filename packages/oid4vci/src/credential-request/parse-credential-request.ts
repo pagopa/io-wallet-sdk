@@ -326,7 +326,8 @@ function parseAuthorizationHeader(headers: FetchHeaders): string {
 
   const [scheme, token, ...rest] = authorizationHeader.split(/\s+/);
 
-  if (rest.length > 0 || scheme !== "DPoP" || !token) {
+  // Per RFC 9110 authentication schemes are case-insensitive
+  if (rest.length > 0 || scheme?.toLowerCase() !== "dpop" || !token) {
     throw new CredentialAuthorizationHeaderError(
       "Credential request contains an invalid 'Authorization' header. Expected format: 'Authorization: DPoP <access_token>'",
     );
