@@ -8,6 +8,7 @@ import {
   RequestLike,
   decodeUtf8String,
   encodeToBase64Url,
+  verifyJwtIatOrThrow,
 } from "@pagopa/io-wallet-utils";
 
 import { decodeJwt } from "../common/jwt/decode-jwt";
@@ -143,6 +144,17 @@ export async function verifyTokenDPoP(options: VerifyTokenDPoPOptions) {
     throw new Oauth2Error(
       `Dpop is signed with jwk with thumbprint value '${jwkThumbprint}', but expect jwk thumbprint value '${options.expectedJwkThumbprint}'`,
     );
+  }
+
+  try {
+    verifyJwtIatOrThrow({
+      iat: payload.iat,
+      now: options.now,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Oauth2Error(`Invalid iat claim in dpop JWT: ${error.message}`);
+    }
   }
 
   await verifyJwt({
