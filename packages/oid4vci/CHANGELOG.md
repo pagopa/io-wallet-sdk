@@ -1,5 +1,20 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.2.0
+
+### Minor Changes
+
+- 32a8f92: feat: upgrade zod library to v4
+- 5840e8e: feat(oid4vci): parse DPoP access token from credential requests
+
+### Patch Changes
+
+- Updated dependencies [32a8f92]
+  - @pagopa/io-wallet-oid-federation@1.2.0
+  - @pagopa/io-wallet-oauth2@1.2.0
+  - @pagopa/io-wallet-oid4vp@1.2.0
+  - @pagopa/io-wallet-utils@1.2.0
+
 ## 1.1.2
 
 ### Patch Changes
