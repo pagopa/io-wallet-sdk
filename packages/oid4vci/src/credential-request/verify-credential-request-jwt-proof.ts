@@ -13,6 +13,7 @@ import {
   ItWalletSpecsVersionError,
   ValidationError,
   hasConfigVersion,
+  verifyJwtIatOrThrow,
 } from "@pagopa/io-wallet-utils";
 
 import {
@@ -127,33 +128,22 @@ async function isJwkInSet(options: IsJwkInSetOptions): Promise<boolean> {
   return thumbprints.includes(targetThumbprint);
 }
 
-const MAX_IAT_AGE_SECONDS = 5 * 60;
-const CLOCK_SKEW_TOLERANCE_SECONDS = 60;
-
 function verifyProofJwtIatOrThrow(options: {
   now?: Date;
   payload: ProofJwtPayload;
 }) {
-  // IT-Wallet freshness policy for proof JWTs: iat must be recent and not too far in the future.
-  if (options.payload.iat === undefined) {
-    throw new VerifyCredentialRequestJwtProofError(
-      "iat claim in credential request proof JWT is missing",
-    );
-  }
-
-  const now = options.now ?? new Date();
-  const nowSeconds = Math.floor(now.getTime() / 1000);
-
-  if (nowSeconds - options.payload.iat > MAX_IAT_AGE_SECONDS) {
-    throw new VerifyCredentialRequestJwtProofError(
-      "iat claim in credential request proof JWT is too old (must be within 5 minutes)",
-    );
-  }
-
-  if (options.payload.iat - nowSeconds > CLOCK_SKEW_TOLERANCE_SECONDS) {
-    throw new VerifyCredentialRequestJwtProofError(
-      "iat claim in credential request proof JWT is too far in the future",
-    );
+  try {
+    verifyJwtIatOrThrow({
+      iat: options.payload.iat,
+      now: options.now,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new VerifyCredentialRequestJwtProofError(
+        `Invalid iat claim in credential request proof JWT: ${error.message}`,
+        error,
+      );
+    }
   }
 }
 
