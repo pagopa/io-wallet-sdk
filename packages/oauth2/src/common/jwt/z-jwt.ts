@@ -1,7 +1,12 @@
 import z from "zod";
 
 import { Jwk, zJwk } from "../jwk/z-jwk";
-import { zAlgValueNotNone, zCertificateChain, zTrustChain } from "../z-common";
+import {
+  TrustChain,
+  zAlgValueNotNone,
+  zCertificateChain,
+  zTrustChain,
+} from "../z-common";
 
 export interface JwtSignerDid {
   alg: string;
@@ -39,7 +44,7 @@ export interface JwtSignerX5c {
   kid?: string;
   method: "x5c";
 
-  trustChain?: [string, ...string[]];
+  trustChain?: TrustChain;
   x5c: string[];
 }
 
@@ -52,7 +57,7 @@ export interface JwtSignerFederation {
   kid: string;
   method: "federation";
 
-  trustChain?: [string, ...string[]];
+  trustChain?: TrustChain;
 }
 
 // In case of custom nothing will be added to the header
