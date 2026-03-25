@@ -9,7 +9,7 @@ import {
 
 import type { InferSchemaOrDefaultOutput } from "./decode-jwt";
 
-import { zJwtHeader } from "./z-jwt";
+import { JwtSigner, zJwtHeader } from "./z-jwt";
 
 export interface DecodeJwtHeaderOptions<
   HeaderSchema extends BaseSchema | undefined,
@@ -64,4 +64,38 @@ export function decodeJwtHeader<
   return {
     header,
   };
+}
+
+export function jwtHeaderFromJwtSigner(signer: JwtSigner) {
+  if (signer.method === "did") {
+    return {
+      alg: signer.alg,
+      kid: signer.didUrl,
+    };
+  }
+
+  if (signer.method === "federation") {
+    return {
+      alg: signer.alg,
+      kid: signer.kid,
+      trust_chain: signer.trustChain,
+    };
+  }
+
+  if (signer.method === "jwk") {
+    return {
+      alg: signer.alg,
+      jwk: signer.publicJwk,
+    };
+  }
+
+  if (signer.method === "x5c") {
+    return {
+      alg: signer.alg,
+      kid: signer.kid,
+      trust_chain: signer.trustChain,
+      x5c: signer.x5c,
+    };
+  }
+  return { alg: signer.alg };
 }
