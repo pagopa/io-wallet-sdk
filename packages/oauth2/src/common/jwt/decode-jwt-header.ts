@@ -93,6 +93,7 @@ export function jwtHeaderFromJwtSigner(signer: JwtSigner) {
     return {
       alg: signer.alg,
       kid: signer.kid,
+      trust_chain: signer.trustChain,
       x5c: signer.x5c,
     };
   }

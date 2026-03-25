@@ -39,6 +39,7 @@ export interface JwtSignerX5c {
   kid?: string;
   method: "x5c";
 
+  trustChain?: [string, ...string[]];
   x5c: string[];
 }
 
