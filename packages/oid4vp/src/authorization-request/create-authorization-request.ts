@@ -1,10 +1,10 @@
-import { jwtHeaderFromJwtSigner } from "@openid4vc/oauth2";
 import {
   type CallbackContext,
   type CreateJarRequestOptions,
   CreateJarRequestResult,
   JarAuthorizationRequest,
   createJarRequest,
+  jwtHeaderFromJwtSigner,
   signedAuthorizationRequestJwtHeaderTyp,
 } from "@pagopa/io-wallet-oauth2";
 import {
