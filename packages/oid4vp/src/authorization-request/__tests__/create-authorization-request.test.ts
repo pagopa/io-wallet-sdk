@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { createJarRequest } from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
@@ -6,7 +7,11 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Oid4vpError } from "../../errors";
-import { createAuthorizationRequest } from "../create-authorization-request";
+import {
+  type CreateAuthorizationRequestOptionsV1_0,
+  type CreateAuthorizationRequestOptionsV1_3,
+  createAuthorizationRequest,
+} from "../create-authorization-request";
 import { Openid4vpAuthorizationRequestPayload } from "../z-authorization-request";
 
 vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
@@ -44,6 +49,17 @@ const jar = {
     kid: "kid-123",
     method: "federation" as const,
     trustChain: ["entity-statement-jwt"] as [string, ...string[]],
+  },
+  requestUri: "https://rp.example.org/request.jwt",
+};
+
+const jarV1_3 = {
+  expiresInSeconds: 600,
+  jwtSigner: {
+    alg: "ES256",
+    kid: "kid-123",
+    method: "x5c" as const,
+    x5c: ["leaf-certificate"],
   },
   requestUri: "https://rp.example.org/request.jwt",
 };
@@ -105,6 +121,44 @@ describe("createAuthorizationRequest", () => {
     });
   });
 
+  it("narrows signer requirements by config version at compile time", () => {
+    const optionsV1_0: CreateAuthorizationRequestOptionsV1_0 = {
+      authorizationRequestPayload,
+      callbacks,
+      config: configV1_0,
+      jar,
+    };
+
+    const optionsV1_3: CreateAuthorizationRequestOptionsV1_3 = {
+      authorizationRequestPayload,
+      callbacks,
+      config: configV1_3,
+      jar: jarV1_3,
+    };
+
+    expect(optionsV1_0.jar.jwtSigner.method).toBe("federation");
+    expect(optionsV1_3.jar.jwtSigner.method).toBe("x5c");
+
+    const invalidV1_0 = {
+      authorizationRequestPayload,
+      callbacks,
+      config: configV1_0,
+      // @ts-expect-error v1.0 only accepts federation signers
+      jar: jarV1_3,
+    } satisfies CreateAuthorizationRequestOptionsV1_0;
+
+    const invalidV1_3 = {
+      authorizationRequestPayload,
+      callbacks,
+      config: configV1_3,
+      // @ts-expect-error v1.3 only accepts x5c signers
+      jar,
+    } satisfies CreateAuthorizationRequestOptionsV1_3;
+
+    expect(invalidV1_0).toBeDefined();
+    expect(invalidV1_3).toBeDefined();
+  });
+
   it("does not overwrite additionalJwtPayload.aud when already provided", async () => {
     vi.mocked(createJarRequest).mockResolvedValue({
       authorizationRequestJwt: "signed.jwt.value",
@@ -143,7 +197,7 @@ describe("createAuthorizationRequest", () => {
     );
   });
 
-  it("throws Oid4vpError in v1.3 when x5c is missing", async () => {
+  it("creates an authorization request URL in v1.3 with an x5c signer", async () => {
     vi.mocked(createJarRequest).mockResolvedValue({
       authorizationRequestJwt: "signed.jwt.value",
       jarAuthorizationRequest: {
@@ -158,15 +212,27 @@ describe("createAuthorizationRequest", () => {
       },
     });
 
-    await expect(
-      createAuthorizationRequest({
-        authorizationRequestPayload,
-        callbacks,
-        config: configV1_3,
-        jar,
-        scheme: "https://wallet.example.org/authorize?existing=1",
+    const result = await createAuthorizationRequest({
+      authorizationRequestPayload,
+      callbacks,
+      config: configV1_3,
+      jar: jarV1_3,
+      scheme: "https://wallet.example.org/authorize?existing=1",
+    });
+
+    expect(createJarRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorizationRequestHeader: {
+          alg: "ES256",
+          kid: "kid-123",
+          typ: "oauth-authz-req+jwt",
+          x5c: ["leaf-certificate"],
+        },
       }),
-    ).rejects.toThrow(Oid4vpError);
+    );
+    expect(result.authorizationRequest).toBe(
+      "https://wallet.example.org/authorize?existing=1&client_id=client-123&request_uri=https%3A%2F%2Frp.example.org%2Frequest.jwt",
+    );
   });
 
   it("throws Oid4vpError when authorization payload is invalid", async () => {
@@ -205,9 +271,8 @@ describe("createAuthorizationRequest", () => {
           ...jar,
           jwtSigner: {
             alg: "ES256",
-            didUrl: "did:key:z6MkiTBz1xAA9nVwJ7LFw7kS2F8Q6XvX1YfC5gPA1JxH7M5M",
-            method: "did",
-          },
+            method: "federation",
+          } as CreateAuthorizationRequestOptionsV1_0["jar"]["jwtSigner"],
         },
       }),
     ).rejects.toThrow(Oid4vpError);

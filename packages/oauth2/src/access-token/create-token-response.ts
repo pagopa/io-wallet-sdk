@@ -3,7 +3,6 @@ import {
   HashAlgorithm,
   JwtSigner,
   calculateJwkThumbprint,
-  jwtHeaderFromJwtSigner,
 } from "@openid4vc/oauth2";
 import {
   addSecondsToDate,
@@ -13,6 +12,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { Jwk } from "../common/jwk/z-jwk";
+import { jwtHeaderFromJwtSigner } from "../common/jwt/decode-jwt-header";
 import { CreateTokenResponseError } from "../errors";
 import {
   AccessTokenProfileJwtHeader,
