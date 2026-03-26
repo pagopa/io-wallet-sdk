@@ -3,6 +3,7 @@ import {
   BaseSchema,
   decodeBase64,
   encodeToUtf8String,
+  formatError,
   parseWithErrorHandling,
   stringToJsonWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
@@ -56,7 +57,10 @@ export function decodeJwt<
   const jwtParts = options.jwt.split(".");
   if (jwtParts.length !== 3) {
     throw new Oauth2JwtParseError(
-      `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+      formatError(
+        "Unable to decode because Jwt is not a valid!",
+        options.errorMessagePrefix,
+      ),
     );
   }
 
@@ -65,23 +69,35 @@ export function decodeJwt<
     const payloadPart = jwtParts[1];
     if (payloadPart === undefined) {
       throw new Oauth2JwtParseError(
-        `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+        formatError(
+          "Unable to decode because Jwt is not a valid!",
+          options.errorMessagePrefix,
+        ),
       );
     }
     payloadJson = stringToJsonWithErrorHandling(
       encodeToUtf8String(decodeBase64(payloadPart)),
-      `${options.errorMessagePrefix ?? ""} Unable to parse jwt payload to JSON`,
+      formatError(
+        "Unable to parse jwt payload to JSON",
+        options.errorMessagePrefix,
+      ),
     );
   } catch (error) {
     throw new Oauth2JwtParseError(
-      `${options.errorMessagePrefix ?? ""} Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
+      formatError(
+        `Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
+        options.errorMessagePrefix,
+      ),
     );
   }
 
   const signaturePart = jwtParts[2];
   if (signaturePart === undefined) {
     throw new Oauth2JwtParseError(
-      `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+      formatError(
+        "Unable to decode because Jwt is not a valid!",
+        options.errorMessagePrefix,
+      ),
     );
   }
 
@@ -93,7 +109,7 @@ export function decodeJwt<
   const payload = parseWithErrorHandling(
     options.payloadSchema ?? zJwtPayload,
     payloadJson,
-    `${options.errorMessagePrefix ?? ""} Invalid JWT payload:`,
+    formatError("Invalid JWT payload", options.errorMessagePrefix),
   );
 
   return {

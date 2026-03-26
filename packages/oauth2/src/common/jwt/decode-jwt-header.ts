@@ -3,6 +3,7 @@ import {
   BaseSchema,
   decodeBase64,
   encodeToUtf8String,
+  formatError,
   parseWithErrorHandling,
   stringToJsonWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
@@ -45,7 +46,10 @@ export function decodeJwtHeader<
   const jwtParts = options.jwt.split(".");
   if (jwtParts.length <= 2) {
     throw new Oauth2JwtParseError(
-      `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+      formatError(
+        "Unable to decode because Jwt is not a valid!",
+        options.errorMessagePrefix,
+      ),
     );
   }
 
@@ -55,18 +59,24 @@ export function decodeJwtHeader<
   try {
     headerJson = stringToJsonWithErrorHandling(
       encodeToUtf8String(decodeBase64(headerPart)),
-      `${options.errorMessagePrefix ?? ""} Unable to parse jwt header to JSON`,
+      formatError(
+        "Unable to parse jwt header to JSON",
+        options.errorMessagePrefix,
+      ),
     );
   } catch (error) {
     throw new Oauth2JwtParseError(
-      `${options.errorMessagePrefix ?? ""} Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
+      formatError(
+        `Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
+        options.errorMessagePrefix,
+      ),
     );
   }
 
   const header = parseWithErrorHandling(
     options.headerSchema ?? zJwtHeader,
     headerJson,
-    `${options.errorMessagePrefix ?? ""} Invalid JWT header:`,
+    formatError("Invalid JWT header", options.errorMessagePrefix),
   ) as InferSchemaOrDefaultOutput<HeaderSchema, typeof zJwtHeader>;
 
   return {
