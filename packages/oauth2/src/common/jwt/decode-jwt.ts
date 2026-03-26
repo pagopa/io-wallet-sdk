@@ -16,6 +16,11 @@ export interface DecodeJwtOptions<
   PayloadSchema extends BaseSchema | undefined,
 > {
   /**
+   * Optional prefix for error messages thrown during decoding, to provide more context on where the error occurred
+   */
+  errorMessagePrefix?: string;
+
+  /**
    * Schema to use for validating the header. If not provided the
    * default `zJwtHeader` schema will be used
    */
@@ -50,37 +55,45 @@ export function decodeJwt<
 ): DecodeJwtResult<HeaderSchema, PayloadSchema> {
   const jwtParts = options.jwt.split(".");
   if (jwtParts.length !== 3) {
-    throw new Oauth2JwtParseError("Jwt is not a valid jwt, unable to decode");
+    throw new Oauth2JwtParseError(
+      `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+    );
   }
 
   let payloadJson: Record<string, unknown>;
   try {
     const payloadPart = jwtParts[1];
     if (payloadPart === undefined) {
-      throw new Oauth2JwtParseError("Jwt is not a valid jwt, unable to decode");
+      throw new Oauth2JwtParseError(
+        `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+      );
     }
     payloadJson = stringToJsonWithErrorHandling(
       encodeToUtf8String(decodeBase64(payloadPart)),
-      "Unable to parse jwt payload to JSON",
+      `${options.errorMessagePrefix ?? ""} Unable to parse jwt payload to JSON`,
     );
   } catch (error) {
     throw new Oauth2JwtParseError(
-      `Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
+      `${options.errorMessagePrefix ?? ""} Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
     );
   }
 
   const signaturePart = jwtParts[2];
   if (signaturePart === undefined) {
-    throw new Oauth2JwtParseError("Jwt is not a valid jwt, unable to decode");
+    throw new Oauth2JwtParseError(
+      `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+    );
   }
 
   const { header } = decodeJwtHeader({
+    errorMessagePrefix: options.errorMessagePrefix,
     headerSchema: options.headerSchema,
     jwt: options.jwt,
   });
   const payload = parseWithErrorHandling(
     options.payloadSchema ?? zJwtPayload,
     payloadJson,
+    `${options.errorMessagePrefix ?? ""} Invalid JWT payload:`,
   );
 
   return {

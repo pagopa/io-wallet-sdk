@@ -15,6 +15,11 @@ export interface DecodeJwtHeaderOptions<
   HeaderSchema extends BaseSchema | undefined,
 > {
   /**
+   * Optional prefix for error messages thrown during decoding, to provide more context on where the error occurred
+   */
+  errorMessagePrefix?: string;
+
+  /**
    * Schema to use for validating the header. If not provided the
    * default `zJwtHeader` schema will be used
    */
@@ -39,7 +44,9 @@ export function decodeJwtHeader<
 ): DecodeJwtHeaderResult<HeaderSchema> {
   const jwtParts = options.jwt.split(".");
   if (jwtParts.length <= 2) {
-    throw new Oauth2JwtParseError("Jwt is not a valid jwt, unable to decode");
+    throw new Oauth2JwtParseError(
+      `${options.errorMessagePrefix ?? ""} Unable to decode because Jwt is not a valid!`,
+    );
   }
 
   const [headerPart] = jwtParts as [string, ...string[]];
@@ -48,17 +55,18 @@ export function decodeJwtHeader<
   try {
     headerJson = stringToJsonWithErrorHandling(
       encodeToUtf8String(decodeBase64(headerPart)),
-      "Unable to parse jwt header to JSON",
+      `${options.errorMessagePrefix ?? ""} Unable to parse jwt header to JSON`,
     );
   } catch (error) {
     throw new Oauth2JwtParseError(
-      `Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
+      `${options.errorMessagePrefix ?? ""} Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
     );
   }
 
   const header = parseWithErrorHandling(
     options.headerSchema ?? zJwtHeader,
     headerJson,
+    `${options.errorMessagePrefix ?? ""} Invalid JWT header:`,
   ) as InferSchemaOrDefaultOutput<HeaderSchema, typeof zJwtHeader>;
 
   return {
