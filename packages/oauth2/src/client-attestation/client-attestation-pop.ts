@@ -59,6 +59,7 @@ export async function verifyClientAttestationPopJwt(
 ) {
   try {
     const { header, payload } = decodeJwt({
+      errorMessagePrefix: "Error decoding client attestation PoP JWT:",
       jwt: options.clientAttestationPopJwt,
     });
 
@@ -143,6 +144,7 @@ export async function createClientAttestationPopJwt(
 ) {
   try {
     const clientAttestation = decodeJwt({
+      errorMessagePrefix: "Error decoding client attestation JWT:",
       jwt: options.clientAttestation,
     });
 

@@ -158,6 +158,7 @@ export async function verifyJarmAuthorizationResponse(
 
   if (responseIsSigned) {
     const { header: jwsProtectedHeader, payload: jwsPayload } = decodeJwt({
+      errorMessagePrefix: "Error decoding JARM authorization response JWT:",
       headerSchema: z.object({ ...zJwtHeader.shape, kid: z.string() }),
       jwt: decryptedRequestData.payload,
     });

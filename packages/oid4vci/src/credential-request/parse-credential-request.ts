@@ -171,7 +171,10 @@ function parseProofJwt(options: {
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 | ItWalletSpecsVersion.V1_3;
   jwt: string;
 }): ParsedCredentialProof {
-  const decoded = decodeJwt({ jwt: options.jwt });
+  const decoded = decodeJwt({
+    errorMessagePrefix: "Error decoding credential request proof JWT:",
+    jwt: options.jwt,
+  });
   const headerValidation =
     options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3
       ? zProofJwtHeaderV1_3.safeParse(decoded.header)

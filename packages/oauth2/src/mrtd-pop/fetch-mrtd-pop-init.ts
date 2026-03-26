@@ -91,6 +91,7 @@ export async function fetchMrtdPopInit(
     const responseJwt = await response.text();
 
     const jwt = decodeJwt({
+      errorMessagePrefix: "Error decoding MRTD PoP init response JWT:",
       headerSchema: zMrtdPopInitResponseJwtHeader,
       jwt: responseJwt,
       payloadSchema: zMrtdPopInitResponseJwtPayload,
