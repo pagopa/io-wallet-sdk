@@ -77,6 +77,7 @@ export const createWalletAttestationJwt = async (
     });
 
     decodeJwt({
+      errorMessagePrefix: "Error decoding wallet attestation JWT:",
       headerSchema: zWalletAttestationJwtHeaderV1_0,
       jwt: result.jwt,
       payloadSchema: zWalletAttestationJwtPayloadV1_0,

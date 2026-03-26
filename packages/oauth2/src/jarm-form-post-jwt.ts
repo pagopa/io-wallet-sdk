@@ -68,6 +68,7 @@ export const getJwtFromFormPost = async <T>(
         if (responseJwt) {
           const jwt = responseJwt.replace(lineExpressionRegex, "");
           const decodedJwt = decodeJwt({
+            errorMessagePrefix: "Error decoding JARM form post JWT:",
             jwt,
             payloadSchema: options.schema,
           });

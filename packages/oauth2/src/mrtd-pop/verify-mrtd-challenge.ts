@@ -54,6 +54,7 @@ export async function verifyMrtdChallenge(
   const { callbacks, challengeJwt, clientId } = options;
 
   const jwt = decodeJwt({
+    errorMessagePrefix: "Error decoding MRTD challenge JWT:",
     headerSchema: zMrtdChallengeJwtHeader,
     jwt: challengeJwt,
     payloadSchema: zMrtdChallengeJwtPayload,
