@@ -1,5 +1,18 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.2.0
+
+### Minor Changes
+
+- 32a8f92: feat: upgrade zod library to v4
+
+### Patch Changes
+
+- 586cb5e: fix: add local JWT signer header mapping aligned with IT Wallet spec
+  refactor: ensuring compile-time enforcement in OID4VP createAuthorizationRequest of allowed signer types for each IT Wallet spec version
+- Updated dependencies [32a8f92]
+  - @pagopa/io-wallet-utils@1.2.0
+
 ## 1.1.2
 
 ### Patch Changes
