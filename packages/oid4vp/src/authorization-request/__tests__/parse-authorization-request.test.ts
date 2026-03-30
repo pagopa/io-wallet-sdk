@@ -169,6 +169,30 @@ const x509RequestObjectJwt = createJwt({
   signature: "valid_x509_signature",
 });
 
+// V1_3 header for openid_federation / no-prefix without trust_chain (delegation scenario)
+const v1_3FederationHeaderNoTrustChain = {
+  alg: "ES256",
+  kid: "test-kid",
+  typ: "oauth-authz-req+jwt",
+  x5c: ["MIIBxxx..."],
+};
+
+const v1_3FederationNoTrustChainJwt = createJwt({
+  header: v1_3FederationHeaderNoTrustChain,
+  payload: correctRequestObject,
+  signature: "valid_signature",
+});
+
+const v1_3FederationClientIdNoTrustChainJwt = createJwt({
+  header: v1_3FederationHeaderNoTrustChain,
+  payload: {
+    ...correctRequestObject,
+    client_id: "openid_federation:test-client-id",
+    iss: "openid_federation:test-client-id",
+  },
+  signature: "valid_signature",
+});
+
 const x509RequestObjectMissingX5cJwt = createJwt({
   header: {
     alg: "ES256",
@@ -409,6 +433,25 @@ describe("parseAuthorizationRequest tests", () => {
           requestObjectJwt: x509RequestObjectMissingX5cJwt,
         }),
     ).rejects.toThrow(ValidationError);
+  });
+
+  it("should parse V1_3 request with no-prefix client_id and no trust_chain, delegating to verifyJwt", async () => {
+    const result = await parseAuthorizeRequest({
+      callbacks,
+      config: configV1_3,
+      requestObjectJwt: v1_3FederationNoTrustChainJwt,
+    });
+    expect(result.payload).toEqual(correctRequestObject);
+    expect(result.header.trust_chain).toBeUndefined();
+  });
+
+  it("should parse V1_3 request with openid_federation client_id and no trust_chain, delegating to verifyJwt", async () => {
+    const result = await parseAuthorizeRequest({
+      callbacks,
+      config: configV1_3,
+      requestObjectJwt: v1_3FederationClientIdNoTrustChainJwt,
+    });
+    expect(result.header.trust_chain).toBeUndefined();
   });
 });
 

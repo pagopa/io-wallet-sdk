@@ -50,7 +50,9 @@ export function extractClientIdPrefix(clientId: string): ClientIdPrefix {
  *
  * Priority order:
  * 1. If client_id has x509_hash prefix: use x5c certificate chain from header
- * 2. If client_id has openid_federation prefix or no prefix: extract metadata from trust_chain in header
+ * 2. If client_id has openid_federation prefix or no prefix: return a federation signer; if trust_chain
+ *    is present it is forwarded, otherwise the verifyJwt callback is responsible for reconstructing
+ *    the chain from client_id
  *
  * @param options - Parse options containing decoded JWT
  * @returns The JWK to use for signature verification
@@ -80,17 +82,12 @@ function getPublicKeyForVerification(options: {
     };
   }
 
-  // Priority 2: openid_federation prefix or no prefix - extract from trust_chain
+  // Priority 2: openid_federation prefix or no prefix - use trust_chain if present,
+  // otherwise delegate chain reconstruction to the verifyJwt callback
   if (
     clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION ||
     clientIdPrefix === ClientIdPrefix.NONE
   ) {
-    if (!header.trust_chain) {
-      throw new ParseAuthorizeRequestError(
-        "trust_chain is required in JWT header for openid_federation client_id or no prefix",
-      );
-    }
-
     if (!header.kid) {
       throw new ParseAuthorizeRequestError(
         "kid is required in JWT header for openid_federation client_id or no prefix",
@@ -101,7 +98,7 @@ function getPublicKeyForVerification(options: {
       alg: header.alg,
       kid: header.kid,
       method: "federation" as const,
-      trustChain: header.trust_chain,
+      ...(header.trust_chain && { trustChain: header.trust_chain }),
     };
   }
 
@@ -143,7 +140,8 @@ export interface ParsedAuthorizeRequestResult {
  * callback is provided, it also verifies the JWT signature using the public key obtained
  * according to IT Wallet specifications:
  * 1. If client_id has x509_hash prefix: use x5c certificate chain from header
- * 2. If client_id has openid_federation prefix or no prefix: extract from header.trust_chain
+ * 2. If client_id has openid_federation prefix or no prefix: pass a federation signer to the callback;
+ *    trust_chain is forwarded when present, otherwise the callback must reconstruct the chain from client_id
  *
  * @param options {@link ParseAuthorizeRequestOptions}
  * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
