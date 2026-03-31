@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.2.1
+
+### Patch Changes
+
+- 09a60bc: fix remove x5c handling from getUsedJsonWebKey function
+  - @pagopa/io-wallet-oauth2@1.2.1
+  - @pagopa/io-wallet-utils@1.2.1
+
 ## 1.2.0
 
 ### Minor Changes
