@@ -112,6 +112,11 @@ async function buildTrustChain(
   verifyJwtCb: VerifyJwtWithJwkCallback,
 ): Promise<ECSequence> {
   for (const ec of ecs) {
+    if (ec.payload.iss !== ec.payload.sub) {
+      throw new TrustChainEvaluationError(
+        `entity configuration iss "${ec.payload.iss}" does not match sub "${ec.payload.sub}"`,
+      );
+    }
     const verificationResult = await verifyJwtWithKeySet(
       ec,
       ec.header.kid,
@@ -125,6 +130,8 @@ async function buildTrustChain(
       );
     }
   }
+
+  checkExpiry(ecs);
 
   // If there's only a single EC, return it directly
   if (ecs.length === 1) return ecs;
@@ -228,13 +235,29 @@ function checkExpiry(chain: ChainEntry[]): void {
 }
 
 function checkStructure(chain: ChainEntry[], trustAnchorUrls?: string[]): void {
+  const firstEntry = chain[0];
+  const lastEntry = chain[chain.length - 1];
+
+  if (firstEntry && firstEntry.payload.iss !== firstEntry.payload.sub) {
+    throw new TrustChainEvaluationError(
+      `leaf EC iss "${firstEntry.payload.iss}" does not match sub "${firstEntry.payload.sub}"`,
+    );
+  }
+  if (
+    lastEntry &&
+    lastEntry !== firstEntry &&
+    lastEntry.payload.iss !== lastEntry.payload.sub
+  ) {
+    throw new TrustChainEvaluationError(
+      `trust anchor EC iss "${lastEntry.payload.iss}" does not match sub "${lastEntry.payload.sub}"`,
+    );
+  }
+
   if (chain.length > 1) {
-    const firstEntry = chain[0];
-    const secondEntry = chain[1];
-    if (!firstEntry || !secondEntry) {
+    if (!firstEntry || !chain[1]) {
       throw new TrustChainEvaluationError("trust chain is malformed");
     }
-    if (firstEntry.payload.sub !== secondEntry.payload.sub) {
+    if (firstEntry.payload.sub !== chain[1].payload.sub) {
       throw new TrustChainEvaluationError(
         "leaf EC subject does not match first subordinate statement subject",
       );
@@ -256,7 +279,6 @@ function checkStructure(chain: ChainEntry[], trustAnchorUrls?: string[]): void {
   }
 
   if (trustAnchorUrls?.length) {
-    const lastEntry = chain[chain.length - 1];
     if (!lastEntry)
       throw new TrustChainEvaluationError("Trust chain root is not defined");
     if (!trustAnchorUrls.includes(lastEntry.payload.iss)) {
@@ -415,6 +437,7 @@ export async function validateTrustChain(
             `Error verifying self-signature of intermediate issuer EC for "${subEntry.payload.iss}"`,
           );
         }
+        checkExpiry([issuerEc]);
         // The issuer EC is the subject for the next subordinate statement.
         subjectEcForCheck = issuerEc;
       } else {

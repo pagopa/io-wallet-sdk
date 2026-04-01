@@ -304,7 +304,9 @@ describe("validateTrustChain - error cases", () => {
       "is not a trusted anchor",
     );
   });
+});
 
+describe("validateTrustChain - authority hints, signatures, and EC checks", () => {
   it("throws when sub-stmt issuer is not in subject authority_hints (§3.2 point 6)", async () => {
     const leafWithStrictHints = makeJwt(
       { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
@@ -338,6 +340,95 @@ describe("validateTrustChain - error cases", () => {
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow();
+  });
+
+  it("throws when leaf EC has mismatched iss and sub", async () => {
+    const mismatchedLeaf = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [ANCHOR_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: "https://other.example.com",
+      },
+    );
+    const chain = [mismatchedLeaf, makeSubStmt(), makeAnchorEC()];
+    const options: ValidateTrustChainOptions = {
+      callbacks: { verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(validateTrustChain(chain, options)).rejects.toThrow(
+      "does not match sub",
+    );
+  });
+
+  it("throws when a fetched intermediate EC is expired (with fetch callback)", async () => {
+    const expiredIntermediateEC = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        exp: past,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const subStmtLeaf = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const subStmtIntermediate = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const leafWithIntermediateHint = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [INTERMEDIATE_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const chain = [
+      leafWithIntermediateHint,
+      subStmtLeaf,
+      subStmtIntermediate,
+      makeAnchorEC(),
+    ];
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (
+        input.toString() === `${INTERMEDIATE_URL}/.well-known/openid-federation`
+      )
+        return new Response(expiredIntermediateEC, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+
+    const options: ValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+
+    await expect(validateTrustChain(chain, options)).rejects.toThrow(
+      "has expired",
+    );
   });
 });
 
@@ -597,6 +688,93 @@ describe("fetchAndValidateTrustChain - error cases", () => {
     };
     await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
       "federation_fetch_endpoint",
+    );
+  });
+});
+
+describe("fetchAndValidateTrustChain - expiry and EC validation errors", () => {
+  it("throws when a fetched intermediate EC is expired (buildTrustChain)", async () => {
+    const leafJwt = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [INTERMEDIATE_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const expiredIntermediateJwt = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [ANCHOR_URL],
+        exp: past,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        metadata: {
+          federation_entity: {
+            federation_fetch_endpoint: INTERMEDIATE_FETCH_ENDPOINT,
+          },
+        },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const anchorJwt = makeAnchorEC();
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(leafJwt, { status: 200 });
+      if (url === `${INTERMEDIATE_URL}/.well-known/openid-federation`)
+        return new Response(expiredIntermediateJwt, { status: 200 });
+      if (url === `${ANCHOR_URL}/.well-known/openid-federation`)
+        return new Response(anchorJwt, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+
+    await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
+      "has expired",
+    );
+  });
+
+  it("throws when a fetched EC has mismatched iss and sub (buildTrustChain)", async () => {
+    const mismatchedAnchorJwt = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [ANCHOR_KEY] },
+        metadata: {
+          federation_entity: { federation_fetch_endpoint: FETCH_ENDPOINT },
+        },
+        sub: "https://other.example.com",
+      },
+    );
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(makeLeafEC(), { status: 200 });
+      if (url === `${ANCHOR_URL}/.well-known/openid-federation`)
+        return new Response(mismatchedAnchorJwt, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+
+    await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
+      "does not match sub",
     );
   });
 
