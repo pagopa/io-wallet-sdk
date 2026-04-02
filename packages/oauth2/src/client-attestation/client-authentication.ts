@@ -1,7 +1,6 @@
-import {
-  AuthorizationServerMetadata,
-  CallbackContext,
-} from "@openid4vc/oauth2";
+import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
+
+import { CallbackContext } from "@openid4vc/oauth2";
 import { ContentType, FetchHeaders, HttpMethod } from "@pagopa/io-wallet-utils";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
@@ -31,7 +30,7 @@ export type SupportedClientAuthenticationMethod =
  */
 export interface IsClientAttestationSupportedOptions {
   /** Authorization server metadata containing supported authentication methods. */
-  authorizationServerMetadata: AuthorizationServerMetadata;
+  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
 }
 
 /**
@@ -67,7 +66,7 @@ export interface ClientAuthenticationCallbackOptions {
   /**
    * Metadata of the authorization server
    */
-  authorizationServerMetadata: AuthorizationServerMetadata;
+  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
 
   /**
    * The body as a JSON object. If content type `x-www-form-urlencoded`

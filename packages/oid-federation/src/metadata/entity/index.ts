@@ -28,3 +28,7 @@ export type {
   KeyStorageLevel as KeyStorageLevelV1_3,
   SupportedCredentialMetadata as SupportedCredentialMetadataV1_3,
 } from "./v1.3";
+
+export type ItWalletAuthorizationServerMetadata =
+  | import("./v1.0").ItWalletAuthorizationServerMetadata
+  | import("./v1.3").ItWalletAuthorizationServerMetadata;
