@@ -48,6 +48,7 @@ function verifyJwtWithKeySet(
   kid: string,
   keys: z.output<typeof jsonWebKeySchema>[],
   verifyJwt: VerifyJwtWithJwkCallback,
+  ecKeys: undefined | z.output<typeof jsonWebKeySchema>[] = undefined,
 ): ReturnType<VerifyJwtWithJwkCallback> {
   const key = keys.find((k) => k.kid === kid);
   if (!key) {
@@ -56,9 +57,23 @@ function verifyJwtWithKeySet(
     );
   }
 
+  if (ecKeys) {
+    if (!ecKeys.find((ecKey) => ecKey.kid === key.kid)) {
+      throw new TrustChainEvaluationError(
+        `signing key with kid "${kid}" not found in EC's declared keys`,
+      );
+    }
+  }
+
+  if (key.alg && key.alg !== jwt.header.alg) {
+    throw new Error(
+      `Error, signing key ${kid}'s alg doesn't match its signed jwt counterpart. Key alg: ${key.alg}, Jwt alg: ${jwt.header.alg}`,
+    );
+  }
+
   return verifyJwt(
     {
-      alg: key.alg ?? "ES256",
+      alg: jwt.header.alg,
       method: "jwk",
       publicJwk: key,
     },
@@ -199,6 +214,7 @@ async function buildTrustChain(
       statement.header.kid,
       superior.payload.jwks.keys,
       verifyJwtCb,
+      statementEc.payload.jwks.keys,
     );
 
     if (!verified) {
@@ -312,7 +328,7 @@ export interface ValidateTrustChainOptions {
      * check. Subordinate statement signatures are verified against the chain
      * superiors in both cases.
      */
-    fetch?: CallbackContext["fetch"];
+    fetch: CallbackContext["fetch"];
     /**
      * Required for verifying entity statement signatures.
      */
@@ -383,15 +399,13 @@ export async function validateTrustChain(
 
   checkStructure(chain, options.trustAnchorUrls);
 
-  const fetcher = options.callbacks.fetch
-    ? createFetcher(options.callbacks.fetch)
-    : undefined;
+  const fetcher = createFetcher(options.callbacks.fetch);
 
   // Tracks the subject entity's EC so we can check authority_hints (§3.2 point 6).
   // Starts as the leaf EC; updated to the fetched intermediate EC on each iteration.
-  let subjectEcForCheck: ChainEntry | undefined = leafEntry;
+  let subjectEcForCheck: ChainEntry = leafEntry;
 
-  for (let i = 1; i < trustChain.length - 1; i++) {
+  for (let i = 0; i < trustChain.length - 1; i++) {
     const subEntry = chain[i];
     const chainSuperior = chain[i + 1];
     if (!subEntry)
@@ -407,55 +421,60 @@ export async function validateTrustChain(
     // in the subject entity's authority_hints.
     if (subjectEcForCheck) {
       const hints = subjectEcForCheck.payload.authority_hints ?? [];
-      if (hints.length > 0 && !hints.includes(subEntry.payload.iss)) {
+      if (hints.length > 0 && !hints.includes(chainSuperior.payload.iss)) {
         throw new TrustChainEvaluationError(
-          `"${subEntry.payload.iss}" is not listed in authority_hints of "${subEntry.payload.sub}"`,
+          `"${chainSuperior.payload.iss}" is not listed in authority_hints of "${subEntry.payload.sub}"`,
         );
       }
     }
 
-    let issuerKeys: z.output<typeof jsonWebKeySchema>[];
-    if (i === trustChain.length - 2) {
-      issuerKeys = anchorEntry.payload.jwks.keys;
-      subjectEcForCheck = undefined;
-    } else {
-      issuerKeys = chainSuperior.payload.jwks.keys;
-      if (fetcher) {
-        const issuerEcJwt = await fetchEntityConfigurationJwt(
-          subEntry.payload.iss,
-          fetcher,
-        );
-        const issuerEc = decodeEntityStatement(issuerEcJwt);
-        const { verified: issuerEcVerified } = await verifyJwtWithKeySet(
-          issuerEc,
-          issuerEc.header.kid,
-          issuerEc.payload.jwks.keys,
-          options.callbacks.verifyJwt,
-        );
-        if (!issuerEcVerified) {
-          throw new TrustChainEvaluationError(
-            `Error verifying self-signature of intermediate issuer EC for "${subEntry.payload.iss}"`,
-          );
-        }
-        checkExpiry([issuerEc]);
-        // The issuer EC is the subject for the next subordinate statement.
-        subjectEcForCheck = issuerEc;
-      } else {
-        subjectEcForCheck = undefined;
-      }
-    }
+    const issuerKeys: z.output<typeof jsonWebKeySchema>[] =
+      chainSuperior.payload.jwks.keys;
 
     const { verified } = await verifyJwtWithKeySet(
       subEntry,
       subEntry.header.kid,
       issuerKeys,
       options.callbacks.verifyJwt,
+      subjectEcForCheck.payload.jwks.keys,
     );
 
     if (!verified) {
       throw new TrustChainEvaluationError(
         `Verification of subordinate statement at step ${i} failed`,
       );
+    }
+
+    if (i === trustChain.length - 2) {
+      subjectEcForCheck = chainSuperior;
+    } else if (i === trustChain.length - 3) {
+      const ta = chain[i + 2];
+      if (!ta) {
+        throw new TrustChainEvaluationError(
+          "Error retrieving trust anchor certificate from chain",
+        );
+      }
+      subjectEcForCheck = ta;
+    } else {
+      const issuerEcJwt = await fetchEntityConfigurationJwt(
+        chainSuperior.payload.iss,
+        fetcher,
+      );
+      const issuerEc = decodeEntityStatement(issuerEcJwt);
+      const { verified: issuerEcVerified } = await verifyJwtWithKeySet(
+        issuerEc,
+        issuerEc.header.kid,
+        issuerEc.payload.jwks.keys,
+        options.callbacks.verifyJwt,
+      );
+      if (!issuerEcVerified) {
+        throw new TrustChainEvaluationError(
+          `Error verifying self-signature of intermediate issuer EC for "${subEntry.payload.iss}"`,
+        );
+      }
+      checkExpiry([issuerEc]);
+      // The issuer EC is the subject for the next subordinate statement.
+      subjectEcForCheck = issuerEc;
     }
   }
 }

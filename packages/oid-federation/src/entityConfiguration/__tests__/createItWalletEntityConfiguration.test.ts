@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 
 const mockHeader = {
-  alg: "ES256",
+  alg: "ES256" as const,
   kid: "test-kid",
   typ: "entity-statement+jwt" as const,
 };
