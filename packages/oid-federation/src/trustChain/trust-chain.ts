@@ -108,16 +108,25 @@ async function fetchECSequence(
     return [entry, decodeEntityStatement(anchorJwt)];
   }
 
+  let lastError: unknown;
   for (const hint of authorityHints) {
     try {
       const restChain = await fetchECSequence(hint, trustAnchorUrls, fetcher);
       return [entry, ...restChain];
-    } catch {
+    } catch (error) {
+      // Store the last error to provide better diagnostics if no path is found
+      lastError = error;
       continue;
     }
   }
+  const lastErrorMessage =
+    lastError instanceof Error
+      ? lastError.message
+      : lastError !== undefined
+        ? String(lastError)
+        : "unknown error";
   throw new TrustChainEvaluationError(
-    `no path to a trusted anchor found from "${entityUrl}"`,
+    `no path to a trusted anchor found from "${entityUrl}" (last error: ${lastErrorMessage})`,
   );
 }
 
