@@ -249,7 +249,7 @@ function checkExpiry(chain: ChainEntry[]): void {
         `trust chain element at position ${i} is undefined`,
       );
     }
-    if ((entry.payload.exp ?? 0) < now) {
+    if ((entry.payload.exp ?? 0) < now - CLOCK_SKEW_SECONDS) {
       throw new TrustChainEvaluationError(
         `trust chain element at position ${i} has expired`,
       );
