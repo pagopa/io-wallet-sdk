@@ -1,4 +1,3 @@
-import { zCertificateChain } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
 
 export const jsonWebKeySchema = z.looseObject({
@@ -7,7 +6,7 @@ export const jsonWebKeySchema = z.looseObject({
   kid: z.string(),
   kty: z.string(),
   use: z.string().optional(),
-  x5c: zCertificateChain.optional(),
+  x5c: z.array(z.string()).nonempty().optional(),
   x5t: z.string().optional(),
   "x5t#S256": z.string().optional(),
   x5u: z.string().optional(),

@@ -1,8 +1,6 @@
-import {
-  AuthorizationServerMetadata,
-  CallbackContext,
-  RequestDpopOptions,
-} from "@openid4vc/oauth2";
+import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
+
+import { CallbackContext, RequestDpopOptions } from "@openid4vc/oauth2";
 import {
   addSecondsToDate,
   dateToSeconds,
@@ -55,7 +53,7 @@ export interface CreatePushedAuthorizationRequestOptions {
    */
   clientId: string;
 
-  codeChallengeMethodsSupported: AuthorizationServerMetadata["code_challenge_methods_supported"];
+  codeChallengeMethodsSupported: ItWalletAuthorizationServerMetadata["code_challenge_methods_supported"];
 
   /**
    * DPoP options. Required when `require_signed_request_object` is `true`
