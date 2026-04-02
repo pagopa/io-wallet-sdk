@@ -2,7 +2,7 @@ import {
   CallbackContext,
   JwtSignerJwk,
   decodeJwt,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import {
   Fetch,
   UnexpectedStatusCodeError,

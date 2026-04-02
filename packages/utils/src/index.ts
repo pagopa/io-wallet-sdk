@@ -8,6 +8,12 @@ export * from "./validation";
 export * from "./verify";
 
 export {
+  type CallbackContext,
+  type JwtSignerJwk,
+  decodeJwt,
+} from "@openid4vc/oauth2";
+
+export {
   ContentType,
   type Fetch,
   JsonParseError,
