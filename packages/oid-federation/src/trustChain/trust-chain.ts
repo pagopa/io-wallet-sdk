@@ -229,7 +229,7 @@ async function buildTrustChain(
     if (!verified) {
       const elementType = i === 0 ? "leaf EC" : "subordinate statement";
       throw new TrustChainEvaluationError(
-        `error verifying signature for ${elementType} at position ${i} (iss="${statement.payload.iss}", sub="${statement.payload.sub}")`,
+        `Error verifying signature for ${elementType} at position ${i} (iss="${statement.payload.iss}", sub="${statement.payload.sub}")`,
       );
     }
   }

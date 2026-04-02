@@ -804,7 +804,7 @@ describe("fetchAndValidateTrustChain - expiry and EC validation errors", () => {
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
-      "Error verifying signature",
+      `Error verifying signature for subordinate statement at position 1 (iss="${ANCHOR_URL}", sub="${LEAF_URL}"`,
     );
   });
 });
