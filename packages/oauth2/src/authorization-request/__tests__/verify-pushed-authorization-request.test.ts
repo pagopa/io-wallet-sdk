@@ -1,9 +1,7 @@
 /* eslint-disable max-lines-per-function */
-import {
-  AuthorizationServerMetadata,
-  CallbackContext,
-  JwtSigner,
-} from "@openid4vc/oauth2";
+import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
+
+import { CallbackContext, JwtSigner } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -51,7 +49,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
   const mockAuthorizationServerMetadata = {
     issuer: "https://auth.example.com",
-  } as AuthorizationServerMetadata;
+  } as ItWalletAuthorizationServerMetadata;
 
   const mockAuthorizationRequest = {
     client_id: "client-123",
@@ -352,7 +350,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         authorizationServerMetadata: {
           ...mockAuthorizationServerMetadata,
           require_signed_request_object: false,
-        },
+        } as VerifyPushedAuthorizationRequestOptions["authorizationServerMetadata"],
         callbacks: mockCallbacks,
         clientAttestation: {
           clientAttestationPopJwt,

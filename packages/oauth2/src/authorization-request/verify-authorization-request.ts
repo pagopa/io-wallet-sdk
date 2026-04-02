@@ -1,7 +1,6 @@
-import {
-  AuthorizationServerMetadata,
-  CallbackContext,
-} from "@openid4vc/oauth2";
+import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
+
+import { CallbackContext } from "@openid4vc/oauth2";
 import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
 import {
@@ -64,7 +63,7 @@ export interface VerifyAuthorizationRequestOptions {
     client_id?: string;
   };
 
-  authorizationServerMetadata: AuthorizationServerMetadata;
+  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
 
   clientAttestation: ClientAttestationOptions;

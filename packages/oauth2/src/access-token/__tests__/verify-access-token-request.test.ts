@@ -1,8 +1,7 @@
 /* eslint-disable max-lines-per-function */
-import {
-  AuthorizationServerMetadata,
-  CallbackContext,
-} from "@openid4vc/oauth2";
+import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
+
+import { CallbackContext } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -47,7 +46,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
 
   const mockAuthorizationServerMetadata = {
     issuer: "https://auth.example.com",
-  } as AuthorizationServerMetadata;
+  } as ItWalletAuthorizationServerMetadata;
 
   const mockConfig = new IoWalletSdkConfig({
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
