@@ -52,6 +52,7 @@ export function parseMrtdChallenge(
   }
 
   const { header, payload } = decodeJwt({
+    errorMessagePrefix: "Error decoding MRTD challenge JWT:",
     headerSchema: zMrtdChallengeJwtHeader,
     jwt: challengeJwt,
     payloadSchema: zMrtdChallengeJwtPayload,

@@ -16,6 +16,7 @@ export async function verifyWalletAttestationBase<
   payloadSchema: TPayload,
 ) {
   const { header, payload } = decodeJwt({
+    errorMessagePrefix: "Error decoding wallet attestation JWT:",
     headerSchema,
     jwt: options.walletAttestationJwt,
     payloadSchema,

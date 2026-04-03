@@ -220,6 +220,7 @@ export async function verifyCredentialRequestJwtProof(
 
     if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
       const { header, payload } = decodeJwt({
+        errorMessagePrefix: "Error decoding credential request proof JWT:",
         headerSchema: zProofJwtHeaderV1_0,
         jwt: options.jwt,
         payloadSchema: zProofJwtPayload,
@@ -249,6 +250,7 @@ export async function verifyCredentialRequestJwtProof(
 
     if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
       const { header, payload } = decodeJwt({
+        errorMessagePrefix: "Error decoding credential request proof JWT:",
         headerSchema: zProofJwtHeaderV1_3,
         jwt: options.jwt,
         payloadSchema: zProofJwtPayload,

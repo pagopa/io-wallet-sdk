@@ -80,6 +80,7 @@ export async function verifyKeyAttestationJwt(
 ): Promise<VerifyKeyAttestationJwtResult> {
   try {
     const { header, payload } = decodeJwt({
+      errorMessagePrefix: "Error decoding key attestation JWT:",
       headerSchema: zKeyAttestationHeader,
       jwt: options.keyAttestationJwt,
       payloadSchema: zKeyAttestationPayload,
