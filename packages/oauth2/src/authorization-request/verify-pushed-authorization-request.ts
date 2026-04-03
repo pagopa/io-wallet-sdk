@@ -168,7 +168,7 @@ export async function verifyPushedAuthorizationRequest(
     // Fail-fast: reject alg="none" before expensive signature verification (RFC 9101 Section 10.5)
     if (requireSigned) {
       const decoded = decodeJwt({
-        errorMessagePrefix: "Error decoding authorization request JWT:",
+        errorMessagePrefix: "Error decoding pushed authorization request JWT:",
         jwt: options.authorizationRequestJwt.jwt,
       });
       if (decoded.header.alg === "none") {
