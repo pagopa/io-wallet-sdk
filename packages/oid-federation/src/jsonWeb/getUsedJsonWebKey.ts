@@ -1,7 +1,7 @@
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { jsonWebKeySchema, jsonWebKeySetSchema } from "../jwk";
+import { jsonWebKeySetSchema } from "../jwk";
 
 export const getUsedJsonWebKey = (
   header: Record<string, unknown>,
@@ -34,12 +34,5 @@ export const getUsedJsonWebKey = (
     );
   }
 
-  // Fix a @openid-federation bug where x5c is expected to be an array
-  const { x5c, ...jwkWithoutX5c } = key;
-  const jwk = jsonWebKeySchema.parse({
-    ...jwkWithoutX5c,
-    x5c: [...(x5c ?? [])],
-  });
-
-  return jwk;
+  return key;
 };

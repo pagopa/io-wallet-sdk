@@ -94,6 +94,39 @@ describe("createItWalletEntityConfiguration", () => {
     expect(decodedSignature).toBe(expectedSignature);
   });
 
+  it("should create a signed entity configuration JWT when x5c is absent", async () => {
+    const keyWithoutX5c = {
+      crv: "P-256",
+      kid: "test-kid",
+      kty: "EC" as const,
+      x: "...",
+      y: "...",
+    };
+    const claimsWithoutX5c = {
+      ...mockClaims,
+      jwks: { keys: [keyWithoutX5c] },
+      metadata: {
+        ...mockClaims.metadata,
+        wallet_provider: { jwks: { keys: [keyWithoutX5c] } },
+      },
+    };
+
+    const result = await createItWalletEntityConfiguration({
+      claims: claimsWithoutX5c,
+      header: mockHeader,
+      signJwtCallback: mockSignJwtCallback,
+    });
+
+    expect(typeof result).toBe("string");
+    const parts = result.split(".");
+    expect(parts).toHaveLength(3);
+
+    const payloadB64 = parts[1];
+    if (!payloadB64) throw new Error("JWT payload missing");
+    const decodedPayload = JSON.parse(Base64.decode(payloadB64));
+    expect(decodedPayload.jwks.keys[0]).not.toHaveProperty("x5c");
+  });
+
   it("should throw an error if header validation fails", async () => {
     const invalidHeader = { ...mockHeader, kid: undefined }; // Invalid header
 
@@ -119,8 +152,10 @@ describe("createItWalletEntityConfiguration", () => {
       }),
     ).rejects.toThrow("invalid payload claims provided");
   });
+});
 
-  it("should create a signed entity configuration JWT with wallet_solution metadata (v1.3)", async () => {
+describe("createItWalletEntityConfiguration v1.3 metadata", () => {
+  it("should create a signed entity configuration JWT with wallet_solution metadata", async () => {
     const mockClaimsV1_3 = {
       ...mockClaims,
       metadata: {
@@ -165,7 +200,7 @@ describe("createItWalletEntityConfiguration", () => {
     ).toBe("Test Wallet");
   });
 
-  it("should create a signed entity configuration JWT with openid_credential_verifier metadata (v1.3)", async () => {
+  it("should create a signed entity configuration JWT with openid_credential_verifier metadata", async () => {
     const mockClaimsV1_3CredentialVerifier = {
       ...mockClaims,
       metadata: {

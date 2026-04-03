@@ -1,6 +1,6 @@
 {
   "name": "@pagopa/io-wallet-oauth2",
-  "version": "1.1.2",
+  "version": "1.2.1",
   "files": [
     "dist"
   ],
@@ -30,6 +30,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@pagopa/io-wallet-oid-federation": "workspace:*",
     "@pagopa/io-wallet-utils": "workspace:*",
     "@openid4vc/oauth2": "catalog:",
     "@openid4vc/utils": "catalog:",

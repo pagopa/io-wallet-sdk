@@ -1,5 +1,25 @@
 export * from "./itWalletFederationEntity";
-export * from "./v1.0";
+
+export {
+  itWalletAuthorizationServerIdentifier,
+  itWalletAuthorizationServerMetadata,
+  itWalletCredentialIssuerIdentifier,
+  itWalletCredentialIssuerMetadata,
+  itWalletCredentialVerifierIdentifier,
+  itWalletCredentialVerifierMetadata,
+  itWalletProviderEntityIdentifier,
+  itWalletProviderEntityMetadata,
+} from "./v1.0";
+
+export type {
+  ClaimsMetadata,
+  CredentialDisplayMetadata,
+  ItWalletAuthorizationServerMetadata as ItWalletAuthorizationServerMetadataV1_0,
+  ItWalletCredentialIssuerMetadata,
+  ItWalletCredentialVerifierMetadata,
+  ItWalletProviderEntityMetadata,
+  SupportedCredentialMetadata,
+} from "./v1.0";
 
 // v1.3 exports with version suffixes for disambiguation
 export {
@@ -28,3 +48,7 @@ export type {
   KeyStorageLevel as KeyStorageLevelV1_3,
   SupportedCredentialMetadata as SupportedCredentialMetadataV1_3,
 } from "./v1.3";
+
+export type ItWalletAuthorizationServerMetadata =
+  | import("./v1.0").ItWalletAuthorizationServerMetadata
+  | import("./v1.3").ItWalletAuthorizationServerMetadata;

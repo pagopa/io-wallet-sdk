@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-utils
 
+## 1.2.1
+
+## 1.2.0
+
+### Minor Changes
+
+- 32a8f92: feat: upgrade zod library to v4
+
 ## 1.1.2
 
 ## 1.1.1

@@ -68,6 +68,9 @@ importers:
       '@openid4vc/utils':
         specifier: 'catalog:'
         version: 0.4.3
+      '@pagopa/io-wallet-oid-federation':
+        specifier: workspace:*
+        version: link:../oid-federation
       '@pagopa/io-wallet-utils':
         specifier: workspace:*
         version: link:../utils
@@ -80,9 +83,6 @@ importers:
 
   packages/oid-federation:
     dependencies:
-      '@pagopa/io-wallet-oauth2':
-        specifier: 'workspace:'
-        version: link:../oauth2
       '@pagopa/io-wallet-utils':
         specifier: 'workspace:'
         version: link:../utils

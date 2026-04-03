@@ -1,5 +1,6 @@
+import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
+
 import {
-  AuthorizationServerMetadata,
   CallbackContext,
   HashAlgorithm,
   calculateJwkThumbprint,
@@ -39,7 +40,7 @@ export interface VerifyClientAttestationOptions {
   /**
    * The authorization server metadata.
    */
-  authorizationServerMetadata: AuthorizationServerMetadata;
+  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
 
   /**
    * Callbacks for hashing and JWT verification.
