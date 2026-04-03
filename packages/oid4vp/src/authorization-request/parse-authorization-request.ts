@@ -160,6 +160,7 @@ export async function parseAuthorizeRequest(
       : zOpenid4vpAuthorizationRequestHeaderV1_3;
 
     const decoded = decodeJwt({
+      errorMessagePrefix: "Error decoding authorization request JWT:",
       headerSchema,
       jwt: options.requestObjectJwt,
       payloadSchema: zOpenid4vpAuthorizationRequestPayload,

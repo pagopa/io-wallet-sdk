@@ -74,7 +74,10 @@ export async function parsePushedAuthorizationRequest(
       jarRequestParams: parsed,
     });
 
-    const jwt = decodeJwt({ jwt: parsedJar.authorizationRequestJwt });
+    const jwt = decodeJwt({
+      errorMessagePrefix: "Error decoding pushed authorization request JWT:",
+      jwt: parsedJar.authorizationRequestJwt,
+    });
 
     parsedAuthorizationRequest = zAuthorizationRequest.safeParse(jwt.payload);
     if (!parsedAuthorizationRequest.success) {

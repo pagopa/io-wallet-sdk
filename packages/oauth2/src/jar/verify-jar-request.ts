@@ -2,13 +2,13 @@ import {
   CallbackContext,
   JwtSigner,
   JwtSignerWithJwk,
-  decodeJwt,
   verifyJwt,
   zCompactJwe,
   zCompactJwt,
 } from "@openid4vc/oauth2";
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
+import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
 import {
   JarRequestObjectPayload,
@@ -132,7 +132,10 @@ async function verifyJarRequestObject(options: {
 }) {
   const { authorizationRequestJwt, callbacks, jwtSigner } = options;
 
-  const jwt = decodeJwt({ jwt: authorizationRequestJwt });
+  const jwt = decodeJwt({
+    errorMessagePrefix: "Error decoding JAR authorization request JWT:",
+    jwt: authorizationRequestJwt,
+  });
   const authorizationRequestPayload = parseWithErrorHandling(
     zJarRequestObjectPayload,
     jwt.payload,

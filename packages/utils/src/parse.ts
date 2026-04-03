@@ -39,3 +39,7 @@ export function parseWithErrorHandling<Schema extends BaseSchema>(
 
   return parseResult.data;
 }
+
+export function formatError(message: string, prefix?: string): string {
+  return prefix ? `${prefix} ${message}` : message;
+}

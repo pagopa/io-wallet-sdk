@@ -69,6 +69,7 @@ export interface VerifyTokenDPoPOptions {
 
 export async function verifyTokenDPoP(options: VerifyTokenDPoPOptions) {
   const { header, payload } = decodeJwt({
+    errorMessagePrefix: "Error decoding access token DPoP JWT:",
     headerSchema: zDpopJwtHeader,
     jwt: options.dpopJwt,
     payloadSchema: zDpopJwtPayload,

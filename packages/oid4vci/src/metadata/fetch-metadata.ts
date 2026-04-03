@@ -87,6 +87,7 @@ async function tryFederationDiscovery(
 
     const entityStatement = await response.text();
     const { header, payload } = decodeJwt({
+      errorMessagePrefix: "Error decoding entity statement JWT:",
       jwt: entityStatement,
       payloadSchema: itWalletEntityStatementClaimsSchema,
     });
