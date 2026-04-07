@@ -2,12 +2,14 @@
  * Generic error thrown during OID Federation operations
  */
 export class OidFederationError extends Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "OidFederationError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -18,8 +20,7 @@ export class OidFederationError extends Error {
  */
 export class TrustChainEvaluationError extends OidFederationError {
   constructor(message: string, cause?: unknown) {
-    super(message);
+    super(message, { cause });
     this.name = "TrustChainEvaluationError";
-    this.cause = cause;
   }
 }

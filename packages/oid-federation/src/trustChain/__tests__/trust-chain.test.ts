@@ -123,13 +123,18 @@ const noopVerifyJwt: VerifyJwtWithJwkCallback = vi.fn(async () => ({
 
 const noopFetch = vi.fn(async () => new Response("not found", { status: 404 }));
 
+const hashImpl = (data: Uint8Array): Promise<Uint8Array> =>
+  globalThis.crypto.subtle
+    .digest("SHA-256", data)
+    .then((buf) => new Uint8Array(buf));
+
 // ---------- validateTrustChain — valid chains and signature verification ----------
 
 describe("validateTrustChain - valid chains and signature verification", () => {
   it("accepts a valid 3-element chain", async () => {
     const chain = [makeLeafEC(), makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).resolves.toBeUndefined();
@@ -147,7 +152,7 @@ describe("validateTrustChain - valid chains and signature verification", () => {
       },
     );
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(
@@ -168,7 +173,7 @@ describe("validateTrustChain - valid chains and signature verification", () => {
     );
     const chain = [leafNoHints, makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).resolves.toBeUndefined();
@@ -183,7 +188,7 @@ describe("validateTrustChain - valid chains and signature verification", () => {
     const anchorJwt = makeAnchorEC();
     const chain = [leafJwt, makeSubStmt(), anchorJwt];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await validateTrustChain(chain, options);
@@ -202,7 +207,7 @@ describe("validateTrustChain - valid chains and signature verification", () => {
     const anchorJwt = makeAnchorEC();
     const chain = [makeLeafEC(), subJwt, anchorJwt];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await validateTrustChain(chain, options);
@@ -219,7 +224,7 @@ describe("validateTrustChain - valid chains and signature verification", () => {
 describe("validateTrustChain - error cases", () => {
   it("throws on empty chain", async () => {
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
     };
     await expect(validateTrustChain([], options)).rejects.toThrow(
       "empty trust chain",
@@ -229,7 +234,7 @@ describe("validateTrustChain - error cases", () => {
   it("throws when an element has expired", async () => {
     const chain = [makeLeafEC(past), makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
       "has expired",
@@ -250,7 +255,7 @@ describe("validateTrustChain - error cases", () => {
     );
     const chain = [leafFutureIat, makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
       "has iat in the future",
@@ -270,7 +275,7 @@ describe("validateTrustChain - error cases", () => {
     );
     const chain = [makeLeafEC(), mismatchedSubStmt, makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
       "leaf EC subject does not match first subordinate statement subject",
@@ -278,19 +283,35 @@ describe("validateTrustChain - error cases", () => {
   });
 
   it("throws when a structural link is broken", async () => {
+    // leafEC lists INTERMEDIATE_URL in authority_hints, so the §3.2 hint check
+    // passes for brokenSubStmt (iss=INTERMEDIATE_URL). However, checkStructure
+    // requires chain[1].iss === chain[2].sub (i.e. INTERMEDIATE_URL === ANCHOR_URL),
+    // which fails → "trust chain link broken".
+    const leafWithIntermediateHint = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [INTERMEDIATE_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
     const brokenSubStmt = makeJwt(
       { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
       {
         exp: future,
         iat: now,
-        iss: "https://wrong-issuer.example.com",
+        iss: INTERMEDIATE_URL,
         jwks: { keys: [LEAF_KEY] },
         sub: LEAF_URL,
       },
     );
-    const chain = [makeLeafEC(), brokenSubStmt, makeAnchorEC()];
+    const chain = [leafWithIntermediateHint, brokenSubStmt, makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
       "trust chain link broken",
@@ -300,7 +321,7 @@ describe("validateTrustChain - error cases", () => {
   it("throws when root is not a trusted anchor", async () => {
     const chain = [makeLeafEC(), makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: ["https://other-anchor.example.com"],
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
@@ -325,7 +346,7 @@ describe("validateTrustChain - authority hints, signatures, and EC checks", () =
     // sub-stmt is issued by ANCHOR_URL, but leaf only lists a different anchor
     const chain = [leafWithStrictHints, makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
@@ -339,7 +360,7 @@ describe("validateTrustChain - authority hints, signatures, and EC checks", () =
     }));
     const chain = [makeLeafEC(), makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow();
@@ -359,7 +380,7 @@ describe("validateTrustChain - authority hints, signatures, and EC checks", () =
     );
     const chain = [mismatchedLeaf, makeSubStmt(), makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
@@ -425,7 +446,7 @@ describe("validateTrustChain - authority hints, signatures, and EC checks", () =
     });
 
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
 
@@ -455,7 +476,7 @@ describe("fetchAndValidateTrustChain - valid chains", () => {
     });
 
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
 
@@ -474,7 +495,7 @@ describe("fetchAndValidateTrustChain - valid chains", () => {
     });
 
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
 
@@ -573,7 +594,7 @@ describe("fetchAndValidateTrustChain - valid chains", () => {
     });
 
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
 
@@ -620,7 +641,7 @@ describe("fetchAndValidateTrustChain - error cases", () => {
       return new Response("not found", { status: 404 });
     });
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(
@@ -631,7 +652,7 @@ describe("fetchAndValidateTrustChain - error cases", () => {
   it("throws when fetch returns a non-200 status", async () => {
     const fetchMock = vi.fn(async () => new Response("error", { status: 500 }));
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(
@@ -657,7 +678,11 @@ describe("fetchAndValidateTrustChain - error cases", () => {
       verified: false as const,
     }));
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: failingVerifyJwt },
+      callbacks: {
+        fetch: fetchMock,
+        hash: hashImpl,
+        verifyJwt: failingVerifyJwt,
+      },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
@@ -686,7 +711,7 @@ describe("fetchAndValidateTrustChain - error cases", () => {
       return new Response("not found", { status: 404 });
     });
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
@@ -738,7 +763,7 @@ describe("fetchAndValidateTrustChain - expiry and EC validation errors", () => {
     });
 
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
 
@@ -772,7 +797,7 @@ describe("fetchAndValidateTrustChain - expiry and EC validation errors", () => {
     });
 
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
 
@@ -800,7 +825,7 @@ describe("fetchAndValidateTrustChain - expiry and EC validation errors", () => {
       return { signerJwk: { kty: "EC" }, verified: true as const };
     });
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
@@ -898,7 +923,11 @@ describe("1-intermediate chain with middle intermediate EC key mismatch", () => 
       });
 
       const options: ValidateTrustChainOptions = {
-        callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+        callbacks: {
+          fetch: fetchMock,
+          hash: hashImpl,
+          verifyJwt: noopVerifyJwt,
+        },
         trustAnchorUrls: [ANCHOR_URL],
       };
 
@@ -926,7 +955,11 @@ describe("1-intermediate chain with middle intermediate EC key mismatch", () => 
       });
 
       const options: FetchAndValidateTrustChainOptions = {
-        callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+        callbacks: {
+          fetch: fetchMock,
+          hash: hashImpl,
+          verifyJwt: noopVerifyJwt,
+        },
         trustAnchorUrls: [ANCHOR_URL],
       };
 
@@ -955,7 +988,7 @@ describe("leaf sub-stmt key mismatch", () => {
   it("validateTrustChain throws when first sub-stmt declares a key different from the one that signed the leaf", async () => {
     const chain = [makeLeafEC(), badLeafSubStmt, makeAnchorEC()];
     const options: ValidateTrustChainOptions = {
-      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(validateTrustChain(chain, options)).rejects.toThrow(
@@ -975,11 +1008,422 @@ describe("leaf sub-stmt key mismatch", () => {
       return new Response("not found", { status: 404 });
     });
     const options: FetchAndValidateTrustChainOptions = {
-      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
       trustAnchorUrls: [ANCHOR_URL],
     };
     await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
       `signing key with kid "${LEAF_KID}" not found`,
+    );
+  });
+});
+
+// ---------- cycle detection ----------
+
+describe("fetchAndValidateTrustChain - cycle detection", () => {
+  it("throws when authority_hints form a cycle", async () => {
+    const cycleLeafEC = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [INTERMEDIATE_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const cycleIntermediateEC = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [LEAF_URL],
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(cycleLeafEC, { status: 200 });
+      if (url === `${INTERMEDIATE_URL}/.well-known/openid-federation`)
+        return new Response(cycleIntermediateEC, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
+      "cycle detected",
+    );
+  });
+
+  it("succeeds via the valid path when one authority_hint leads to a cycle and another reaches the trust anchor", async () => {
+    // leaf.authority_hints = [BAD_INTERMEDIATE_URL, INTERMEDIATE_URL]
+    // BAD_INTERMEDIATE.authority_hints = [LEAF_URL]  ← cycle back to leaf
+    // INTERMEDIATE.authority_hints    = [ANCHOR_URL] ← valid path
+    // fetchECSequence should catch the cycle error from the first branch and
+    // continue to the second, returning [leafEC, intermediateEC, anchorEC].
+    const leafWithTwoHints = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [BAD_INTERMEDIATE_URL, INTERMEDIATE_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const badIntermediateEC = makeJwt(
+      { alg: "ES256", kid: BAD_INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [LEAF_URL],
+        exp: future,
+        iat: now,
+        iss: BAD_INTERMEDIATE_URL,
+        jwks: { keys: [BAD_INTERMEDIATE_KEY] },
+        sub: BAD_INTERMEDIATE_URL,
+      },
+    );
+    const goodIntermediateEC = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [ANCHOR_URL],
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        metadata: {
+          federation_entity: {
+            federation_fetch_endpoint: INTERMEDIATE_FETCH_ENDPOINT,
+          },
+        },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const subStmtForLeaf = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const subStmtForIntermediate = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(leafWithTwoHints, { status: 200 });
+      if (url === `${BAD_INTERMEDIATE_URL}/.well-known/openid-federation`)
+        return new Response(badIntermediateEC, { status: 200 });
+      if (url === `${INTERMEDIATE_URL}/.well-known/openid-federation`)
+        return new Response(goodIntermediateEC, { status: 200 });
+      if (url === `${ANCHOR_URL}/.well-known/openid-federation`)
+        return new Response(makeAnchorEC(), { status: 200 });
+      if (url.startsWith(INTERMEDIATE_FETCH_ENDPOINT))
+        return new Response(subStmtForLeaf, { status: 200 });
+      if (url.startsWith(FETCH_ENDPOINT))
+        return new Response(subStmtForIntermediate, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(
+      fetchAndValidateTrustChain(LEAF_URL, options),
+    ).resolves.toBeDefined();
+  });
+});
+
+// ---------- max_path_length enforcement ----------
+
+describe("max_path_length enforcement", () => {
+  it("validateTrustChain throws when a subordinate statement's max_path_length is exceeded", async () => {
+    // 4-element chain: leaf → stmt_by_intermediate (max_path_length=0) → stmt_by_anchor → anchor
+    // At position 1, max_path_length=0 but remainingIntermediates=1 → violation.
+    // The leafEC must list INTERMEDIATE_URL in authority_hints so the §3.2 hint check
+    // passes, and the fetch callback must serve the intermediate's EC because
+    // validateTrustChain fetches ECs for chain positions 1..n-3.
+    const leafWithIntermediateHint = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [INTERMEDIATE_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const constrainedSubStmt = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        constraints: { max_path_length: 0 },
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const anchorIntermediateSubStmt = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const intermediateEC = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [ANCHOR_URL],
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (
+        input.toString() === `${INTERMEDIATE_URL}/.well-known/openid-federation`
+      )
+        return new Response(intermediateEC, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+    const chain = [
+      leafWithIntermediateHint,
+      constrainedSubStmt,
+      anchorIntermediateSubStmt,
+      makeAnchorEC(),
+    ];
+    const options: ValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(validateTrustChain(chain, options)).rejects.toThrow(
+      "max_path_length",
+    );
+  });
+
+  it("validateTrustChain accepts a chain that exactly meets max_path_length", async () => {
+    const constrainedSubStmt = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        constraints: { max_path_length: 0 },
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const chain = [makeLeafEC(), constrainedSubStmt, makeAnchorEC()];
+    const options: ValidateTrustChainOptions = {
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(validateTrustChain(chain, options)).resolves.toBeUndefined();
+  });
+
+  it("fetchAndValidateTrustChain throws when a sub-stmt's max_path_length is exceeded", async () => {
+    // leaf → intermediate → anchor, but the intermediate issues its sub-stmt for the
+    // leaf with max_path_length=0, while there is still one more sub-stmt above it
+    // (anchor's sub-stmt for the intermediate), making remainingIntermediates=1 > 0.
+    const leafJwt = makeJwt(
+      { alg: "ES256", kid: LEAF_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [INTERMEDIATE_URL],
+        exp: future,
+        iat: now,
+        iss: LEAF_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const intermediateJwt = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        authority_hints: [ANCHOR_URL],
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        metadata: {
+          federation_entity: {
+            federation_fetch_endpoint: INTERMEDIATE_FETCH_ENDPOINT,
+          },
+        },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const constrainedLeafSubStmt = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        constraints: { max_path_length: 0 },
+        exp: future,
+        iat: now,
+        iss: INTERMEDIATE_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const anchorIntermediateSubStmt = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: INTERMEDIATE_URL,
+      },
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(leafJwt, { status: 200 });
+      if (url === `${INTERMEDIATE_URL}/.well-known/openid-federation`)
+        return new Response(intermediateJwt, { status: 200 });
+      if (url === `${ANCHOR_URL}/.well-known/openid-federation`)
+        return new Response(makeAnchorEC(), { status: 200 });
+      if (url.startsWith(INTERMEDIATE_FETCH_ENDPOINT))
+        return new Response(constrainedLeafSubStmt, { status: 200 });
+      if (url.startsWith(FETCH_ENDPOINT))
+        return new Response(anchorIntermediateSubStmt, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
+      "max_path_length",
+    );
+  });
+
+  it("fetchAndValidateTrustChain accepts a chain that exactly meets max_path_length", async () => {
+    const constrainedSubStmt = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        constraints: { max_path_length: 0 },
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(makeLeafEC(), { status: 200 });
+      if (url === `${ANCHOR_URL}/.well-known/openid-federation`)
+        return new Response(makeAnchorEC(), { status: 200 });
+      if (url.startsWith(FETCH_ENDPOINT))
+        return new Response(constrainedSubStmt, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(
+      fetchAndValidateTrustChain(LEAF_URL, options),
+    ).resolves.toBeDefined();
+  });
+});
+
+// ---------- HTTPS enforcement ----------
+
+describe("HTTPS enforcement", () => {
+  it("fetchAndValidateTrustChain throws when federation_fetch_endpoint uses plain HTTP", async () => {
+    const httpFetchEndpoint = `http://anchor.example.com/fetch`;
+    const insecureAnchorEC = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [ANCHOR_KEY] },
+        metadata: {
+          federation_entity: {
+            federation_fetch_endpoint: httpFetchEndpoint,
+          },
+        },
+        sub: ANCHOR_URL,
+      },
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(makeLeafEC(), { status: 200 });
+      if (url === `${ANCHOR_URL}/.well-known/openid-federation`)
+        return new Response(insecureAnchorEC, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
+      "federation requests must use HTTPS",
+    );
+  });
+
+  it("validateTrustChain throws when an intermediate entity has an HTTP iss (fetched EC URL is not HTTPS)", async () => {
+    const httpIntermediateUrl = "http://intermediate.example.com";
+    // 4-element chain so validateTrustChain fetches the intermediate EC at
+    // position 1. Its iss is an HTTP URL, triggering the HTTPS wrapper.
+    const subStmtByHttpIntermediate = makeJwt(
+      { alg: "ES256", kid: INTERMEDIATE_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: httpIntermediateUrl,
+        jwks: { keys: [LEAF_KEY] },
+        sub: LEAF_URL,
+      },
+    );
+    const subStmtByAnchor = makeJwt(
+      { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+      {
+        exp: future,
+        iat: now,
+        iss: ANCHOR_URL,
+        jwks: { keys: [INTERMEDIATE_KEY] },
+        sub: httpIntermediateUrl,
+      },
+    );
+    const chain = [
+      makeLeafEC(),
+      subStmtByHttpIntermediate,
+      subStmtByAnchor,
+      makeAnchorEC(),
+    ];
+    const options: ValidateTrustChainOptions = {
+      callbacks: { fetch: noopFetch, hash: hashImpl, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(validateTrustChain(chain, options)).rejects.toThrow(
+      "federation requests must use HTTPS",
     );
   });
 });

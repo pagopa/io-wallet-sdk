@@ -1,12 +1,13 @@
 import {
   CallbackContext,
-  JwtSignerJwk,
-  decodeJwt,
-} from "@pagopa/io-wallet-utils";
-import {
   Fetch,
+  HashAlgorithm,
+  HashCallback,
+  JwtSignerJwk,
   UnexpectedStatusCodeError,
+  calculateJwkThumbprint,
   createFetcher,
+  decodeJwt,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
@@ -31,6 +32,23 @@ function decodeEntityStatement(jwt: string): ChainEntry {
   return { compact: jwt, header, payload };
 }
 
+function withHttpsEnforcement(fetcher: Fetch): Fetch {
+  return (input, init) => {
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url;
+    if (!url.startsWith("https://")) {
+      throw new TrustChainEvaluationError(
+        `federation requests must use HTTPS, got "${url}"`,
+      );
+    }
+    return fetcher(input, init);
+  };
+}
+
 async function fetchEntityConfigurationJwt(
   entityUrl: string,
   fetcher: Fetch,
@@ -43,13 +61,18 @@ async function fetchEntityConfigurationJwt(
   return response.text();
 }
 
-function verifyJwtWithKeySet(
+interface VerifyCallbacks {
+  hash: HashCallback;
+  verifyJwt: VerifyJwtWithJwkCallback;
+}
+
+async function verifyJwtWithKeySet(
   jwt: Parameters<VerifyJwtCallback>[1],
   kid: string,
   keys: z.output<typeof jsonWebKeySchema>[],
-  verifyJwt: VerifyJwtWithJwkCallback,
-  ecKeys: undefined | z.output<typeof jsonWebKeySchema>[] = undefined,
-): ReturnType<VerifyJwtWithJwkCallback> {
+  ecKeys: undefined | z.output<typeof jsonWebKeySchema>[],
+  callbacks: VerifyCallbacks,
+): Promise<Awaited<ReturnType<VerifyJwtWithJwkCallback>>> {
   const key = keys.find((k) => k.kid === kid);
   if (!key) {
     throw new TrustChainEvaluationError(
@@ -58,20 +81,38 @@ function verifyJwtWithKeySet(
   }
 
   if (ecKeys) {
-    if (!ecKeys.find((ecKey) => ecKey.kid === key.kid)) {
+    const ecKey = ecKeys.find((k) => k.kid === key.kid);
+    if (!ecKey) {
       throw new TrustChainEvaluationError(
         `signing key with kid "${kid}" not found in EC's declared keys`,
+      );
+    }
+    const [subThumbprint, ecThumbprint] = await Promise.all([
+      calculateJwkThumbprint({
+        hashAlgorithm: HashAlgorithm.Sha256,
+        hashCallback: callbacks.hash,
+        jwk: key as Parameters<typeof calculateJwkThumbprint>[0]["jwk"],
+      }),
+      calculateJwkThumbprint({
+        hashAlgorithm: HashAlgorithm.Sha256,
+        hashCallback: callbacks.hash,
+        jwk: ecKey as Parameters<typeof calculateJwkThumbprint>[0]["jwk"],
+      }),
+    ]);
+    if (subThumbprint !== ecThumbprint) {
+      throw new TrustChainEvaluationError(
+        `signing key with kid "${kid}" has mismatched key material between subordinate statement and entity configuration`,
       );
     }
   }
 
   if (key.alg && key.alg !== jwt.header.alg) {
-    throw new Error(
-      `Error, signing key ${kid}'s alg doesn't match its signed jwt counterpart. Key alg: ${key.alg}, Jwt alg: ${jwt.header.alg}`,
+    throw new TrustChainEvaluationError(
+      `signing key ${kid}'s alg doesn't match its signed jwt counterpart. Key alg: ${key.alg}, Jwt alg: ${jwt.header.alg}`,
     );
   }
 
-  return verifyJwt(
+  return callbacks.verifyJwt(
     {
       alg: jwt.header.alg,
       method: "jwk",
@@ -83,15 +124,32 @@ function verifyJwtWithKeySet(
 
 type ECSequence = [ChainEntry, ...ChainEntry[]];
 
+const MAX_FEDERATION_DEPTH = 200;
+
 async function fetchECSequence(
   entityUrl: string,
-  trustAnchorUrls: string[],
+  trustAnchorUrls: [string, ...string[]] | undefined,
   fetcher: Fetch,
+  visited = new Set<string>(),
+  depth = 0,
 ): Promise<ECSequence> {
+  if (visited.has(entityUrl)) {
+    throw new TrustChainEvaluationError(
+      `cycle detected: "${entityUrl}" was already visited`,
+    );
+  }
+  if (depth >= MAX_FEDERATION_DEPTH) {
+    throw new TrustChainEvaluationError(
+      `maximum federation depth of ${MAX_FEDERATION_DEPTH} reached at "${entityUrl}"`,
+    );
+  }
+
+  visited.add(entityUrl);
+
   const jwt = await fetchEntityConfigurationJwt(entityUrl, fetcher);
   const entry = decodeEntityStatement(jwt);
 
-  if (trustAnchorUrls.find((url) => url === entry.payload.iss)) {
+  if (trustAnchorUrls?.find((url) => url === entry.payload.iss)) {
     return [entry];
   }
 
@@ -102,7 +160,9 @@ async function fetchECSequence(
     );
   }
 
-  const reachedAnchor = authorityHints.find((h) => trustAnchorUrls.includes(h));
+  const reachedAnchor = authorityHints.find((h) =>
+    trustAnchorUrls?.includes(h),
+  );
   if (reachedAnchor) {
     const anchorJwt = await fetchEntityConfigurationJwt(reachedAnchor, fetcher);
     return [entry, decodeEntityStatement(anchorJwt)];
@@ -111,12 +171,16 @@ async function fetchECSequence(
   let lastError: unknown;
   for (const hint of authorityHints) {
     try {
-      const restChain = await fetchECSequence(hint, trustAnchorUrls, fetcher);
+      const restChain = await fetchECSequence(
+        hint,
+        trustAnchorUrls,
+        fetcher,
+        visited,
+        depth + 1,
+      );
       return [entry, ...restChain];
     } catch (error) {
-      // Store the last error to provide better diagnostics if no path is found
       lastError = error;
-      continue;
     }
   }
   const lastErrorMessage =
@@ -133,7 +197,7 @@ async function fetchECSequence(
 async function verifyChainLinks(
   chain: ECSequence,
   ecs: ECSequence,
-  verifyJwtCb: VerifyJwtWithJwkCallback,
+  callbacks: VerifyCallbacks,
 ): Promise<void> {
   const linkVerifications = await Promise.all(
     Array.from({ length: chain.length - 1 }, (_, i) => {
@@ -149,8 +213,8 @@ async function verifyChainLinks(
         statement,
         statement.header.kid,
         superior.payload.jwks.keys,
-        verifyJwtCb,
         statementEc.payload.jwks.keys,
+        callbacks,
       );
     }),
   );
@@ -174,7 +238,7 @@ async function verifyChainLinks(
 async function buildTrustChain(
   ecs: ECSequence,
   fetcher: Fetch,
-  verifyJwtCb: VerifyJwtWithJwkCallback,
+  callbacks: VerifyCallbacks,
 ): Promise<ECSequence> {
   for (const ec of ecs) {
     if (ec.payload.iss !== ec.payload.sub) {
@@ -190,7 +254,8 @@ async function buildTrustChain(
       leaf,
       leaf.header.kid,
       leaf.payload.jwks.keys,
-      verifyJwtCb,
+      undefined,
+      callbacks,
     );
     if (!verified) {
       throw new TrustChainEvaluationError(
@@ -209,7 +274,8 @@ async function buildTrustChain(
           ec,
           ec.header.kid,
           ec.payload.jwks.keys,
-          verifyJwtCb,
+          undefined,
+          callbacks,
         ),
       ),
   );
@@ -284,7 +350,9 @@ async function buildTrustChain(
     }
   }
 
-  await verifyChainLinks(chain, ecs, verifyJwtCb);
+  checkMaxPathLength(chain);
+
+  await verifyChainLinks(chain, ecs, callbacks);
 
   return chain;
 }
@@ -314,7 +382,25 @@ function checkExpiry(chain: ChainEntry[]): void {
   }
 }
 
-function checkStructure(chain: ChainEntry[], trustAnchorUrls?: string[]): void {
+function checkMaxPathLength(chain: ChainEntry[]): void {
+  for (let i = 1; i < chain.length - 1; i++) {
+    const subStmt = chain[i];
+    const maxPath = subStmt?.payload.constraints?.max_path_length;
+    if (maxPath !== undefined) {
+      const remainingIntermediates = chain.length - 2 - i;
+      if (remainingIntermediates > maxPath) {
+        throw new TrustChainEvaluationError(
+          `chain exceeds max_path_length constraint at position ${i}: allowed ${maxPath} more intermediates, found ${remainingIntermediates}`,
+        );
+      }
+    }
+  }
+}
+
+function checkStructure(
+  chain: ChainEntry[],
+  trustAnchorUrls?: [string, ...string[]],
+): void {
   const firstEntry = chain[0];
   const lastEntry = chain[chain.length - 1];
 
@@ -358,6 +444,9 @@ function checkStructure(chain: ChainEntry[], trustAnchorUrls?: string[]): void {
     }
   }
 
+  // WARNING: when trustAnchorUrls is not provided, any chain root is accepted
+  // without binding to a known trust anchor. Callers that omit this parameter
+  // must apply their own root-of-trust verification.
   if (trustAnchorUrls?.length) {
     if (!lastEntry)
       throw new TrustChainEvaluationError("Trust chain root is not defined");
@@ -387,22 +476,29 @@ export type VerifyJwtWithJwkCallback = (
 export interface ValidateTrustChainOptions {
   callbacks: {
     /**
-     * Optional. When provided, each intermediate issuer's entity configuration
-     * is fetched and its self-signature verified as an additional integrity
-     * check. Subordinate statement signatures are verified against the chain
-     * superiors in both cases.
+     * Required for chains with intermediate entities (chains longer than two
+     * elements). Used to fetch each intermediate issuer's entity configuration
+     * for self-signature verification.
      */
     fetch: CallbackContext["fetch"];
+    /**
+     * Required for hashing operations, used to compute JWK thumbprints when
+     * comparing key material across subordinate statements and entity
+     * configurations.
+     */
+    hash: HashCallback;
     /**
      * Required for verifying entity statement signatures.
      */
     verifyJwt: VerifyJwtWithJwkCallback;
   };
   /**
-   * Optional set of trusted trust anchor URLs. When provided, the chain root
-   * must be one of them.
+   * Non-empty list of trusted trust anchor URLs. When provided, the chain root
+   * must be one of them. When omitted, any chain root is accepted without
+   * binding to a known trust anchor — callers are responsible for applying
+   * their own root-of-trust verification in that case.
    */
-  trustAnchorUrls?: string[];
+  trustAnchorUrls?: [string, ...string[]];
 }
 
 /**
@@ -421,6 +517,10 @@ export interface ValidateTrustChainOptions {
  * @param options Validation options including callbacks and trusted anchors.
  * @throws If any signature is invalid, any element is expired, structural
  *   links are broken, or the root is not a trusted anchor.
+ *
+ * @warning When `options.trustAnchorUrls` is omitted, the chain root is
+ *   accepted unconditionally. Callers are responsible for applying their own
+ *   root-of-trust verification in that case.
  */
 export async function validateTrustChain(
   trustChain: string[],
@@ -441,9 +541,12 @@ export async function validateTrustChain(
       "Trust anchor certificate is not defined",
     );
 
-  checkStructure(chain, options.trustAnchorUrls);
+  const verifyCallbacks: VerifyCallbacks = {
+    hash: options.callbacks.hash,
+    verifyJwt: options.callbacks.verifyJwt,
+  };
 
-  const fetcher = createFetcher(options.callbacks.fetch);
+  const fetcher = withHttpsEnforcement(createFetcher(options.callbacks.fetch));
 
   const subjectEcs: ChainEntry[] = new Array(chain.length - 1);
   subjectEcs[0] = leafEntry;
@@ -473,7 +576,8 @@ export async function validateTrustChain(
         ec,
         ec.header.kid,
         ec.payload.jwks.keys,
-        options.callbacks.verifyJwt,
+        undefined,
+        verifyCallbacks,
       );
       if (!verified) {
         throw new TrustChainEvaluationError(
@@ -523,15 +627,16 @@ export async function validateTrustChain(
         subEntry,
         subEntry.header.kid,
         chainSuperior.payload.jwks.keys,
-        options.callbacks.verifyJwt,
         subjectEc.payload.jwks.keys,
+        verifyCallbacks,
       );
     }),
     verifyJwtWithKeySet(
       anchorEntry,
       anchorEntry.header.kid,
       anchorEntry.payload.jwks.keys,
-      options.callbacks.verifyJwt,
+      undefined,
+      verifyCallbacks,
     ),
   ]);
 
@@ -548,49 +653,67 @@ export async function validateTrustChain(
   if (!anchorVerification?.verified) {
     throw new TrustChainEvaluationError("Error verifying Trust Anchor EC");
   }
+
+  checkMaxPathLength(chain);
+
+  checkStructure(chain, options.trustAnchorUrls);
 }
 
 export interface FetchAndValidateTrustChainOptions {
   callbacks: {
+    /**
+     * Required for hashing operations, used to compute JWK thumbprints when
+     * comparing key material across subordinate statements and entity
+     * configurations.
+     */
+    hash: HashCallback;
     verifyJwt: VerifyJwtWithJwkCallback;
   } & Pick<CallbackContext, "fetch">;
   /**
-   * Set of trusted trust anchor URLs. The resolved chain root must be one of
-   * them.
+   * Non-empty list of trusted trust anchor URLs. When provided, traversal
+   * stops as soon as one of these URLs is reached and the resolved chain root
+   * is verified against the list. When omitted, traversal follows
+   * `authority_hints` until no further hints exist (or a cycle / depth limit
+   * is hit), and any chain root is accepted — callers are responsible for
+   * applying their own root-of-trust verification in that case.
    */
-  trustAnchorUrls: string[];
+  trustAnchorUrls?: [string, ...string[]];
 }
 
 /**
  * Fetches and validates a trust chain starting from a leaf entity.
  *
  * Traverses `authority_hints` upward from the leaf entity until a known
- * trust anchor is reached, fetches every entity configuration along the
- * path and the corresponding subordinate statements, verifies all
- * signatures, and returns the assembled chain as an array of compact JWTs.
+ * trust anchor is reached (or until no further hints exist), fetches every
+ * entity configuration along the path and the corresponding subordinate
+ * statements, verifies all signatures, and returns the assembled chain as an
+ * array of compact JWTs.
  *
  * @param entityUrl URL of the leaf entity.
  * @param options Options including fetch/verifyJwt callbacks and trusted anchors.
  * @returns Ordered array of compact JWTs forming the validated trust chain.
  * @throws If the chain cannot be built, any element is expired or invalid, or
  *   the root is not a trusted anchor.
+ *
+ * @warning When `options.trustAnchorUrls` is omitted, the chain root is
+ *   accepted unconditionally. Callers are responsible for applying their own
+ *   root-of-trust verification in that case.
  */
 export async function fetchAndValidateTrustChain(
   entityUrl: string,
   options: FetchAndValidateTrustChainOptions,
 ): Promise<string[]> {
-  const fetcher = createFetcher(options.callbacks.fetch);
+  const fetcher = withHttpsEnforcement(createFetcher(options.callbacks.fetch));
 
   const ecs = await fetchECSequence(
     entityUrl,
     options.trustAnchorUrls,
     fetcher,
   );
-  const chain = await buildTrustChain(
-    ecs,
-    fetcher,
-    options.callbacks.verifyJwt,
-  );
+  const chain = await buildTrustChain(ecs, fetcher, {
+    hash: options.callbacks.hash,
+    verifyJwt: options.callbacks.verifyJwt,
+  });
 
   checkExpiry(chain);
   checkStructure(chain, options.trustAnchorUrls);
