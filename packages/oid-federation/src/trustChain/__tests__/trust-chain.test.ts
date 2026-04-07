@@ -936,3 +936,50 @@ describe("1-intermediate chain with middle intermediate EC key mismatch", () => 
     });
   });
 });
+
+// ---------- leaf sub-stmt key mismatch (sub-stmt declares a different key than the leaf used to sign) ----------
+
+describe("leaf sub-stmt key mismatch", () => {
+  // sub-stmt issued by anchor about the leaf, but declares ANCHOR_KEY instead of LEAF_KEY
+  const badLeafSubStmt = makeJwt(
+    { alg: "ES256", kid: ANCHOR_KID, typ: "entity-statement+jwt" },
+    {
+      exp: future,
+      iat: now,
+      iss: ANCHOR_URL,
+      jwks: { keys: [ANCHOR_KEY] },
+      sub: LEAF_URL,
+    },
+  );
+
+  it("validateTrustChain throws when first sub-stmt declares a key different from the one that signed the leaf", async () => {
+    const chain = [makeLeafEC(), badLeafSubStmt, makeAnchorEC()];
+    const options: ValidateTrustChainOptions = {
+      callbacks: { fetch: noopFetch, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(validateTrustChain(chain, options)).rejects.toThrow(
+      `signing key with kid "${LEAF_KID}" not found`,
+    );
+  });
+
+  it("fetchAndValidateTrustChain throws when the fetched sub-stmt declares a key different from the one that signed the leaf", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === `${LEAF_URL}/.well-known/openid-federation`)
+        return new Response(makeLeafEC(), { status: 200 });
+      if (url === `${ANCHOR_URL}/.well-known/openid-federation`)
+        return new Response(makeAnchorEC(), { status: 200 });
+      if (url.startsWith(FETCH_ENDPOINT))
+        return new Response(badLeafSubStmt, { status: 200 });
+      return new Response("not found", { status: 404 });
+    });
+    const options: FetchAndValidateTrustChainOptions = {
+      callbacks: { fetch: fetchMock, verifyJwt: noopVerifyJwt },
+      trustAnchorUrls: [ANCHOR_URL],
+    };
+    await expect(fetchAndValidateTrustChain(LEAF_URL, options)).rejects.toThrow(
+      `signing key with kid "${LEAF_KID}" not found`,
+    );
+  });
+});
