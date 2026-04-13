@@ -125,7 +125,7 @@ export async function verifyKeyAttestationJwt(
       `Unexpected error during key attestation jwt verification: ${
         error instanceof Error ? error.message : String(error)
       }`,
-      error,
+      { cause: error },
     );
   }
 }

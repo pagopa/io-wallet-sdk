@@ -2,12 +2,14 @@
  * Generic error thrown on Oid4vci operations
  */
 export class Oid4vciError extends Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "Oid4vciError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -17,10 +19,9 @@ export class Oid4vciError extends Error {
  * doesn't contain a kid
  */
 export class WalletProviderError extends Oid4vciError {
-  constructor(message: string, cause?: unknown) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "WalletProviderError";
-    this.cause = cause;
   }
 }
 
@@ -28,12 +29,14 @@ export class WalletProviderError extends Oid4vciError {
  * Error thrown when an unexpected error occurs during nonce request.
  */
 export class NonceRequestError extends Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "NonceRequestError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -41,10 +44,9 @@ export class NonceRequestError extends Error {
  * Error thrown when an unexpected error occurs during credential response fetching.
  */
 export class FetchCredentialResponseError extends Oid4vciError {
-  constructor(message: string, cause?: unknown) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "FetchCredentialResponseError";
-    this.cause = cause;
   }
 }
 
@@ -52,10 +54,9 @@ export class FetchCredentialResponseError extends Oid4vciError {
  * Error thrown when an unexpected error occurs during credential request parsing.
  */
 export class ParseCredentialRequestError extends Oid4vciError {
-  constructor(message: string, cause?: unknown) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "ParseCredentialRequestError";
-    this.cause = cause;
   }
 }
 
@@ -63,9 +64,8 @@ export class ParseCredentialRequestError extends Oid4vciError {
  * Error thrown when metadata fetching fails at all discovery endpoints.
  */
 export class FetchMetadataError extends Oid4vciError {
-  constructor(message: string, cause?: unknown) {
-    super(message);
-    this.cause = cause;
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "FetchMetadataError";
   }
 }
@@ -74,10 +74,9 @@ export class FetchMetadataError extends Oid4vciError {
  * Error thrown when an unexpected error occurs during credential response creation.
  */
 export class CreateCredentialResponseError extends Oid4vciError {
-  constructor(message: string, cause?: unknown) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "CreateCredentialResponseError";
-    this.cause = cause;
   }
 }
 
@@ -85,10 +84,9 @@ export class CreateCredentialResponseError extends Oid4vciError {
  * Error thrown when an unexpected error occurs during credential request JWT proof verification.
  */
 export class VerifyCredentialRequestJwtProofError extends Oid4vciError {
-  constructor(message: string, cause?: unknown) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "VerifyCredentialRequestJwtProofError";
-    this.cause = cause;
   }
 }
 
@@ -96,10 +94,9 @@ export class VerifyCredentialRequestJwtProofError extends Oid4vciError {
  * Error thrown when an error occurs during key attestation JWT verification.
  */
 export class VerifyKeyAttestationJwtError extends Oid4vciError {
-  constructor(message: string, cause?: unknown) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "VerifyKeyAttestationJwtError";
-    this.cause = cause;
   }
 }
 
@@ -108,9 +105,14 @@ export class VerifyKeyAttestationJwtError extends Oid4vciError {
  * This includes parsing, resolving, validating, and extracting grant details from credential offers.
  */
 export class CredentialOfferError extends Oid4vciError {
-  constructor(message: string, statusCode?: number) {
-    super(message, statusCode);
+  readonly statusCode?: number;
+  constructor(
+    message: string,
+    options?: { statusCode?: number } & ErrorOptions,
+  ) {
+    super(message, options);
     this.name = "CredentialOfferError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -120,8 +122,9 @@ export class CredentialOfferError extends Oid4vciError {
 export class MissingDpopProofError extends Oid4vciError {
   constructor(
     message = "Credential request is missing required 'DPoP' proof header",
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "MissingDpopProofError";
   }
 }
@@ -132,8 +135,9 @@ export class MissingDpopProofError extends Oid4vciError {
 export class CredentialAuthorizationHeaderError extends Oid4vciError {
   constructor(
     message = "Credential request is missing required 'Authorization' header with DPoP scheme",
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "CredentialAuthorizationHeaderError";
   }
 }

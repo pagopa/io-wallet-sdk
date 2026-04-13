@@ -459,7 +459,7 @@ export function parseCredentialRequest(
       `Unexpected error during credential request parsing: ${
         error instanceof Error ? error.message : String(error)
       }`,
-      error,
+      { cause: error },
     );
   }
 }
