@@ -10,8 +10,7 @@ export const zDpopJwtPayload = z.looseObject({
   htm: zHttpMethod,
   htu: z.url(),
   iat: z.number().int().nonnegative(),
-
-  jti: z.string(),
+  jti: z.string().max(256),
 });
 
 export type DpopJwtPayload = z.infer<typeof zDpopJwtPayload>;

@@ -67,7 +67,7 @@ export const zAccessTokenProfileJwtPayload = z.looseObject({
   exp: z.number(),
   iat: z.number(),
   iss: z.string(),
-  jti: z.string(),
+  jti: z.string().max(256),
   nbf: z.number().optional(),
   scope: z.string().optional(),
   sub: z.string(),

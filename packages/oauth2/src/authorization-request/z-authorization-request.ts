@@ -26,7 +26,7 @@ export const zAuthorizationRequest = z
     code_challenge: z.string(),
     code_challenge_method: z.string(),
     issuer_state: z.optional(z.string()),
-    jti: z.string(),
+    jti: z.string().max(256),
     redirect_uri: z.url(),
     response_mode: z.string(),
     response_type: z.string(),

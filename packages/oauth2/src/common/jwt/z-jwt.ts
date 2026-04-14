@@ -112,7 +112,7 @@ export const zJwtPayload = z.looseObject({
   exp: z.number().int().optional(),
   iat: z.number().int().optional(),
   iss: z.string().optional(),
-  jti: z.string().optional(),
+  jti: z.string().max(256).optional(),
   nbf: z.number().int().optional(),
   nonce: z.string().optional(),
   // Reserved for status parameters
