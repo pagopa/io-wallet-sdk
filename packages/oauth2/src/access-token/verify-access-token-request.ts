@@ -74,6 +74,17 @@ export interface VerifyAccessTokenRequestOptions {
   expectedCode: string;
 
   /**
+   * The expected DPoP nonce value that must appear in the `nonce` claim of the DPoP proof JWT.
+   *
+   * AS implementations **SHOULD** issue server-provided nonces (via the `DPoP-Nonce` response
+   * header) and pass the expected value here to prevent pre-generated DPoP proofs from being
+   * reused across requests within the `iat` window.
+   *
+   * See RFC 9449 §8 for the full nonce issuance flow.
+   */
+  expectedDpopNonce?: string;
+
+  /**
    * The parsed authorization code grant
    */
   grant: ParsedAccessTokenAuthorizationCodeRequestGrant;
@@ -161,6 +172,7 @@ export async function verifyAccessTokenRequest(
     allowedSigningAlgs: options.dpop.allowedSigningAlgs,
     callbacks: options.callbacks,
     dpopJwt: options.dpop.jwt,
+    expectedNonce: options.expectedDpopNonce,
     now: options.now,
     request: options.request,
   });

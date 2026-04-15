@@ -325,6 +325,52 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       expect(typeof result.dpop.jwkThumbprint).toBe("string");
       expect(result.dpop.jwkThumbprint.length).toBeGreaterThan(0);
     });
+
+    it("should pass when expectedDpopNonce matches the nonce in the DPoP proof", async () => {
+      const now = new Date();
+      const nonce = "server-nonce-abc123";
+      const options = createValidOptions({
+        dpop: {
+          jwt: createMockDpopJwt({
+            htm: "POST",
+            htu: "https://auth.example.com/token",
+            iat: Math.floor(now.getTime() / 1000),
+            jti: "test-jti",
+            nonce,
+          }),
+        },
+        expectedDpopNonce: nonce,
+        now,
+      });
+
+      const result = await verifyAccessTokenRequest(options);
+
+      expect(result).toBeDefined();
+    });
+
+    it("should throw when expectedDpopNonce does not match the nonce in the DPoP proof", async () => {
+      const now = new Date();
+      const options = createValidOptions({
+        dpop: {
+          jwt: createMockDpopJwt({
+            htm: "POST",
+            htu: "https://auth.example.com/token",
+            iat: Math.floor(now.getTime() / 1000),
+            jti: "test-jti",
+            nonce: "wrong-nonce",
+          }),
+        },
+        expectedDpopNonce: "server-nonce-abc123",
+        now,
+      });
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        Oauth2Error,
+      );
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        /expected nonce value/,
+      );
+    });
   });
 
   describe("Client attestation verification", () => {
