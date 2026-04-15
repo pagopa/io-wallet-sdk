@@ -8,6 +8,8 @@ import {
   zTrustChain,
 } from "../z-common";
 
+export const MAX_JTI_LENGTH = 256;
+
 export interface JwtSignerDid {
   alg: string;
   didUrl: string;
@@ -112,7 +114,7 @@ export const zJwtPayload = z.looseObject({
   exp: z.number().int().optional(),
   iat: z.number().int().optional(),
   iss: z.string().optional(),
-  jti: z.string().max(256).optional(),
+  jti: z.string().max(MAX_JTI_LENGTH).optional(),
   nbf: z.number().int().optional(),
   nonce: z.string().optional(),
   // Reserved for status parameters
