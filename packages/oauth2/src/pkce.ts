@@ -91,7 +91,7 @@ export async function verifyPkce(options: VerifyPkceOptions) {
 
   if (options.codeChallenge !== calculatedCodeChallenge) {
     throw new Oauth2Error(
-      `"PKCE verification failed: code_verifier does not match the stored code_challenge"`,
+      `PKCE verification failed: code_verifier does not match the stored code_challenge`,
     );
   }
 }
