@@ -127,6 +127,7 @@ export async function createAccessTokenResponse(
     } satisfies AccessTokenProfileJwtHeader);
 
     const payload = parseWithErrorHandling(zAccessTokenProfileJwtPayload, {
+      ...options.additionalPayload,
       aud: options.audience,
       client_id: options.clientId,
       cnf: options.dpop
@@ -145,7 +146,6 @@ export async function createAccessTokenResponse(
       nbf: options.nbf,
       scope: options.scope,
       sub: options.subject,
-      ...options.additionalPayload,
     } satisfies AccessTokenProfileJwtPayload);
 
     const { jwt } = await options.callbacks.signJwt(options.signer, {
