@@ -364,12 +364,10 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now,
       });
 
-      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
-        Oauth2Error,
-      );
-      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
-        /expected nonce value/,
-      );
+      const result = verifyAccessTokenRequest(options);
+
+      await expect(result).rejects.toThrow(Oauth2Error);
+      await expect(result).rejects.toThrow(/expected nonce value/);
     });
   });
 
