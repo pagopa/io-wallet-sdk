@@ -1,5 +1,6 @@
 import { zCertificateChain, zJwk, zTrustChain } from "@pagopa/io-wallet-oauth2";
 import { zKeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
+import { zItwSupportedSignatureAlg } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 export const zStatusList = z.object({
@@ -16,19 +17,10 @@ export const zKeyAttestationStatus = z.object({
 export type KeyAttestationStatus = z.infer<typeof zKeyAttestationStatus>;
 
 /**
- * For the moment, these are all the supported algorithms in both
- * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/algorithms.html#cryptographic-algorithms|v1.3.3} and
- * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.0.2/en/algorithms.html#cryptographic-algorithms|v1.0.2},
- * and in both specifications the `alg` field MUST be one of those values.
+ * For the moment, the specification doesn't restrict the key attestation signature algorithm
+ * to a subset of those that must/should be allowed
  */
-export const zKeyAttestationAlg = z.enum([
-  "ES256",
-  "ES384",
-  "ES512",
-  "PS256",
-  "PS384",
-  "PS512",
-]);
+export const zKeyAttestationAlg = zItwSupportedSignatureAlg;
 
 export const zKeyAttestationHeader = z.object({
   alg: zKeyAttestationAlg,

@@ -280,9 +280,8 @@ export async function fetchMetadata(
     ) {
       throw error;
     }
-    throw new FetchMetadataError(
-      "Unexpected error during metadata fetch",
-      error,
-    );
+    throw new FetchMetadataError("Unexpected error during metadata fetch", {
+      cause: error,
+    });
   }
 }

@@ -161,6 +161,9 @@ importers:
 
   packages/utils:
     dependencies:
+      '@openid4vc/oauth2':
+        specifier: 'catalog:'
+        version: 0.4.3
       '@openid4vc/utils':
         specifier: 'catalog:'
         version: 0.4.3

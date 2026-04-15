@@ -10,6 +10,7 @@ export * from "./pkce";
 export * from "./token-dpop";
 
 export {
+  /** @deprecated Use `CallbackContext` from `@pagopa/io-wallet-utils` instead. */
   type CallbackContext,
   type ClientAttestationPopJwtHeader,
   type ClientAttestationPopJwtPayload,
@@ -19,6 +20,7 @@ export {
   HashAlgorithm,
   type JweEncryptor,
   type JwtSigner,
+  /** @deprecated Use `JwtSignerJwk` from `@pagopa/io-wallet-utils` instead. */
   type JwtSignerJwk,
   Oauth2JwtParseError,
   type RequestDpopOptions,
