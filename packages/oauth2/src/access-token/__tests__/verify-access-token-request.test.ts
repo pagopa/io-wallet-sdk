@@ -326,11 +326,12 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       expect(result.dpop.jwkThumbprint.length).toBeGreaterThan(0);
     });
 
-    it("should pass when expectedDpopNonce matches the nonce in the DPoP proof", async () => {
+    it("should pass when dpop.expectedNonce matches the nonce in the DPoP proof", async () => {
       const now = new Date();
       const nonce = "server-nonce-abc123";
       const options = createValidOptions({
         dpop: {
+          expectedNonce: nonce,
           jwt: createMockDpopJwt({
             htm: "POST",
             htu: "https://auth.example.com/token",
@@ -339,7 +340,6 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
             nonce,
           }),
         },
-        expectedDpopNonce: nonce,
         now,
       });
 
@@ -348,10 +348,11 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       expect(result).toBeDefined();
     });
 
-    it("should throw when expectedDpopNonce does not match the nonce in the DPoP proof", async () => {
+    it("should throw when dpop.expectedNonce does not match the nonce in the DPoP proof", async () => {
       const now = new Date();
       const options = createValidOptions({
         dpop: {
+          expectedNonce: "server-nonce-abc123",
           jwt: createMockDpopJwt({
             htm: "POST",
             htu: "https://auth.example.com/token",
@@ -360,7 +361,6 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
             nonce: "wrong-nonce",
           }),
         },
-        expectedDpopNonce: "server-nonce-abc123",
         now,
       });
 
@@ -368,6 +368,24 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
 
       await expect(result).rejects.toThrow(Oauth2Error);
       await expect(result).rejects.toThrow(/expected nonce value/);
+    });
+
+    it("should throw when dpop.expectedNonce is empty", async () => {
+      const options = createValidOptions({
+        dpop: {
+          expectedNonce: "",
+          jwt: createMockDpopJwt({
+            htm: "POST",
+            htu: "https://auth.example.com/token",
+            iat: Math.floor(Date.now() / 1000),
+            jti: "test-jti",
+          }),
+        },
+      });
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Invalid 'dpop.expectedNonce' provided",
+      );
     });
   });
 

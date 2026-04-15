@@ -31,6 +31,17 @@ export interface VerifyAccessTokenRequestDpop {
   allowedSigningAlgs?: string[];
 
   /**
+   * The expected DPoP nonce value that must appear in the `nonce` claim of the DPoP proof JWT.
+   *
+   * AS implementations **SHOULD** issue server-provided nonces (via the `DPoP-Nonce` response
+   * header) and pass the expected value here to prevent pre-generated DPoP proofs from being
+   * reused across requests within the `iat` window.
+   *
+   * See RFC 9449 §8 for the full nonce issuance flow.
+   */
+  expectedNonce?: string;
+
+  /**
    * The dpop jwt from the access token request
    */
   jwt: string;
@@ -72,17 +83,6 @@ export interface VerifyAccessTokenRequestOptions {
    * The expected authorization code
    */
   expectedCode: string;
-
-  /**
-   * The expected DPoP nonce value that must appear in the `nonce` claim of the DPoP proof JWT.
-   *
-   * AS implementations **SHOULD** issue server-provided nonces (via the `DPoP-Nonce` response
-   * header) and pass the expected value here to prevent pre-generated DPoP proofs from being
-   * reused across requests within the `iat` window.
-   *
-   * See RFC 9449 §8 for the full nonce issuance flow.
-   */
-  expectedDpopNonce?: string;
 
   /**
    * The parsed authorization code grant
@@ -150,7 +150,11 @@ export interface VerifyAccessTokenRequestResult {
  *   callbacks: { hash, verifyJwt },
  *   clientAttestation: { jwt: "...", popJwt: "..." },
  *   codeExpiresAt: new Date(Date.now() + 600000),
- *   dpop: { jwt: dpopJwt, allowedSigningAlgs: ["ES256"] },
+ *   dpop: {
+ *     allowedSigningAlgs: ["ES256"],
+ *     expectedNonce: "server-issued-nonce",
+ *     jwt: dpopJwt,
+ *   },
  *   expectedCode: "auth_code_123",
  *   grant: parsedGrant,
  *   pkce: { codeChallenge, codeChallengeMethod: "S256", codeVerifier },
@@ -161,6 +165,10 @@ export interface VerifyAccessTokenRequestResult {
 export async function verifyAccessTokenRequest(
   options: VerifyAccessTokenRequestOptions,
 ): Promise<VerifyAccessTokenRequestResult> {
+  if (options.dpop.expectedNonce === "") {
+    throw new Oauth2Error(`Invalid 'dpop.expectedNonce' provided`);
+  }
+
   await verifyPkce({
     callbacks: options.callbacks,
     codeChallenge: options.pkce.codeChallenge,
@@ -172,7 +180,7 @@ export async function verifyAccessTokenRequest(
     allowedSigningAlgs: options.dpop.allowedSigningAlgs,
     callbacks: options.callbacks,
     dpopJwt: options.dpop.jwt,
-    expectedNonce: options.expectedDpopNonce,
+    expectedNonce: options.dpop.expectedNonce,
     now: options.now,
     request: options.request,
   });
