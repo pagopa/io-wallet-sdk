@@ -141,7 +141,7 @@ function verifyProofJwtIatOrThrow(options: {
     if (error instanceof Error) {
       throw new VerifyCredentialRequestJwtProofError(
         `Invalid iat claim in credential request proof JWT: ${error.message}`,
-        error,
+        { cause: error },
       );
     }
   }
@@ -334,7 +334,7 @@ export async function verifyCredentialRequestJwtProof(
       `Unexpected error during credential request proof verification: ${
         error instanceof Error ? error.message : String(error)
       }`,
-      error,
+      { cause: error },
     );
   }
 }

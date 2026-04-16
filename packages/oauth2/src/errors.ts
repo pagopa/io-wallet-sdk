@@ -2,12 +2,14 @@
  * Generic error thrown on OAuth2 operations
  */
 export class Oauth2Error extends Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "Oauth2Error";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -15,12 +17,14 @@ export class Oauth2Error extends Error {
  * Custom error thrown when pushed authorization request operations fail
  */
 export class PushedAuthorizationRequestError extends Oauth2Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "PushedAuthorizationRequestError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -29,8 +33,8 @@ export class PushedAuthorizationRequestError extends Oauth2Error {
  * nor a generateRandom callback or when the signJwt callback throws
  */
 export class CreateTokenDPoPError extends Oauth2Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "CreateTokenDPoPError";
   }
 }
@@ -40,12 +44,14 @@ export class CreateTokenDPoPError extends Oauth2Error {
  * Used in eID Substantial Authentication with MRTD Verification flow (IT-Wallet L2+ specification).
  */
 export class MrtdPopError extends Oauth2Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "MrtdPopError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -53,22 +59,26 @@ export class MrtdPopError extends Oauth2Error {
  * Custom error thrown when pushed authorization request operations fail
  */
 export class FetchTokenResponseError extends Oauth2Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
-    this.name = "fetchTokenResponseError";
+    super(message, options);
+    this.name = "FetchTokenResponseError";
+    this.statusCode = options?.statusCode;
   }
 }
 
 export class CreateTokenResponseError extends Oauth2Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "CreateTokenResponseError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -76,9 +86,8 @@ export class CreateTokenResponseError extends Oauth2Error {
  * Error thrown when an unexpected error occurs during client attestation (wallet attestation) creation.
  */
 export class ClientAttestationError extends Oauth2Error {
-  constructor(message: string, cause?: unknown) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "ClientAttestationError";
-    this.cause = cause;
   }
 }

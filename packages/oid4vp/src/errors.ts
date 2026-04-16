@@ -2,12 +2,14 @@
  * Generic error thrown during Oid4vp operations
  */
 export class Oid4vpError extends Error {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "Oid4vpError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -17,12 +19,14 @@ export class Oid4vpError extends Error {
  * are thrown
  */
 export class ParseAuthorizeRequestError extends Oid4vpError {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "ParseAuthorizeRequestError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -30,12 +34,14 @@ export class ParseAuthorizeRequestError extends Oid4vpError {
  * Error thrown by {@link fetchAuthorizationResponse}
  */
 export class FetchAuthorizationResponseError extends Oid4vpError {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "FetchAuthorizationResponseError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -44,12 +50,14 @@ export class FetchAuthorizationResponseError extends Oid4vpError {
  * are unexpected errors.
  */
 export class CreateAuthorizationResponseError extends Oid4vpError {
+  readonly statusCode?: number;
   constructor(
     message: string,
-    public readonly statusCode?: number,
+    options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "CreateAuthorizationResponseError";
+    this.statusCode = options?.statusCode;
   }
 }
 
@@ -58,8 +66,8 @@ export class CreateAuthorizationResponseError extends Oid4vpError {
  * Valid values are "get" or "post" (case-insensitive).
  */
 export class InvalidRequestUriMethodError extends Oid4vpError {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "InvalidRequestUriMethodError";
   }
 }
