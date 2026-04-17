@@ -12,6 +12,7 @@ import {
   vi,
 } from "vitest";
 
+import { WalletProviderError } from "../../errors";
 import { WalletProvider } from "../WalletProvider";
 
 vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
@@ -57,6 +58,17 @@ describe("WalletProvider v1.4 routing", () => {
     y: "test-y-value",
   };
 
+  const provider = new WalletProvider(
+    new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_4 }),
+  );
+
+  const baseSigner: V1_4.WalletAttestationOptionsV1_4["signer"] = {
+    alg: "ES256",
+    kid: "provider-key-id",
+    method: "x5c",
+    x5c: ["cert1-base64"] as [string, ...string[]],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockCreateWalletAttestationJwtV1_0.mockResolvedValue("v1.0-jwt-token");
@@ -65,27 +77,16 @@ describe("WalletProvider v1.4 routing", () => {
   });
 
   it("should route to v1.4 implementation when version is V1_4", async () => {
-    const provider = new WalletProvider(
-      new IoWalletSdkConfig({
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
-      }),
-    );
-
     const options: V1_4.WalletAttestationOptionsV1_4 = {
       callbacks: { signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
       signer: {
-        alg: "ES256",
-        kid: "provider-key-id",
-        method: "x5c",
+        ...baseSigner,
         x5c: ["cert1-base64", "cert2-base64"] as [string, ...string[]],
       },
       status: {
-        status_list: {
-          idx: 2,
-          uri: "https://status.example.com/list",
-        },
+        status_list: { idx: 2, uri: "https://status.example.com/list" },
       },
       walletLink: "https://wallet.example.com",
       walletName: "Wallet v1.4",
@@ -100,19 +101,9 @@ describe("WalletProvider v1.4 routing", () => {
   });
 
   it("should pass all options to v1.4 implementation including eudiWalletInfo", async () => {
-    const provider = new WalletProvider(
-      new IoWalletSdkConfig({
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
-      }),
-    );
-
     const status = {
-      status_list: {
-        idx: 42,
-        uri: "https://status.example.com/list",
-      },
+      status_list: { idx: 42, uri: "https://status.example.com/list" },
     };
-
     const eudiWalletInfo = {
       general_info: {
         wallet_provider_name: "PagoPA",
@@ -121,7 +112,6 @@ describe("WalletProvider v1.4 routing", () => {
         wallet_solution_version: "1.0.0",
       },
     };
-
     const options: V1_4.WalletAttestationOptionsV1_4 = {
       callbacks: { signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
@@ -129,9 +119,7 @@ describe("WalletProvider v1.4 routing", () => {
       expiresAt: new Date("2025-06-01T00:00:00Z"),
       issuer: "https://wallet-provider.example.com",
       signer: {
-        alg: "ES256",
-        kid: "provider-key-id",
-        method: "x5c",
+        ...baseSigner,
         trustChain: ["jwt1", "jwt2"] as [string, ...string[]],
         x5c: ["cert1-base64", "cert2-base64"] as [string, ...string[]],
       },
@@ -158,6 +146,56 @@ describe("WalletProvider v1.4 routing", () => {
       status,
       walletLink: "https://wallet.example.com",
       walletName: "Premium Wallet",
+    });
+  });
+
+  describe("version mismatch", () => {
+    const baseOptions = {
+      callbacks: { signJwt: vi.fn() },
+      dpopJwkPublic: {
+        crv: "P-256",
+        kid: "test-key-id",
+        kty: "EC",
+        x: "test-x-value",
+        y: "test-y-value",
+      },
+      issuer: "https://wallet-provider.example.com",
+      signer: {
+        alg: "ES256",
+        kid: "provider-key-id",
+        method: "x5c" as const,
+        x5c: ["cert1-base64"] as [string, ...string[]],
+      },
+      status: { status_list: { idx: 1, uri: "https://status.example.com" } },
+      walletLink: "https://wallet.example.com",
+      walletName: "My Wallet",
+    };
+
+    it.each([
+      ["walletLink is missing", { ...baseOptions, walletLink: undefined }],
+      ["walletName is missing", { ...baseOptions, walletName: undefined }],
+      ["status is missing", { ...baseOptions, status: undefined }],
+      [
+        "nbf (v1.3-only) is present",
+        { ...baseOptions, nbf: new Date("2025-01-01T00:00:00Z") },
+      ],
+      [
+        "v1.3-shaped options are passed (all required fields absent)",
+        {
+          callbacks: baseOptions.callbacks,
+          dpopJwkPublic: baseOptions.dpopJwkPublic,
+          issuer: baseOptions.issuer,
+          signer: baseOptions.signer,
+        },
+      ],
+    ])("should throw WalletProviderError when %s", async (_, options) => {
+      await expect(
+        provider.createItWalletAttestationJwt(
+          options as unknown as Parameters<
+            typeof provider.createItWalletAttestationJwt
+          >[0],
+        ),
+      ).rejects.toThrow(WalletProviderError);
     });
   });
 });

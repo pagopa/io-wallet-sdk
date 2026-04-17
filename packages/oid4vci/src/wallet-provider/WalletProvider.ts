@@ -44,6 +44,26 @@ function assertV1_4Options(
       `Version mismatch: provider is configured for v1.4 (x5c) but received options with signer method "${options.signer.method}"`,
     );
   }
+  if (!options.walletLink) {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 but 'walletLink' is required and missing`,
+    );
+  }
+  if (!options.walletName) {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 but 'walletName' is required and missing`,
+    );
+  }
+  if (!("status" in options) || !options.status) {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 but 'status' is required and missing`,
+    );
+  }
+  if ("nbf" in options && options.nbf !== undefined) {
+    throw new WalletProviderError(
+      `Version mismatch: 'nbf' is not supported in v1.4`,
+    );
+  }
 }
 
 /**
