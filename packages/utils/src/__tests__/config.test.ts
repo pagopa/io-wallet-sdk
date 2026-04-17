@@ -17,6 +17,13 @@ describe("IoWalletSdkConfig", () => {
       });
       expect(config.itWalletSpecsVersion).toBe(ItWalletSpecsVersion.V1_3);
     });
+
+    it("should create config with v1.4", () => {
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+      });
+      expect(config.itWalletSpecsVersion).toBe(ItWalletSpecsVersion.V1_4);
+    });
   });
 
   describe("isVersion", () => {
@@ -48,6 +55,20 @@ describe("IoWalletSdkConfig", () => {
       expect(config.isVersion(ItWalletSpecsVersion.V1_0)).toBe(false);
     });
 
+    it("should return true when version matches for v1.4", () => {
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+      });
+      expect(config.isVersion(ItWalletSpecsVersion.V1_4)).toBe(true);
+    });
+
+    it("should return false when version does not match for v1.4", () => {
+      const config = new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+      });
+      expect(config.isVersion(ItWalletSpecsVersion.V1_3)).toBe(false);
+    });
+
     it("should provide type narrowing (TypeScript compile-time check)", () => {
       const config = new IoWalletSdkConfig({
         itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
@@ -67,6 +88,7 @@ describe("IoWalletSdkConfig", () => {
       const validVersions: ItWalletSpecsVersion[] = [
         ItWalletSpecsVersion.V1_0,
         ItWalletSpecsVersion.V1_3,
+        ItWalletSpecsVersion.V1_4,
       ];
 
       validVersions.forEach((version) => {
