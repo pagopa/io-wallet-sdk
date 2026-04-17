@@ -36,6 +36,7 @@ export const zWalletAttestationJwtPayloadV1_4 = z.looseObject({
   exp: z.number().int(),
   iat: z.number().int(),
   iss: z.string(),
+  nbf: z.number().optional(),
   status: zWalletAttestationStatusV1_4,
   sub: z.string(),
   wallet_link: z.url(),
