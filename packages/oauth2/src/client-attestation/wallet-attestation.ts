@@ -11,6 +11,7 @@ import {
 } from "./types";
 import * as V1_0 from "./v1.0";
 import * as V1_3 from "./v1.3";
+import * as V1_4 from "./v1.4";
 
 function isV1_0Options(
   options: VerifyWalletAttestationJwtOptions,
@@ -24,13 +25,21 @@ function isV1_3Options(
   return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
 }
 
+function isV1_4Options(
+  options: VerifyWalletAttestationJwtOptions,
+): options is V1_4.VerifyWalletAttestationJwtOptionsV1_4 {
+  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_4;
+}
+
 export type VerifiedWalletAttestationJwt =
   | V1_0.VerifiedWalletAttestationJwtV1_0
-  | V1_3.VerifiedWalletAttestationJwtV1_3;
+  | V1_3.VerifiedWalletAttestationJwtV1_3
+  | V1_4.VerifiedWalletAttestationJwtV1_4;
 
 export type VerifyWalletAttestationJwtOptions =
   | V1_0.VerifyWalletAttestationJwtOptionsV1_0
-  | V1_3.VerifyWalletAttestationJwtOptionsV1_3;
+  | V1_3.VerifyWalletAttestationJwtOptionsV1_3
+  | V1_4.VerifyWalletAttestationJwtOptionsV1_4;
 
 export async function verifyWalletAttestationJwt(
   options: V1_0.VerifyWalletAttestationJwtOptionsV1_0,
@@ -39,6 +48,10 @@ export async function verifyWalletAttestationJwt(
 export async function verifyWalletAttestationJwt(
   options: V1_3.VerifyWalletAttestationJwtOptionsV1_3,
 ): Promise<V1_3.VerifiedWalletAttestationJwtV1_3>;
+
+export async function verifyWalletAttestationJwt(
+  options: V1_4.VerifyWalletAttestationJwtOptionsV1_4,
+): Promise<V1_4.VerifiedWalletAttestationJwtV1_4>;
 
 export async function verifyWalletAttestationJwt(
   options: VerifyWalletAttestationJwtOptions,
@@ -53,9 +66,14 @@ export async function verifyWalletAttestationJwt(
     return V1_3.verifyWalletAttestationJwt(options);
   }
 
+  if (isV1_4Options(options)) {
+    return V1_4.verifyWalletAttestationJwt(options);
+  }
+
   throw new ItWalletSpecsVersionError("verifyWalletAttestationJwt", version, [
     ItWalletSpecsVersion.V1_0,
     ItWalletSpecsVersion.V1_3,
+    ItWalletSpecsVersion.V1_4,
   ]);
 }
 
