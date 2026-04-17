@@ -179,8 +179,10 @@ export class WalletProvider {
    * Creates a wallet attestation JWT according to the configured Italian Wallet specification version.
    *
    * Version Differences:
-   * - v1.0: Uses only `trust_chain` in header (federation method)
-   * - v1.3: Requires `x5c` in header, optional `trust_chain`, supports `nbf` and `status` claims
+   * - v1.0: Uses only `trust_chain` in header (federation method); no `status` claim
+   * - v1.3: Requires `x5c` in header, optional `trust_chain`; supports optional `nbf` and `status` claims
+   * - v1.4: Requires `x5c` in header, optional `trust_chain`; `status`, `wallet_link`, and `wallet_name`
+   *   are all **required**; optional `eudi_wallet_info` claim; sets `sub` to `dpopJwkPublic.kid`
    *
    * @public
    * @async
@@ -214,6 +216,31 @@ export class WalletProvider {
    *   },
    *   nbf: new Date('2025-01-01'), // Optional
    *   status: { status_list: { idx: 2, uri: "https://status.example.com" } } // Optional
+   * });
+   *
+   * @example v1.4 - Wallet attestation with required status and optional eudi_wallet_info
+   * const jwt = await provider.createItWalletAttestationJwt({
+   *   callbacks: { signJwt: mySignJwtCallback },
+   *   dpopJwkPublic: myJwk,
+   *   issuer: "https://wallet-provider.example.com",
+   *   signer: {
+   *     alg: "ES256",
+   *     kid: "provider-key-id",
+   *     method: "x5c",
+   *     x5c: ["cert1-base64", "cert2-base64"],
+   *     trustChain: ["trust-anchor-jwt"] // Optional
+   *   },
+   *   status: { status_list: { idx: 2, uri: "https://status.example.com" } }, // Required
+   *   walletLink: "https://wallet.example.com", // Required
+   *   walletName: "My Wallet", // Required
+   *   eudiWalletInfo: { // Optional
+   *     general_info: {
+   *       wallet_provider_name: "PagoPA",
+   *       wallet_solution_certification_information: "certification-ref",
+   *       wallet_solution_id: "wallet-solution-id",
+   *       wallet_solution_version: "1.0.0"
+   *     }
+   *   }
    * });
    */
 
