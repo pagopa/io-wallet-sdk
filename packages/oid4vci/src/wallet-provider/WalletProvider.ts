@@ -1,5 +1,5 @@
 import { CallbackContext, JwtSignerX5c } from "@openid4vc/oauth2";
-import { Jwk, V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
+import { Jwk, V1_0, V1_3, V1_4 } from "@pagopa/io-wallet-oauth2";
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
@@ -32,6 +32,16 @@ function assertV1_3Options(
   if (options.signer.method !== "x5c") {
     throw new WalletProviderError(
       `Version mismatch: provider is configured for v1.3 (x5c) but received options with signer method "${options.signer.method}"`,
+    );
+  }
+}
+
+function assertV1_4Options(
+  options: WalletAttestationOptions,
+): asserts options is V1_4.WalletAttestationOptionsV1_4 {
+  if (options.signer.method !== "x5c") {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 (x5c) but received options with signer method "${options.signer.method}"`,
     );
   }
 }
@@ -245,10 +255,29 @@ export class WalletProvider {
       });
     }
 
+    if (this.specVersion === ItWalletSpecsVersion.V1_4) {
+      assertV1_4Options(options);
+      return V1_4.createWalletAttestationJwt({
+        callbacks: options.callbacks,
+        dpopJwkPublic: options.dpopJwkPublic,
+        eudiWalletInfo: options.eudiWalletInfo,
+        expiresAt: options.expiresAt,
+        issuer: options.issuer,
+        signer: options.signer,
+        status: options.status,
+        walletLink: options.walletLink,
+        walletName: options.walletName,
+      });
+    }
+
     throw new ItWalletSpecsVersionError(
       "createItWalletAttestationJwt",
       this.specVersion,
-      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+      [
+        ItWalletSpecsVersion.V1_0,
+        ItWalletSpecsVersion.V1_3,
+        ItWalletSpecsVersion.V1_4,
+      ],
     );
   }
 }

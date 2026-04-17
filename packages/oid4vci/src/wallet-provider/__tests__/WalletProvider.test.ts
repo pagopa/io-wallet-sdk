@@ -40,7 +40,6 @@ const mockCreateWalletAttestationJwtV1_3 =
   V1_3.createWalletAttestationJwt as MockedFunction<
     typeof V1_3.createWalletAttestationJwt
   >;
-
 describe("WalletProvider", () => {
   const mockSignJwt = vi.fn();
 
