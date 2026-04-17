@@ -1,3 +1,8 @@
+import {
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
+  parseWithErrorHandling,
+} from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 import {
@@ -53,6 +58,57 @@ export const itWalletMetadataV1_3 = z.strictObject({
 export const itWalletMetadataSchema =
   itWalletMetadataV1_3.or(itWalletMetadataV1_0);
 
-export type MetadataV1_0 = z.input<typeof itWalletMetadataV1_0>;
-export type MetadataV1_3 = z.input<typeof itWalletMetadataV1_3>;
-export type Metadata = MetadataV1_0 | MetadataV1_3;
+export type ItWalletMetadataV1_0 = z.output<typeof itWalletMetadataV1_0>;
+export type ItWalletMetadataV1_3 = z.output<typeof itWalletMetadataV1_3>;
+export type ItWalletMetadata = ItWalletMetadataV1_0 | ItWalletMetadataV1_3;
+
+export type ItWalletMetadataByVersion<V extends ItWalletSpecsVersion> =
+  V extends ItWalletSpecsVersion.V1_0
+    ? ItWalletMetadataV1_0
+    : V extends ItWalletSpecsVersion.V1_3
+      ? ItWalletMetadataV1_3
+      : never;
+
+export function isItWalletMetadataVersion<V extends ItWalletSpecsVersion>(
+  metadata: unknown,
+  version: V,
+): metadata is ItWalletMetadataByVersion<V> {
+  switch (version) {
+    case ItWalletSpecsVersion.V1_0:
+      return itWalletMetadataV1_0.safeParse(metadata).success;
+    case ItWalletSpecsVersion.V1_3:
+      return itWalletMetadataV1_3.safeParse(metadata).success;
+    default:
+      throw new ItWalletSpecsVersionError(
+        "isItWalletMetadataVersion",
+        version,
+        [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+      );
+  }
+}
+
+export function parseItWalletMetadataForVersion<V extends ItWalletSpecsVersion>(
+  metadata: unknown,
+  version: V,
+): ItWalletMetadataByVersion<V> {
+  switch (version) {
+    case ItWalletSpecsVersion.V1_0:
+      return parseWithErrorHandling(
+        itWalletMetadataV1_0,
+        metadata,
+        "invalid v1.0 metadata provided",
+      ) as ItWalletMetadataByVersion<V>;
+    case ItWalletSpecsVersion.V1_3:
+      return parseWithErrorHandling(
+        itWalletMetadataV1_3,
+        metadata,
+        "invalid v1.3 metadata provided",
+      ) as ItWalletMetadataByVersion<V>;
+    default:
+      throw new ItWalletSpecsVersionError(
+        "parseItWalletMetadataForVersion",
+        version,
+        [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+      );
+  }
+}
