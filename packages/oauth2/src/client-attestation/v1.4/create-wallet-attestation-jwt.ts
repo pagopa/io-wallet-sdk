@@ -2,7 +2,6 @@ import {
   ValidationError,
   addSecondsToDate,
   dateToSeconds,
-  parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
@@ -20,6 +19,7 @@ import {
 export interface WalletAttestationOptionsV1_4
   extends Omit<BaseWalletAttestationOptions, "walletLink" | "walletName"> {
   eudiWalletInfo?: z.infer<typeof zEudiWalletInfoV1_4>;
+  nbf?: Date;
   signer: {
     alg: string;
     kid: string;
@@ -40,37 +40,30 @@ export const createWalletAttestationJwt = async (
     const exp =
       options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60);
 
-    const payload = parseWithErrorHandling(
-      zWalletAttestationJwtPayloadV1_4,
-      {
-        cnf: { jwk: options.dpopJwkPublic },
-        exp: dateToSeconds(exp),
-        iat: dateToSeconds(new Date()),
-        iss: options.issuer,
-        status: options.status,
-        sub: options.dpopJwkPublic.kid,
-        wallet_link: options.walletLink,
-        wallet_name: options.walletName,
-        ...(options.eudiWalletInfo && {
-          eudi_wallet_info: options.eudiWalletInfo,
-        }),
-      },
-      "Invalid v1.4 wallet attestation payload",
-    );
+    const payload = {
+      cnf: { jwk: options.dpopJwkPublic },
+      exp: dateToSeconds(exp),
+      iat: dateToSeconds(new Date()),
+      iss: options.issuer,
+      status: options.status,
+      sub: options.dpopJwkPublic.kid,
+      wallet_link: options.walletLink,
+      wallet_name: options.walletName,
+      ...(options.nbf && { nbf: dateToSeconds(options.nbf) }),
+      ...(options.eudiWalletInfo && {
+        eudi_wallet_info: options.eudiWalletInfo,
+      }),
+    };
 
-    const header = parseWithErrorHandling(
-      zWalletAttestationJwtHeaderV1_4,
-      {
-        alg: options.signer.alg,
-        kid: options.signer.kid,
-        typ: "oauth-client-attestation+jwt",
-        x5c: options.signer.x5c,
-        ...(options.signer.trustChain && {
-          trust_chain: options.signer.trustChain,
-        }),
-      },
-      "Invalid v1.4 wallet attestation header",
-    );
+    const header = {
+      alg: options.signer.alg,
+      kid: options.signer.kid,
+      typ: "oauth-client-attestation+jwt",
+      x5c: options.signer.x5c,
+      ...(options.signer.trustChain && {
+        trust_chain: options.signer.trustChain,
+      }),
+    };
 
     const result = await signJwt(options.signer, {
       header,
