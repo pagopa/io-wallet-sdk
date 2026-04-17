@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
+import { MAX_JTI_LENGTH, zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
   z.object({
@@ -67,7 +67,7 @@ export const zAccessTokenProfileJwtPayload = z.looseObject({
   exp: z.number(),
   iat: z.number(),
   iss: z.string(),
-  jti: z.string(),
+  jti: z.string().max(MAX_JTI_LENGTH),
   nbf: z.number().optional(),
   scope: z.string().optional(),
   sub: z.string(),

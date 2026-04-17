@@ -84,7 +84,11 @@ export async function verifyTokenDPoP(options: VerifyTokenDPoPOptions) {
     );
   }
 
-  if (options.expectedNonce) {
+  if (options.expectedNonce !== undefined) {
+    if (options.expectedNonce === "") {
+      throw new Oauth2Error(`Invalid 'expectedNonce' provided`);
+    }
+
     if (!payload.nonce) {
       throw new Oauth2Error(
         `Dpop jwt does not have a nonce value, but expected nonce value '${options.expectedNonce}'`,
