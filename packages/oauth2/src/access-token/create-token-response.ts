@@ -154,11 +154,11 @@ export async function createAccessTokenResponse(
     });
 
     const accessTokenResponse = parseWithErrorHandling(zAccessTokenResponse, {
+      ...options.additionalPayload,
       access_token: jwt,
       expires_in: options.expiresInSeconds,
       refresh_token: options.refreshToken,
       token_type: options.tokenType,
-      ...options.additionalPayload,
     } satisfies AccessTokenResponse);
 
     return accessTokenResponse;
