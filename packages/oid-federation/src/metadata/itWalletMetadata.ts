@@ -6,25 +6,41 @@ import {
 import { z } from "zod";
 
 import {
-  itWalletAuthorizationServerIdentifier,
-  itWalletAuthorizationServerIdentifierV1_3,
-  itWalletAuthorizationServerMetadata,
-  itWalletAuthorizationServerMetadataV1_3,
-  itWalletCredentialIssuerIdentifier,
-  itWalletCredentialIssuerIdentifierV1_3,
-  itWalletCredentialIssuerMetadata,
-  itWalletCredentialIssuerMetadataV1_3,
-  itWalletCredentialVerifierIdentifier,
-  itWalletCredentialVerifierIdentifierV1_3,
-  itWalletCredentialVerifierMetadata,
-  itWalletCredentialVerifierMetadataV1_3,
   itWalletFederationEntityIdentifier,
   itWalletFederationEntityMetadata,
+} from "./entity/itWalletFederationEntity";
+import {
   itWalletProviderEntityIdentifier,
   itWalletProviderEntityMetadata,
-  itWalletSolutionEntityIdentifierV1_3,
-  itWalletSolutionEntityMetadataV1_3,
-} from "./entity";
+} from "./entity/v1.0/ItWalletProvider";
+import {
+  itWalletAuthorizationServerIdentifier,
+  itWalletAuthorizationServerMetadata,
+} from "./entity/v1.0/itWalletAuthorizationServer";
+import {
+  itWalletCredentialIssuerIdentifier,
+  itWalletCredentialIssuerMetadata,
+} from "./entity/v1.0/itWalletCredentialIssuer";
+import {
+  itWalletCredentialVerifierIdentifier,
+  itWalletCredentialVerifierMetadata,
+} from "./entity/v1.0/itWalletCredentialVerifier";
+import {
+  itWalletAuthorizationServerIdentifier as itWalletAuthorizationServerIdentifierV1_3,
+  itWalletAuthorizationServerMetadata as itWalletAuthorizationServerMetadataV1_3,
+} from "./entity/v1.3/itWalletAuthorizationServer";
+import {
+  itWalletCredentialIssuerIdentifier as itWalletCredentialIssuerIdentifierV1_3,
+  itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_3,
+} from "./entity/v1.3/itWalletCredentialIssuer";
+import {
+  itWalletCredentialVerifierIdentifier as itWalletCredentialVerifierIdentifierV1_3,
+  itWalletCredentialVerifierMetadata as itWalletCredentialVerifierMetadataV1_3,
+} from "./entity/v1.3/itWalletCredentialVerifier";
+import {
+  itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_3,
+  itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
+} from "./entity/v1.3/itWalletSolution";
 
 // v1.0 combined metadata
 export const itWalletMetadataV1_0 = z.strictObject({

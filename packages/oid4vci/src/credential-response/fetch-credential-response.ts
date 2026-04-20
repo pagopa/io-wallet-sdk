@@ -9,8 +9,8 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
-import type { CredentialRequestV1_0 } from "../credential-request/v1.0";
-import type { CredentialRequestV1_3 } from "../credential-request/v1.3";
+import type { CredentialRequestV1_0 } from "../credential-request/v1.0/z-credential";
+import type { CredentialRequestV1_3 } from "../credential-request/v1.3/z-credential";
 
 import { FetchCredentialResponseError } from "../errors";
 import {

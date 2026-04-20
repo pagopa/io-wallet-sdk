@@ -1,4 +1,4 @@
-import { UnexpectedStatusCodeError } from "./errors";
+import { UnexpectedStatusCodeError } from "./errors/errors";
 
 /**
  * Check if a response is in the expected status, otherwise throw an error

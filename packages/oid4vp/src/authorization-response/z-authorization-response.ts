@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { zVpToken } from "../vp-token";
+import { zVpToken } from "../vp-token/z-vp-token";
 
 export const zOpenid4vpAuthorizationResponse = z.object({
   state: z.string(),

@@ -11,8 +11,8 @@ import { Oauth2Error } from "../errors";
 import {
   isJarAuthorizationRequest,
   parseJarRequest,
-  zJarAuthorizationRequest,
-} from "../jar";
+} from "../jar/parse-jar-request";
+import { zJarAuthorizationRequest } from "../jar/z-jar";
 import {
   ParseAuthorizationRequestResult,
   parseAuthorizationRequest,

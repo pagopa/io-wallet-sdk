@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { commonMetadataSchema } from "../metadata/common";
-import { swapValidators } from "../metadata/operator/utils";
+import { swapValidators } from "../metadata/operator/utils/swap-validators";
 import { metadataPolicySchema } from "../metadata/policy";
 
 export const createEntity = <T extends string, S extends z.ZodRawShape>({

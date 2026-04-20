@@ -2,7 +2,10 @@ import { JwtSigner } from "@openid4vc/oauth2";
 
 import { decodeJwt } from "../common/jwt/decode-jwt";
 import { PushedAuthorizationRequestError } from "../errors";
-import { VerifiedJarRequest, verifyJarRequest } from "../jar";
+import {
+  VerifiedJarRequest,
+  verifyJarRequest,
+} from "../jar/verify-jar-request";
 import {
   type VerifyAuthorizationRequestOptions,
   type VerifyAuthorizationRequestResult,
