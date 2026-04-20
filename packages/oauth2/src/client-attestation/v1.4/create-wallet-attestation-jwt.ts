@@ -40,6 +40,11 @@ export const createWalletAttestationJwt = async (
     const exp =
       options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60);
 
+    // Validate temporal constraints
+    if (options.nbf && options.nbf >= exp) {
+      throw new ValidationError("nbf must be before exp");
+    }
+
     const payload = {
       cnf: { jwk: options.dpopJwkPublic },
       exp: dateToSeconds(exp),

@@ -176,10 +176,6 @@ describe("WalletProvider v1.4 routing", () => {
       ["walletName is missing", { ...baseOptions, walletName: undefined }],
       ["status is missing", { ...baseOptions, status: undefined }],
       [
-        "nbf (v1.3-only) is present",
-        { ...baseOptions, nbf: new Date("2025-01-01T00:00:00Z") },
-      ],
-      [
         "v1.3-shaped options are passed (all required fields absent)",
         {
           callbacks: baseOptions.callbacks,

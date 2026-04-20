@@ -59,11 +59,6 @@ function assertV1_4Options(
       `Version mismatch: provider is configured for v1.4 but 'status' is required and missing`,
     );
   }
-  if ("nbf" in options && options.nbf !== undefined) {
-    throw new WalletProviderError(
-      `Version mismatch: 'nbf' is not supported in v1.4`,
-    );
-  }
 }
 
 /**
