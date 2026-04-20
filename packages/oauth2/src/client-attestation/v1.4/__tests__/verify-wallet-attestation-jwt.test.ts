@@ -73,7 +73,8 @@ describe("verifyWalletAttestationJwt v1.4", () => {
       eudi_wallet_info: {
         general_info: {
           wallet_provider_name: "PagoPA",
-          wallet_solution_certification_information: "certification-reference",
+          wallet_solution_certification_information:
+            "https://certification-reference.example.it",
           wallet_solution_id: "wallet-solution-id",
           wallet_solution_version: "1.0.0",
         },
@@ -89,7 +90,8 @@ describe("verifyWalletAttestationJwt v1.4", () => {
     expect(result.payload.eudi_wallet_info).toEqual({
       general_info: {
         wallet_provider_name: "PagoPA",
-        wallet_solution_certification_information: "certification-reference",
+        wallet_solution_certification_information:
+          "https://certification-reference.example.it",
         wallet_solution_id: "wallet-solution-id",
         wallet_solution_version: "1.0.0",
       },

@@ -14,7 +14,7 @@ export const zWalletAttestationStatusV1_4 = z.object({
 export const zEudiWalletInfoV1_4 = z.object({
   general_info: z.object({
     wallet_provider_name: z.string(),
-    wallet_solution_certification_information: z.string(),
+    wallet_solution_certification_information: z.url(),
     wallet_solution_id: z.string(),
     wallet_solution_version: z.string(),
   }),
