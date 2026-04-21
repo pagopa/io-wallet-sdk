@@ -1,5 +1,7 @@
 import z from "zod";
 
+import { MAX_JTI_LENGTH } from "../common/jwt/z-jwt";
+
 const zOpenidCredentialAuthorizationDetails = z.object({
   credential_configuration_id: z.string(),
   type: z.literal("openid_credential"),
@@ -26,7 +28,7 @@ export const zAuthorizationRequest = z
     code_challenge: z.string(),
     code_challenge_method: z.string(),
     issuer_state: z.optional(z.string()),
-    jti: z.string(),
+    jti: z.string().max(MAX_JTI_LENGTH),
     redirect_uri: z.url(),
     response_mode: z.string(),
     response_type: z.string(),

@@ -1,7 +1,16 @@
+import {
+  ItWalletSpecsVersion,
+  parseWithErrorHandling,
+} from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 import { jsonWebKeySetSchema } from "../jwk/jwk";
-import { itWalletMetadataSchema } from "../metadata/itWalletMetadata";
+import {
+  ItWalletMetadataByVersion,
+  isItWalletMetadataVersion,
+  itWalletMetadataSchema,
+  parseItWalletMetadataForVersion,
+} from "../metadata/itWalletMetadata";
 import { metadataPolicySchema } from "../metadata/policy";
 import { constraintSchema } from "./z-constraint";
 import {
@@ -34,9 +43,9 @@ const baseSchema = z.object({
   trust_marks: z.array(trustMarkSchema).optional(),
 });
 
-type ItWalletEntityStatementClaimsOptions = z.input<typeof baseSchema>;
+type BaseEntityStatementClaimsOptions = z.input<typeof baseSchema>;
 
-type ItWalletEntityStatementClaims = z.output<typeof baseSchema>;
+type BaseEntityStatementClaims = z.output<typeof baseSchema>;
 
 const entityStatementClaimsSchema = baseSchema.loose().refine(
   (data) => {
@@ -52,6 +61,59 @@ const entityStatementClaimsSchema = baseSchema.loose().refine(
 
 // The explicit type annotation here is necessary to avoid this node exceeds the maximum length the compiler will serialize.
 export const itWalletEntityStatementClaimsSchema: z.ZodType<
-  ItWalletEntityStatementClaims,
-  ItWalletEntityStatementClaimsOptions
+  BaseEntityStatementClaims,
+  BaseEntityStatementClaimsOptions
 > = entityStatementClaimsSchema;
+
+export type ItWalletEntityStatementClaimsOptions = z.input<
+  typeof itWalletEntityStatementClaimsSchema
+>;
+
+export type ItWalletEntityStatementClaims = z.output<
+  typeof itWalletEntityStatementClaimsSchema
+>;
+
+type EntityStatementClaimsWithMetadata<TMetadata> = {
+  metadata?: TMetadata;
+} & Omit<ItWalletEntityStatementClaims, "metadata">;
+
+export type ItWalletEntityStatementClaimsByVersion<
+  V extends ItWalletSpecsVersion,
+> = EntityStatementClaimsWithMetadata<ItWalletMetadataByVersion<V>>;
+
+export function isItWalletEntityStatementClaimsVersion<
+  V extends ItWalletSpecsVersion,
+>(
+  claims: unknown,
+  version: V,
+): claims is ItWalletEntityStatementClaimsByVersion<V> {
+  const parsedClaims = itWalletEntityStatementClaimsSchema.safeParse(claims);
+
+  if (!parsedClaims.success) {
+    return false;
+  }
+
+  return (
+    parsedClaims.data.metadata === undefined ||
+    isItWalletMetadataVersion(parsedClaims.data.metadata, version)
+  );
+}
+
+export function parseItWalletEntityStatementClaimsForVersion<
+  V extends ItWalletSpecsVersion,
+>(claims: unknown, version: V): ItWalletEntityStatementClaimsByVersion<V> {
+  const parsedClaims = parseWithErrorHandling(
+    itWalletEntityStatementClaimsSchema,
+    claims,
+    "invalid entity statement claims provided",
+  );
+
+  if (parsedClaims.metadata === undefined) {
+    return parsedClaims as ItWalletEntityStatementClaimsByVersion<V>;
+  }
+
+  return {
+    ...parsedClaims,
+    metadata: parseItWalletMetadataForVersion(parsedClaims.metadata, version),
+  } as ItWalletEntityStatementClaimsByVersion<V>;
+}

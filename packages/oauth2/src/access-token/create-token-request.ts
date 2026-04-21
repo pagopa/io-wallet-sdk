@@ -38,9 +38,9 @@ export const createTokenRequest = async (
   options: RetrieveAuthorizationCodeAccessTokenOptions,
 ) =>
   ({
+    ...options.additionalRequestPayload,
     code: options.authorizationCode,
     code_verifier: options.pkceCodeVerifier,
     grant_type: "authorization_code",
     redirect_uri: options.redirectUri,
-    ...options.additionalRequestPayload,
   }) satisfies AuthorizationCodeGrantType;
