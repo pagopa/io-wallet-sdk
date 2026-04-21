@@ -315,7 +315,7 @@ export class WalletProvider {
     throw new ItWalletSpecsVersionError(
       "createItWalletAttestationJwt",
       this.specVersion,
-      Object.values(ItWalletSpecVersion),
+      Object.values(ItWalletSpecsVersion),
     );
   }
 }
