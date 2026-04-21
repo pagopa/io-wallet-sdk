@@ -70,11 +70,11 @@ export async function verifyWalletAttestationJwt(
     return V1_4.verifyWalletAttestationJwt(options);
   }
 
-  throw new ItWalletSpecsVersionError("verifyWalletAttestationJwt", version, [
-    ItWalletSpecsVersion.V1_0,
-    ItWalletSpecsVersion.V1_3,
-    ItWalletSpecsVersion.V1_4,
-  ]);
+  throw new ItWalletSpecsVersionError(
+    "verifyWalletAttestationJwt",
+    version,
+    Object.values(ItWalletSpecsVersion),
+  );
 }
 
 export function extractClientAttestationJwtsFromHeaders(headers: FetchHeaders):
