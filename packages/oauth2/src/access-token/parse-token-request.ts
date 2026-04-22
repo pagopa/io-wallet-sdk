@@ -4,9 +4,9 @@ import {
   formatZodError,
 } from "@pagopa/io-wallet-utils";
 
-import { extractClientAttestationJwtsFromHeaders } from "../client-attestation";
+import { extractClientAttestationJwtsFromHeaders } from "../client-attestation/wallet-attestation";
 import { Oauth2Error } from "../errors";
-import { extractDpopJwtFromHeaders } from "../token-dpop";
+import { extractDpopJwtFromHeaders } from "../token-dpop/create-token-dpop";
 import {
   AuthorizationCodeGrantIdentifier,
   RefreshTokenGrantIdentifier,

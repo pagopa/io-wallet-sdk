@@ -9,12 +9,12 @@ import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
 
 import {
   ClientIdPrefix,
-  Openid4vpAuthorizationRequestPayload,
   extractClientIdPrefix,
-} from "../authorization-request";
+} from "../authorization-request/parse-authorization-request";
+import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";
 import { CreateAuthorizationResponseError } from "../errors";
-import { extractEncryptionJwkFromJwks } from "../jarm";
-import { VpToken } from "../vp-token";
+import { extractEncryptionJwkFromJwks } from "../jarm/jarm-extract-jwks";
+import { VpToken } from "../vp-token/z-vp-token";
 import { Openid4vpAuthorizationResponse } from "./z-authorization-response";
 
 export interface CreateAuthorizationResponseOptions {

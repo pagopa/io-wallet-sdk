@@ -12,7 +12,7 @@ import {
 import { stringToJsonWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
+import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";
 import { extractEncryptionJwkFromJwks } from "./jarm-extract-jwks";
 import {
   JarmAuthorizationResponse,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../../jwk";
+import { jsonWebKeySetSchema } from "../../../jwk/jwk";
 
 /**
  * IT Wallet Credential Verifier Metadata for OpenID Federation v1.3.3

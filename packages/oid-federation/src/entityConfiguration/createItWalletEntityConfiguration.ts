@@ -1,8 +1,10 @@
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import { Buffer } from "buffer";
 
+import type { SignCallback } from "../utils/types";
+
 import { getUsedJsonWebKey } from "../jsonWeb/getUsedJsonWebKey";
-import { SignCallback, base64ToBase64URL } from "../utils";
+import { base64ToBase64URL } from "../utils/encoding";
 import {
   ItWalletEntityConfigurationClaimsOptions,
   itWalletEntityConfigurationClaimsSchema,

@@ -1,7 +1,7 @@
 import { CallbackContext } from "@pagopa/io-wallet-oauth2";
 import { describe, expect, it } from "vitest";
 
-import { Openid4vpAuthorizationRequestPayload } from "../../authorization-request";
+import { Openid4vpAuthorizationRequestPayload } from "../../authorization-request/z-authorization-request";
 import { parseJarmAuthorizationResponse } from "../parse-jarm-authorization-response";
 
 const encodeJwtPart = (value: unknown): string =>

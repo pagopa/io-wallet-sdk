@@ -1,4 +1,4 @@
-import { JsonWebKey } from "../jwk";
+import { JsonWebKey } from "../jwk/jwk";
 
 export type SignCallback = (options: {
   jwk: JsonWebKey;

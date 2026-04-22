@@ -1,14 +1,12 @@
 import { z } from "zod";
 
-import {
-  addOperator,
-  defaultOperator,
-  essentialOperator,
-  oneOfOperator,
-  subsetOfOperator,
-  supersetOfOperator,
-  valueOperator,
-} from "./operator";
+import { addOperator } from "./operator/standard/add";
+import { defaultOperator } from "./operator/standard/default";
+import { essentialOperator } from "./operator/standard/essential";
+import { oneOfOperator } from "./operator/standard/oneOf";
+import { subsetOfOperator } from "./operator/standard/subsetOf";
+import { supersetOfOperator } from "./operator/standard/supersetOf";
+import { valueOperator } from "./operator/standard/value";
 
 export const allSupportedPolicies = {
   [addOperator.key]: addOperator,

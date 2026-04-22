@@ -3,16 +3,16 @@ import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-
 import { CallbackContext } from "@openid4vc/oauth2";
 import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
+import { VerifiedClientAttestationPopJwt } from "../client-attestation/client-attestation-pop";
 import {
   ClientAttestationOptions,
-  VerifiedClientAttestationPopJwt,
-  VerifiedWalletAttestationJwt,
   verifyClientAttestation,
-} from "../client-attestation";
+} from "../client-attestation/verify-client-attestation";
+import { VerifiedWalletAttestationJwt } from "../client-attestation/wallet-attestation";
 import { Jwk } from "../common/jwk/z-jwk";
 import { Oauth2Error } from "../errors";
 import { PkceCodeChallengeMethod, verifyPkce } from "../pkce";
-import { verifyTokenDPoP } from "../token-dpop";
+import { verifyTokenDPoP } from "../token-dpop/verify-token-dpop";
 import { ParsedAccessTokenAuthorizationCodeRequestGrant } from "./parse-token-request";
 import { AccessTokenRequest } from "./z-token";
 

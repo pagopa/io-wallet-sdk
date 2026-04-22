@@ -1,6 +1,7 @@
 export * from "./config";
 export * from "./constants";
-export * from "./errors";
+export * from "./errors/errors";
+export * from "./errors/parse";
 export * from "./fetcher";
 export type * from "./globals";
 export * from "./parse";

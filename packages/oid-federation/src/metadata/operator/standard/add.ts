@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { MetadataMergeStrategy } from "../metadata-merge-strategy";
 import { MetadataOrderOfApplication } from "../metadata-order-of-application";
-import { createPolicyOperatorSchema } from "../utils";
+import { createPolicyOperatorSchema } from "../utils/create-policy-operator-schema";
 
 export const addOperator = createPolicyOperatorSchema({
   canBeCombinedWith: ["default", "subset_of", "superset_of", "essential"],

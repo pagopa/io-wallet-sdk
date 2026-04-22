@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../jwk";
+import { jsonWebKeySetSchema } from "../jwk/jwk";
 
 /**
  * @example https://<federation_authority_domain>/trust_marks/<purpose>/<entity_type>
