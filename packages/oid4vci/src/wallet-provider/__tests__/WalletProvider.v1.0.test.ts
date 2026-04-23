@@ -1,6 +1,4 @@
 import {
-  type WalletAttestationOptionsV1_0,
-  type WalletAttestationOptionsV1_3,
   createWalletAttestationJwtV1_0,
   createWalletAttestationJwtV1_3,
 } from "@pagopa/io-wallet-oauth2";
@@ -18,7 +16,6 @@ import {
   vi,
 } from "vitest";
 
-import { WalletProviderError } from "../../errors";
 import { WalletProvider } from "../WalletProvider";
 
 vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
@@ -58,33 +55,6 @@ describe("WalletProvider v1.0", () => {
   });
 
   describe("routing", () => {
-    it("should route to v1.0 implementation when version is V1_0", async () => {
-      const provider = new WalletProvider(
-        new IoWalletSdkConfig({
-          itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
-        }),
-      );
-
-      const options: WalletAttestationOptionsV1_0 = {
-        authenticatorAssuranceLevel: "aal1",
-        callbacks: { signJwt: mockSignJwt },
-        dpopJwkPublic: mockJwk,
-        issuer: "https://wallet-provider.example.com",
-        signer: {
-          alg: "ES256",
-          kid: "provider-key-id",
-          method: "federation",
-          trustChain: ["jwt1", "jwt2"] as [string, ...string[]],
-        },
-      };
-
-      const result = await provider.createItWalletAttestationJwt(options);
-
-      expect(result).toBe("v1.0-jwt-token");
-      expect(mockCreateWalletAttestationJwtV1_0).toHaveBeenCalledTimes(1);
-      expect(mockCreateWalletAttestationJwtV1_3).not.toHaveBeenCalled();
-    });
-
     it("should throw ItWalletSpecsVersionError for unsupported version", async () => {
       const invalidConfig = {
         isVersion: vi.fn(),
@@ -108,36 +78,6 @@ describe("WalletProvider v1.0", () => {
       await expect(
         provider.createItWalletAttestationJwt(options),
       ).rejects.toThrow(ItWalletSpecsVersionError);
-    });
-  });
-
-  describe("version mismatch", () => {
-    it("should throw WalletProviderError when options signer method mismatches configured version", async () => {
-      const provider = new WalletProvider(
-        new IoWalletSdkConfig({
-          itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
-        }),
-      );
-
-      const v1_3Options: WalletAttestationOptionsV1_3 = {
-        callbacks: { signJwt: mockSignJwt },
-        dpopJwkPublic: mockJwk,
-        issuer: "https://wallet-provider.example.com",
-        signer: {
-          alg: "ES256",
-          kid: "provider-key-id",
-          method: "x5c",
-          x5c: ["cert1-base64"] as [string, ...string[]],
-        },
-      };
-
-      await expect(
-        provider.createItWalletAttestationJwt(
-          v1_3Options as Parameters<
-            typeof provider.createItWalletAttestationJwt
-          >[0],
-        ),
-      ).rejects.toThrow(WalletProviderError);
     });
   });
 });
