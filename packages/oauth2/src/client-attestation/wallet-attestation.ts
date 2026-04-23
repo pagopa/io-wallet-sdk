@@ -5,53 +5,66 @@ import {
   ItWalletSpecsVersionError,
 } from "@pagopa/io-wallet-utils";
 
+import type {
+  VerifiedWalletAttestationJwtV1_0,
+  VerifyWalletAttestationJwtOptionsV1_0,
+} from "./v1.0/verify-wallet-attestation-jwt";
+import type {
+  VerifiedWalletAttestationJwtV1_3,
+  VerifyWalletAttestationJwtOptionsV1_3,
+} from "./v1.3/verify-wallet-attestation-jwt";
+import type {
+  VerifiedWalletAttestationJwtV1_4,
+  VerifyWalletAttestationJwtOptionsV1_4,
+} from "./v1.4/verify-wallet-attestation-jwt";
+
 import {
   oauthClientAttestationHeader,
   oauthClientAttestationPopHeader,
 } from "./types";
-import * as V1_0 from "./v1.0";
-import * as V1_3 from "./v1.3";
-import * as V1_4 from "./v1.4";
+import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_0 } from "./v1.0/verify-wallet-attestation-jwt";
+import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_3 } from "./v1.3/verify-wallet-attestation-jwt";
+import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_4 } from "./v1.4/verify-wallet-attestation-jwt";
 
 function isV1_0Options(
   options: VerifyWalletAttestationJwtOptions,
-): options is V1_0.VerifyWalletAttestationJwtOptionsV1_0 {
+): options is VerifyWalletAttestationJwtOptionsV1_0 {
   return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
 }
 
 function isV1_3Options(
   options: VerifyWalletAttestationJwtOptions,
-): options is V1_3.VerifyWalletAttestationJwtOptionsV1_3 {
+): options is VerifyWalletAttestationJwtOptionsV1_3 {
   return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
 }
 
 function isV1_4Options(
   options: VerifyWalletAttestationJwtOptions,
-): options is V1_4.VerifyWalletAttestationJwtOptionsV1_4 {
+): options is VerifyWalletAttestationJwtOptionsV1_4 {
   return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_4;
 }
 
 export type VerifiedWalletAttestationJwt =
-  | V1_0.VerifiedWalletAttestationJwtV1_0
-  | V1_3.VerifiedWalletAttestationJwtV1_3
-  | V1_4.VerifiedWalletAttestationJwtV1_4;
+  | VerifiedWalletAttestationJwtV1_0
+  | VerifiedWalletAttestationJwtV1_3
+  | VerifiedWalletAttestationJwtV1_4;
 
 export type VerifyWalletAttestationJwtOptions =
-  | V1_0.VerifyWalletAttestationJwtOptionsV1_0
-  | V1_3.VerifyWalletAttestationJwtOptionsV1_3
-  | V1_4.VerifyWalletAttestationJwtOptionsV1_4;
+  | VerifyWalletAttestationJwtOptionsV1_0
+  | VerifyWalletAttestationJwtOptionsV1_3
+  | VerifyWalletAttestationJwtOptionsV1_4;
 
 export async function verifyWalletAttestationJwt(
-  options: V1_0.VerifyWalletAttestationJwtOptionsV1_0,
-): Promise<V1_0.VerifiedWalletAttestationJwtV1_0>;
+  options: VerifyWalletAttestationJwtOptionsV1_0,
+): Promise<VerifiedWalletAttestationJwtV1_0>;
 
 export async function verifyWalletAttestationJwt(
-  options: V1_3.VerifyWalletAttestationJwtOptionsV1_3,
-): Promise<V1_3.VerifiedWalletAttestationJwtV1_3>;
+  options: VerifyWalletAttestationJwtOptionsV1_3,
+): Promise<VerifiedWalletAttestationJwtV1_3>;
 
 export async function verifyWalletAttestationJwt(
-  options: V1_4.VerifyWalletAttestationJwtOptionsV1_4,
-): Promise<V1_4.VerifiedWalletAttestationJwtV1_4>;
+  options: VerifyWalletAttestationJwtOptionsV1_4,
+): Promise<VerifiedWalletAttestationJwtV1_4>;
 
 export async function verifyWalletAttestationJwt(
   options: VerifyWalletAttestationJwtOptions,
@@ -59,15 +72,15 @@ export async function verifyWalletAttestationJwt(
   const version = options.config.itWalletSpecsVersion;
 
   if (isV1_0Options(options)) {
-    return V1_0.verifyWalletAttestationJwt(options);
+    return verifyWalletAttestationJwtV1_0(options);
   }
 
   if (isV1_3Options(options)) {
-    return V1_3.verifyWalletAttestationJwt(options);
+    return verifyWalletAttestationJwtV1_3(options);
   }
 
   if (isV1_4Options(options)) {
-    return V1_4.verifyWalletAttestationJwt(options);
+    return verifyWalletAttestationJwtV1_4(options);
   }
 
   throw new ItWalletSpecsVersionError(

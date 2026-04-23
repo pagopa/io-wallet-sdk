@@ -1,6 +1,6 @@
-import type { CredentialRequestOptionsV1_0 } from "./v1.0";
+import type { CredentialRequestOptionsV1_0 } from "./v1.0/create-credential-request";
 import type { CredentialRequestV1_0 } from "./v1.0/z-credential";
-import type { CredentialRequestOptionsV1_3 } from "./v1.3";
+import type { CredentialRequestOptionsV1_3 } from "./v1.3/create-credential-request";
 import type { CredentialRequestV1_3 } from "./v1.3/z-credential";
 
 // Re-export version-specific options

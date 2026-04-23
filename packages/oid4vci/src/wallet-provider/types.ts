@@ -1,10 +1,10 @@
-import type { V1_0, V1_3, V1_4 } from "@pagopa/io-wallet-oauth2";
+import type {
+  WalletAttestationOptionsV1_0,
+  WalletAttestationOptionsV1_3,
+  WalletAttestationOptionsV1_4,
+} from "@pagopa/io-wallet-oauth2";
 
 export type { BaseWalletAttestationOptions } from "@pagopa/io-wallet-oauth2";
-
-export type WalletAttestationOptionsV1_0 = V1_0.WalletAttestationOptionsV1_0;
-export type WalletAttestationOptionsV1_3 = V1_3.WalletAttestationOptionsV1_3;
-export type WalletAttestationOptionsV1_4 = V1_4.WalletAttestationOptionsV1_4;
 
 /**
  * Union type for wallet attestation options

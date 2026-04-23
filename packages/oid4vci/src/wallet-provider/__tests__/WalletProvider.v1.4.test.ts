@@ -1,4 +1,9 @@
-import { V1_0, V1_3, V1_4 } from "@pagopa/io-wallet-oauth2";
+import {
+  type WalletAttestationOptionsV1_4,
+  createWalletAttestationJwtV1_0,
+  createWalletAttestationJwtV1_3,
+  createWalletAttestationJwtV1_4,
+} from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -20,32 +25,23 @@ vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
     await importOriginal<typeof import("@pagopa/io-wallet-oauth2")>();
   return {
     ...actual,
-    V1_0: {
-      ...actual.V1_0,
-      createWalletAttestationJwt: vi.fn(),
-    },
-    V1_3: {
-      ...actual.V1_3,
-      createWalletAttestationJwt: vi.fn(),
-    },
-    V1_4: {
-      ...actual.V1_4,
-      createWalletAttestationJwt: vi.fn(),
-    },
+    createWalletAttestationJwtV1_0: vi.fn(),
+    createWalletAttestationJwtV1_3: vi.fn(),
+    createWalletAttestationJwtV1_4: vi.fn(),
   };
 });
 
 const mockCreateWalletAttestationJwtV1_0 =
-  V1_0.createWalletAttestationJwt as MockedFunction<
-    typeof V1_0.createWalletAttestationJwt
+  createWalletAttestationJwtV1_0 as MockedFunction<
+    typeof createWalletAttestationJwtV1_0
   >;
 const mockCreateWalletAttestationJwtV1_3 =
-  V1_3.createWalletAttestationJwt as MockedFunction<
-    typeof V1_3.createWalletAttestationJwt
+  createWalletAttestationJwtV1_3 as MockedFunction<
+    typeof createWalletAttestationJwtV1_3
   >;
 const mockCreateWalletAttestationJwtV1_4 =
-  V1_4.createWalletAttestationJwt as MockedFunction<
-    typeof V1_4.createWalletAttestationJwt
+  createWalletAttestationJwtV1_4 as MockedFunction<
+    typeof createWalletAttestationJwtV1_4
   >;
 
 describe("WalletProvider v1.4 routing", () => {
@@ -62,7 +58,7 @@ describe("WalletProvider v1.4 routing", () => {
     new IoWalletSdkConfig({ itWalletSpecsVersion: ItWalletSpecsVersion.V1_4 }),
   );
 
-  const baseSigner: V1_4.WalletAttestationOptionsV1_4["signer"] = {
+  const baseSigner: WalletAttestationOptionsV1_4["signer"] = {
     alg: "ES256",
     kid: "provider-key-id",
     method: "x5c",
@@ -77,7 +73,7 @@ describe("WalletProvider v1.4 routing", () => {
   });
 
   it("should route to v1.4 implementation when version is V1_4", async () => {
-    const options: V1_4.WalletAttestationOptionsV1_4 = {
+    const options: WalletAttestationOptionsV1_4 = {
       callbacks: { signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
@@ -112,7 +108,7 @@ describe("WalletProvider v1.4 routing", () => {
         wallet_solution_version: "1.0.0",
       },
     };
-    const options: V1_4.WalletAttestationOptionsV1_4 = {
+    const options: WalletAttestationOptionsV1_4 = {
       callbacks: { signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       eudiWalletInfo,
@@ -150,7 +146,7 @@ describe("WalletProvider v1.4 routing", () => {
   });
 
   describe("version mismatch", () => {
-    const baseOptions = {
+    const baseOptions: WalletAttestationOptionsV1_4 = {
       callbacks: { signJwt: vi.fn() },
       dpopJwkPublic: {
         crv: "P-256",

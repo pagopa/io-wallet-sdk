@@ -7,7 +7,7 @@ import {
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
+import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";
 import { ParseAuthorizationResponseResult } from "../authorization-response/parse-authorization-response";
 import { validateOpenid4vpAuthorizationResponsePayload } from "../authorization-response/validate-authorization-response";
 import { zOpenid4vpAuthorizationResponse } from "../authorization-response/z-authorization-response";

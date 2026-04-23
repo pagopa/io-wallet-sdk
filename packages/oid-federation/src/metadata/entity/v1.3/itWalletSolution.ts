@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../../jwk";
+import { jsonWebKeySetSchema } from "../../../jwk/jwk";
 
 const walletMetadataSchema = z.looseObject({
   authorization_endpoint: z.url(),

@@ -12,7 +12,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { entityConfigurationHeaderSchema } from "../entityConfiguration";
+import { entityConfigurationHeaderSchema } from "../entityConfiguration/z-entity-configuration-header";
 import { itWalletEntityStatementClaimsSchema } from "../entityStatement/itWalletEntityStatementClaims";
 import { TrustChainEvaluationError } from "../errors";
 import { jsonWebKeySchema } from "../jwk/jwk";

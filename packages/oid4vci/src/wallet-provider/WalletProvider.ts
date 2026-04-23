@@ -1,5 +1,13 @@
 import { CallbackContext, JwtSignerX5c } from "@openid4vc/oauth2";
-import { Jwk, V1_0, V1_3, V1_4 } from "@pagopa/io-wallet-oauth2";
+import {
+  Jwk,
+  type WalletAttestationOptionsV1_0,
+  type WalletAttestationOptionsV1_3,
+  type WalletAttestationOptionsV1_4,
+  createWalletAttestationJwtV1_0,
+  createWalletAttestationJwtV1_3,
+  createWalletAttestationJwtV1_4,
+} from "@pagopa/io-wallet-oauth2";
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
@@ -18,7 +26,7 @@ import {
 
 function assertV1_0Options(
   options: WalletAttestationOptions,
-): asserts options is V1_0.WalletAttestationOptionsV1_0 {
+): asserts options is WalletAttestationOptionsV1_0 {
   if (options.signer.method !== "federation") {
     throw new WalletProviderError(
       `Version mismatch: provider is configured for v1.0 (federation) but received options with signer method "${options.signer.method}"`,
@@ -28,7 +36,7 @@ function assertV1_0Options(
 
 function assertV1_3Options(
   options: WalletAttestationOptions,
-): asserts options is V1_3.WalletAttestationOptionsV1_3 {
+): asserts options is WalletAttestationOptionsV1_3 {
   if (options.signer.method !== "x5c") {
     throw new WalletProviderError(
       `Version mismatch: provider is configured for v1.3 (x5c) but received options with signer method "${options.signer.method}"`,
@@ -38,7 +46,7 @@ function assertV1_3Options(
 
 function assertV1_4Options(
   options: WalletAttestationOptions,
-): asserts options is V1_4.WalletAttestationOptionsV1_4 {
+): asserts options is WalletAttestationOptionsV1_4 {
   if (options.signer.method !== "x5c") {
     throw new WalletProviderError(
       `Version mismatch: provider is configured for v1.4 (x5c) but received options with signer method "${options.signer.method}"`,
@@ -270,7 +278,7 @@ export class WalletProvider {
 
     if (this.specVersion === ItWalletSpecsVersion.V1_0) {
       assertV1_0Options(options);
-      return V1_0.createWalletAttestationJwt({
+      return createWalletAttestationJwtV1_0({
         authenticatorAssuranceLevel: options.authenticatorAssuranceLevel,
         callbacks: options.callbacks,
         dpopJwkPublic: options.dpopJwkPublic,
@@ -284,7 +292,7 @@ export class WalletProvider {
 
     if (this.specVersion === ItWalletSpecsVersion.V1_3) {
       assertV1_3Options(options);
-      return V1_3.createWalletAttestationJwt({
+      return createWalletAttestationJwtV1_3({
         callbacks: options.callbacks,
         dpopJwkPublic: options.dpopJwkPublic,
         expiresAt: options.expiresAt,
@@ -299,7 +307,7 @@ export class WalletProvider {
 
     if (this.specVersion === ItWalletSpecsVersion.V1_4) {
       assertV1_4Options(options);
-      return V1_4.createWalletAttestationJwt({
+      return createWalletAttestationJwtV1_4({
         callbacks: options.callbacks,
         dpopJwkPublic: options.dpopJwkPublic,
         eudiWalletInfo: options.eudiWalletInfo,

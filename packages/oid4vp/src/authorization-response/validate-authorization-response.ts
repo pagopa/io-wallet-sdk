@@ -1,6 +1,6 @@
-import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
+import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";
 import { Oid4vpError } from "../errors";
-import { parseVpToken } from "../vp-token";
+import { parseVpToken } from "../vp-token/parse-vp-token";
 import { Openid4vpAuthorizationResponse } from "./z-authorization-response";
 
 export interface ValidateOpenid4vpAuthorizationResponseOptions {

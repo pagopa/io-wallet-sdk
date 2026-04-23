@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../jwk";
-import { createEntity } from "../../utils";
+import { jsonWebKeySetSchema } from "../../jwk/jwk";
+import { createEntity } from "../../utils/create-entity";
 
 export const federationEntityMetadata = createEntity({
   additionalValidation: {

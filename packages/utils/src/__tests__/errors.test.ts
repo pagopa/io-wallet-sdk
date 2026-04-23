@@ -4,7 +4,7 @@ import { ItWalletSpecsVersion } from "../config";
 import {
   ItWalletSpecsVersionError,
   UnexpectedStatusCodeError,
-} from "../errors";
+} from "../errors/errors";
 
 describe("ItWalletSpecsVersionError", () => {
   describe("constructor", () => {

@@ -1,4 +1,9 @@
-import { V1_0, V1_3 } from "@pagopa/io-wallet-oauth2";
+import {
+  type WalletAttestationOptionsV1_0,
+  type WalletAttestationOptionsV1_3,
+  createWalletAttestationJwtV1_0,
+  createWalletAttestationJwtV1_3,
+} from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -21,24 +26,18 @@ vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
     await importOriginal<typeof import("@pagopa/io-wallet-oauth2")>();
   return {
     ...actual,
-    V1_0: {
-      ...actual.V1_0,
-      createWalletAttestationJwt: vi.fn(),
-    },
-    V1_3: {
-      ...actual.V1_3,
-      createWalletAttestationJwt: vi.fn(),
-    },
+    createWalletAttestationJwtV1_0: vi.fn(),
+    createWalletAttestationJwtV1_3: vi.fn(),
   };
 });
 
 const mockCreateWalletAttestationJwtV1_0 =
-  V1_0.createWalletAttestationJwt as MockedFunction<
-    typeof V1_0.createWalletAttestationJwt
+  createWalletAttestationJwtV1_0 as MockedFunction<
+    typeof createWalletAttestationJwtV1_0
   >;
 const mockCreateWalletAttestationJwtV1_3 =
-  V1_3.createWalletAttestationJwt as MockedFunction<
-    typeof V1_3.createWalletAttestationJwt
+  createWalletAttestationJwtV1_3 as MockedFunction<
+    typeof createWalletAttestationJwtV1_3
   >;
 
 describe("WalletProvider v1.0", () => {
@@ -66,7 +65,7 @@ describe("WalletProvider v1.0", () => {
         }),
       );
 
-      const options: V1_0.WalletAttestationOptionsV1_0 = {
+      const options: WalletAttestationOptionsV1_0 = {
         authenticatorAssuranceLevel: "aal1",
         callbacks: { signJwt: mockSignJwt },
         dpopJwkPublic: mockJwk,
@@ -120,7 +119,7 @@ describe("WalletProvider v1.0", () => {
         }),
       );
 
-      const v1_3Options: V1_3.WalletAttestationOptionsV1_3 = {
+      const v1_3Options: WalletAttestationOptionsV1_3 = {
         callbacks: { signJwt: mockSignJwt },
         dpopJwkPublic: mockJwk,
         issuer: "https://wallet-provider.example.com",

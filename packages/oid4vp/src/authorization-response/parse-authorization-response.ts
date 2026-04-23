@@ -1,13 +1,11 @@
 import { CallbackContext } from "@pagopa/io-wallet-oauth2";
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
-import { Openid4vpAuthorizationRequestPayload } from "../authorization-request";
+import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";
 import { Oid4vpError } from "../errors";
-import {
-  JarmHeader,
-  VerifyJarmAuthorizationResponseResult,
-  parseJarmAuthorizationResponse,
-} from "../jarm";
+import { parseJarmAuthorizationResponse } from "../jarm/parse-jarm-authorization-response";
+import { VerifyJarmAuthorizationResponseResult } from "../jarm/verify-jarm-authorization-response";
+import { JarmHeader } from "../jarm/z-jarm";
 import {
   ValidateOpenid4vpAuthorizationResponseResult,
   validateOpenid4vpAuthorizationResponsePayload,
