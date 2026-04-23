@@ -3,57 +3,38 @@ import {
   addSecondsToDate,
   dateToSeconds,
 } from "@pagopa/io-wallet-utils";
+import { z } from "zod";
 
 import { decodeJwt } from "../../common/jwt/decode-jwt";
 import { ClientAttestationError } from "../../errors";
 import { BaseWalletAttestationOptions } from "../types";
 import {
-  WalletAttestationJwtV1_3,
-  zWalletAttestationJwtHeaderV1_3,
-  zWalletAttestationJwtPayloadV1_3,
+  WalletAttestationJwtV1_4,
+  zEudiWalletInfoV1_4,
+  zWalletAttestationJwtHeaderV1_4,
+  zWalletAttestationJwtPayloadV1_4,
+  zWalletAttestationStatusV1_4,
 } from "./z-wallet-attestation";
 
-/**
- * Options for creating a wallet attestation with v1.3
- * Requires x5c, optional trust_chain, nbf, and status
- */
-export interface WalletAttestationOptionsV1_3
-  extends BaseWalletAttestationOptions {
-  // NEW OPTIONAL CLAIMS
-  nbf?: Date; // Not Before timestamp
-
+export interface WalletAttestationOptionsV1_4
+  extends Omit<BaseWalletAttestationOptions, "walletLink" | "walletName"> {
+  eudiWalletInfo?: z.infer<typeof zEudiWalletInfoV1_4>;
+  nbf?: Date;
   signer: {
     alg: string;
     kid: string;
     method: "x5c";
-    trustChain?: [string, ...string[]]; // OPTIONAL in v1.3
-    x5c: [string, ...string[]]; // REQUIRED in v1.3
+    trustChain?: [string, ...string[]];
+    x5c: [string, ...string[]];
   };
-  status?: {
-    status_list: {
-      idx: number;
-      uri: string;
-    };
-  }; // Status object for revocation mechanisms
+  status: z.infer<typeof zWalletAttestationStatusV1_4>;
+  walletLink: string;
+  walletName: string;
 }
 
-/**
- * Create a Wallet Attestation JWT for IT-Wallet v1.3
- *
- * Version 1.3 specifics:
- * - x5c in header is REQUIRED
- * - trust_chain in header is OPTIONAL
- * - Supports nbf and status claims in payload
- *
- * @param options - Wallet attestation options for v1.3
- * @returns Signed wallet attestation JWT string
- * @throws {ValidationError} When validation fails (including nbf >= exp)
- * @throws {ClientAttestationError} For other unexpected errors during creation
- * @internal This function is called by the WalletProvider router
- */
 export const createWalletAttestationJwt = async (
-  options: WalletAttestationOptionsV1_3,
-): Promise<WalletAttestationJwtV1_3> => {
+  options: WalletAttestationOptionsV1_4,
+): Promise<WalletAttestationJwtV1_4> => {
   try {
     const { signJwt } = options.callbacks;
     const iat = new Date();
@@ -69,18 +50,21 @@ export const createWalletAttestationJwt = async (
       exp: dateToSeconds(exp),
       iat: dateToSeconds(iat),
       iss: options.issuer,
+      status: options.status,
       sub: options.dpopJwkPublic.kid,
+      wallet_link: options.walletLink,
+      wallet_name: options.walletName,
       ...(options.nbf && { nbf: dateToSeconds(options.nbf) }),
-      ...(options.status && { status: options.status }),
-      ...(options.walletLink && { wallet_link: options.walletLink }),
-      ...(options.walletName && { wallet_name: options.walletName }),
+      ...(options.eudiWalletInfo && {
+        eudi_wallet_info: options.eudiWalletInfo,
+      }),
     };
 
     const header = {
       alg: options.signer.alg,
       kid: options.signer.kid,
       typ: "oauth-client-attestation+jwt",
-      x5c: options.signer.x5c, // REQUIRED
+      x5c: options.signer.x5c,
       ...(options.signer.trustChain && {
         trust_chain: options.signer.trustChain,
       }),
@@ -91,12 +75,11 @@ export const createWalletAttestationJwt = async (
       payload,
     });
 
-    // Validate the generated JWT structure
     decodeJwt({
       errorMessagePrefix: "Error decoding wallet attestation JWT:",
-      headerSchema: zWalletAttestationJwtHeaderV1_3,
+      headerSchema: zWalletAttestationJwtHeaderV1_4,
       jwt: result.jwt,
-      payloadSchema: zWalletAttestationJwtPayloadV1_3,
+      payloadSchema: zWalletAttestationJwtPayloadV1_4,
     });
 
     return result.jwt;
@@ -104,6 +87,7 @@ export const createWalletAttestationJwt = async (
     if (error instanceof ValidationError) {
       throw error;
     }
+
     throw new ClientAttestationError(
       `Unexpected error during wallet attestation creation: ${error instanceof Error ? error.message : String(error)}`,
     );

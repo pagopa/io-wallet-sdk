@@ -4,6 +4,7 @@
 export enum ItWalletSpecsVersion {
   V1_0 = "V1_0",
   V1_3 = "V1_3",
+  V1_4 = "V1_4",
 }
 
 /**

@@ -3,8 +3,10 @@ import {
   Jwk,
   type WalletAttestationOptionsV1_0,
   type WalletAttestationOptionsV1_3,
+  type WalletAttestationOptionsV1_4,
   createWalletAttestationJwtV1_0,
   createWalletAttestationJwtV1_3,
+  createWalletAttestationJwtV1_4,
 } from "@pagopa/io-wallet-oauth2";
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
@@ -38,6 +40,31 @@ function assertV1_3Options(
   if (options.signer.method !== "x5c") {
     throw new WalletProviderError(
       `Version mismatch: provider is configured for v1.3 (x5c) but received options with signer method "${options.signer.method}"`,
+    );
+  }
+}
+
+function assertV1_4Options(
+  options: WalletAttestationOptions,
+): asserts options is WalletAttestationOptionsV1_4 {
+  if (options.signer.method !== "x5c") {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 (x5c) but received options with signer method "${options.signer.method}"`,
+    );
+  }
+  if (!options.walletLink) {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 but 'walletLink' is required and missing`,
+    );
+  }
+  if (!options.walletName) {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 but 'walletName' is required and missing`,
+    );
+  }
+  if (!("status" in options) || !options.status) {
+    throw new WalletProviderError(
+      `Version mismatch: provider is configured for v1.4 but 'status' is required and missing`,
     );
   }
 }
@@ -175,8 +202,10 @@ export class WalletProvider {
    * Creates a wallet attestation JWT according to the configured Italian Wallet specification version.
    *
    * Version Differences:
-   * - v1.0: Uses only `trust_chain` in header (federation method)
-   * - v1.3: Requires `x5c` in header, optional `trust_chain`, supports `nbf` and `status` claims
+   * - v1.0: Uses only `trust_chain` in header (federation method); no `status` claim
+   * - v1.3: Requires `x5c` in header, optional `trust_chain`; supports optional `nbf` and `status` claims
+   * - v1.4: Requires `x5c` in header, optional `trust_chain`; `status`, `wallet_link`, and `wallet_name`
+   *   are all **required**; optional `eudi_wallet_info` claim; sets `sub` to `dpopJwkPublic.kid`
    *
    * @public
    * @async
@@ -210,6 +239,31 @@ export class WalletProvider {
    *   },
    *   nbf: new Date('2025-01-01'), // Optional
    *   status: { status_list: { idx: 2, uri: "https://status.example.com" } } // Optional
+   * });
+   *
+   * @example v1.4 - Wallet attestation with required status and optional eudi_wallet_info
+   * const jwt = await provider.createItWalletAttestationJwt({
+   *   callbacks: { signJwt: mySignJwtCallback },
+   *   dpopJwkPublic: myJwk,
+   *   issuer: "https://wallet-provider.example.com",
+   *   signer: {
+   *     alg: "ES256",
+   *     kid: "provider-key-id",
+   *     method: "x5c",
+   *     x5c: ["cert1-base64", "cert2-base64"],
+   *     trustChain: ["trust-anchor-jwt"] // Optional
+   *   },
+   *   status: { status_list: { idx: 2, uri: "https://status.example.com" } }, // Required
+   *   walletLink: "https://wallet.example.com", // Required
+   *   walletName: "My Wallet", // Required
+   *   eudiWalletInfo: { // Optional
+   *     general_info: {
+   *       wallet_provider_name: "PagoPA",
+   *       wallet_solution_certification_information: "certification-ref",
+   *       wallet_solution_id: "wallet-solution-id",
+   *       wallet_solution_version: "1.0.0"
+   *     }
+   *   }
    * });
    */
 
@@ -251,10 +305,25 @@ export class WalletProvider {
       });
     }
 
+    if (this.specVersion === ItWalletSpecsVersion.V1_4) {
+      assertV1_4Options(options);
+      return createWalletAttestationJwtV1_4({
+        callbacks: options.callbacks,
+        dpopJwkPublic: options.dpopJwkPublic,
+        eudiWalletInfo: options.eudiWalletInfo,
+        expiresAt: options.expiresAt,
+        issuer: options.issuer,
+        signer: options.signer,
+        status: options.status,
+        walletLink: options.walletLink,
+        walletName: options.walletName,
+      });
+    }
+
     throw new ItWalletSpecsVersionError(
       "createItWalletAttestationJwt",
       this.specVersion,
-      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+      Object.values(ItWalletSpecsVersion),
     );
   }
 }
