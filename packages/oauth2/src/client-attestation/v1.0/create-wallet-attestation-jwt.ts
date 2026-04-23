@@ -49,14 +49,13 @@ export const createWalletAttestationJwt = async (
 ): Promise<WalletAttestationJwtV1_0> => {
   try {
     const { signJwt } = options.callbacks;
-    // Calculate default expiration (60 days)
-    const exp =
-      options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60);
+    const iat = new Date();
+    const exp = options.expiresAt ?? addSecondsToDate(iat, 3600); // Default expiration of 1 hour
 
     const payload = {
       cnf: { jwk: options.dpopJwkPublic },
       exp: dateToSeconds(exp),
-      iat: dateToSeconds(new Date()),
+      iat: dateToSeconds(iat),
       iss: options.issuer,
       sub: options.dpopJwkPublic.kid,
       ...(options.walletLink && { wallet_link: options.walletLink }),

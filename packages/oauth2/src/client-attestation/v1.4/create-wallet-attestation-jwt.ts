@@ -37,8 +37,8 @@ export const createWalletAttestationJwt = async (
 ): Promise<WalletAttestationJwtV1_4> => {
   try {
     const { signJwt } = options.callbacks;
-    const exp =
-      options.expiresAt ?? addSecondsToDate(new Date(), 3600 * 24 * 60);
+    const iat = new Date();
+    const exp = options.expiresAt ?? addSecondsToDate(iat, 3600); // Default expiration of 1 hour
 
     // Validate temporal constraints
     if (options.nbf && options.nbf >= exp) {
@@ -48,7 +48,7 @@ export const createWalletAttestationJwt = async (
     const payload = {
       cnf: { jwk: options.dpopJwkPublic },
       exp: dateToSeconds(exp),
-      iat: dateToSeconds(new Date()),
+      iat: dateToSeconds(iat),
       iss: options.issuer,
       status: options.status,
       sub: options.dpopJwkPublic.kid,
