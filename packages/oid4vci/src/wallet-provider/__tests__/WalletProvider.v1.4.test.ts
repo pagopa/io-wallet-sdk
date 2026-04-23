@@ -145,7 +145,7 @@ describe("WalletProvider v1.4 routing", () => {
     });
   });
 
-  describe("version mismatch", () => {
+  describe("missing or invalid v1.4 options", () => {
     const baseOptions: WalletAttestationOptionsV1_4 = {
       callbacks: { signJwt: vi.fn() },
       dpopJwkPublic: {
