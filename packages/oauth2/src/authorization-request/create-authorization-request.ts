@@ -187,12 +187,17 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  * @throws {ZodError} If authorization request parameters fail validation
  *
  * @example
- * // Example 1: Create signed PAR (explicit)
+ * // Example 1: Create signed PAR for IT-Wallet v1.0 (explicit)
+ * const config = new IoWalletSdkConfig({
+ *   itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+ * });
+ *
  * const signedPar = await createPushedAuthorizationRequest({
  *   audience: 'https://issuer.example.com',
  *   callbacks: { generateRandom, hash, signJwt },
  *   clientId: 'wallet_client_thumbprint',
  *   codeChallengeMethodsSupported: ['S256'],
+ *   config,
  *   dpop: { signer: { alg: 'ES256', publicJwk: { kid: 'key-1' } } },
  *   redirectUri: 'https://wallet.example.com/callback',
  *   responseMode: 'form_post.jwt',
@@ -204,14 +209,18 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  * // signedPar.request contains the signed JWT
  *
  * @example
- * // Example 2: Create unsigned PAR (when Authorization Server allows it)
+ * // Example 2: Create unsigned PAR for IT-Wallet v1.3 (when Authorization Server allows it)
+ * const config = new IoWalletSdkConfig({
+ *   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+ * });
+ *
  * const unsignedPar = await createPushedAuthorizationRequest({
  *   audience: 'https://issuer.example.com',
  *   callbacks: { generateRandom, hash, signJwt },
  *   clientId: 'wallet_client_thumbprint',
  *   codeChallengeMethodsSupported: ['S256'],
+ *   config,
  *   redirectUri: 'https://wallet.example.com/callback',
- *   responseMode: 'query',
  *   scope: 'openid',
  *   authorizationServerMetadata: {
  *     require_signed_request_object: false  // Creates unsigned request — dpop not needed
@@ -220,12 +229,17 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  * // unsignedPar.authorizationRequest contains the plain object
  *
  * @example
- * // Example 3: Default behavior (no metadata - unsigned)
+ * // Example 3: Default behavior for IT-Wallet v1.0 (no metadata - unsigned)
+ * const config = new IoWalletSdkConfig({
+ *   itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+ * });
+ *
  * const par = await createPushedAuthorizationRequest({
  *   audience: 'https://issuer.example.com',
  *   callbacks: { generateRandom, hash, signJwt },
  *   clientId: 'wallet_client_thumbprint',
  *   codeChallengeMethodsSupported: ['S256'],
+ *   config,
  *   redirectUri: 'https://wallet.example.com/callback',
  *   responseMode: 'form_post.jwt',
  *   scope: 'openid'
