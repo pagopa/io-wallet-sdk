@@ -5,15 +5,17 @@ import {
   zBaseCredentialRequest,
 } from "../z-base-credential-request";
 
+const zCredentialRequestProofJwt = z
+  .string()
+  .min(1, "JWT must not be empty in credential request proofs array");
+
 /**
  * Proofs object schema for v1.3
  * Contains an array of JWTs (supports batch issuance)
  * proof_type is implicit (determined by the property name)
  */
 export const zCredentialRequestProofs = z.object({
-  jwt: z
-    .tuple([z.string().min(1, "JWT must not be empty")])
-    .rest(z.string().min(1, "JWT must not be empty")),
+  jwt: z.tuple([zCredentialRequestProofJwt], zCredentialRequestProofJwt),
 });
 
 export type CredentialRequestProofs = z.infer<typeof zCredentialRequestProofs>;
