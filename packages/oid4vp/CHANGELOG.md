@@ -1,5 +1,17 @@
 # @pagopa/io-wallet-oid4vp
 
+## 1.3.0
+
+### Patch Changes
+
+- 0decc23: refactor: remove nested barrel files to improve tree-shaking and avoid accidental circular dependencies
+- Updated dependencies [c53d926]
+- Updated dependencies [66e7f8b]
+- Updated dependencies [0decc23]
+  - @pagopa/io-wallet-oauth2@1.3.0
+  - @pagopa/io-wallet-utils@1.3.0
+  - @pagopa/io-wallet-oid-federation@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes
