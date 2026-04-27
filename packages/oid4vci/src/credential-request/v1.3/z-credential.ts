@@ -12,8 +12,8 @@ import {
  */
 export const zCredentialRequestProofs = z.object({
   jwt: z
-    .array(z.string().min(1, "JWT must not be empty"))
-    .min(1, "At least one JWT proof is required"),
+    .tuple([z.string().min(1, "JWT must not be empty")])
+    .rest(z.string().min(1, "JWT must not be empty")),
 });
 
 export type CredentialRequestProofs = z.infer<typeof zCredentialRequestProofs>;
