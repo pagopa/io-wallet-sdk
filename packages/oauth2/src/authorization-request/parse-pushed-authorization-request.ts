@@ -22,7 +22,6 @@ import {
 } from "./parse-authorization-request";
 import {
   AuthorizationRequest,
-  zAuthorizationRequest,
   zAuthorizationRequestV1_0,
   zAuthorizationRequestV1_3,
 } from "./z-authorization-request";
@@ -73,9 +72,7 @@ export async function parsePushedAuthorizationRequest(
     "Invalid authorization request. Could not parse authorization request or jar.",
   );
 
-  let parsedAuthorizationRequest: ReturnType<
-    typeof zAuthorizationRequest.safeParse
-  >;
+  let parsedAuthorizationRequest: z.ZodSafeParseResult<AuthorizationRequest>;
 
   let authorizationRequestJwt: string | undefined;
   if (isJarAuthorizationRequest(parsed)) {
