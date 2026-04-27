@@ -1,5 +1,23 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.3.0
+
+### Minor Changes
+
+- c53d926: feat: Add support for Wallet Attestation v1.4 with validation and tests
+
+### Patch Changes
+
+- 0decc23: refactor: remove nested barrel files to improve tree-shaking and avoid accidental circular dependencies
+- a499d0b: fix: refine CredentialRequestV1_3 type to use variadic tuple
+- Updated dependencies [c53d926]
+- Updated dependencies [66e7f8b]
+- Updated dependencies [0decc23]
+  - @pagopa/io-wallet-oauth2@1.3.0
+  - @pagopa/io-wallet-utils@1.3.0
+  - @pagopa/io-wallet-oid-federation@1.3.0
+  - @pagopa/io-wallet-oid4vp@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes
