@@ -1,5 +1,8 @@
 import { CallbackContext } from "@openid4vc/oauth2";
 import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
   RequestLike,
   formatZodError,
   parseWithErrorHandling,
@@ -19,12 +22,14 @@ import {
 } from "./parse-authorization-request";
 import {
   AuthorizationRequest,
-  zAuthorizationRequest,
+  zAuthorizationRequestV1_0,
+  zAuthorizationRequestV1_3,
 } from "./z-authorization-request";
 
 export interface ParsePushedAuthorizationRequestOptions {
   authorizationRequest: unknown;
   callbacks: Pick<CallbackContext, "fetch">;
+  config: IoWalletSdkConfig;
   request: RequestLike;
 }
 
@@ -57,15 +62,17 @@ export interface ParsePushedAuthorizationRequestResult
 export async function parsePushedAuthorizationRequest(
   options: ParsePushedAuthorizationRequestOptions,
 ): Promise<ParsePushedAuthorizationRequestResult> {
+  const authorizationRequestSchema = getAuthorizationRequestSchema(
+    options.config,
+  );
+
   const parsed = parseWithErrorHandling(
-    z.union([zAuthorizationRequest, zJarAuthorizationRequest]),
+    z.union([authorizationRequestSchema, zJarAuthorizationRequest]),
     options.authorizationRequest,
     "Invalid authorization request. Could not parse authorization request or jar.",
   );
 
-  let parsedAuthorizationRequest: ReturnType<
-    typeof zAuthorizationRequest.safeParse
-  >;
+  let parsedAuthorizationRequest: z.ZodSafeParseResult<AuthorizationRequest>;
 
   let authorizationRequestJwt: string | undefined;
   if (isJarAuthorizationRequest(parsed)) {
@@ -79,7 +86,9 @@ export async function parsePushedAuthorizationRequest(
       jwt: parsedJar.authorizationRequestJwt,
     });
 
-    parsedAuthorizationRequest = zAuthorizationRequest.safeParse(jwt.payload);
+    parsedAuthorizationRequest = authorizationRequestSchema.safeParse(
+      jwt.payload,
+    );
     if (!parsedAuthorizationRequest.success) {
       throw new Oauth2Error(
         `Invalid authorization request. Could not parse jar request payload.\n${formatZodError(parsedAuthorizationRequest.error)}`,
@@ -88,7 +97,7 @@ export async function parsePushedAuthorizationRequest(
 
     authorizationRequestJwt = parsedJar.authorizationRequestJwt;
   } else {
-    parsedAuthorizationRequest = zAuthorizationRequest.safeParse(
+    parsedAuthorizationRequest = authorizationRequestSchema.safeParse(
       options.authorizationRequest,
     );
     if (!parsedAuthorizationRequest.success) {
@@ -109,4 +118,20 @@ export async function parsePushedAuthorizationRequest(
     clientAttestation,
     dpop,
   };
+}
+
+function getAuthorizationRequestSchema(config: IoWalletSdkConfig) {
+  if (config.isVersion(ItWalletSpecsVersion.V1_0)) {
+    return zAuthorizationRequestV1_0;
+  }
+
+  if (config.isVersion(ItWalletSpecsVersion.V1_3)) {
+    return zAuthorizationRequestV1_3;
+  }
+
+  throw new ItWalletSpecsVersionError(
+    "parsePushedAuthorizationRequest",
+    config.itWalletSpecsVersion,
+    [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+  );
 }
