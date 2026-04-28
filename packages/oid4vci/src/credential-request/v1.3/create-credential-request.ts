@@ -68,7 +68,9 @@ export const createCredentialRequest = async (
   try {
     const { maxBatchSize, signers } = options;
 
-    if (signers.length === 0) {
+    const [firstSigner, ...otherSigners] = signers;
+
+    if (!firstSigner) {
       throw new ValidationError("At least one signer is required");
     }
 
@@ -107,9 +109,9 @@ export const createCredentialRequest = async (
       }
     }
 
-    const proofJwts = await Promise.all(
-      signers.map((signer) =>
-        signJwt(signer, {
+    const createProofJwt = async (signer: JwtSignerJwk): Promise<string> =>
+      (
+        await signJwt(signer, {
           header: {
             alg: signer.alg,
             jwk: signer.publicJwk,
@@ -122,14 +124,18 @@ export const createCredentialRequest = async (
             iss: options.clientId,
             nonce: options.nonce,
           },
-        }),
-      ),
-    );
+        })
+      ).jwt;
+
+    const proofJwts: [string, ...string[]] = await Promise.all([
+      createProofJwt(firstSigner),
+      ...otherSigners.map(createProofJwt),
+    ]);
 
     return parseWithErrorHandling(zCredentialRequestV1_3, {
       credential_identifier: options.credential_identifier,
       proofs: {
-        jwt: proofJwts.map((proofJwt) => proofJwt.jwt), // Array for batch support
+        jwt: proofJwts,
       },
     } satisfies CredentialRequestV1_3);
   } catch (error) {
