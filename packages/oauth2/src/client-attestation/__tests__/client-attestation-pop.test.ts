@@ -90,7 +90,6 @@ describe("client-attestation-pop", () => {
       callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
       clientAttestation: mockClientAttestation,
       config: mockConfigV1_3,
-      expiresAt: new Date("2025-01-01T00:01:00.000Z"),
       issuedAt: new Date("2025-01-01T00:00:00.000Z"),
     });
 
@@ -103,7 +102,6 @@ describe("client-attestation-pop", () => {
       callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
       clientAttestation: mockClientAttestation,
       config: mockConfigV1_4,
-      expiresAt: new Date("2025-01-01T00:01:00.000Z"),
       issuedAt: new Date("2025-01-01T00:00:00.000Z"),
     });
 
@@ -207,5 +205,57 @@ describe("client-attestation-pop", () => {
         clientAttestationPublicJwk: mockJwk,
       }),
     ).rejects.toThrow(Oauth2Error);
+  });
+});
+
+describe("CreateClientAttestationPopJwtOptions", () => {
+  it("should only allow expiresAt for IT-Wallet v1.0", () => {
+    const mockCallbacks = {
+      generateRandom: vi.fn(async (len) => new Uint8Array(len)),
+      signJwt: vi.fn(),
+    };
+    const createV1_0 = () =>
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config: new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+        }),
+        expiresAt: new Date("2025-01-01T00:01:00.000Z"),
+      });
+
+    const createV1_3 = () =>
+      // @ts-expect-error expiresAt is only available for IT-Wallet v1.0 options
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config: new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+        }),
+        expiresAt: new Date("2025-01-01T00:01:00.000Z"),
+      });
+
+    expect(createV1_0).toBeDefined();
+    expect(createV1_3).toBeDefined();
+  });
+
+  it("should allow base options for other IT-Wallet versions", () => {
+    const mockCallbacks = {
+      generateRandom: vi.fn(async (len) => new Uint8Array(len)),
+      signJwt: vi.fn(),
+    };
+    const createV1_3 = () =>
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config: new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+        }),
+      });
+
+    expect(createV1_3).toBeDefined();
   });
 });

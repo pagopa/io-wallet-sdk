@@ -98,7 +98,7 @@ export async function verifyClientAttestationPopJwt(
   }
 }
 
-export interface CreateClientAttestationPopJwtOptions {
+export interface BaseCreateClientAttestationPopJwtOptions {
   /**
    * The audience authorization server identifier
    */
@@ -123,11 +123,6 @@ export interface CreateClientAttestationPopJwtOptions {
   config: IoWalletSdkConfig;
 
   /**
-   * Expiration time of the JWT. If not provided 1 minute will be added to the `issuedAt`
-   */
-  expiresAt?: Date;
-
-  /**
    * Creation time of the JWT. If not provided the current date will be used
    */
   issuedAt?: Date;
@@ -145,6 +140,31 @@ export interface CreateClientAttestationPopJwtOptions {
    */
   signer?: JwtSignerJwk;
 }
+
+export interface CreateClientAttestationPopJwtOptionsV1_0
+  extends BaseCreateClientAttestationPopJwtOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_0>;
+
+  /**
+   * Expiration time of the JWT.
+   * If not provided, 1 minute will be added to `issuedAt`.
+   */
+  expiresAt?: Date;
+}
+
+export type CreateClientAttestationPopJwtOptions =
+  | BaseCreateClientAttestationPopJwtOptions
+  | CreateClientAttestationPopJwtOptionsV1_0;
+
+/* eslint-disable @typescript-eslint/unified-signatures */
+export function createClientAttestationPopJwt(
+  options: CreateClientAttestationPopJwtOptionsV1_0,
+): Promise<string>;
+
+export function createClientAttestationPopJwt(
+  options: BaseCreateClientAttestationPopJwtOptions,
+): Promise<string>;
+/* eslint-enable @typescript-eslint/unified-signatures */
 
 export async function createClientAttestationPopJwt(
   options: CreateClientAttestationPopJwtOptions,
@@ -181,7 +201,6 @@ export async function createClientAttestationPopJwt(
     } satisfies ClientAttestationPopJwtHeader;
 
     const issuedAt = options.issuedAt ?? new Date();
-    const expiresAt = options.expiresAt ?? addSecondsToDate(issuedAt, 1 * 60);
     const jti =
       options.jti ??
       (options.callbacks.generateRandom
@@ -200,7 +219,13 @@ export async function createClientAttestationPopJwt(
       iss: sub,
       jti,
       ...(options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0
-        ? { exp: dateToSeconds(expiresAt) }
+        ? {
+            exp: dateToSeconds(
+              "expiresAt" in options && options.expiresAt
+                ? options.expiresAt
+                : addSecondsToDate(issuedAt, 1 * 60),
+            ),
+          }
         : {}),
     };
 
