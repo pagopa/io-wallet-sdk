@@ -1,4 +1,10 @@
-import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  decodeBase64,
+  encodeToBase64Url,
+  encodeToUtf8String,
+} from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error } from "../../errors";
@@ -8,6 +14,15 @@ import {
 } from "../client-attestation-pop";
 
 describe("client-attestation-pop", () => {
+  const mockConfigV1_0 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  });
+  const mockConfigV1_3 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+  });
+  const mockConfigV1_4 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+  });
   const mockJwk = { crv: "P-256", kty: "EC", x: "...", y: "..." };
   const mockHeader = { alg: "ES256", typ: "oauth-client-attestation-pop+jwt" };
   const mockPayload = {
@@ -33,16 +48,66 @@ describe("client-attestation-pop", () => {
     signerJwk: mockJwk,
     verified: true,
   }));
+  const decodeJwtPayload = (jwt: string) => {
+    const payloadPart = jwt.split(".")[1];
+    if (!payloadPart) throw new Error("JWT payload part is missing");
+    return JSON.parse(encodeToUtf8String(decodeBase64(payloadPart))) as Record<
+      string,
+      unknown
+    >;
+  };
 
   it("should create a client attestation pop jwt", async () => {
     const jwt = await createClientAttestationPopJwt({
       authorizationServer: "https://auth.example",
       callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
       clientAttestation: mockClientAttestation,
+      config: mockConfigV1_0,
       issuedAt: new Date(1700000000000),
     });
     expect(typeof jwt).toBe("string");
     expect(jwt.split(".").length).toBe(3);
+  });
+
+  it("should include exp in the client attestation pop jwt payload for IT-Wallet v1.0", async () => {
+    const jwt = await createClientAttestationPopJwt({
+      authorizationServer: "https://auth.example",
+      callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+      clientAttestation: mockClientAttestation,
+      config: mockConfigV1_0,
+      expiresAt: new Date("2025-01-01T00:01:00.000Z"),
+      issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+
+    expect(decodeJwtPayload(jwt)).toMatchObject({
+      exp: 1735689660,
+    });
+  });
+
+  it("should not include exp in the client attestation pop jwt payload for IT-Wallet v1.3", async () => {
+    const jwt = await createClientAttestationPopJwt({
+      authorizationServer: "https://auth.example",
+      callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+      clientAttestation: mockClientAttestation,
+      config: mockConfigV1_3,
+      expiresAt: new Date("2025-01-01T00:01:00.000Z"),
+      issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+
+    expect(decodeJwtPayload(jwt)).not.toHaveProperty("exp");
+  });
+
+  it("should not include exp in the client attestation pop jwt payload for IT-Wallet v1.4", async () => {
+    const jwt = await createClientAttestationPopJwt({
+      authorizationServer: "https://auth.example",
+      callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+      clientAttestation: mockClientAttestation,
+      config: mockConfigV1_4,
+      expiresAt: new Date("2025-01-01T00:01:00.000Z"),
+      issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+
+    expect(decodeJwtPayload(jwt)).not.toHaveProperty("exp");
   });
 
   it("should throw if client attestation does not contain cnf.jwk", async () => {
@@ -56,6 +121,7 @@ describe("client-attestation-pop", () => {
         authorizationServer: "https://auth.example",
         callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
         clientAttestation: badAttestation,
+        config: mockConfigV1_0,
       }),
     ).rejects.toThrow(/cnf\.jwk/);
   });
@@ -71,6 +137,7 @@ describe("client-attestation-pop", () => {
         authorizationServer: "https://auth.example",
         callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
         clientAttestation: badAttestation,
+        config: mockConfigV1_0,
       }),
     ).rejects.toThrow(/sub/);
   });
@@ -86,6 +153,7 @@ describe("client-attestation-pop", () => {
         authorizationServer: "https://auth.example",
         callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
         clientAttestation: badAttestation,
+        config: mockConfigV1_0,
       }),
     ).rejects.toThrow(Oauth2Error);
   });

@@ -1,7 +1,12 @@
 import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 
 import { CallbackContext } from "@openid4vc/oauth2";
-import { ContentType, FetchHeaders, HttpMethod } from "@pagopa/io-wallet-utils";
+import {
+  ContentType,
+  FetchHeaders,
+  HttpMethod,
+  IoWalletSdkConfig,
+} from "@pagopa/io-wallet-utils";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
 import {
@@ -112,6 +117,7 @@ export function clientAuthenticationAnonymous(): ClientAuthenticationCallback {
 
 export interface ClientAuthenticationWalletAttestationJwtOptions {
   callbacks: Pick<CallbackContext, "generateRandom" | "signJwt">;
+  config: IoWalletSdkConfig;
   walletAttestationJwt: string;
 }
 
@@ -127,6 +133,7 @@ export function clientAuthenticationWalletAttestationJwt(
       authorizationServer: authorizationServerMetadata.issuer,
       callbacks: options.callbacks,
       clientAttestation: options.walletAttestationJwt,
+      config: options.config,
     });
 
     headers.set(oauthClientAttestationHeader, options.walletAttestationJwt);

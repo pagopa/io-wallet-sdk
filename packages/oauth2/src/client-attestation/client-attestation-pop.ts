@@ -1,11 +1,12 @@
 import {
   CallbackContext,
   ClientAttestationPopJwtHeader,
-  ClientAttestationPopJwtPayload,
   JwtSignerJwk,
   verifyJwt,
 } from "@openid4vc/oauth2";
 import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
@@ -116,6 +117,12 @@ export interface CreateClientAttestationPopJwtOptions {
   clientAttestation: string;
 
   /**
+   * The IT-Wallet SDK configuration, used to select the correct version-specific
+   * payload shape for the client attestation PoP JWT.
+   */
+  config: IoWalletSdkConfig;
+
+  /**
    * Expiration time of the JWT. If not provided 1 minute will be added to the `issuedAt`
    */
   expiresAt?: Date;
@@ -189,11 +196,13 @@ export async function createClientAttestationPopJwt(
 
     const payload = {
       aud: options.authorizationServer,
-      exp: dateToSeconds(expiresAt),
       iat: dateToSeconds(issuedAt),
       iss: sub,
       jti,
-    } satisfies ClientAttestationPopJwtPayload;
+      ...(options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0
+        ? { exp: dateToSeconds(expiresAt) }
+        : {}),
+    };
 
     const { jwt } = await options.callbacks.signJwt(signer, {
       header,
