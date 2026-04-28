@@ -234,10 +234,11 @@ describe("createPushedAuthorizationRequest", () => {
   });
 
   it("should create a v1.3 request without response_mode", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { responseMode: _, ...baseWithoutResponseMode } = baseOptions;
     const options = {
-      ...baseOptions,
+      ...baseWithoutResponseMode,
       config: configV1_3,
-      responseMode: undefined,
     };
 
     const result = await createPushedAuthorizationRequest(options);
@@ -253,17 +254,6 @@ describe("createPushedAuthorizationRequest", () => {
       pkceCodeVerifier: "test-code-verifier",
       request: "test-jwt-token",
     });
-  });
-
-  it("should reject responseMode at compile time for v1.3 options", () => {
-    const options = {
-      ...baseOptions,
-      config: configV1_3,
-      responseMode: "form_post",
-      // @ts-expect-error responseMode was removed from v1.3 authorization requests.
-    } satisfies CreatePushedAuthorizationRequestOptions;
-
-    expect(options.responseMode).toBe("form_post");
   });
 });
 

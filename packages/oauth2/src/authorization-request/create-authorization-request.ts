@@ -8,6 +8,7 @@ import {
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
+  hasConfigVersion,
 } from "@pagopa/io-wallet-utils";
 
 import { PushedAuthorizationRequestError } from "../errors";
@@ -117,10 +118,8 @@ export interface CreatePushedAuthorizationRequestOptionsV1_0
   responseMode: string;
 }
 
-export interface CreatePushedAuthorizationRequestOptionsV1_3
-  extends BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_3> {
-  responseMode?: never;
-}
+export type CreatePushedAuthorizationRequestOptionsV1_3 =
+  BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_3>;
 
 export type CreatePushedAuthorizationRequestOptions =
   | CreatePushedAuthorizationRequestOptionsV1_0
@@ -366,14 +365,14 @@ function parseAuthorizationRequestByVersion(
 ): AuthorizationRequest {
   const version = options.config.itWalletSpecsVersion;
 
-  if (version === ItWalletSpecsVersion.V1_0) {
+  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
     return zAuthorizationRequestV1_0.parse({
       ...baseAuthorizationRequest,
       response_mode: options.responseMode,
     }) satisfies AuthorizationRequestV1_0;
   }
 
-  if (version === ItWalletSpecsVersion.V1_3) {
+  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
     return zAuthorizationRequestV1_3.parse(
       baseAuthorizationRequest,
     ) satisfies AuthorizationRequestV1_3;
