@@ -1,5 +1,15 @@
 # @pagopa/io-wallet-utils
 
+## 1.3.0
+
+### Minor Changes
+
+- c53d926: feat: Add support for Wallet Attestation v1.4 with validation and tests
+
+### Patch Changes
+
+- 0decc23: refactor: remove nested barrel files to improve tree-shaking and avoid accidental circular dependencies
+
 ## 1.2.1
 
 ## 1.2.0
