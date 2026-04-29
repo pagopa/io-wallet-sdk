@@ -1,7 +1,13 @@
 import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 
 import { CallbackContext } from "@openid4vc/oauth2";
-import { ContentType, FetchHeaders, HttpMethod } from "@pagopa/io-wallet-utils";
+import {
+  ContentType,
+  FetchHeaders,
+  HttpMethod,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
 import {
@@ -110,8 +116,11 @@ export function clientAuthenticationAnonymous(): ClientAuthenticationCallback {
   };
 }
 
-export interface ClientAuthenticationWalletAttestationJwtOptions {
+export interface ClientAuthenticationWalletAttestationJwtOptions<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
+> {
   callbacks: Pick<CallbackContext, "generateRandom" | "signJwt">;
+  config: IoWalletSdkConfig<V>;
   walletAttestationJwt: string;
 }
 
@@ -119,14 +128,17 @@ export interface ClientAuthenticationWalletAttestationJwtOptions {
  * Client authentication using wallet attestation JWT.
  * This method adds the wallet attestation JWT and a proof-of-possession JWT to the request headers.
  */
-export function clientAuthenticationWalletAttestationJwt(
-  options: ClientAuthenticationWalletAttestationJwtOptions,
+export function clientAuthenticationWalletAttestationJwt<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
+>(
+  options: ClientAuthenticationWalletAttestationJwtOptions<V>,
 ): ClientAuthenticationCallback {
   return async ({ authorizationServerMetadata, headers }) => {
     const clientAttestationPop = await createClientAttestationPopJwt({
       authorizationServer: authorizationServerMetadata.issuer,
       callbacks: options.callbacks,
       clientAttestation: options.walletAttestationJwt,
+      config: options.config,
     });
 
     headers.set(oauthClientAttestationHeader, options.walletAttestationJwt);

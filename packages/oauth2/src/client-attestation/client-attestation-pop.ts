@@ -1,19 +1,35 @@
+import { CallbackContext, JwtSignerJwk, verifyJwt } from "@openid4vc/oauth2";
 import {
-  CallbackContext,
-  ClientAttestationPopJwtHeader,
-  ClientAttestationPopJwtPayload,
-  JwtSignerJwk,
-  verifyJwt,
-} from "@openid4vc/oauth2";
-import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
+  parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
 import { Jwk } from "../common/jwk/z-jwk";
 import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
+import {
+  IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
+  ItWalletClientAttestationPopJwtHeader,
+  ItWalletClientAttestationPopJwtPayload,
+  zItWalletClientAttestationPopJwtAlg,
+  zItWalletClientAttestationPopJwtHeader,
+  zItWalletClientAttestationPopJwtPayload,
+  zItWalletClientAttestationPopJwtTyp,
+} from "./z-client-attestation-pop";
+
+function assertSupportedClientAttestationPopAlg(
+  alg: string,
+): asserts alg is (typeof IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES)[number] {
+  if (!zItWalletClientAttestationPopJwtAlg.safeParse(alg).success) {
+    throw new Oauth2Error(
+      `Unsupported alg '${alg}' in client attestation PoP JWT: must be one of ${IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES.join(", ")}`,
+    );
+  }
+}
 
 export interface VerifyClientAttestationPopJwtOptions {
   /**
@@ -60,18 +76,17 @@ export async function verifyClientAttestationPopJwt(
   try {
     const { header, payload } = decodeJwt({
       errorMessagePrefix: "Error decoding client attestation PoP JWT:",
+      headerSchema: zItWalletClientAttestationPopJwtHeader,
       jwt: options.clientAttestationPopJwt,
+      payloadSchema: zItWalletClientAttestationPopJwtPayload,
     });
 
-    if (payload.aud !== options.authorizationServer) {
-      throw new Oauth2Error(
-        `Client Attestation Pop jwt contains 'aud' value '${payload.aud}', but expected authorization server identifier '${options.authorizationServer}'`,
-      );
-    }
+    assertSupportedClientAttestationPopAlg(header.alg);
 
     const { signer } = await verifyJwt({
       compact: options.clientAttestationPopJwt,
       errorMessage: "client attestation pop jwt verification failed",
+      expectedAudience: options.authorizationServer,
       expectedNonce: options.expectedNonce,
       header,
       now: options.now,
@@ -97,7 +112,9 @@ export async function verifyClientAttestationPopJwt(
   }
 }
 
-export interface CreateClientAttestationPopJwtOptions {
+interface BaseCreateClientAttestationPopJwtOptions<
+  V extends ItWalletSpecsVersion,
+> {
   /**
    * The audience authorization server identifier
    */
@@ -116,9 +133,10 @@ export interface CreateClientAttestationPopJwtOptions {
   clientAttestation: string;
 
   /**
-   * Expiration time of the JWT. If not provided 1 minute will be added to the `issuedAt`
+   * The IT-Wallet SDK configuration, used to select the correct version-specific
+   * payload shape for the client attestation PoP JWT.
    */
-  expiresAt?: Date;
+  config: IoWalletSdkConfig<V>;
 
   /**
    * Creation time of the JWT. If not provided the current date will be used
@@ -139,9 +157,45 @@ export interface CreateClientAttestationPopJwtOptions {
   signer?: JwtSignerJwk;
 }
 
-export async function createClientAttestationPopJwt(
-  options: CreateClientAttestationPopJwtOptions,
-) {
+type NoClientAttestationPopJwtExtraOptions = Record<never, never>;
+
+interface CreateClientAttestationPopJwtVersionOptions {
+  [ItWalletSpecsVersion.V1_0]: {
+    /**
+     * Expiration time of the JWT.
+     * If not provided, 1 minute will be added to `issuedAt`.
+     */
+    expiresAt?: Date;
+  };
+  [ItWalletSpecsVersion.V1_3]: NoClientAttestationPopJwtExtraOptions;
+  [ItWalletSpecsVersion.V1_4]: NoClientAttestationPopJwtExtraOptions;
+}
+
+type CreateClientAttestationPopJwtExtraOptions<V extends ItWalletSpecsVersion> =
+  [V] extends [keyof CreateClientAttestationPopJwtVersionOptions]
+    ? CreateClientAttestationPopJwtVersionOptions[V]
+    : NoClientAttestationPopJwtExtraOptions;
+
+export type CreateClientAttestationPopJwtOptionsForVersion<
+  V extends ItWalletSpecsVersion,
+> = BaseCreateClientAttestationPopJwtOptions<V> &
+  CreateClientAttestationPopJwtExtraOptions<V>;
+
+export type CreateClientAttestationPopJwtOptionsV1_0 =
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_0>;
+
+export type CreateClientAttestationPopJwtOptionsV1_3 =
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_3>;
+
+export type CreateClientAttestationPopJwtOptionsV1_4 =
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_4>;
+
+export type CreateClientAttestationPopJwtOptions =
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion>;
+
+export async function createClientAttestationPopJwt<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
+>(options: CreateClientAttestationPopJwtOptionsForVersion<V>): Promise<string> {
   try {
     const clientAttestation = decodeJwt({
       errorMessagePrefix: "Error decoding client attestation JWT:",
@@ -168,13 +222,14 @@ export async function createClientAttestationPopJwt(
       publicJwk: jwk,
     };
 
+    assertSupportedClientAttestationPopAlg(signer.alg);
+
     const header = {
       alg: signer.alg,
-      typ: "oauth-client-attestation-pop+jwt",
-    } satisfies ClientAttestationPopJwtHeader;
+      typ: zItWalletClientAttestationPopJwtTyp.value,
+    } satisfies ItWalletClientAttestationPopJwtHeader;
 
     const issuedAt = options.issuedAt ?? new Date();
-    const expiresAt = options.expiresAt ?? addSecondsToDate(issuedAt, 1 * 60);
     const jti =
       options.jti ??
       (options.callbacks.generateRandom
@@ -187,13 +242,24 @@ export async function createClientAttestationPopJwt(
       );
     }
 
-    const payload = {
-      aud: options.authorizationServer,
-      exp: dateToSeconds(expiresAt),
-      iat: dateToSeconds(issuedAt),
-      iss: sub,
-      jti,
-    } satisfies ClientAttestationPopJwtPayload;
+    const payload = parseWithErrorHandling(
+      zItWalletClientAttestationPopJwtPayload,
+      {
+        aud: options.authorizationServer,
+        iat: dateToSeconds(issuedAt),
+        iss: sub,
+        jti,
+        ...(options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0
+          ? {
+              exp: dateToSeconds(
+                "expiresAt" in options && options.expiresAt
+                  ? options.expiresAt
+                  : addSecondsToDate(issuedAt, 1 * 60),
+              ),
+            }
+          : {}),
+      } satisfies ItWalletClientAttestationPopJwtPayload,
+    );
 
     const { jwt } = await options.callbacks.signJwt(signer, {
       header,

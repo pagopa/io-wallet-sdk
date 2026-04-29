@@ -62,6 +62,7 @@ export {
 } from "./client-attestation/v1.4/z-wallet-attestation";
 export * from "./client-attestation/verify-client-attestation";
 export * from "./client-attestation/wallet-attestation";
+export * from "./client-attestation/z-client-attestation-pop";
 export * from "./common/jwk/z-jwk";
 export * from "./common/jwt/decode-jwt";
 export * from "./common/jwt/decode-jwt-header";
