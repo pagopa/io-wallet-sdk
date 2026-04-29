@@ -1,20 +1,16 @@
-import {
-  IoWalletSdkConfig,
-  ItWalletSpecsVersion,
-  dateToSeconds,
-} from "@pagopa/io-wallet-utils";
+import { dateToSeconds } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ClientAttestationError } from "../../../errors";
-import { createWalletAttestationJwt } from "../create-wallet-attestation-jwt";
+import {
+  WalletAttestationOptionsV1_3,
+  createWalletAttestationJwt,
+} from "../create-wallet-attestation-jwt";
 
 describe("createWalletAttestationJwt v1.3", () => {
   const mockHash = vi.fn();
   const mockSignJwt = vi.fn();
   const mockJwkThumbprint = "AQID";
-  const mockConfig = new IoWalletSdkConfig({
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
-  }) as { itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 } & IoWalletSdkConfig;
 
   const mockJwk = {
     crv: "P-256",
@@ -39,9 +35,8 @@ describe("createWalletAttestationJwt v1.3", () => {
 
   describe("successful JWT creation", () => {
     it("should create a valid wallet attestation JWT with x5c", async () => {
-      const options = {
+      const options: WalletAttestationOptionsV1_3 = {
         callbacks: { hash: mockHash, signJwt: mockSignJwt },
-        config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
         issuer: "https://wallet-provider.example.com",
@@ -80,9 +75,8 @@ describe("createWalletAttestationJwt v1.3", () => {
 
     it("should include optional nbf when provided", async () => {
       const nbfDate = new Date("2025-01-01T00:00:00Z");
-      const options = {
+      const options: WalletAttestationOptionsV1_3 = {
         callbacks: { hash: mockHash, signJwt: mockSignJwt },
-        config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
         issuer: "https://wallet-provider.example.com",
@@ -110,9 +104,8 @@ describe("createWalletAttestationJwt v1.3", () => {
 
   describe("nbf validation", () => {
     it("should accept when nbf is before exp", async () => {
-      const options = {
+      const options: WalletAttestationOptionsV1_3 = {
         callbacks: { hash: mockHash, signJwt: mockSignJwt },
-        config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
         issuer: "https://wallet-provider.example.com",
@@ -133,9 +126,8 @@ describe("createWalletAttestationJwt v1.3", () => {
     it("should wrap unexpected errors in ClientAttestationError", async () => {
       mockSignJwt.mockRejectedValue(new Error("Crypto module crashed"));
 
-      const options = {
+      const options: WalletAttestationOptionsV1_3 = {
         callbacks: { hash: mockHash, signJwt: mockSignJwt },
-        config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
         issuer: "https://wallet-provider.example.com",
