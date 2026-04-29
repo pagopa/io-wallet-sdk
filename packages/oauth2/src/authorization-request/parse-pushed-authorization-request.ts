@@ -21,10 +21,13 @@ import {
   parseAuthorizationRequest,
 } from "./parse-authorization-request";
 import {
-  AuthorizationRequest,
+  AuthorizationRequestV1_0,
+  AuthorizationRequestV1_3,
   zAuthorizationRequestV1_0,
   zAuthorizationRequestV1_3,
 } from "./z-authorization-request";
+
+type AuthorizationRequest = AuthorizationRequestV1_0 | AuthorizationRequestV1_3;
 
 export interface ParsePushedAuthorizationRequestOptions {
   authorizationRequest: unknown;

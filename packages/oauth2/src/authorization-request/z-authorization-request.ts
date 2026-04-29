@@ -65,12 +65,6 @@ export type AuthorizationRequestV1_3 = z.infer<
   typeof zAuthorizationRequestV1_3
 >;
 
-export const zAuthorizationRequest = z.union([
-  zAuthorizationRequestV1_0,
-  zAuthorizationRequestV1_3,
-]);
-export type AuthorizationRequest = z.infer<typeof zAuthorizationRequest>;
-
 export const zPushedAuthorizationRequestSigned = z.looseObject({
   client_id: z
     .string()
@@ -127,19 +121,14 @@ export type PushedAuthorizationRequestUnsignedV1_3 = z.infer<
   typeof zPushedAuthorizationRequestUnsignedV1_3
 >;
 
-export const zPushedAuthorizationRequestUnsigned =
-  zPushedAuthorizationRequestUnsignedBase(zAuthorizationRequest);
-export type PushedAuthorizationRequestUnsigned =
-  | PushedAuthorizationRequestUnsignedV1_0
-  | PushedAuthorizationRequestUnsignedV1_3;
-
 /**
  * Union type for Pushed Authorization Request - can be either signed (JAR) or unsigned.
  * The variant depends on the Authorization Server's require_signed_request_object metadata.
  */
 export type PushedAuthorizationRequest =
   | PushedAuthorizationRequestSigned
-  | PushedAuthorizationRequestUnsigned;
+  | PushedAuthorizationRequestUnsignedV1_0
+  | PushedAuthorizationRequestUnsignedV1_3;
 
 export function isPushedAuthorizationRequestSigned(
   par: PushedAuthorizationRequest,
@@ -149,7 +138,9 @@ export function isPushedAuthorizationRequestSigned(
 
 export function isPushedAuthorizationRequestUnsigned(
   par: PushedAuthorizationRequest,
-): par is PushedAuthorizationRequestUnsigned {
+): par is
+  | PushedAuthorizationRequestUnsignedV1_0
+  | PushedAuthorizationRequestUnsignedV1_3 {
   return "authorizationRequest" in par;
 }
 

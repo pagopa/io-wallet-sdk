@@ -14,7 +14,6 @@ import {
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";
 import {
-  AuthorizationRequest,
   AuthorizationRequestV1_0,
   AuthorizationRequestV1_3,
   PushedAuthorizationRequest,
@@ -27,6 +26,8 @@ import {
 
 const JWT_EXPIRY_SECONDS = 3600; // 1 hour
 const RANDOM_BYTES_SIZE = 32;
+
+type AuthorizationRequest = AuthorizationRequestV1_0 | AuthorizationRequestV1_3;
 
 interface BaseCreatePushedAuthorizationRequestOptions<
   V extends ItWalletSpecsVersion,
@@ -179,7 +180,7 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  *
  * @returns A promise resolving to either:
  *   - `PushedAuthorizationRequestSigned` when JAR signing is required (contains `request` JWT)
- *   - `PushedAuthorizationRequestUnsigned` when JAR signing is not required (contains `authorizationRequest` object)
+ *   - version-specific unsigned PAR when JAR signing is not required (contains `authorizationRequest` object)
  *
  * @throws {PushedAuthorizationRequestError} If DPoP signer is missing required properties (alg, publicJwk.kid)
  * @throws {PushedAuthorizationRequestError} If PKCE code challenge method is not supported
