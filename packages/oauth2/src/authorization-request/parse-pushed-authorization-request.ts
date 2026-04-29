@@ -36,8 +36,7 @@ export interface ParsePushedAuthorizationRequestOptions {
   request: RequestLike;
 }
 
-export interface ParsePushedAuthorizationRequestResult
-  extends ParseAuthorizationRequestResult {
+export interface ParsePushedAuthorizationRequestResult extends ParseAuthorizationRequestResult {
   authorizationRequest: AuthorizationRequest;
 
   /**

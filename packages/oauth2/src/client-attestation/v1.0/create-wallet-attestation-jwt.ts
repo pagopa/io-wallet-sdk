@@ -17,8 +17,7 @@ import {
  * Options for creating a wallet attestation with v1.0
  * Uses only trust_chain (federation method)
  */
-export interface WalletAttestationOptionsV1_0
-  extends BaseWalletAttestationOptions {
+export interface WalletAttestationOptionsV1_0 extends BaseWalletAttestationOptions {
   /**
    * It expresses the strength of the authentication mechanism backing the Wallet instance when interacting with a Relying Party.
    */

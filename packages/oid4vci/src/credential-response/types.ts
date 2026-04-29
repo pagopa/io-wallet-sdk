@@ -33,14 +33,12 @@ interface CreateCredentialResponseOptionsBase {
   credentialResponseEncryption?: CredentialResponseEncryption;
 }
 
-export interface CreateCredentialResponseOptionsV1_0
-  extends CreateCredentialResponseOptionsBase {
+export interface CreateCredentialResponseOptionsV1_0 extends CreateCredentialResponseOptionsBase {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_0>;
   flow: DeferredFlowOptionsV1_0 | ImmediateFlowOptions;
 }
 
-export interface CreateCredentialResponseOptionsV1_3
-  extends CreateCredentialResponseOptionsBase {
+export interface CreateCredentialResponseOptionsV1_3 extends CreateCredentialResponseOptionsBase {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   flow: DeferredFlowOptionsV1_3 | ImmediateFlowOptions;
 }

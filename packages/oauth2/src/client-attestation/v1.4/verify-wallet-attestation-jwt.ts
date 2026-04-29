@@ -10,8 +10,7 @@ import {
   zWalletAttestationJwtPayloadV1_4,
 } from "./z-wallet-attestation";
 
-export interface VerifyWalletAttestationJwtOptionsV1_4
-  extends BaseVerifyWalletAttestationJwtOptions {
+export interface VerifyWalletAttestationJwtOptionsV1_4 extends BaseVerifyWalletAttestationJwtOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
 }
 
