@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -12,6 +13,7 @@ import {
   createClientAttestationPopJwt,
   verifyClientAttestationPopJwt,
 } from "../client-attestation-pop";
+import { zItWalletClientAttestationPopJwtPayload } from "../z-client-attestation-pop";
 
 describe("client-attestation-pop", () => {
   const mockConfigV1_0 = new IoWalletSdkConfig({
@@ -159,7 +161,12 @@ describe("client-attestation-pop", () => {
     const jwt = [
       encodeToBase64Url(JSON.stringify(mockHeader)),
       encodeToBase64Url(
-        JSON.stringify({ aud: "https://auth.example", sub: "client-id" }),
+        JSON.stringify({
+          aud: "https://auth.example",
+          iat: 1_735_689_600,
+          iss: "client-id",
+          jti: "test-jti",
+        }),
       ),
       "signature",
     ].join(".");
@@ -171,13 +178,42 @@ describe("client-attestation-pop", () => {
     });
     expect(result.header.alg).toBe("ES256");
     expect(result.payload.aud).toBe("https://auth.example");
+    expect(result.payload.iss).toBe("client-id");
     expect(result.signer).toBeDefined();
+  });
+
+  it("should validate IT-Wallet client attestation pop payload without exp", () => {
+    const result = zItWalletClientAttestationPopJwtPayload.safeParse({
+      aud: "https://auth.example",
+      iat: 1_735_689_600,
+      iss: "client-id",
+      jti: "test-jti",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject IT-Wallet client attestation pop payload without jti", () => {
+    const result = zItWalletClientAttestationPopJwtPayload.safeParse({
+      aud: "https://auth.example",
+      iat: 1_735_689_600,
+      iss: "client-id",
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("should throw if aud does not match", async () => {
     const jwt = [
       encodeToBase64Url(JSON.stringify(mockHeader)),
-      encodeToBase64Url(JSON.stringify({ aud: "wrong", sub: "client-id" })),
+      encodeToBase64Url(
+        JSON.stringify({
+          aud: "wrong",
+          iat: 1_735_689_600,
+          iss: "client-id",
+          jti: "test-jti",
+        }),
+      ),
       "signature",
     ].join(".");
     await expect(
