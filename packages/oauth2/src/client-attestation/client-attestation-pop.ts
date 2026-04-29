@@ -12,12 +12,24 @@ import { Jwk } from "../common/jwk/z-jwk";
 import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
 import {
+  IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
   ItWalletClientAttestationPopJwtHeader,
   ItWalletClientAttestationPopJwtPayload,
+  zItWalletClientAttestationPopJwtAlg,
   zItWalletClientAttestationPopJwtHeader,
   zItWalletClientAttestationPopJwtPayload,
   zItWalletClientAttestationPopJwtTyp,
 } from "./z-client-attestation-pop";
+
+function assertSupportedClientAttestationPopAlg(
+  alg: string,
+): asserts alg is (typeof IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES)[number] {
+  if (!zItWalletClientAttestationPopJwtAlg.safeParse(alg).success) {
+    throw new Oauth2Error(
+      `Unsupported alg '${alg}' in client attestation PoP JWT: must be one of ${IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES.join(", ")}`,
+    );
+  }
+}
 
 export interface VerifyClientAttestationPopJwtOptions {
   /**
@@ -68,6 +80,8 @@ export async function verifyClientAttestationPopJwt(
       jwt: options.clientAttestationPopJwt,
       payloadSchema: zItWalletClientAttestationPopJwtPayload,
     });
+
+    assertSupportedClientAttestationPopAlg(header.alg);
 
     const { signer } = await verifyJwt({
       compact: options.clientAttestationPopJwt,
@@ -207,6 +221,8 @@ export async function createClientAttestationPopJwt<
       method: "jwk",
       publicJwk: jwk,
     };
+
+    assertSupportedClientAttestationPopAlg(signer.alg);
 
     const header = {
       alg: signer.alg,

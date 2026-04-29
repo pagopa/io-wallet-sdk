@@ -13,7 +13,10 @@ import {
   createClientAttestationPopJwt,
   verifyClientAttestationPopJwt,
 } from "../client-attestation-pop";
-import { zItWalletClientAttestationPopJwtPayload } from "../z-client-attestation-pop";
+import {
+  IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
+  zItWalletClientAttestationPopJwtPayload,
+} from "../z-client-attestation-pop";
 
 describe("client-attestation-pop", () => {
   const mockConfigV1_0 = new IoWalletSdkConfig({
@@ -157,6 +160,28 @@ describe("client-attestation-pop", () => {
     ).rejects.toThrow(Oauth2Error);
   });
 
+  it("should throw when creating a client attestation pop jwt with an unsupported alg", async () => {
+    const badClientAttestation = [
+      encodeToBase64Url(
+        JSON.stringify({
+          alg: "HS256",
+          typ: "oauth-client-attestation+jwt",
+        }),
+      ),
+      encodeToBase64Url(JSON.stringify(mockPayload)),
+      "signature",
+    ].join(".");
+
+    await expect(
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+        clientAttestation: badClientAttestation,
+        config: mockConfigV1_0,
+      }),
+    ).rejects.toThrow(/Unsupported alg 'HS256'/);
+  });
+
   it("should verify a valid client attestation pop jwt", async () => {
     const jwt = [
       encodeToBase64Url(JSON.stringify(mockHeader)),
@@ -180,6 +205,48 @@ describe("client-attestation-pop", () => {
     expect(result.payload.aud).toBe("https://auth.example");
     expect(result.payload.iss).toBe("client-id");
     expect(result.signer).toBeDefined();
+  });
+
+  it("should export the IT-Wallet client attestation pop allowed algorithms", () => {
+    expect(IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES).toEqual([
+      "ES256",
+      "ES384",
+      "ES512",
+    ]);
+  });
+
+  it("should reject client attestation pop jwt with an unsupported alg before verification", async () => {
+    const verifyJwt = vi.fn(async () => ({
+      signerJwk: mockJwk,
+      verified: true,
+    }));
+    const jwt = [
+      encodeToBase64Url(
+        JSON.stringify({
+          alg: "HS256",
+          typ: "oauth-client-attestation-pop+jwt",
+        }),
+      ),
+      encodeToBase64Url(
+        JSON.stringify({
+          aud: "https://auth.example",
+          iat: 1_735_689_600,
+          iss: "client-id",
+          jti: "test-jti",
+        }),
+      ),
+      "signature",
+    ].join(".");
+
+    await expect(
+      verifyClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { verifyJwt },
+        clientAttestationPopJwt: jwt,
+        clientAttestationPublicJwk: mockJwk,
+      }),
+    ).rejects.toThrow(/Unsupported alg 'HS256'/);
+    expect(verifyJwt).not.toHaveBeenCalled();
   });
 
   it("should validate IT-Wallet client attestation pop payload without exp", () => {

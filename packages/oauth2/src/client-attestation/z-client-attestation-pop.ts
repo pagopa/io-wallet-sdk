@@ -2,6 +2,20 @@ import z from "zod";
 
 import { MAX_JTI_LENGTH, zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
+export const IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES = [
+  "ES256",
+  "ES384",
+  "ES512",
+] as const;
+
+export const zItWalletClientAttestationPopJwtAlg = z.enum(
+  IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
+);
+
+export type ItWalletClientAttestationPopJwtAlg = z.infer<
+  typeof zItWalletClientAttestationPopJwtAlg
+>;
+
 export const zItWalletClientAttestationPopJwtPayload = z.looseObject({
   ...zJwtPayload.shape,
   aud: z.string(),
