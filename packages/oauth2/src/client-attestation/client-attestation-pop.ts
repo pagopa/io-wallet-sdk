@@ -98,7 +98,9 @@ export async function verifyClientAttestationPopJwt(
   }
 }
 
-export interface BaseCreateClientAttestationPopJwtOptions {
+interface BaseCreateClientAttestationPopJwtOptions<
+  V extends ItWalletSpecsVersion,
+> {
   /**
    * The audience authorization server identifier
    */
@@ -120,7 +122,7 @@ export interface BaseCreateClientAttestationPopJwtOptions {
    * The IT-Wallet SDK configuration, used to select the correct version-specific
    * payload shape for the client attestation PoP JWT.
    */
-  config: IoWalletSdkConfig;
+  config: IoWalletSdkConfig<V>;
 
   /**
    * Creation time of the JWT. If not provided the current date will be used
@@ -141,34 +143,45 @@ export interface BaseCreateClientAttestationPopJwtOptions {
   signer?: JwtSignerJwk;
 }
 
-export interface CreateClientAttestationPopJwtOptionsV1_0
-  extends BaseCreateClientAttestationPopJwtOptions {
-  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_0>;
+type NoClientAttestationPopJwtExtraOptions = Record<never, never>;
 
-  /**
-   * Expiration time of the JWT.
-   * If not provided, 1 minute will be added to `issuedAt`.
-   */
-  expiresAt?: Date;
+interface CreateClientAttestationPopJwtVersionOptions {
+  [ItWalletSpecsVersion.V1_0]: {
+    /**
+     * Expiration time of the JWT.
+     * If not provided, 1 minute will be added to `issuedAt`.
+     */
+    expiresAt?: Date;
+  };
+  [ItWalletSpecsVersion.V1_3]: NoClientAttestationPopJwtExtraOptions;
+  [ItWalletSpecsVersion.V1_4]: NoClientAttestationPopJwtExtraOptions;
 }
 
+type CreateClientAttestationPopJwtExtraOptions<V extends ItWalletSpecsVersion> =
+  [V] extends [keyof CreateClientAttestationPopJwtVersionOptions]
+    ? CreateClientAttestationPopJwtVersionOptions[V]
+    : NoClientAttestationPopJwtExtraOptions;
+
+export type CreateClientAttestationPopJwtOptionsForVersion<
+  V extends ItWalletSpecsVersion,
+> = BaseCreateClientAttestationPopJwtOptions<V> &
+  CreateClientAttestationPopJwtExtraOptions<V>;
+
+export type CreateClientAttestationPopJwtOptionsV1_0 =
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_0>;
+
+export type CreateClientAttestationPopJwtOptionsV1_3 =
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_3>;
+
+export type CreateClientAttestationPopJwtOptionsV1_4 =
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_4>;
+
 export type CreateClientAttestationPopJwtOptions =
-  | BaseCreateClientAttestationPopJwtOptions
-  | CreateClientAttestationPopJwtOptionsV1_0;
+  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion>;
 
-/* eslint-disable @typescript-eslint/unified-signatures */
-export function createClientAttestationPopJwt(
-  options: CreateClientAttestationPopJwtOptionsV1_0,
-): Promise<string>;
-
-export function createClientAttestationPopJwt(
-  options: BaseCreateClientAttestationPopJwtOptions,
-): Promise<string>;
-/* eslint-enable @typescript-eslint/unified-signatures */
-
-export async function createClientAttestationPopJwt(
-  options: CreateClientAttestationPopJwtOptions,
-) {
+export async function createClientAttestationPopJwt<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
+>(options: CreateClientAttestationPopJwtOptionsForVersion<V>): Promise<string> {
   try {
     const clientAttestation = decodeJwt({
       errorMessagePrefix: "Error decoding client attestation JWT:",

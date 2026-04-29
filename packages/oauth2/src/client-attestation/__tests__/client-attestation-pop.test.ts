@@ -75,7 +75,6 @@ describe("client-attestation-pop", () => {
       callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
       clientAttestation: mockClientAttestation,
       config: mockConfigV1_0,
-      expiresAt: new Date("2025-01-01T00:01:00.000Z"),
       issuedAt: new Date("2025-01-01T00:00:00.000Z"),
     });
 
@@ -226,7 +225,6 @@ describe("CreateClientAttestationPopJwtOptions", () => {
       });
 
     const createV1_3 = () =>
-      // @ts-expect-error expiresAt is only available for IT-Wallet v1.0 options
       createClientAttestationPopJwt({
         authorizationServer: "https://auth.example",
         callbacks: mockCallbacks,
@@ -234,6 +232,7 @@ describe("CreateClientAttestationPopJwtOptions", () => {
         config: new IoWalletSdkConfig({
           itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
         }),
+        // @ts-expect-error expiresAt is only available for IT-Wallet v1.0 options
         expiresAt: new Date("2025-01-01T00:01:00.000Z"),
       });
 
@@ -257,5 +256,24 @@ describe("CreateClientAttestationPopJwtOptions", () => {
       });
 
     expect(createV1_3).toBeDefined();
+  });
+
+  it("should allow base options for a broad IT-Wallet config", () => {
+    const mockCallbacks = {
+      generateRandom: vi.fn(async (len) => new Uint8Array(len)),
+      signJwt: vi.fn(),
+    };
+    const config: IoWalletSdkConfig = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    });
+    const createWithBroadConfig = () =>
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config,
+      });
+
+    expect(createWithBroadConfig).toBeDefined();
   });
 });
