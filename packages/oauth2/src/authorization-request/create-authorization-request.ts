@@ -2,25 +2,36 @@ import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-
 
 import { CallbackContext, RequestDpopOptions } from "@openid4vc/oauth2";
 import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
+  hasConfigVersion,
 } from "@pagopa/io-wallet-utils";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";
 import {
-  AuthorizationRequest,
+  AuthorizationRequestV1_0,
+  AuthorizationRequestV1_3,
   PushedAuthorizationRequest,
   PushedAuthorizationRequestSigned,
-  PushedAuthorizationRequestUnsigned,
-  zAuthorizationRequest,
+  PushedAuthorizationRequestUnsignedV1_0,
+  PushedAuthorizationRequestUnsignedV1_3,
+  zAuthorizationRequestV1_0,
+  zAuthorizationRequestV1_3,
 } from "./z-authorization-request";
 
 const JWT_EXPIRY_SECONDS = 3600; // 1 hour
 const RANDOM_BYTES_SIZE = 32;
 
-export interface CreatePushedAuthorizationRequestOptions {
+type AuthorizationRequest = AuthorizationRequestV1_0 | AuthorizationRequestV1_3;
+
+interface BaseCreatePushedAuthorizationRequestOptions<
+  V extends ItWalletSpecsVersion,
+> {
   /**
    * It MUST be set to the identifier of the Credential Issuer.
    */
@@ -55,6 +66,8 @@ export interface CreatePushedAuthorizationRequestOptions {
 
   codeChallengeMethodsSupported: ItWalletAuthorizationServerMetadata["code_challenge_methods_supported"];
 
+  config: IoWalletSdkConfig<V>;
+
   /**
    * DPoP options. Required when `require_signed_request_object` is `true`
    * (enforced at the type level via function overloads). Not used in the
@@ -88,11 +101,6 @@ export interface CreatePushedAuthorizationRequestOptions {
   redirectUri: string;
 
   /**
-   * It MUST be one of the supported values (response_modes_supported) provided in the metadata of the Credential Issuer.
-   */
-  responseMode: string;
-
-  /**
    * Scope to request for the authorization request
    */
   scope?: string;
@@ -102,6 +110,34 @@ export interface CreatePushedAuthorizationRequestOptions {
    */
   state?: string;
 }
+
+export interface CreatePushedAuthorizationRequestOptionsV1_0
+  extends BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_0> {
+  /**
+   * It MUST be one of the supported values (response_modes_supported) provided in the metadata of the Credential Issuer.
+   */
+  responseMode: string;
+}
+
+export type CreatePushedAuthorizationRequestOptionsV1_3 =
+  BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_3>;
+
+export type CreatePushedAuthorizationRequestOptions =
+  | CreatePushedAuthorizationRequestOptionsV1_0
+  | CreatePushedAuthorizationRequestOptionsV1_3;
+
+type CreatePushedAuthorizationRequestOptionsSigned<
+  TOptions extends CreatePushedAuthorizationRequestOptions,
+> = {
+  authorizationServerMetadata: { require_signed_request_object: true };
+  dpop: RequestDpopOptions;
+} & TOptions;
+
+type CreatePushedAuthorizationRequestOptionsUnsigned<
+  TOptions extends CreatePushedAuthorizationRequestOptions,
+> = {
+  authorizationServerMetadata: { require_signed_request_object: false };
+} & TOptions;
 
 /**
  * Creates a Pushed Authorization Request (PAR) for OAuth 2.0 authorization flows.
@@ -135,7 +171,8 @@ export interface CreatePushedAuthorizationRequestOptions {
  * @param options.jti - Optional JWT ID for PAR (auto-generated if not provided)
  * @param options.pkceCodeVerifier - Optional PKCE code verifier (auto-generated if not provided)
  * @param options.redirectUri - Redirect URI for the authorization response
- * @param options.responseMode - Response mode (must be supported by Credential Issuer)
+ * @param options.config - Italian Wallet specification version used to build the request shape
+ * @param options.responseMode - Response mode (v1.0 only, must be supported by Credential Issuer)
  * @param options.scope - OAuth 2.0 scope to request
  * @param options.state - Optional state parameter (auto-generated if not provided)
  * @param options.expiresAt - Optional JWT expiration time (defaults to 1 hour from issuedAt)
@@ -143,19 +180,24 @@ export interface CreatePushedAuthorizationRequestOptions {
  *
  * @returns A promise resolving to either:
  *   - `PushedAuthorizationRequestSigned` when JAR signing is required (contains `request` JWT)
- *   - `PushedAuthorizationRequestUnsigned` when JAR signing is not required (contains `authorizationRequest` object)
+ *   - version-specific unsigned PAR when JAR signing is not required (contains `authorizationRequest` object)
  *
  * @throws {PushedAuthorizationRequestError} If DPoP signer is missing required properties (alg, publicJwk.kid)
  * @throws {PushedAuthorizationRequestError} If PKCE code challenge method is not supported
  * @throws {ZodError} If authorization request parameters fail validation
  *
  * @example
- * // Example 1: Create signed PAR (explicit)
+ * // Example 1: Create signed PAR for IT-Wallet v1.0 (explicit)
+ * const config = new IoWalletSdkConfig({
+ *   itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+ * });
+ *
  * const signedPar = await createPushedAuthorizationRequest({
  *   audience: 'https://issuer.example.com',
  *   callbacks: { generateRandom, hash, signJwt },
  *   clientId: 'wallet_client_thumbprint',
  *   codeChallengeMethodsSupported: ['S256'],
+ *   config,
  *   dpop: { signer: { alg: 'ES256', publicJwk: { kid: 'key-1' } } },
  *   redirectUri: 'https://wallet.example.com/callback',
  *   responseMode: 'form_post.jwt',
@@ -167,14 +209,18 @@ export interface CreatePushedAuthorizationRequestOptions {
  * // signedPar.request contains the signed JWT
  *
  * @example
- * // Example 2: Create unsigned PAR (when Authorization Server allows it)
+ * // Example 2: Create unsigned PAR for IT-Wallet v1.3 (when Authorization Server allows it)
+ * const config = new IoWalletSdkConfig({
+ *   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+ * });
+ *
  * const unsignedPar = await createPushedAuthorizationRequest({
  *   audience: 'https://issuer.example.com',
  *   callbacks: { generateRandom, hash, signJwt },
  *   clientId: 'wallet_client_thumbprint',
  *   codeChallengeMethodsSupported: ['S256'],
+ *   config,
  *   redirectUri: 'https://wallet.example.com/callback',
- *   responseMode: 'query',
  *   scope: 'openid',
  *   authorizationServerMetadata: {
  *     require_signed_request_object: false  // Creates unsigned request — dpop not needed
@@ -183,12 +229,17 @@ export interface CreatePushedAuthorizationRequestOptions {
  * // unsignedPar.authorizationRequest contains the plain object
  *
  * @example
- * // Example 3: Default behavior (no metadata - unsigned)
+ * // Example 3: Default behavior for IT-Wallet v1.0 (no metadata - unsigned)
+ * const config = new IoWalletSdkConfig({
+ *   itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+ * });
+ *
  * const par = await createPushedAuthorizationRequest({
  *   audience: 'https://issuer.example.com',
  *   callbacks: { generateRandom, hash, signJwt },
  *   clientId: 'wallet_client_thumbprint',
  *   codeChallengeMethodsSupported: ['S256'],
+ *   config,
  *   redirectUri: 'https://wallet.example.com/callback',
  *   responseMode: 'form_post.jwt',
  *   scope: 'openid'
@@ -202,34 +253,43 @@ export interface CreatePushedAuthorizationRequestOptions {
  */
 // Function overloads for type narrowing based on require_signed_request_object
 export async function createPushedAuthorizationRequest(
-  options: {
-    authorizationServerMetadata: { require_signed_request_object: true };
-    dpop: RequestDpopOptions;
-  } & CreatePushedAuthorizationRequestOptions,
+  options: CreatePushedAuthorizationRequestOptionsSigned<CreatePushedAuthorizationRequestOptions>,
 ): Promise<PushedAuthorizationRequestSigned>;
 
 export async function createPushedAuthorizationRequest(
-  options: {
-    authorizationServerMetadata: { require_signed_request_object: false };
-  } & CreatePushedAuthorizationRequestOptions,
-): Promise<PushedAuthorizationRequestUnsigned>;
+  options: CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_0>,
+): Promise<PushedAuthorizationRequestUnsignedV1_0>;
+
+export async function createPushedAuthorizationRequest(
+  options: CreatePushedAuthorizationRequestOptionsV1_0,
+): Promise<
+  PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_0
+>;
+
+export async function createPushedAuthorizationRequest(
+  options: CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_3>,
+): Promise<PushedAuthorizationRequestUnsignedV1_3>;
+
+export async function createPushedAuthorizationRequest(
+  options: CreatePushedAuthorizationRequestOptionsV1_3,
+): Promise<
+  PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_3
+>;
 
 export async function createPushedAuthorizationRequest(
   options: CreatePushedAuthorizationRequestOptions,
 ): Promise<PushedAuthorizationRequest>;
 
-// Implementation
 export async function createPushedAuthorizationRequest(
   options: CreatePushedAuthorizationRequestOptions,
 ): Promise<PushedAuthorizationRequest> {
-  // PKCE
   const pkce = await createPkce({
     allowedCodeChallengeMethods: options.codeChallengeMethodsSupported,
     callbacks: options.callbacks,
     codeVerifier: options.pkceCodeVerifier,
   });
 
-  const authorizationRequest = zAuthorizationRequest.parse({
+  const baseAuthorizationRequest = {
     authorization_details: options.authorization_details,
     client_id: options.clientId,
     code_challenge: pkce.codeChallenge,
@@ -240,7 +300,6 @@ export async function createPushedAuthorizationRequest(
         await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
       ),
     redirect_uri: options.redirectUri,
-    response_mode: options.responseMode,
     response_type: "code",
     scope: options.scope,
     state:
@@ -248,14 +307,17 @@ export async function createPushedAuthorizationRequest(
       encodeToBase64Url(
         await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
       ),
-  });
+  };
 
-  // Check if JAR signing is required
+  const authorizationRequest = parseAuthorizationRequestByVersion(
+    options,
+    baseAuthorizationRequest,
+  );
+
   const requireSigned =
     options.authorizationServerMetadata?.require_signed_request_object ?? false;
 
   if (requireSigned) {
-    // Create signed JAR (JWT-Secured Authorization Request)
     const { dpop } = options;
     if (!dpop || !dpop.signer.alg || !dpop.signer.publicJwk?.kid) {
       throw new PushedAuthorizationRequestError(
@@ -285,12 +347,41 @@ export async function createPushedAuthorizationRequest(
       pkceCodeVerifier: pkce.codeVerifier,
       request: requestJwt.jwt,
     };
-  } else {
-    // Create unsigned authorization request
-    return {
-      authorizationRequest,
-      client_id: options.clientId,
-      pkceCodeVerifier: pkce.codeVerifier,
-    };
   }
+
+  return {
+    authorizationRequest,
+    client_id: options.clientId,
+    pkceCodeVerifier: pkce.codeVerifier,
+  };
+}
+
+function parseAuthorizationRequestByVersion(
+  options: CreatePushedAuthorizationRequestOptions,
+  baseAuthorizationRequest: Omit<
+    AuthorizationRequest,
+    "authorization_details" | "response_mode" | "scope"
+  > &
+    Pick<AuthorizationRequest, "authorization_details" | "scope">,
+): AuthorizationRequest {
+  const version = options.config.itWalletSpecsVersion;
+
+  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
+    return zAuthorizationRequestV1_0.parse({
+      ...baseAuthorizationRequest,
+      response_mode: options.responseMode,
+    }) satisfies AuthorizationRequestV1_0;
+  }
+
+  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
+    return zAuthorizationRequestV1_3.parse(
+      baseAuthorizationRequest,
+    ) satisfies AuthorizationRequestV1_3;
+  }
+
+  throw new ItWalletSpecsVersionError(
+    "createPushedAuthorizationRequest",
+    version,
+    [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+  );
 }
