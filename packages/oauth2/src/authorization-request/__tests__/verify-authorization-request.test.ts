@@ -278,10 +278,11 @@ describe("verifyAuthorizationRequest", () => {
         sub: "client-123",
       });
 
-      const clientAttestationPopJwt = createMockClientAttestationJwt({
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000),
+        iss: "client-123",
         jti: "test-jti",
       });
 

@@ -1,4 +1,11 @@
-import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
+/* eslint-disable max-lines-per-function */
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  decodeBase64,
+  encodeToBase64Url,
+  encodeToUtf8String,
+} from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import { Oauth2Error } from "../../errors";
@@ -6,8 +13,21 @@ import {
   createClientAttestationPopJwt,
   verifyClientAttestationPopJwt,
 } from "../client-attestation-pop";
+import {
+  IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
+  zItWalletClientAttestationPopJwtPayload,
+} from "../z-client-attestation-pop";
 
 describe("client-attestation-pop", () => {
+  const mockConfigV1_0 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  });
+  const mockConfigV1_3 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+  });
+  const mockConfigV1_4 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+  });
   const mockJwk = { crv: "P-256", kty: "EC", x: "...", y: "..." };
   const mockHeader = { alg: "ES256", typ: "oauth-client-attestation-pop+jwt" };
   const mockPayload = {
@@ -33,16 +53,63 @@ describe("client-attestation-pop", () => {
     signerJwk: mockJwk,
     verified: true,
   }));
+  const decodeJwtPayload = (jwt: string) => {
+    const payloadPart = jwt.split(".")[1];
+    if (!payloadPart) throw new Error("JWT payload part is missing");
+    return JSON.parse(encodeToUtf8String(decodeBase64(payloadPart))) as Record<
+      string,
+      unknown
+    >;
+  };
 
   it("should create a client attestation pop jwt", async () => {
     const jwt = await createClientAttestationPopJwt({
       authorizationServer: "https://auth.example",
       callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
       clientAttestation: mockClientAttestation,
+      config: mockConfigV1_0,
       issuedAt: new Date(1700000000000),
     });
     expect(typeof jwt).toBe("string");
     expect(jwt.split(".").length).toBe(3);
+  });
+
+  it("should include exp in the client attestation pop jwt payload for IT-Wallet v1.0", async () => {
+    const jwt = await createClientAttestationPopJwt({
+      authorizationServer: "https://auth.example",
+      callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+      clientAttestation: mockClientAttestation,
+      config: mockConfigV1_0,
+      issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+
+    expect(decodeJwtPayload(jwt)).toMatchObject({
+      exp: 1735689660,
+    });
+  });
+
+  it("should not include exp in the client attestation pop jwt payload for IT-Wallet v1.3", async () => {
+    const jwt = await createClientAttestationPopJwt({
+      authorizationServer: "https://auth.example",
+      callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+      clientAttestation: mockClientAttestation,
+      config: mockConfigV1_3,
+      issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+
+    expect(decodeJwtPayload(jwt)).not.toHaveProperty("exp");
+  });
+
+  it("should not include exp in the client attestation pop jwt payload for IT-Wallet v1.4", async () => {
+    const jwt = await createClientAttestationPopJwt({
+      authorizationServer: "https://auth.example",
+      callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+      clientAttestation: mockClientAttestation,
+      config: mockConfigV1_4,
+      issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+
+    expect(decodeJwtPayload(jwt)).not.toHaveProperty("exp");
   });
 
   it("should throw if client attestation does not contain cnf.jwk", async () => {
@@ -56,6 +123,7 @@ describe("client-attestation-pop", () => {
         authorizationServer: "https://auth.example",
         callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
         clientAttestation: badAttestation,
+        config: mockConfigV1_0,
       }),
     ).rejects.toThrow(/cnf\.jwk/);
   });
@@ -71,6 +139,7 @@ describe("client-attestation-pop", () => {
         authorizationServer: "https://auth.example",
         callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
         clientAttestation: badAttestation,
+        config: mockConfigV1_0,
       }),
     ).rejects.toThrow(/sub/);
   });
@@ -86,15 +155,43 @@ describe("client-attestation-pop", () => {
         authorizationServer: "https://auth.example",
         callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
         clientAttestation: badAttestation,
+        config: mockConfigV1_0,
       }),
     ).rejects.toThrow(Oauth2Error);
+  });
+
+  it("should throw when creating a client attestation pop jwt with an unsupported alg", async () => {
+    const badClientAttestation = [
+      encodeToBase64Url(
+        JSON.stringify({
+          alg: "HS256",
+          typ: "oauth-client-attestation+jwt",
+        }),
+      ),
+      encodeToBase64Url(JSON.stringify(mockPayload)),
+      "signature",
+    ].join(".");
+
+    await expect(
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+        clientAttestation: badClientAttestation,
+        config: mockConfigV1_0,
+      }),
+    ).rejects.toThrow(/Unsupported alg 'HS256'/);
   });
 
   it("should verify a valid client attestation pop jwt", async () => {
     const jwt = [
       encodeToBase64Url(JSON.stringify(mockHeader)),
       encodeToBase64Url(
-        JSON.stringify({ aud: "https://auth.example", sub: "client-id" }),
+        JSON.stringify({
+          aud: "https://auth.example",
+          iat: 1_735_689_600,
+          iss: "client-id",
+          jti: "test-jti",
+        }),
       ),
       "signature",
     ].join(".");
@@ -106,13 +203,84 @@ describe("client-attestation-pop", () => {
     });
     expect(result.header.alg).toBe("ES256");
     expect(result.payload.aud).toBe("https://auth.example");
+    expect(result.payload.iss).toBe("client-id");
     expect(result.signer).toBeDefined();
+  });
+
+  it("should export the IT-Wallet client attestation pop allowed algorithms", () => {
+    expect(IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES).toEqual([
+      "ES256",
+      "ES384",
+      "ES512",
+    ]);
+  });
+
+  it("should reject client attestation pop jwt with an unsupported alg before verification", async () => {
+    const verifyJwt = vi.fn(async () => ({
+      signerJwk: mockJwk,
+      verified: true,
+    }));
+    const jwt = [
+      encodeToBase64Url(
+        JSON.stringify({
+          alg: "HS256",
+          typ: "oauth-client-attestation-pop+jwt",
+        }),
+      ),
+      encodeToBase64Url(
+        JSON.stringify({
+          aud: "https://auth.example",
+          iat: 1_735_689_600,
+          iss: "client-id",
+          jti: "test-jti",
+        }),
+      ),
+      "signature",
+    ].join(".");
+
+    await expect(
+      verifyClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { verifyJwt },
+        clientAttestationPopJwt: jwt,
+        clientAttestationPublicJwk: mockJwk,
+      }),
+    ).rejects.toThrow(/Unsupported alg 'HS256'/);
+    expect(verifyJwt).not.toHaveBeenCalled();
+  });
+
+  it("should validate IT-Wallet client attestation pop payload without exp", () => {
+    const result = zItWalletClientAttestationPopJwtPayload.safeParse({
+      aud: "https://auth.example",
+      iat: 1_735_689_600,
+      iss: "client-id",
+      jti: "test-jti",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject IT-Wallet client attestation pop payload without jti", () => {
+    const result = zItWalletClientAttestationPopJwtPayload.safeParse({
+      aud: "https://auth.example",
+      iat: 1_735_689_600,
+      iss: "client-id",
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("should throw if aud does not match", async () => {
     const jwt = [
       encodeToBase64Url(JSON.stringify(mockHeader)),
-      encodeToBase64Url(JSON.stringify({ aud: "wrong", sub: "client-id" })),
+      encodeToBase64Url(
+        JSON.stringify({
+          aud: "wrong",
+          iat: 1_735_689_600,
+          iss: "client-id",
+          jti: "test-jti",
+        }),
+      ),
       "signature",
     ].join(".");
     await expect(
@@ -139,5 +307,76 @@ describe("client-attestation-pop", () => {
         clientAttestationPublicJwk: mockJwk,
       }),
     ).rejects.toThrow(Oauth2Error);
+  });
+});
+
+describe("CreateClientAttestationPopJwtOptions", () => {
+  it("[compile-time] should reject expiresAt option for IT-Wallet v1.3+", () => {
+    const mockCallbacks = {
+      generateRandom: vi.fn(async (len) => new Uint8Array(len)),
+      signJwt: vi.fn(),
+    };
+    const createV1_0 = () =>
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config: new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+        }),
+        expiresAt: new Date("2025-01-01T00:01:00.000Z"),
+      });
+
+    const createV1_3 = () =>
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config: new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+        }),
+        // @ts-expect-error expiresAt is only available for IT-Wallet v1.0 options
+        expiresAt: new Date("2025-01-01T00:01:00.000Z"),
+      });
+
+    expect(createV1_0).toBeDefined();
+    expect(createV1_3).toBeDefined();
+  });
+
+  it("should allow base options for other IT-Wallet versions", () => {
+    const mockCallbacks = {
+      generateRandom: vi.fn(async (len) => new Uint8Array(len)),
+      signJwt: vi.fn(),
+    };
+    const createV1_3 = () =>
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config: new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+        }),
+      });
+
+    expect(createV1_3).toBeDefined();
+  });
+
+  it("should allow base options for a broad IT-Wallet config", () => {
+    const mockCallbacks = {
+      generateRandom: vi.fn(async (len) => new Uint8Array(len)),
+      signJwt: vi.fn(),
+    };
+    const config: IoWalletSdkConfig = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    });
+    const createWithBroadConfig = () =>
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: mockCallbacks,
+        clientAttestation: "header.payload.signature",
+        config,
+      });
+
+    expect(createWithBroadConfig).toBeDefined();
   });
 });
