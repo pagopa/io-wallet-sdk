@@ -1,10 +1,19 @@
-import { HashAlgorithm, calculateJwkThumbprint } from "@openid4vc/oauth2";
+import {
+  CallbackContext,
+  HashAlgorithm,
+  calculateJwkThumbprint,
+} from "@openid4vc/oauth2";
 
-import { type BaseWalletAttestationOptions } from "./types";
+import { Jwk } from "../common/jwk/z-jwk";
+
+interface JwkThumbprintOptions {
+  callbacks: Pick<CallbackContext, "hash">;
+  dpopJwkPublic: Jwk;
+}
 
 export const calculateDpopJwkThumbprint = (
-  options: Pick<BaseWalletAttestationOptions, "callbacks" | "dpopJwkPublic">,
-) =>
+  options: JwkThumbprintOptions,
+): Promise<string> =>
   calculateJwkThumbprint({
     hashAlgorithm: HashAlgorithm.Sha256,
     hashCallback: options.callbacks.hash,
