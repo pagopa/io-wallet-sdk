@@ -307,7 +307,7 @@ export class Oid4vciError extends Error {
 ```
 Generic error thrown on Oid4vci operations
 
-Error thrown when wallet provider options do not match the configured IT-Wallet specification version
+Error thrown when wallet-provider options are invalid or when wallet attestation and key attestation JWT creation fails.
 ```typescript
 export class WalletProviderError extends Oid4vciError {
   constructor(message: string, cause?: unknown) {

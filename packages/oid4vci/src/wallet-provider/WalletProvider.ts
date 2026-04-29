@@ -211,7 +211,12 @@ export class WalletProvider {
    * @async
    * @param {WalletAttestationOptions} options - The necessary parameters to build the attestation.
    * @returns {Promise<string>} A promise that resolves to the signed wallet attestation JWT as a string.
-   * @throws {ItWalletSpecsVersionError} When version is not supported
+   * @throws {WalletProviderError} When the provided options do not match the configured IT-Wallet
+   * specification version, or when v1.4 options are missing `walletLink`, `walletName`, or `status`.
+   * @throws {ValidationError} When the generated wallet attestation JWT fails validation.
+   * @throws {ClientAttestationError} When wallet attestation JWT creation fails unexpectedly,
+   * including signing errors from the configured `signJwt` callback.
+   * @throws {ItWalletSpecsVersionError} When the configured IT-Wallet specification version is not supported.
    *
    * @example v1.0 - Basic wallet attestation with trust chain
    * const jwt = await provider.createItWalletAttestationJwt({
