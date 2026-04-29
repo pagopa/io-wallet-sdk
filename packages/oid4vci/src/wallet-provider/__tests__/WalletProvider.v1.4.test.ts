@@ -45,6 +45,7 @@ const mockCreateWalletAttestationJwtV1_4 =
   >;
 
 describe("WalletProvider v1.4 routing", () => {
+  const mockHash = vi.fn();
   const mockSignJwt = vi.fn();
   const mockJwk = {
     crv: "P-256",
@@ -74,7 +75,7 @@ describe("WalletProvider v1.4 routing", () => {
 
   it("should route to v1.4 implementation when version is V1_4", async () => {
     const options: WalletAttestationOptionsV1_4 = {
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -109,7 +110,7 @@ describe("WalletProvider v1.4 routing", () => {
       },
     };
     const options: WalletAttestationOptionsV1_4 = {
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       eudiWalletInfo,
       expiresAt: new Date("2025-06-01T00:00:00Z"),
@@ -127,7 +128,7 @@ describe("WalletProvider v1.4 routing", () => {
     await provider.createItWalletAttestationJwt(options);
 
     expect(mockCreateWalletAttestationJwtV1_4).toHaveBeenCalledWith({
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       eudiWalletInfo,
       expiresAt: new Date("2025-06-01T00:00:00Z"),
@@ -147,7 +148,7 @@ describe("WalletProvider v1.4 routing", () => {
 
   describe("missing or invalid v1.4 options", () => {
     const baseOptions: WalletAttestationOptionsV1_4 = {
-      callbacks: { signJwt: vi.fn() },
+      callbacks: { hash: vi.fn(), signJwt: vi.fn() },
       dpopJwkPublic: {
         crv: "P-256",
         kid: "test-key-id",

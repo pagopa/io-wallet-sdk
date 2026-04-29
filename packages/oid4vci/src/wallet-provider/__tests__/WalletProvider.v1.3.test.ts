@@ -41,6 +41,7 @@ const mockCreateWalletAttestationJwtV1_3 =
   >;
 
 const mockSignJwt = vi.fn();
+const mockHash = vi.fn();
 
 const mockJwk = {
   crv: "P-256",
@@ -66,7 +67,7 @@ describe("WalletProvider v1.3 - version routing", () => {
 
     const options: WalletAttestationOptionsV1_0 = {
       authenticatorAssuranceLevel: "aal1",
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -92,7 +93,7 @@ describe("WalletProvider v1.3 - version routing", () => {
     );
 
     const options: WalletAttestationOptionsV1_3 = {
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -118,7 +119,7 @@ describe("WalletProvider v1.3 - version routing", () => {
     const provider = new WalletProvider(invalidConfig);
 
     const options = {
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -145,7 +146,7 @@ describe("WalletProvider v1.3 - version mismatch", () => {
     );
 
     const v1_3Options: WalletAttestationOptionsV1_3 = {
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -174,7 +175,7 @@ describe("WalletProvider v1.3 - version mismatch", () => {
 
     const v1_0Options: WalletAttestationOptionsV1_0 = {
       authenticatorAssuranceLevel: "aal1",
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -212,7 +213,7 @@ describe("WalletProvider v1.3 - v1.3 routing", () => {
     };
 
     const options: WalletAttestationOptionsV1_3 = {
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       expiresAt: new Date("2025-06-01T00:00:00Z"),
       issuer: "https://wallet-provider.example.com",
@@ -232,7 +233,7 @@ describe("WalletProvider v1.3 - v1.3 routing", () => {
     await provider.createItWalletAttestationJwt(options);
 
     expect(mockCreateWalletAttestationJwtV1_3).toHaveBeenCalledWith({
-      callbacks: { signJwt: mockSignJwt },
+      callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
       expiresAt: new Date("2025-06-01T00:00:00Z"),
       issuer: "https://wallet-provider.example.com",

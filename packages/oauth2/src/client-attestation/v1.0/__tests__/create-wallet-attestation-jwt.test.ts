@@ -9,7 +9,9 @@ import { ClientAttestationError } from "../../../errors";
 import { createWalletAttestationJwt } from "../create-wallet-attestation-jwt";
 
 describe("createWalletAttestationJwt v1.0", () => {
+  const mockHash = vi.fn();
   const mockSignJwt = vi.fn();
+  const mockJwkThumbprint = "AQID";
   const mockConfig = new IoWalletSdkConfig({
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
   }) as { itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 } & IoWalletSdkConfig;
@@ -30,6 +32,7 @@ describe("createWalletAttestationJwt v1.0", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHash.mockResolvedValue(new Uint8Array([1, 2, 3]));
     mockSignJwt.mockResolvedValue({ jwt: mockJwt });
   });
 
@@ -37,7 +40,7 @@ describe("createWalletAttestationJwt v1.0", () => {
     it("should create a valid wallet attestation JWT with required fields", async () => {
       const options = {
         authenticatorAssuranceLevel: "aal1",
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
@@ -69,7 +72,7 @@ describe("createWalletAttestationJwt v1.0", () => {
             exp: dateToSeconds(new Date("2025-01-25T00:00:00Z")),
             iat: expect.any(Number),
             iss: "https://wallet-provider.example.com",
-            sub: "test-key-id",
+            sub: mockJwkThumbprint,
           }),
         }),
       );
@@ -78,7 +81,7 @@ describe("createWalletAttestationJwt v1.0", () => {
     it("should include both walletLink and walletName when provided", async () => {
       const options = {
         authenticatorAssuranceLevel: "aal1",
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
@@ -111,7 +114,7 @@ describe("createWalletAttestationJwt v1.0", () => {
     it("should set typ header to oauth-client-attestation+jwt", async () => {
       const options = {
         authenticatorAssuranceLevel: "aal1",
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
@@ -140,7 +143,7 @@ describe("createWalletAttestationJwt v1.0", () => {
 
       const options = {
         authenticatorAssuranceLevel: "aal1",
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),

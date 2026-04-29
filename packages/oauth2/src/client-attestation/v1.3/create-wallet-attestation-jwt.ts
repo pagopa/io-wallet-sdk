@@ -6,6 +6,7 @@ import {
 
 import { decodeJwt } from "../../common/jwt/decode-jwt";
 import { ClientAttestationError } from "../../errors";
+import { calculateDpopJwkThumbprint } from "../jwk-thumbprint";
 import { BaseWalletAttestationOptions } from "../types";
 import {
   WalletAttestationJwtV1_3,
@@ -58,6 +59,7 @@ export const createWalletAttestationJwt = async (
     const { signJwt } = options.callbacks;
     const iat = new Date();
     const exp = options.expiresAt ?? addSecondsToDate(iat, 3600); // Default expiration of 1 hour
+    const dpopJwkThumbprint = await calculateDpopJwkThumbprint(options);
 
     // Validate temporal constraints
     if (options.nbf && options.nbf >= exp) {
@@ -69,7 +71,7 @@ export const createWalletAttestationJwt = async (
       exp: dateToSeconds(exp),
       iat: dateToSeconds(iat),
       iss: options.issuer,
-      sub: options.dpopJwkPublic.kid,
+      sub: dpopJwkThumbprint,
       ...(options.nbf && { nbf: dateToSeconds(options.nbf) }),
       ...(options.status && { status: options.status }),
       ...(options.walletLink && { wallet_link: options.walletLink }),

@@ -9,7 +9,9 @@ import { ClientAttestationError } from "../../../errors";
 import { createWalletAttestationJwt } from "../create-wallet-attestation-jwt";
 
 describe("createWalletAttestationJwt v1.3", () => {
+  const mockHash = vi.fn();
   const mockSignJwt = vi.fn();
+  const mockJwkThumbprint = "AQID";
   const mockConfig = new IoWalletSdkConfig({
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
   }) as { itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 } & IoWalletSdkConfig;
@@ -29,6 +31,7 @@ describe("createWalletAttestationJwt v1.3", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHash.mockResolvedValue(new Uint8Array([1, 2, 3]));
     mockSignJwt.mockResolvedValue({
       jwt: "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWNsaWVudC1hdHRlc3RhdGlvbitqd3QiLCJraWQiOiJ0ZXN0LWtpZCIsIng1YyI6WyJNSUlDZXJ0aWZpY2F0ZTFCYXNlNjQ9PSIsIk1JSUNLZXJ0aWZpY2F0ZTJCYXNlNjQ9PSJdfQ.eyJpc3MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLmNvbSIsInN1YiI6InRlc3QtY2xpZW50LWlkIiwiaWF0IjoxNzM4MjQzMjAwLCJleHAiOjE3NDMzMzk2MDAsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJraWQiOiJ0ZXN0LWtleS1pZCIsImt0eSI6IkVDIiwieCI6InRlc3QteC12YWx1ZSIsInkiOiJ0ZXN0LXktdmFsdWUifX19.signature",
     });
@@ -37,7 +40,7 @@ describe("createWalletAttestationJwt v1.3", () => {
   describe("successful JWT creation", () => {
     it("should create a valid wallet attestation JWT with x5c", async () => {
       const options = {
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
@@ -69,7 +72,7 @@ describe("createWalletAttestationJwt v1.3", () => {
             exp: dateToSeconds(new Date("2025-01-25T00:00:00Z")),
             iat: expect.any(Number),
             iss: "https://wallet-provider.example.com",
-            sub: "test-key-id",
+            sub: mockJwkThumbprint,
           }),
         }),
       );
@@ -78,7 +81,7 @@ describe("createWalletAttestationJwt v1.3", () => {
     it("should include optional nbf when provided", async () => {
       const nbfDate = new Date("2025-01-01T00:00:00Z");
       const options = {
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
@@ -108,7 +111,7 @@ describe("createWalletAttestationJwt v1.3", () => {
   describe("nbf validation", () => {
     it("should accept when nbf is before exp", async () => {
       const options = {
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
@@ -131,7 +134,7 @@ describe("createWalletAttestationJwt v1.3", () => {
       mockSignJwt.mockRejectedValue(new Error("Crypto module crashed"));
 
       const options = {
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         config: mockConfig,
         dpopJwkPublic: mockJwk,
         expiresAt: new Date("2025-01-25T00:00:00Z"),
