@@ -311,7 +311,7 @@ describe("client-attestation-pop", () => {
 });
 
 describe("CreateClientAttestationPopJwtOptions", () => {
-  it("should only allow expiresAt for IT-Wallet v1.0", () => {
+  it("[compile-time] should reject expiresAt option for IT-Wallet v1.3+", () => {
     const mockCallbacks = {
       generateRandom: vi.fn(async (len) => new Uint8Array(len)),
       signJwt: vi.fn(),
