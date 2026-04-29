@@ -40,12 +40,13 @@ export const createWalletAttestationJwt = async (
     const { signJwt } = options.callbacks;
     const iat = new Date();
     const exp = options.expiresAt ?? addSecondsToDate(iat, 3600); // Default expiration of 1 hour
-    const dpopJwkThumbprint = await calculateDpopJwkThumbprint(options);
 
     // Validate temporal constraints
     if (options.nbf && options.nbf >= exp) {
       throw new ValidationError("nbf must be before exp");
     }
+
+    const dpopJwkThumbprint = await calculateDpopJwkThumbprint(options);
 
     const payload = {
       cnf: { jwk: options.dpopJwkPublic },
