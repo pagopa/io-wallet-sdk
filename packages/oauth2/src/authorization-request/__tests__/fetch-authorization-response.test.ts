@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import {
   CONTENT_TYPES,
   HEADERS,
@@ -355,6 +356,60 @@ describe("fetchPushedAuthorizationResponse - unsigned PAR", () => {
       "https://auth-server.example.com/par",
       {
         body: expectedParams,
+        headers: {
+          [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+          [HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",
+          [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
+            "test-client-attestation-dpop-jwt",
+        },
+        method: "POST",
+      },
+    );
+  });
+
+  it("should send unsigned v1.3 request body without response_mode", async () => {
+    const mockResponse = {
+      json: vi.fn().mockResolvedValue({
+        expires_in: 60,
+        request_uri: "urn:ietf:params:oauth:request_uri:test-uri",
+      }),
+      status: 201,
+    };
+    mockFetch.mockResolvedValue(mockResponse);
+
+    const unsignedOptions: fetchPushedAuthorizationResponseOptions = {
+      ...baseOptions,
+      pushedAuthorizationRequest: {
+        authorizationRequest: {
+          client_id: "test-client-id",
+          code_challenge: "test-code-challenge",
+          code_challenge_method: "S256",
+          jti: "test-jti",
+          redirect_uri: "https://client.example.com/callback",
+          response_type: "code",
+          scope: "openid",
+          state: "test-state",
+        },
+        client_id: "test-client-id",
+        pkceCodeVerifier: "test-pkce-code-verifier",
+      },
+    };
+
+    await fetchPushedAuthorizationResponse(unsignedOptions);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://auth-server.example.com/par",
+      {
+        body: new URLSearchParams({
+          client_id: "test-client-id",
+          code_challenge: "test-code-challenge",
+          code_challenge_method: "S256",
+          jti: "test-jti",
+          redirect_uri: "https://client.example.com/callback",
+          response_type: "code",
+          scope: "openid",
+          state: "test-state",
+        }),
         headers: {
           [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
           [HEADERS.OAUTH_CLIENT_ATTESTATION]: "test-wallet-attestation-jwt",

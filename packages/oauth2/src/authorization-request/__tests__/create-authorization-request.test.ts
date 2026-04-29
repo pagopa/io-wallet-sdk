@@ -1,3 +1,7 @@
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PkceCodeChallengeMethod, createPkce } from "../../pkce";
@@ -35,6 +39,14 @@ const mockCallbacks = {
   signJwt: vi.fn(),
 };
 
+const configV1_0 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+});
+
+const configV1_3 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
 const baseOptions: CreatePushedAuthorizationRequestOptions = {
   audience: "https://issuer.example.com",
   authorization_details: [
@@ -49,6 +61,7 @@ const baseOptions: CreatePushedAuthorizationRequestOptions = {
   callbacks: mockCallbacks,
   clientId: "test-client-id",
   codeChallengeMethodsSupported: ["S256"],
+  config: configV1_0,
   dpop: {
     signer: mockSigner,
   },
@@ -219,6 +232,29 @@ describe("createPushedAuthorizationRequest", () => {
       request: "test-jwt-token",
     });
   });
+
+  it("should create a v1.3 request without response_mode", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { responseMode: _, ...baseWithoutResponseMode } = baseOptions;
+    const options = {
+      ...baseWithoutResponseMode,
+      config: configV1_3,
+    };
+
+    const result = await createPushedAuthorizationRequest(options);
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.not.objectContaining({
+        response_mode: expect.anything(),
+      }),
+    });
+    expect(result).toEqual({
+      client_id: "test-client-id",
+      pkceCodeVerifier: "test-code-verifier",
+      request: "test-jwt-token",
+    });
+  });
 });
 
 describe("createPushedAuthorizationRequest - timestamp handling", () => {
@@ -363,6 +399,29 @@ describe("createPushedAuthorizationRequest - JAR signing policy", () => {
       authorizationRequest: expect.objectContaining({
         client_id: "test-client-id",
         response_type: "code",
+      }),
+      client_id: "test-client-id",
+      pkceCodeVerifier: "test-code-verifier",
+    });
+  });
+
+  it("should create unsigned v1.3 PAR without response_mode", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { dpop: _, responseMode: __, ...baseWithoutDpop } = baseOptions;
+    const options = {
+      ...baseWithoutDpop,
+      authorizationServerMetadata: {
+        require_signed_request_object: false,
+      },
+      config: configV1_3,
+    };
+
+    const result = await createPushedAuthorizationRequest(options);
+
+    expect(mockCallbacks.signJwt).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      authorizationRequest: expect.not.objectContaining({
+        response_mode: expect.anything(),
       }),
       client_id: "test-client-id",
       pkceCodeVerifier: "test-code-verifier",

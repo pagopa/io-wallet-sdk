@@ -1,5 +1,7 @@
 /* eslint-disable max-lines-per-function */
 import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   RequestLike,
   UnexpectedStatusCodeError,
 } from "@pagopa/io-wallet-utils";
@@ -10,6 +12,12 @@ import { parsePushedAuthorizationRequest } from "../parse-pushed-authorization-r
 
 describe("parsePushedAuthorizationRequest", () => {
   const mockFetch = vi.fn();
+  const configV1_0 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  });
+  const configV1_3 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+  });
   const mockRequest: RequestLike = {
     headers: new Headers(),
     method: "POST",
@@ -42,6 +50,7 @@ describe("parsePushedAuthorizationRequest", () => {
       const result = await parsePushedAuthorizationRequest({
         authorizationRequest: baseAuthorizationRequest,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: mockRequest,
       });
 
@@ -65,11 +74,59 @@ describe("parsePushedAuthorizationRequest", () => {
       const result = await parsePushedAuthorizationRequest({
         authorizationRequest: authRequestWithScope,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: mockRequest,
       });
 
       expect(result.authorizationRequest).toEqual(authRequestWithScope);
       expect(result.authorizationRequestJwt).toBeUndefined();
+    });
+
+    it("should throw for v1.0 authorization request without response_mode", async () => {
+      const authRequestWithoutResponseMode = {
+        client_id: "test-client-id",
+        code_challenge: "test-challenge",
+        code_challenge_method: "S256",
+        jti: "test-jti",
+        redirect_uri: "https://client.example.com/callback",
+        response_type: "code",
+        scope: "openid profile",
+        state: "test-state",
+      };
+
+      await expect(
+        parsePushedAuthorizationRequest({
+          authorizationRequest: authRequestWithoutResponseMode,
+          callbacks: { fetch: mockFetch },
+          config: configV1_0,
+          request: mockRequest,
+        }),
+      ).rejects.toThrow();
+    });
+
+    it("should parse v1.3 authorization request without response_mode", async () => {
+      const authRequestWithoutResponseMode = {
+        client_id: "test-client-id",
+        code_challenge: "test-challenge",
+        code_challenge_method: "S256",
+        jti: "test-jti",
+        redirect_uri: "https://client.example.com/callback",
+        response_type: "code",
+        scope: "openid profile",
+        state: "test-state",
+      };
+
+      const result = await parsePushedAuthorizationRequest({
+        authorizationRequest: authRequestWithoutResponseMode,
+        callbacks: { fetch: mockFetch },
+        config: configV1_3,
+        request: mockRequest,
+      });
+
+      expect(result.authorizationRequest).toEqual(
+        authRequestWithoutResponseMode,
+      );
+      expect(result.authorizationRequest).not.toHaveProperty("response_mode");
     });
 
     it("should throw error for missing mandatory fields", async () => {
@@ -81,6 +138,7 @@ describe("parsePushedAuthorizationRequest", () => {
         parsePushedAuthorizationRequest({
           authorizationRequest: invalidRequest,
           callbacks: { fetch: mockFetch },
+          config: configV1_0,
           request: mockRequest,
         }),
       ).rejects.toThrow();
@@ -101,6 +159,7 @@ describe("parsePushedAuthorizationRequest", () => {
         parsePushedAuthorizationRequest({
           authorizationRequest: requestWithoutAuthDetailsOrScope,
           callbacks: { fetch: mockFetch },
+          config: configV1_0,
           request: mockRequest,
         }),
       ).rejects.toThrow();
@@ -120,12 +179,31 @@ describe("parsePushedAuthorizationRequest", () => {
       const result = await parsePushedAuthorizationRequest({
         authorizationRequest: jarRequest,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: mockRequest,
       });
 
       expect(result.authorizationRequest).toBeDefined();
       expect(result.authorizationRequestJwt).toBe(mockJwt);
       expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should parse a v1.3 JAR request without response_mode", async () => {
+      const mockJwt =
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6Imp3dCJ9.eyJyZXNwb25zZV90eXBlIjoiY29kZSIsImNsaWVudF9pZCI6InRlc3QtY2xpZW50LWlkIiwiY29kZV9jaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwczovL2NsaWVudC5leGFtcGxlLmNvbS9jYWxsYmFjayIsInN0YXRlIjoidGVzdC1zdGF0ZSIsInNjb3BlIjoib3BlbmlkIiwianRpIjoidGVzdC1qdGkifQ.signature";
+
+      const result = await parsePushedAuthorizationRequest({
+        authorizationRequest: {
+          client_id: "test-client-id",
+          request: mockJwt,
+        },
+        callbacks: { fetch: mockFetch },
+        config: configV1_3,
+        request: mockRequest,
+      });
+
+      expect(result.authorizationRequest).not.toHaveProperty("response_mode");
+      expect(result.authorizationRequestJwt).toBe(mockJwt);
     });
 
     it("should parse a JAR request with request_uri parameter (by reference)", async () => {
@@ -146,6 +224,7 @@ describe("parsePushedAuthorizationRequest", () => {
       const result = await parsePushedAuthorizationRequest({
         authorizationRequest: jarRequest,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: mockRequest,
       });
 
@@ -172,6 +251,7 @@ describe("parsePushedAuthorizationRequest", () => {
         parsePushedAuthorizationRequest({
           authorizationRequest: jarRequest,
           callbacks: { fetch: mockFetch },
+          config: configV1_0,
           request: mockRequest,
         }),
       ).rejects.toThrow();
@@ -189,6 +269,7 @@ describe("parsePushedAuthorizationRequest", () => {
       const result = await parsePushedAuthorizationRequest({
         authorizationRequest: jarRequest,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: mockRequest,
       });
 
@@ -219,6 +300,7 @@ describe("parsePushedAuthorizationRequest", () => {
       const promise = parsePushedAuthorizationRequest({
         authorizationRequest: jarRequest,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: mockRequest,
       });
 
@@ -239,6 +321,7 @@ describe("parsePushedAuthorizationRequest", () => {
         parsePushedAuthorizationRequest({
           authorizationRequest: invalidRequest,
           callbacks: { fetch: mockFetch },
+          config: configV1_0,
           request: mockRequest,
         }),
       ).rejects.toThrow();
@@ -258,6 +341,7 @@ describe("parsePushedAuthorizationRequest", () => {
         parsePushedAuthorizationRequest({
           authorizationRequest: baseAuthorizationRequest,
           callbacks: { fetch: mockFetch },
+          config: configV1_0,
           request: requestWithInvalidDpop,
         }),
       ).rejects.toThrow(Oauth2Error);
@@ -274,6 +358,7 @@ describe("parsePushedAuthorizationRequest", () => {
         parsePushedAuthorizationRequest({
           authorizationRequest: jarRequest,
           callbacks: { fetch: mockFetch },
+          config: configV1_0,
           request: mockRequest,
         }),
       ).rejects.toThrow(Oauth2Error);
@@ -309,6 +394,7 @@ describe("parsePushedAuthorizationRequest", () => {
       const result = await parsePushedAuthorizationRequest({
         authorizationRequest: jarRequest,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: requestWithHeaders,
       });
 
@@ -331,6 +417,7 @@ describe("parsePushedAuthorizationRequest", () => {
       const result = await parsePushedAuthorizationRequest({
         authorizationRequest: fullAuthRequest,
         callbacks: { fetch: mockFetch },
+        config: configV1_0,
         request: mockRequest,
       });
 
