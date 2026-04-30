@@ -14,9 +14,8 @@ export class Oid4vciError extends Error {
 }
 
 /**
- * Error thrown in case the DPoP key passed to the
- * {@link WalletProvider.createItWalletAttestationJwt} method
- * doesn't contain a kid
+ * Error thrown when wallet-provider options are invalid or when wallet
+ * attestation and key attestation creation fails.
  */
 export class WalletProviderError extends Oid4vciError {
   constructor(message: string, options?: ErrorOptions) {

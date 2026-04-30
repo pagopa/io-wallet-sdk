@@ -11,8 +11,17 @@ import {
   createWalletAttestationJwt,
 } from "../create-wallet-attestation-jwt";
 
+const buildJwt = (header: object, payload: object) =>
+  [
+    encodeToBase64Url(JSON.stringify(header)),
+    encodeToBase64Url(JSON.stringify(payload)),
+    "signature",
+  ].join(".");
+
 describe("createWalletAttestationJwt v1.4", () => {
+  const mockHash = vi.fn();
   const mockSignJwt = vi.fn();
+  const mockJwkThumbprint = "AQID";
 
   const mockJwk = {
     crv: "P-256",
@@ -28,7 +37,7 @@ describe("createWalletAttestationJwt v1.4", () => {
   ];
 
   const baseOptions: WalletAttestationOptionsV1_4 = {
-    callbacks: { signJwt: mockSignJwt },
+    callbacks: { hash: mockHash, signJwt: mockSignJwt },
     dpopJwkPublic: mockJwk,
     expiresAt: new Date("2025-01-25T00:00:00Z"),
     issuer: "https://wallet-provider.example.com",
@@ -48,25 +57,17 @@ describe("createWalletAttestationJwt v1.4", () => {
     walletName: "Test Wallet",
   };
 
-  const buildJwt = (header: object, payload: object) =>
-    [
-      encodeToBase64Url(JSON.stringify(header)),
-      encodeToBase64Url(JSON.stringify(payload)),
-      "signature",
-    ].join(".");
-
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHash.mockResolvedValue(new Uint8Array([1, 2, 3]));
     mockSignJwt.mockImplementation(async (_signer, { header, payload }) => ({
       jwt: buildJwt(header, payload),
     }));
   });
 
   it("should create a valid wallet attestation JWT with required v1.4 claims", async () => {
-    const result = await createWalletAttestationJwt(baseOptions);
+    await createWalletAttestationJwt(baseOptions);
 
-    expect(result).toBeDefined();
-    expect(typeof result).toBe("string");
     expect(mockSignJwt).toHaveBeenCalledWith(
       baseOptions.signer,
       expect.objectContaining({
@@ -87,7 +88,7 @@ describe("createWalletAttestationJwt v1.4", () => {
               uri: "https://status.example.com/list",
             },
           },
-          sub: "test-key-id",
+          sub: mockJwkThumbprint,
           wallet_link: "https://wallet.example.com",
           wallet_name: "Test Wallet",
         }),
@@ -103,6 +104,30 @@ describe("createWalletAttestationJwt v1.4", () => {
       expect.objectContaining({
         payload: expect.not.objectContaining({
           eudi_wallet_info: expect.anything(),
+        }),
+      }),
+    );
+  });
+
+  it("should create a valid wallet attestation JWT when the DPoP JWK has no kid", async () => {
+    const options = {
+      ...baseOptions,
+      dpopJwkPublic: {
+        crv: "P-256",
+        kty: "EC",
+        x: "test-x-value",
+        y: "test-y-value",
+      },
+    };
+
+    await createWalletAttestationJwt(options);
+
+    expect(mockSignJwt).toHaveBeenCalledWith(
+      baseOptions.signer,
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          cnf: { jwk: options.dpopJwkPublic },
+          sub: mockJwkThumbprint,
         }),
       }),
     );

@@ -36,6 +36,7 @@ import { WalletProvider, WalletAttestationOptions } from '@pagopa/io-wallet-oid4
 
 // Create wallet attestation
 const attestationOptions: WalletAttestationOptions = {
+  callbacks: { hash: myHashCallback, signJwt: mySignJwtCallback },
   issuer: "https://wallet-provider.example.com",
   dpopJwkPublic: {
     // JWK public key for DPoP binding
@@ -306,7 +307,7 @@ export class Oid4vciError extends Error {
 ```
 Generic error thrown on Oid4vci operations
 
-Error thrown in case the DPoP key passed to the `WalletProvider.createItWalletAttestationJwt` method doesn't contain a kid
+Error thrown when wallet-provider options are invalid or when wallet attestation and key attestation JWT creation fails.
 ```typescript
 export class WalletProviderError extends Oid4vciError {
   constructor(message: string, cause?: unknown) {

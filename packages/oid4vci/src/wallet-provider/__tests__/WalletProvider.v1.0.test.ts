@@ -38,6 +38,7 @@ const mockCreateWalletAttestationJwtV1_3 =
   >;
 
 describe("WalletProvider v1.0", () => {
+  const mockHash = vi.fn();
   const mockSignJwt = vi.fn();
 
   const mockJwk = {
@@ -63,7 +64,7 @@ describe("WalletProvider v1.0", () => {
       const provider = new WalletProvider(invalidConfig);
 
       const options = {
-        callbacks: { signJwt: mockSignJwt },
+        callbacks: { hash: mockHash, signJwt: mockSignJwt },
         dpopJwkPublic: mockJwk,
         issuer: "https://wallet-provider.example.com",
         signer: {

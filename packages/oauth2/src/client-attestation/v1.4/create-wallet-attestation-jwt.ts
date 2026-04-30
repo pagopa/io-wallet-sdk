@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { decodeJwt } from "../../common/jwt/decode-jwt";
 import { ClientAttestationError } from "../../errors";
+import { calculateDpopJwkThumbprint } from "../jwk-thumbprint";
 import { BaseWalletAttestationOptions } from "../types";
 import {
   WalletAttestationJwtV1_4,
@@ -45,13 +46,15 @@ export const createWalletAttestationJwt = async (
       throw new ValidationError("nbf must be before exp");
     }
 
+    const dpopJwkThumbprint = await calculateDpopJwkThumbprint(options);
+
     const payload = {
       cnf: { jwk: options.dpopJwkPublic },
       exp: dateToSeconds(exp),
       iat: dateToSeconds(iat),
       iss: options.issuer,
       status: options.status,
-      sub: options.dpopJwkPublic.kid,
+      sub: dpopJwkThumbprint,
       wallet_link: options.walletLink,
       wallet_name: options.walletName,
       ...(options.nbf && { nbf: dateToSeconds(options.nbf) }),
