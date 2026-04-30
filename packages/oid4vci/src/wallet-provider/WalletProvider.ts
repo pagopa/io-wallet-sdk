@@ -205,18 +205,22 @@ export class WalletProvider {
    * - v1.0: Uses only `trust_chain` in header (federation method); no `status` claim
    * - v1.3: Requires `x5c` in header, optional `trust_chain`; supports optional `nbf` and `status` claims
    * - v1.4: Requires `x5c` in header, optional `trust_chain`; `status`, `wallet_link`, and `wallet_name`
-   *   are all **required**; optional `eudi_wallet_info` claim; sets `sub` to `dpopJwkPublic.kid`
+   *   are all **required**; optional `eudi_wallet_info` claim; sets `sub` to the DPoP JWK thumbprint
    *
    * @public
    * @async
    * @param {WalletAttestationOptions} options - The necessary parameters to build the attestation.
    * @returns {Promise<string>} A promise that resolves to the signed wallet attestation JWT as a string.
-   * @throws {WalletProviderError} When dpopJwkPublic.kid is missing
-   * @throws {ItWalletSpecsVersionError} When version is not supported
+   * @throws {WalletProviderError} When the provided options do not match the configured IT-Wallet
+   * specification version, or when v1.4 options are missing `walletLink`, `walletName`, or `status`.
+   * @throws {ValidationError} When the generated wallet attestation JWT fails validation.
+   * @throws {ClientAttestationError} When wallet attestation JWT creation fails unexpectedly,
+   * including signing errors from the configured `signJwt` callback.
+   * @throws {ItWalletSpecsVersionError} When the configured IT-Wallet specification version is not supported.
    *
    * @example v1.0 - Basic wallet attestation with trust chain
    * const jwt = await provider.createItWalletAttestationJwt({
-   *   callbacks: { signJwt: mySignJwtCallback },
+   *   callbacks: { hash: myHashCallback, signJwt: mySignJwtCallback },
    *   dpopJwkPublic: myJwk,
    *   issuer: "https://wallet-provider.example.com",
    *   signer: {
@@ -228,7 +232,7 @@ export class WalletProvider {
    *
    * @example v1.3 - Wallet attestation with x5c and optional fields
    * const jwt = await provider.createItWalletAttestationJwt({
-   *   callbacks: { signJwt: mySignJwtCallback },
+   *   callbacks: { hash: myHashCallback, signJwt: mySignJwtCallback },
    *   dpopJwkPublic: myJwk,
    *   issuer: "https://wallet-provider.example.com",
    *   signer: {
@@ -243,7 +247,7 @@ export class WalletProvider {
    *
    * @example v1.4 - Wallet attestation with required status and optional eudi_wallet_info
    * const jwt = await provider.createItWalletAttestationJwt({
-   *   callbacks: { signJwt: mySignJwtCallback },
+   *   callbacks: { hash: myHashCallback, signJwt: mySignJwtCallback },
    *   dpopJwkPublic: myJwk,
    *   issuer: "https://wallet-provider.example.com",
    *   signer: {
@@ -270,12 +274,6 @@ export class WalletProvider {
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
-    // Validate that dpopJwkPublic has a kid property
-    // This validation is common across all versions
-    if (!options.dpopJwkPublic.kid) {
-      throw new WalletProviderError("The DPoP JWK must have a 'kid' property");
-    }
-
     if (this.specVersion === ItWalletSpecsVersion.V1_0) {
       assertV1_0Options(options);
       return createWalletAttestationJwtV1_0({

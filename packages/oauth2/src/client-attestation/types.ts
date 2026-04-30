@@ -14,7 +14,7 @@ export interface BaseVerifyWalletAttestationJwtOptions {
  * Base options shared across all wallet attestation versions
  */
 export interface BaseWalletAttestationOptions {
-  callbacks: Pick<CallbackContext, "signJwt">;
+  callbacks: Pick<CallbackContext, "hash" | "signJwt">;
   dpopJwkPublic: ClientAttestationJwtPayload["cnf"]["jwk"];
   expiresAt?: Date;
   issuer: string;
