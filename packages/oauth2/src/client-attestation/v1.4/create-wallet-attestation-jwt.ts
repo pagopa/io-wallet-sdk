@@ -17,8 +17,10 @@ import {
   zWalletAttestationStatusV1_4,
 } from "./z-wallet-attestation";
 
-export interface WalletAttestationOptionsV1_4
-  extends Omit<BaseWalletAttestationOptions, "walletLink" | "walletName"> {
+export interface WalletAttestationOptionsV1_4 extends Omit<
+  BaseWalletAttestationOptions,
+  "walletLink" | "walletName"
+> {
   eudiWalletInfo?: z.infer<typeof zEudiWalletInfoV1_4>;
   nbf?: Date;
   signer: {

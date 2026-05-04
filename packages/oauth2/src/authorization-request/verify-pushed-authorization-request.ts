@@ -12,19 +12,17 @@ import {
   verifyAuthorizationRequest,
 } from "./verify-authorization-request";
 
-export interface VerifyPushedAuthorizationRequestReturn
-  extends VerifyAuthorizationRequestResult {
+export interface VerifyPushedAuthorizationRequestReturn extends VerifyAuthorizationRequestResult {
   /**
    * The verified JAR request, if `authorizationRequestJwt` was provided
    */
   jar?: VerifiedJarRequest;
 }
 
-export interface VerifyPushedAuthorizationRequestOptions
-  extends Omit<
-    VerifyAuthorizationRequestOptions,
-    "authorizationServerMetadata"
-  > {
+export interface VerifyPushedAuthorizationRequestOptions extends Omit<
+  VerifyAuthorizationRequestOptions,
+  "authorizationServerMetadata"
+> {
   /**
    * The authorization request JWT to verify. If this value was returned from `parsePushedAuthorizationRequest`
    * you MUST provide this value to ensure the JWT is verified.

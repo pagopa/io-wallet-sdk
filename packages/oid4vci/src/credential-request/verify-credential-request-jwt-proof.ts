@@ -68,8 +68,7 @@ export interface VerifyCredentialRequestJwtProofBaseOptions {
   now?: Date;
 }
 
-export interface VerifyCredentialRequestJwtProofOptionsV1_0
-  extends VerifyCredentialRequestJwtProofBaseOptions {
+export interface VerifyCredentialRequestJwtProofOptionsV1_0 extends VerifyCredentialRequestJwtProofBaseOptions {
   /**
    * SDK configuration that determines the IT-Wallet specification version.
    * Controls which header schema is used and whether key attestation is verified.
@@ -77,8 +76,7 @@ export interface VerifyCredentialRequestJwtProofOptionsV1_0
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_0>;
 }
 
-export interface VerifyCredentialRequestJwtProofOptionsV1_3
-  extends VerifyCredentialRequestJwtProofBaseOptions {
+export interface VerifyCredentialRequestJwtProofOptionsV1_3 extends VerifyCredentialRequestJwtProofBaseOptions {
   /**
    * SDK configuration that determines the IT-Wallet specification version.
    * Controls which header schema is used and whether key attestation is verified.

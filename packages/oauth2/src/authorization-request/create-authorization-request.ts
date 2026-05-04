@@ -111,8 +111,7 @@ interface BaseCreatePushedAuthorizationRequestOptions<
   state?: string;
 }
 
-export interface CreatePushedAuthorizationRequestOptionsV1_0
-  extends BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_0> {
+export interface CreatePushedAuthorizationRequestOptionsV1_0 extends BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_0> {
   /**
    * It MUST be one of the supported values (response_modes_supported) provided in the metadata of the Credential Issuer.
    */

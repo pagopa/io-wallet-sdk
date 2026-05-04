@@ -20,8 +20,7 @@ import { CredentialRequestV1_3, zCredentialRequestV1_3 } from "./z-credential";
  * Options for creating a credential request with v1.3
  * Requires keyAttestation parameter
  */
-export interface CredentialRequestOptionsV1_3
-  extends BaseCredentialRequestOptions {
+export interface CredentialRequestOptionsV1_3 extends BaseCredentialRequestOptions {
   callbacks: Pick<CallbackContext, "hash" | "signJwt">;
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   keyAttestation: string; // Required in v1.3

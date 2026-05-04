@@ -18,8 +18,7 @@ import {
  * Options for creating a wallet attestation with v1.3
  * Requires x5c, optional trust_chain, nbf, and status
  */
-export interface WalletAttestationOptionsV1_3
-  extends BaseWalletAttestationOptions {
+export interface WalletAttestationOptionsV1_3 extends BaseWalletAttestationOptions {
   // NEW OPTIONAL CLAIMS
   nbf?: Date; // Not Before timestamp
 
