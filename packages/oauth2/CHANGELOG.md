@@ -1,5 +1,23 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.4.0
+
+### Minor Changes
+
+- f78b0e9: fix(oauth2): remove response_mode from authorization request v1.3
+- ce16379: fix(oauth2): align client attestation PoP JWT payload with IT-Wallet specs
+
+  Adds a local IT-Wallet client attestation PoP JWT schema, keeps `exp` optional for v1.3 and v1.4 PoP JWTs, and restricts accepted PoP signing algorithms to ES256, ES384, and ES512.
+
+- 10651ef: Use the RFC 7638 DPoP JWK thumbprint as the Wallet Attestation JWT `sub` claim.
+
+### Patch Changes
+
+- ee0754c: chore(sec): fix security issues identified by dependency auditing by updating development dependencies
+- Updated dependencies [ee0754c]
+  - @pagopa/io-wallet-oid-federation@1.4.0
+  - @pagopa/io-wallet-utils@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes
