@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.4.0
+
+### Patch Changes
+
+- ee0754c: chore(sec): fix security issues identified by dependency auditing by updating development dependencies
+- Updated dependencies [ee0754c]
+  - @pagopa/io-wallet-utils@1.4.0
+
 ## 1.3.0
 
 ### Patch Changes

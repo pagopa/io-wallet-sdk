@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-utils
 
+## 1.4.0
+
+### Patch Changes
+
+- ee0754c: chore(sec): fix security issues identified by dependency auditing by updating development dependencies
+
 ## 1.3.0
 
 ### Minor Changes

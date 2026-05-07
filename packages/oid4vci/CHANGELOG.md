@@ -1,5 +1,23 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.4.0
+
+### Minor Changes
+
+- 10651ef: Use the RFC 7638 DPoP JWK thumbprint as the Wallet Attestation JWT `sub` claim.
+
+### Patch Changes
+
+- ee0754c: chore(sec): fix security issues identified by dependency auditing by updating development dependencies
+- Updated dependencies [f78b0e9]
+- Updated dependencies [ce16379]
+- Updated dependencies [ee0754c]
+- Updated dependencies [10651ef]
+  - @pagopa/io-wallet-oauth2@1.4.0
+  - @pagopa/io-wallet-oid-federation@1.4.0
+  - @pagopa/io-wallet-oid4vp@1.4.0
+  - @pagopa/io-wallet-utils@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes
