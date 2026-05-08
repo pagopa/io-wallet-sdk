@@ -49,12 +49,12 @@ describe("itWalletCredentialVerifierMetadata (v1.3)", () => {
     });
 
     it("should validate correct v1.3.3 metadata with required fields only", () => {
-      const result =
-        itWalletCredentialVerifierMetadata.safeParse({
-          encrypted_response_enc_values_supported: validV1_3Metadata.encrypted_response_enc_values_supported,
-          jwks: validV1_3Metadata.jwks,
-          vp_formats_supported: validV1_3Metadata.vp_formats_supported,
-        });
+      const result = itWalletCredentialVerifierMetadata.safeParse({
+        encrypted_response_enc_values_supported:
+          validV1_3Metadata.encrypted_response_enc_values_supported,
+        jwks: validV1_3Metadata.jwks,
+        vp_formats_supported: validV1_3Metadata.vp_formats_supported,
+      });
       expect(result.success).toBe(true);
     });
   });
