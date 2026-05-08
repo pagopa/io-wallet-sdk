@@ -39,13 +39,23 @@ const validV1_3Metadata = {
 
 describe("itWalletCredentialVerifierMetadata (v1.3)", () => {
   describe("basic validation", () => {
-    it("should validate correct v1.3.3 metadata", () => {
+    it("should validate correct v1.3.3 metadata with all fields", () => {
       const result =
         itWalletCredentialVerifierMetadata.safeParse(validV1_3Metadata);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toEqual(validV1_3Metadata);
       }
+    });
+
+    it("should validate correct v1.3.3 metadata with required fields only", () => {
+      const result =
+        itWalletCredentialVerifierMetadata.safeParse({
+          encrypted_response_enc_values_supported: validV1_3Metadata.encrypted_response_enc_values_supported,
+          jwks: validV1_3Metadata.jwks,
+          vp_formats_supported: validV1_3Metadata.vp_formats_supported,
+        });
+      expect(result.success).toBe(true);
     });
   });
 
@@ -67,16 +77,6 @@ describe("itWalletCredentialVerifierMetadata (v1.3)", () => {
       };
       const result = itWalletCredentialVerifierMetadata.safeParse(
         metadataWithInvalidLogoUri,
-      );
-      expect(result.success).toBe(false);
-    });
-
-    it("should reject missing logo_uri", () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { logo_uri: _logo_uri, ...metadataWithoutLogoUri } =
-        validV1_3Metadata;
-      const result = itWalletCredentialVerifierMetadata.safeParse(
-        metadataWithoutLogoUri,
       );
       expect(result.success).toBe(false);
     });

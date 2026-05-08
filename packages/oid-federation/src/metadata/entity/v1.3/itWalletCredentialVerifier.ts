@@ -21,15 +21,15 @@ import { jsonWebKeySetSchema } from "../../../jwk/jwk";
  * @see {@link https://italia.github.io/eidas-it-wallet-docs/versioned_docs/version-1.3.3/en/relying-party-metadata.html}
  */
 export const itWalletCredentialVerifierMetadata = z.looseObject({
-  application_type: z.literal("web"),
-  client_id: z.url(),
-  client_name: z.string(),
+  application_type: z.literal("web").optional(),
+  client_id: z.url().optional(),
+  client_name: z.string().optional(),
   encrypted_response_enc_values_supported: z.array(z.string()).min(1),
   erasure_endpoint: z.url().optional(),
   jwks: jsonWebKeySetSchema,
-  logo_uri: z.url(),
-  request_uris: z.array(z.url()),
-  response_uris: z.array(z.url()),
+  logo_uri: z.url().optional(),
+  request_uris: z.array(z.url()).optional(),
+  response_uris: z.array(z.url()).optional(),
   vp_formats_supported: z.record(
     z.string(),
     z.object({
