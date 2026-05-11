@@ -171,7 +171,7 @@ export async function createCredentialResponse(
   options: CreateCredentialResponseOptions,
 ): Promise<CreateCredentialResponseResult> {
   try {
-    const credentialResponse = buildVersionedResponse(options);
+    const credentialResponse = dispatchBuildVersionedResponse(options);
     let credentialResponseJwt: string | undefined;
 
     if (options.credentialResponseEncryption) {
@@ -204,12 +204,6 @@ export async function createCredentialResponse(
       { cause: error },
     );
   }
-}
-
-function buildVersionedResponse(
-  options: CreateCredentialResponseOptions,
-): CredentialResponse {
-  return dispatchBuildVersionedResponse(options);
 }
 
 async function encryptResponse(

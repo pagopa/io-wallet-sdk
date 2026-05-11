@@ -1,7 +1,7 @@
 import { ItWalletSpecsVersion } from "./config";
 import { ItWalletSpecsVersionError } from "./errors/errors";
 
-interface AnyOptions {
+export interface VersionedOptions {
   config: { itWalletSpecsVersion: ItWalletSpecsVersion };
 }
 
@@ -14,7 +14,10 @@ interface AnyOptions {
  * @param featureName - Used in the error message when version is unsupported
  * @param handlers    - Map of version → handler function
  */
-export function createVersionDispatcher<TOptions extends AnyOptions, TResult>(
+export function createVersionDispatcher<
+  TOptions extends VersionedOptions,
+  TResult,
+>(
   featureName: string,
   handlers: Partial<
     Record<ItWalletSpecsVersion, (options: TOptions) => TResult>

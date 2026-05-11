@@ -59,17 +59,14 @@ const dispatchCreateCredentialRequest = createVersionDispatcher<
  * // Returns: { credential_identifier: "...", proofs: { jwt: ["..."] } }
  */
 
-// Function overload for v1.0
 export function createCredentialRequest(
   options: V1_0.CredentialRequestOptionsV1_0,
 ): Promise<CredentialRequestV1_0>;
 
-// Function overload for v1.3
 export function createCredentialRequest(
   options: V1_3.CredentialRequestOptionsV1_3,
 ): Promise<CredentialRequestV1_3>;
 
-// Implementation signature (not callable by users)
 export async function createCredentialRequest(
   options: CredentialRequestOptions,
 ): Promise<CredentialRequest> {

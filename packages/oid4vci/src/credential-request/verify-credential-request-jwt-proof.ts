@@ -171,7 +171,7 @@ export type VerifyCredentialRequestJwtProofResult =
   | VerifyCredentialRequestJwtProofResultV1_3;
 
 async function verifyProofV1_0(
-  options: VerifyCredentialRequestJwtProofOptions,
+  options: VerifyCredentialRequestJwtProofOptionsV1_0,
 ): Promise<VerifyCredentialRequestJwtProofResultV1_0> {
   const { header, payload } = decodeJwt({
     errorMessagePrefix: "Error decoding credential request proof JWT:",
@@ -199,10 +199,8 @@ async function verifyProofV1_0(
 }
 
 async function verifyProofV1_3(
-  options: VerifyCredentialRequestJwtProofOptions,
+  options: VerifyCredentialRequestJwtProofOptionsV1_3,
 ): Promise<VerifyCredentialRequestJwtProofResultV1_3> {
-  const v1_3Options = options as VerifyCredentialRequestJwtProofOptionsV1_3;
-
   const { header, payload } = decodeJwt({
     errorMessagePrefix: "Error decoding credential request proof JWT:",
     headerSchema: zProofJwtHeaderV1_3,
@@ -225,7 +223,7 @@ async function verifyProofV1_3(
     verifyJwtCallback: options.callbacks.verifyJwt,
   });
 
-  if (v1_3Options.trustedWalletProviderIssuers.length === 0) {
+  if (options.trustedWalletProviderIssuers.length === 0) {
     throw new VerifyCredentialRequestJwtProofError(
       "trustedWalletProviderIssuers must include at least one trusted wallet provider issuer",
     );
@@ -233,13 +231,13 @@ async function verifyProofV1_3(
 
   const keyAttestationResult = await verifyKeyAttestationJwt({
     callbacks: options.callbacks,
-    fetchStatusList: v1_3Options.fetchStatusList,
+    fetchStatusList: options.fetchStatusList,
     keyAttestationJwt: header.key_attestation,
     now: options.now,
   });
 
   if (
-    !v1_3Options.trustedWalletProviderIssuers.includes(
+    !options.trustedWalletProviderIssuers.includes(
       keyAttestationResult.payload.iss,
     )
   ) {
@@ -267,8 +265,10 @@ const dispatchVerifyProof = createVersionDispatcher<
   VerifyCredentialRequestJwtProofOptions,
   Promise<VerifyCredentialRequestJwtProofResult>
 >("verifyCredentialRequestJwtProof", {
-  [ItWalletSpecsVersion.V1_0]: verifyProofV1_0,
-  [ItWalletSpecsVersion.V1_3]: verifyProofV1_3,
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    verifyProofV1_0(o as VerifyCredentialRequestJwtProofOptionsV1_0),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
 });
 
 /**
@@ -307,15 +307,15 @@ export async function verifyCredentialRequestJwtProof(
   options: VerifyCredentialRequestJwtProofOptions,
 ): Promise<VerifyCredentialRequestJwtProofResult> {
   try {
-    const now = options.now?.getTime() ?? Date.now();
+    const now = options.now ?? new Date();
 
-    if (options.nonceExpiresAt && now > options.nonceExpiresAt.getTime()) {
+    if (options.nonceExpiresAt && now > options.nonceExpiresAt) {
       throw new VerifyCredentialRequestJwtProofError(
         "Nonce used for credential request proof expired",
       );
     }
 
-    return await dispatchVerifyProof(options);
+    return await dispatchVerifyProof({ ...options, now });
   } catch (error) {
     if (
       error instanceof VerifyCredentialRequestJwtProofError ||
