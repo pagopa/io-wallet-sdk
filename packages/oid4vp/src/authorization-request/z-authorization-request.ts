@@ -13,14 +13,15 @@ import { z } from "zod";
  * only a subset of the Credential Verifier metadata fields are required in the Request Object.
  * @see https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/remote-flow.html#request-object
  */
-const zOpenid4vpCredentialVerifierMetadata = itWalletCredentialVerifierMetadataV1_3.partial({
-  application_type: true,
-  client_id: true,
-  client_name: true,
-  logo_uri: true,
-  request_uris: true,
-  response_uris: true,
-})
+const zOpenid4vpCredentialVerifierMetadata =
+  itWalletCredentialVerifierMetadataV1_3.partial({
+    application_type: true,
+    client_id: true,
+    client_name: true,
+    logo_uri: true,
+    request_uris: true,
+    response_uris: true,
+  });
 
 /**
  * Zod parser that describes a JWT payload
