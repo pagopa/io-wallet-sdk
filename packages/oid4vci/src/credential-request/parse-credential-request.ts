@@ -10,6 +10,7 @@ import {
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
   ValidationError,
+  createVersionDispatcher,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
@@ -360,6 +361,59 @@ function parseDpopProof(headers: FetchHeaders): string {
   return extracted.dpopJwt;
 }
 
+interface ParseCredentialRequestHandlerOptions extends ParseCredentialRequestOptions {
+  accessToken: string;
+  dpopProof: string;
+  grantType: GrantType;
+  isDeferredFlow: boolean;
+}
+
+function parseCredentialRequestV1_0(
+  options: ParseCredentialRequestHandlerOptions,
+): ParsedCredentialRequest {
+  const credentialRequest = parseWithErrorHandling(
+    zCredentialRequestV1_0,
+    options.credentialRequest,
+    "Invalid credential request format for ItWalletSpecsVersion 1.0",
+  );
+  return toResult({
+    accessToken: options.accessToken,
+    credentialRequest,
+    dpopProof: options.dpopProof,
+    expected: options.expected,
+    grantType: options.grantType,
+    isDeferredFlow: options.isDeferredFlow,
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+  });
+}
+
+function parseCredentialRequestV1_3(
+  options: ParseCredentialRequestHandlerOptions,
+): ParsedCredentialRequest {
+  const credentialRequest = parseWithErrorHandling(
+    zCredentialRequestV1_3,
+    options.credentialRequest,
+    "Invalid credential request format for ItWalletSpecsVersion 1.3",
+  );
+  return toResult({
+    accessToken: options.accessToken,
+    credentialRequest,
+    dpopProof: options.dpopProof,
+    expected: options.expected,
+    grantType: options.grantType,
+    isDeferredFlow: options.isDeferredFlow,
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+  });
+}
+
+const dispatchParseCredentialRequest = createVersionDispatcher<
+  ParseCredentialRequestHandlerOptions,
+  ParsedCredentialRequest
+>("parseCredentialRequest", {
+  [ItWalletSpecsVersion.V1_0]: parseCredentialRequestV1_0,
+  [ItWalletSpecsVersion.V1_3]: parseCredentialRequestV1_3,
+});
+
 /**
  * Parses and validates a credential request for the configured IT-Wallet version.
  *
@@ -397,53 +451,18 @@ export function parseCredentialRequest(
 ): ParsedCredentialRequest {
   const grantType = options.grantType ?? "authorization_code";
   const isDeferredFlow = options.isDeferredFlow ?? false;
-  const { config } = options;
 
   try {
     const accessToken = parseAuthorizationHeader(options.headers);
     const dpopProof = parseDpopProof(options.headers);
 
-    if (options.config.isVersion(ItWalletSpecsVersion.V1_0)) {
-      const credentialRequest = parseWithErrorHandling(
-        zCredentialRequestV1_0,
-        options.credentialRequest,
-        "Invalid credential request format for ItWalletSpecsVersion 1.0",
-      );
-
-      return toResult({
-        accessToken,
-        credentialRequest,
-        dpopProof,
-        expected: options.expected,
-        grantType,
-        isDeferredFlow,
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
-      });
-    }
-
-    if (options.config.isVersion(ItWalletSpecsVersion.V1_3)) {
-      const credentialRequest = parseWithErrorHandling(
-        zCredentialRequestV1_3,
-        options.credentialRequest,
-        "Invalid credential request format for ItWalletSpecsVersion 1.3",
-      );
-
-      return toResult({
-        accessToken,
-        credentialRequest,
-        dpopProof,
-        expected: options.expected,
-        grantType,
-        isDeferredFlow,
-        itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
-      });
-    }
-
-    throw new ItWalletSpecsVersionError(
-      "parseCredentialRequest",
-      config.itWalletSpecsVersion,
-      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
-    );
+    return dispatchParseCredentialRequest({
+      ...options,
+      accessToken,
+      dpopProof,
+      grantType,
+      isDeferredFlow,
+    });
   } catch (error) {
     if (
       error instanceof ItWalletSpecsVersionError ||

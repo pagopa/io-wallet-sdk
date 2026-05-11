@@ -12,7 +12,7 @@ import {
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
   ValidationError,
-  hasConfigVersion,
+  createVersionDispatcher,
   verifyJwtIatOrThrow,
 } from "@pagopa/io-wallet-utils";
 
@@ -170,17 +170,106 @@ export type VerifyCredentialRequestJwtProofResult =
   | VerifyCredentialRequestJwtProofResultV1_0
   | VerifyCredentialRequestJwtProofResultV1_3;
 
-export async function verifyCredentialRequestJwtProof(
-  options: VerifyCredentialRequestJwtProofOptionsV1_0,
-): Promise<VerifyCredentialRequestJwtProofResultV1_0>;
-
-export async function verifyCredentialRequestJwtProof(
-  options: VerifyCredentialRequestJwtProofOptionsV1_3,
-): Promise<VerifyCredentialRequestJwtProofResultV1_3>;
-
-export async function verifyCredentialRequestJwtProof(
+async function verifyProofV1_0(
   options: VerifyCredentialRequestJwtProofOptions,
-): Promise<VerifyCredentialRequestJwtProofResult>;
+): Promise<VerifyCredentialRequestJwtProofResultV1_0> {
+  const { header, payload } = decodeJwt({
+    errorMessagePrefix: "Error decoding credential request proof JWT:",
+    headerSchema: zProofJwtHeaderV1_0,
+    jwt: options.jwt,
+    payloadSchema: zProofJwtPayload,
+  });
+
+  verifyProofJwtIatOrThrow({ now: options.now, payload });
+
+  const { signer } = await verifyJwt({
+    compact: options.jwt,
+    errorMessage: "Error verifying credential request proof jwt.",
+    expectedAudience: options.credentialIssuer,
+    expectedIssuer: options.clientId,
+    expectedNonce: options.expectedNonce,
+    header,
+    now: options.now,
+    payload,
+    signer: jwtSignerFromJwt({ header, payload }),
+    verifyJwtCallback: options.callbacks.verifyJwt,
+  });
+
+  return { header, payload, signer };
+}
+
+async function verifyProofV1_3(
+  options: VerifyCredentialRequestJwtProofOptions,
+): Promise<VerifyCredentialRequestJwtProofResultV1_3> {
+  const v1_3Options = options as VerifyCredentialRequestJwtProofOptionsV1_3;
+
+  const { header, payload } = decodeJwt({
+    errorMessagePrefix: "Error decoding credential request proof JWT:",
+    headerSchema: zProofJwtHeaderV1_3,
+    jwt: options.jwt,
+    payloadSchema: zProofJwtPayload,
+  });
+
+  verifyProofJwtIatOrThrow({ now: options.now, payload });
+
+  const { signer } = await verifyJwt({
+    compact: options.jwt,
+    errorMessage: "Error verifying credential request proof jwt.",
+    expectedAudience: options.credentialIssuer,
+    expectedIssuer: options.clientId,
+    expectedNonce: options.expectedNonce,
+    header,
+    now: options.now,
+    payload,
+    signer: jwtSignerFromJwt({ header, payload }),
+    verifyJwtCallback: options.callbacks.verifyJwt,
+  });
+
+  if (v1_3Options.trustedWalletProviderIssuers.length === 0) {
+    throw new VerifyCredentialRequestJwtProofError(
+      "trustedWalletProviderIssuers must include at least one trusted wallet provider issuer",
+    );
+  }
+
+  const keyAttestationResult = await verifyKeyAttestationJwt({
+    callbacks: options.callbacks,
+    fetchStatusList: v1_3Options.fetchStatusList,
+    keyAttestationJwt: header.key_attestation,
+    now: options.now,
+  });
+
+  if (
+    !v1_3Options.trustedWalletProviderIssuers.includes(
+      keyAttestationResult.payload.iss,
+    )
+  ) {
+    throw new VerifyCredentialRequestJwtProofError(
+      `Untrusted key attestation issuer: ${keyAttestationResult.payload.iss}`,
+    );
+  }
+
+  const isSignedWithAttestedKey = await isJwkInSet({
+    callbacks: options.callbacks,
+    jwk: signer.publicJwk,
+    jwks: keyAttestationResult.payload.attested_keys,
+  });
+
+  if (!isSignedWithAttestedKey) {
+    throw new VerifyCredentialRequestJwtProofError(
+      "Credential request jwt proof is not signed with a key in the 'key_attestation' jwt payload 'attested_keys'",
+    );
+  }
+
+  return { header, keyAttestation: keyAttestationResult, payload, signer };
+}
+
+const dispatchVerifyProof = createVersionDispatcher<
+  VerifyCredentialRequestJwtProofOptions,
+  Promise<VerifyCredentialRequestJwtProofResult>
+>("verifyCredentialRequestJwtProof", {
+  [ItWalletSpecsVersion.V1_0]: verifyProofV1_0,
+  [ItWalletSpecsVersion.V1_3]: verifyProofV1_3,
+});
 
 /**
  * Verifies a credential request JWT proof according to the configured IT-Wallet specification version.
@@ -203,10 +292,20 @@ export async function verifyCredentialRequestJwtProof(
  * @throws {Oauth2JwtParseError} If JWT decoding fails.
  */
 export async function verifyCredentialRequestJwtProof(
+  options: VerifyCredentialRequestJwtProofOptionsV1_0,
+): Promise<VerifyCredentialRequestJwtProofResultV1_0>;
+
+export async function verifyCredentialRequestJwtProof(
+  options: VerifyCredentialRequestJwtProofOptionsV1_3,
+): Promise<VerifyCredentialRequestJwtProofResultV1_3>;
+
+export async function verifyCredentialRequestJwtProof(
+  options: VerifyCredentialRequestJwtProofOptions,
+): Promise<VerifyCredentialRequestJwtProofResult>;
+
+export async function verifyCredentialRequestJwtProof(
   options: VerifyCredentialRequestJwtProofOptions,
 ): Promise<VerifyCredentialRequestJwtProofResult> {
-  const configVersion = options.config.itWalletSpecsVersion;
-
   try {
     const now = options.now?.getTime() ?? Date.now();
 
@@ -216,107 +315,7 @@ export async function verifyCredentialRequestJwtProof(
       );
     }
 
-    if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
-      const { header, payload } = decodeJwt({
-        errorMessagePrefix: "Error decoding credential request proof JWT:",
-        headerSchema: zProofJwtHeaderV1_0,
-        jwt: options.jwt,
-        payloadSchema: zProofJwtPayload,
-      });
-
-      verifyProofJwtIatOrThrow({ now: options.now, payload });
-
-      const { signer } = await verifyJwt({
-        compact: options.jwt,
-        errorMessage: "Error verifying credential request proof jwt.",
-        expectedAudience: options.credentialIssuer,
-        expectedIssuer: options.clientId,
-        expectedNonce: options.expectedNonce,
-        header,
-        now: options.now,
-        payload,
-        signer: jwtSignerFromJwt({ header, payload }),
-        verifyJwtCallback: options.callbacks.verifyJwt,
-      });
-
-      return {
-        header,
-        payload,
-        signer,
-      };
-    }
-
-    if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
-      const { header, payload } = decodeJwt({
-        errorMessagePrefix: "Error decoding credential request proof JWT:",
-        headerSchema: zProofJwtHeaderV1_3,
-        jwt: options.jwt,
-        payloadSchema: zProofJwtPayload,
-      });
-
-      verifyProofJwtIatOrThrow({ now: options.now, payload });
-
-      const { signer } = await verifyJwt({
-        compact: options.jwt,
-        errorMessage: "Error verifying credential request proof jwt.",
-        expectedAudience: options.credentialIssuer,
-        expectedIssuer: options.clientId,
-        expectedNonce: options.expectedNonce,
-        header,
-        now: options.now,
-        payload,
-        signer: jwtSignerFromJwt({ header, payload }),
-        verifyJwtCallback: options.callbacks.verifyJwt,
-      });
-
-      if (options.trustedWalletProviderIssuers.length === 0) {
-        throw new VerifyCredentialRequestJwtProofError(
-          "trustedWalletProviderIssuers must include at least one trusted wallet provider issuer",
-        );
-      }
-
-      const keyAttestationResult = await verifyKeyAttestationJwt({
-        callbacks: options.callbacks,
-        fetchStatusList: options.fetchStatusList,
-        keyAttestationJwt: header.key_attestation,
-        now: options.now,
-      });
-
-      if (
-        !options.trustedWalletProviderIssuers.includes(
-          keyAttestationResult.payload.iss,
-        )
-      ) {
-        throw new VerifyCredentialRequestJwtProofError(
-          `Untrusted key attestation issuer: ${keyAttestationResult.payload.iss}`,
-        );
-      }
-
-      const isSignedWithAttestedKey = await isJwkInSet({
-        callbacks: options.callbacks,
-        jwk: signer.publicJwk,
-        jwks: keyAttestationResult.payload.attested_keys,
-      });
-
-      if (!isSignedWithAttestedKey) {
-        throw new VerifyCredentialRequestJwtProofError(
-          "Credential request jwt proof is not signed with a key in the 'key_attestation' jwt payload 'attested_keys'",
-        );
-      }
-
-      return {
-        header,
-        keyAttestation: keyAttestationResult,
-        payload,
-        signer,
-      };
-    }
-
-    throw new ItWalletSpecsVersionError(
-      "verifyCredentialRequestJwtProof",
-      configVersion,
-      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
-    );
+    return await dispatchVerifyProof(options);
   } catch (error) {
     if (
       error instanceof VerifyCredentialRequestJwtProofError ||

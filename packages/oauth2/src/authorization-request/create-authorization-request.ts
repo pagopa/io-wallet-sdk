@@ -4,11 +4,10 @@ import { CallbackContext, RequestDpopOptions } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   addSecondsToDate,
   dateToSeconds,
+  dispatchByVersion,
   encodeToBase64Url,
-  hasConfigVersion,
 } from "@pagopa/io-wallet-utils";
 
 import { PushedAuthorizationRequestError } from "../errors";
@@ -363,24 +362,21 @@ function parseAuthorizationRequestByVersion(
   > &
     Pick<AuthorizationRequest, "authorization_details" | "scope">,
 ): AuthorizationRequest {
-  const version = options.config.itWalletSpecsVersion;
-
-  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
-    return zAuthorizationRequestV1_0.parse({
-      ...baseAuthorizationRequest,
-      response_mode: options.responseMode,
-    }) satisfies AuthorizationRequestV1_0;
-  }
-
-  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
-    return zAuthorizationRequestV1_3.parse(
-      baseAuthorizationRequest,
-    ) satisfies AuthorizationRequestV1_3;
-  }
-
-  throw new ItWalletSpecsVersionError(
+  return dispatchByVersion(
     "createPushedAuthorizationRequest",
-    version,
-    [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+    options.config.itWalletSpecsVersion,
+    {
+      [ItWalletSpecsVersion.V1_0]: () =>
+        zAuthorizationRequestV1_0.parse({
+          ...baseAuthorizationRequest,
+          response_mode: (
+            options as CreatePushedAuthorizationRequestOptionsV1_0
+          ).responseMode,
+        }) satisfies AuthorizationRequestV1_0,
+      [ItWalletSpecsVersion.V1_3]: () =>
+        zAuthorizationRequestV1_3.parse(
+          baseAuthorizationRequest,
+        ) satisfies AuthorizationRequestV1_3,
+    },
   );
 }
