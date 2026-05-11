@@ -62,9 +62,6 @@ const wrongSignature =
 const correctRequestObject: Openid4vpAuthorizationRequestPayload = {
   client_id: "test-client-id",
   client_metadata: {
-    application_type: "web",
-    client_id: "https://relying-party.example.org",
-    client_name: "Example Relying Party",
     encrypted_response_enc_values_supported: ["A256GCM"],
     jwks: {
       keys: [
@@ -78,9 +75,6 @@ const correctRequestObject: Openid4vpAuthorizationRequestPayload = {
         },
       ],
     },
-    logo_uri: "https://relying-party.example.org/public/compact-logo.svg",
-    request_uris: ["https://relying-party.example.org/request_uri"],
-    response_uris: ["https://relying-party.example.org/response_uri"],
     vp_formats_supported: {
       "dc+sd-jwt": {
         "kb-jwt_alg_values": ["ES256"],
