@@ -12,9 +12,8 @@ import {
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   ValidationError,
-  hasConfigVersion,
+  createVersionDispatcher,
   objectToQueryParams,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
@@ -117,6 +116,22 @@ export type CreateAuthorizationRequestResult =
  * @throws When authorization request payload validation fails
  * @throws When JAR creation fails
  */
+const dispatchCreateAuthorizationRequest = createVersionDispatcher<
+  CreateAuthorizationRequestOptions,
+  Promise<CreateAuthorizationRequestResult>
+>("createAuthorizationRequest", {
+  [ItWalletSpecsVersion.V1_0]: async (o) =>
+    createAuthorizationRequestWithHeader(
+      o as CreateAuthorizationRequestOptionsV1_0,
+      zOpenid4vpAuthorizationRequestHeaderV1_0,
+    ),
+  [ItWalletSpecsVersion.V1_3]: async (o) =>
+    createAuthorizationRequestWithHeader(
+      o as CreateAuthorizationRequestOptionsV1_3,
+      zOpenid4vpAuthorizationRequestHeaderV1_3,
+    ),
+});
+
 export async function createAuthorizationRequest(
   options: CreateAuthorizationRequestOptionsV1_0,
 ): Promise<CreateAuthorizationRequestResultV1_0>;
@@ -129,27 +144,7 @@ export async function createAuthorizationRequest(
   options: CreateAuthorizationRequestOptions,
 ): Promise<CreateAuthorizationRequestResult> {
   try {
-    const { config } = options;
-
-    if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
-      return await createAuthorizationRequestWithHeader(
-        options,
-        zOpenid4vpAuthorizationRequestHeaderV1_0,
-      );
-    }
-
-    if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
-      return await createAuthorizationRequestWithHeader(
-        options,
-        zOpenid4vpAuthorizationRequestHeaderV1_3,
-      );
-    }
-
-    throw new ItWalletSpecsVersionError(
-      "createAuthorizationRequest",
-      config.itWalletSpecsVersion,
-      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
-    );
+    return await dispatchCreateAuthorizationRequest(options);
   } catch (error) {
     if (error instanceof ValidationError) {
       throw new Oid4vpError(`Invalid authorization request: ${error.message}`);

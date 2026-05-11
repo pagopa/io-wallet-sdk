@@ -1,6 +1,5 @@
 export * from "./config";
 export * from "./constants";
-export * from "./version-dispatcher";
 export * from "./errors/errors";
 export * from "./errors/parse";
 export * from "./fetcher";
@@ -8,6 +7,7 @@ export type * from "./globals";
 export * from "./parse";
 export * from "./validation";
 export * from "./verify";
+export * from "./version-dispatcher";
 
 export {
   type CallbackContext,

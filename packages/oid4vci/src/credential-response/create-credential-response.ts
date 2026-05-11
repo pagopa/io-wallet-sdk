@@ -7,7 +7,7 @@ import {
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
   ValidationError,
-  hasConfigVersion,
+  createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
 
 import type {
@@ -31,6 +31,20 @@ import type { ImmediateCredentialResponse } from "./z-immediate-credential-respo
 import { CreateCredentialResponseError, Oid4vciError } from "../errors";
 import * as V1_0 from "./v1.0/create-credential-response";
 import * as V1_3 from "./v1.3/create-credential-response";
+
+const dispatchBuildVersionedResponse = createVersionDispatcher<
+  CreateCredentialResponseOptions,
+  CredentialResponse
+>("createCredentialResponse", {
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    V1_0.createCredentialResponseV1_0(
+      (o as CreateCredentialResponseOptionsV1_0).flow,
+    ),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    V1_3.createCredentialResponseV1_3(
+      (o as CreateCredentialResponseOptionsV1_3).flow,
+    ),
+});
 
 export type {
   CreateCredentialResponseOptions,
@@ -195,20 +209,7 @@ export async function createCredentialResponse(
 function buildVersionedResponse(
   options: CreateCredentialResponseOptions,
 ): CredentialResponse {
-  const version = options.config.itWalletSpecsVersion;
-
-  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_0)) {
-    return V1_0.createCredentialResponseV1_0(options.flow);
-  }
-
-  if (hasConfigVersion(options, ItWalletSpecsVersion.V1_3)) {
-    return V1_3.createCredentialResponseV1_3(options.flow);
-  }
-
-  throw new ItWalletSpecsVersionError("createCredentialResponse", version, [
-    ItWalletSpecsVersion.V1_0,
-    ItWalletSpecsVersion.V1_3,
-  ]);
+  return dispatchBuildVersionedResponse(options);
 }
 
 async function encryptResponse(

@@ -1,7 +1,9 @@
 import { ItWalletSpecsVersion } from "./config";
 import { ItWalletSpecsVersionError } from "./errors/errors";
 
-type AnyOptions = { config: { itWalletSpecsVersion: ItWalletSpecsVersion } };
+interface AnyOptions {
+  config: { itWalletSpecsVersion: ItWalletSpecsVersion };
+}
 
 /**
  * Creates a version-aware dispatcher that routes a function call
@@ -22,7 +24,7 @@ export function createVersionDispatcher<TOptions extends AnyOptions, TResult>(
 
   return (options: TOptions): TResult => {
     const version = options.config.itWalletSpecsVersion;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const handler = (handlers as Record<string, (o: TOptions) => TResult>)[
       version
     ];
