@@ -5,6 +5,16 @@ export interface VersionedOptions {
   config: { itWalletSpecsVersion: ItWalletSpecsVersion };
 }
 
+function getSupportedVersions<THandler>(
+  handlers: Partial<Record<ItWalletSpecsVersion, THandler>>,
+): ItWalletSpecsVersion[] {
+  return (
+    Object.entries(handlers) as [ItWalletSpecsVersion, THandler | undefined][]
+  )
+    .filter(([, handler]) => handler !== undefined)
+    .map(([version]) => version);
+}
+
 /**
  * Creates a version-aware dispatcher that routes a function call
  * based on options.config.itWalletSpecsVersion.
@@ -23,7 +33,7 @@ export function createVersionDispatcher<
     Record<ItWalletSpecsVersion, (options: TOptions) => TResult>
   >,
 ): (options: TOptions) => TResult {
-  const supportedVersions = Object.keys(handlers) as ItWalletSpecsVersion[];
+  const supportedVersions = getSupportedVersions(handlers);
 
   return (options: TOptions): TResult => {
     const version = options.config.itWalletSpecsVersion;
@@ -61,6 +71,6 @@ export function dispatchByVersion<TResult>(
   throw new ItWalletSpecsVersionError(
     featureName,
     version,
-    Object.keys(handlers) as ItWalletSpecsVersion[],
+    getSupportedVersions(handlers),
   );
 }

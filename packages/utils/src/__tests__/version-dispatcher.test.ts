@@ -87,6 +87,21 @@ describe("createVersionDispatcher", () => {
     );
   });
 
+  it("excludes undefined handlers from supported versions in error messages", () => {
+    const dispatch = createVersionDispatcher("aFeature", {
+      [ItWalletSpecsVersion.V1_0]: vi.fn(),
+      [ItWalletSpecsVersion.V1_3]: undefined,
+    });
+
+    const options = {
+      config: { itWalletSpecsVersion: "V99_99" as ItWalletSpecsVersion },
+    };
+
+    expect(() => dispatch(options)).toThrow(
+      `Supported versions: ${ItWalletSpecsVersion.V1_0}`,
+    );
+  });
+
   it("works correctly with async handlers returning Promise<T>", async () => {
     const v1_0Handler = vi.fn().mockResolvedValue("async-result-v1.0");
 
@@ -160,6 +175,15 @@ describe("dispatchByVersion", () => {
     ).toThrow(
       `Supported versions: ${ItWalletSpecsVersion.V1_0}, ${ItWalletSpecsVersion.V1_3}`,
     );
+  });
+
+  it("excludes undefined handlers from supported versions in error messages", () => {
+    expect(() =>
+      dispatchByVersion("aFeature", "V99_99" as ItWalletSpecsVersion, {
+        [ItWalletSpecsVersion.V1_0]: vi.fn(),
+        [ItWalletSpecsVersion.V1_3]: undefined,
+      }),
+    ).toThrow(`Supported versions: ${ItWalletSpecsVersion.V1_0}`);
   });
 
   it("works correctly with async handlers", async () => {
