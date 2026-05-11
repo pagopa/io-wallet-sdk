@@ -12,9 +12,9 @@ import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   addSecondsToDate,
   dateToSeconds,
+  dispatchByVersion,
 } from "@pagopa/io-wallet-utils";
 
 import { WalletProviderError } from "../errors";
@@ -274,54 +274,48 @@ export class WalletProvider {
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
-    if (this.specVersion === ItWalletSpecsVersion.V1_0) {
-      assertV1_0Options(options);
-      return createWalletAttestationJwtV1_0({
-        authenticatorAssuranceLevel: options.authenticatorAssuranceLevel,
-        callbacks: options.callbacks,
-        dpopJwkPublic: options.dpopJwkPublic,
-        expiresAt: options.expiresAt,
-        issuer: options.issuer,
-        signer: options.signer,
-        walletLink: options.walletLink,
-        walletName: options.walletName,
-      });
-    }
-
-    if (this.specVersion === ItWalletSpecsVersion.V1_3) {
-      assertV1_3Options(options);
-      return createWalletAttestationJwtV1_3({
-        callbacks: options.callbacks,
-        dpopJwkPublic: options.dpopJwkPublic,
-        expiresAt: options.expiresAt,
-        issuer: options.issuer,
-        nbf: options.nbf,
-        signer: options.signer,
-        status: options.status,
-        walletLink: options.walletLink,
-        walletName: options.walletName,
-      });
-    }
-
-    if (this.specVersion === ItWalletSpecsVersion.V1_4) {
-      assertV1_4Options(options);
-      return createWalletAttestationJwtV1_4({
-        callbacks: options.callbacks,
-        dpopJwkPublic: options.dpopJwkPublic,
-        eudiWalletInfo: options.eudiWalletInfo,
-        expiresAt: options.expiresAt,
-        issuer: options.issuer,
-        signer: options.signer,
-        status: options.status,
-        walletLink: options.walletLink,
-        walletName: options.walletName,
-      });
-    }
-
-    throw new ItWalletSpecsVersionError(
-      "createItWalletAttestationJwt",
-      this.specVersion,
-      Object.values(ItWalletSpecsVersion),
-    );
+    return dispatchByVersion("createItWalletAttestationJwt", this.specVersion, {
+      [ItWalletSpecsVersion.V1_0]: () => {
+        assertV1_0Options(options);
+        return createWalletAttestationJwtV1_0({
+          authenticatorAssuranceLevel: options.authenticatorAssuranceLevel,
+          callbacks: options.callbacks,
+          dpopJwkPublic: options.dpopJwkPublic,
+          expiresAt: options.expiresAt,
+          issuer: options.issuer,
+          signer: options.signer,
+          walletLink: options.walletLink,
+          walletName: options.walletName,
+        });
+      },
+      [ItWalletSpecsVersion.V1_3]: () => {
+        assertV1_3Options(options);
+        return createWalletAttestationJwtV1_3({
+          callbacks: options.callbacks,
+          dpopJwkPublic: options.dpopJwkPublic,
+          expiresAt: options.expiresAt,
+          issuer: options.issuer,
+          nbf: options.nbf,
+          signer: options.signer,
+          status: options.status,
+          walletLink: options.walletLink,
+          walletName: options.walletName,
+        });
+      },
+      [ItWalletSpecsVersion.V1_4]: () => {
+        assertV1_4Options(options);
+        return createWalletAttestationJwtV1_4({
+          callbacks: options.callbacks,
+          dpopJwkPublic: options.dpopJwkPublic,
+          eudiWalletInfo: options.eudiWalletInfo,
+          expiresAt: options.expiresAt,
+          issuer: options.issuer,
+          signer: options.signer,
+          status: options.status,
+          walletLink: options.walletLink,
+          walletName: options.walletName,
+        });
+      },
+    });
   }
 }

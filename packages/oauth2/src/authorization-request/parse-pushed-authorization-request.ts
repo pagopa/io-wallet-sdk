@@ -2,8 +2,8 @@ import { CallbackContext } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   RequestLike,
+  dispatchByVersion,
   formatZodError,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
@@ -123,17 +123,12 @@ export async function parsePushedAuthorizationRequest(
 }
 
 function getAuthorizationRequestSchema(config: IoWalletSdkConfig) {
-  if (config.isVersion(ItWalletSpecsVersion.V1_0)) {
-    return zAuthorizationRequestV1_0;
-  }
-
-  if (config.isVersion(ItWalletSpecsVersion.V1_3)) {
-    return zAuthorizationRequestV1_3;
-  }
-
-  throw new ItWalletSpecsVersionError(
+  return dispatchByVersion(
     "parsePushedAuthorizationRequest",
     config.itWalletSpecsVersion,
-    [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
+    {
+      [ItWalletSpecsVersion.V1_0]: () => zAuthorizationRequestV1_0,
+      [ItWalletSpecsVersion.V1_3]: () => zAuthorizationRequestV1_3,
+    },
   );
 }
