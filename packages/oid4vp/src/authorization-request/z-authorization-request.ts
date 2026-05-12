@@ -9,13 +9,28 @@ import { itWalletCredentialVerifierMetadataV1_3 } from "@pagopa/io-wallet-oid-fe
 import { z } from "zod";
 
 /**
+ * This schema is a less strict version of {@link itWalletCredentialVerifierMetadataV1_3} because
+ * only a subset of the Credential Verifier metadata fields are required in the Request Object.
+ * @see https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/remote-flow.html#request-object
+ */
+const zOpenid4vpCredentialVerifierMetadata =
+  itWalletCredentialVerifierMetadataV1_3.partial({
+    application_type: true,
+    client_id: true,
+    client_name: true,
+    logo_uri: true,
+    request_uris: true,
+    response_uris: true,
+  });
+
+/**
  * Zod parser that describes a JWT payload
  * containing an OID4VP Request Object
  */
 export const zOpenid4vpAuthorizationRequestPayload = z
   .looseObject({
     client_id: z.string(),
-    client_metadata: itWalletCredentialVerifierMetadataV1_3.optional(),
+    client_metadata: zOpenid4vpCredentialVerifierMetadata.optional(),
     dcql_query: z.record(z.string(), z.any()),
     nonce: z.string(),
     request_uri: z.url().optional(),
