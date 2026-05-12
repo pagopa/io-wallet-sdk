@@ -7,6 +7,7 @@ export type * from "./globals";
 export * from "./parse";
 export * from "./validation";
 export * from "./verify";
+export * from "./version-dispatcher";
 
 export {
   type CallbackContext,

@@ -2,7 +2,7 @@ import { zCompactJwt } from "@openid4vc/oauth2";
 import {
   FetchHeaders,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
+  createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
 
 import type {
@@ -26,23 +26,17 @@ import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_0 } from "./
 import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_3 } from "./v1.3/verify-wallet-attestation-jwt";
 import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_4 } from "./v1.4/verify-wallet-attestation-jwt";
 
-function isV1_0Options(
-  options: VerifyWalletAttestationJwtOptions,
-): options is VerifyWalletAttestationJwtOptionsV1_0 {
-  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0;
-}
-
-function isV1_3Options(
-  options: VerifyWalletAttestationJwtOptions,
-): options is VerifyWalletAttestationJwtOptionsV1_3 {
-  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3;
-}
-
-function isV1_4Options(
-  options: VerifyWalletAttestationJwtOptions,
-): options is VerifyWalletAttestationJwtOptionsV1_4 {
-  return options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_4;
-}
+const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
+  VerifyWalletAttestationJwtOptions,
+  Promise<VerifiedWalletAttestationJwt>
+>("verifyWalletAttestationJwt", {
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    verifyWalletAttestationJwtV1_0(o as VerifyWalletAttestationJwtOptionsV1_0),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    verifyWalletAttestationJwtV1_3(o as VerifyWalletAttestationJwtOptionsV1_3),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    verifyWalletAttestationJwtV1_4(o as VerifyWalletAttestationJwtOptionsV1_4),
+});
 
 export type VerifiedWalletAttestationJwt =
   | VerifiedWalletAttestationJwtV1_0
@@ -69,25 +63,7 @@ export async function verifyWalletAttestationJwt(
 export async function verifyWalletAttestationJwt(
   options: VerifyWalletAttestationJwtOptions,
 ): Promise<VerifiedWalletAttestationJwt> {
-  const version = options.config.itWalletSpecsVersion;
-
-  if (isV1_0Options(options)) {
-    return verifyWalletAttestationJwtV1_0(options);
-  }
-
-  if (isV1_3Options(options)) {
-    return verifyWalletAttestationJwtV1_3(options);
-  }
-
-  if (isV1_4Options(options)) {
-    return verifyWalletAttestationJwtV1_4(options);
-  }
-
-  throw new ItWalletSpecsVersionError(
-    "verifyWalletAttestationJwt",
-    version,
-    Object.values(ItWalletSpecsVersion),
-  );
+  return dispatchVerifyWalletAttestationJwt(options);
 }
 
 export function extractClientAttestationJwtsFromHeaders(headers: FetchHeaders):

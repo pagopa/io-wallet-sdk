@@ -8,7 +8,9 @@ import { decodeJwt } from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
   ValidationError,
+  dispatchByVersion,
 } from "@pagopa/io-wallet-utils";
 
 import { ParseAuthorizeRequestError } from "../errors";
@@ -155,9 +157,15 @@ export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,
 ): Promise<ParsedAuthorizeRequestResult> {
   try {
-    const headerSchema = options.config.isVersion(ItWalletSpecsVersion.V1_0)
-      ? zOpenid4vpAuthorizationRequestHeaderV1_0
-      : zOpenid4vpAuthorizationRequestHeaderV1_3;
+    const headerSchema = dispatchByVersion<
+      | typeof zOpenid4vpAuthorizationRequestHeaderV1_0
+      | typeof zOpenid4vpAuthorizationRequestHeaderV1_3
+    >("parseAuthorizeRequest", options.config.itWalletSpecsVersion, {
+      [ItWalletSpecsVersion.V1_0]: () =>
+        zOpenid4vpAuthorizationRequestHeaderV1_0,
+      [ItWalletSpecsVersion.V1_3]: () =>
+        zOpenid4vpAuthorizationRequestHeaderV1_3,
+    });
 
     const decoded = decodeJwt({
       errorMessagePrefix: "Error decoding authorization request JWT:",
@@ -188,6 +196,7 @@ export async function parseAuthorizeRequest(
     };
   } catch (error) {
     if (
+      error instanceof ItWalletSpecsVersionError ||
       error instanceof ValidationError ||
       error instanceof Oauth2JwtParseError
     )

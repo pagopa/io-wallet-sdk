@@ -8,6 +8,7 @@ import {
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,
+  createVersionDispatcher,
   hasStatusOrThrow,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
@@ -186,6 +187,54 @@ async function fallbackDiscovery(
   };
 }
 
+async function fetchMetadataV1_0(
+  options: FetchMetadataOptions,
+): Promise<MetadataResponse> {
+  const fetch = createFetcher(options.callbacks.fetch);
+  const federationResult = await tryFederationDiscovery(
+    fetch,
+    options.credentialIssuerUrl,
+    options.callbacks.verifyJwt,
+  );
+  if (!federationResult) {
+    throw new FetchMetadataError(
+      `Federation discovery failed for IT Wallet v1.0; no fallback available for credentialIssuerUrl ${options.credentialIssuerUrl}`,
+    );
+  }
+  return parseWithErrorHandling(
+    zMetadataResponseV1_0,
+    federationResult,
+    "Failed to parse v1.0 metadata response",
+  );
+}
+
+async function fetchMetadataV1_3(
+  options: FetchMetadataOptions,
+): Promise<MetadataResponse> {
+  const fetch = createFetcher(options.callbacks.fetch);
+  const federationResult = await tryFederationDiscovery(
+    fetch,
+    options.credentialIssuerUrl,
+    options.callbacks.verifyJwt,
+  );
+  const raw =
+    federationResult ??
+    (await fallbackDiscovery(fetch, options.credentialIssuerUrl));
+  return parseWithErrorHandling(
+    zMetadataResponseV1_3,
+    raw,
+    "Failed to parse v1.3 metadata response",
+  );
+}
+
+const dispatchFetchMetadata = createVersionDispatcher<
+  FetchMetadataOptions,
+  Promise<MetadataResponse>
+>("fetchMetadata", {
+  [ItWalletSpecsVersion.V1_0]: fetchMetadataV1_0,
+  [ItWalletSpecsVersion.V1_3]: fetchMetadataV1_3,
+});
+
 /**
  * Performs the OID4VCI discovery flow for a Credential Issuer, routing discovery
  * strategy and metadata schema validation based on the IT-Wallet specification version
@@ -219,7 +268,6 @@ async function fallbackDiscovery(
 export async function fetchMetadata(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
-  const { config } = options;
   try {
     const urlValidation = z.url().safeParse(options.credentialIssuerUrl);
     if (!urlValidation.success || !urlValidation.data.startsWith("https://")) {
@@ -228,49 +276,7 @@ export async function fetchMetadata(
       );
     }
 
-    const fetch = createFetcher(options.callbacks.fetch);
-
-    if (config.isVersion(ItWalletSpecsVersion.V1_0)) {
-      // v1.0: federation ONLY — no OID4VCI fallback
-      const federationResult = await tryFederationDiscovery(
-        fetch,
-        options.credentialIssuerUrl,
-        options.callbacks.verifyJwt,
-      );
-      if (!federationResult) {
-        throw new FetchMetadataError(
-          `Federation discovery failed for IT Wallet v1.0; no fallback available for credentialIssuerUrl ${options.credentialIssuerUrl}`,
-        );
-      }
-      return parseWithErrorHandling(
-        zMetadataResponseV1_0,
-        federationResult,
-        "Failed to parse v1.0 metadata response",
-      );
-    }
-
-    if (config.isVersion(ItWalletSpecsVersion.V1_3)) {
-      // v1.3: federation-first, OID4VCI fallback
-      const federationResult = await tryFederationDiscovery(
-        fetch,
-        options.credentialIssuerUrl,
-        options.callbacks.verifyJwt,
-      );
-      const raw =
-        federationResult ??
-        (await fallbackDiscovery(fetch, options.credentialIssuerUrl));
-      return parseWithErrorHandling(
-        zMetadataResponseV1_3,
-        raw,
-        "Failed to parse v1.3 metadata response",
-      );
-    }
-
-    throw new ItWalletSpecsVersionError(
-      "fetchMetadata",
-      config.itWalletSpecsVersion,
-      [ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3],
-    );
+    return await dispatchFetchMetadata(options);
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
