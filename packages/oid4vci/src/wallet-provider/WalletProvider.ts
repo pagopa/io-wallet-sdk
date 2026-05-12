@@ -274,7 +274,7 @@ export class WalletProvider {
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
-    return dispatchByVersion("createItWalletAttestationJwt", this.specVersion, {
+    return dispatchByVersion(this.specVersion, {
       [ItWalletSpecsVersion.V1_0]: () => {
         assertV1_0Options(options);
         return createWalletAttestationJwtV1_0({

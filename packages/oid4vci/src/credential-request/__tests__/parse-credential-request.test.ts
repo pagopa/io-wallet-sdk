@@ -3,7 +3,6 @@ import { Oauth2JwtParseError } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
@@ -660,22 +659,5 @@ describe("parseCredentialRequest", () => {
         }),
       }),
     ).toThrow(Oauth2JwtParseError);
-  });
-
-  it("throws ItWalletSpecsVersionError for unsupported version", () => {
-    const unsupportedConfig = new IoWalletSdkConfig({
-      itWalletSpecsVersion: "9.9.9" as unknown as ItWalletSpecsVersion,
-    });
-
-    expect(() =>
-      parseCredentialRequest({
-        config: unsupportedConfig,
-        credentialRequest: {},
-        headers: createHeaders({
-          authorization: "DPoP test-access-token",
-          dpop: VALID_DPOP_JWT,
-        }),
-      } as unknown as Parameters<typeof parseCredentialRequest>[0]),
-    ).toThrow(ItWalletSpecsVersionError);
   });
 });

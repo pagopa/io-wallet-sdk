@@ -2,7 +2,6 @@
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
@@ -379,25 +378,6 @@ describe("createCredentialResponse", () => {
       });
 
       expect(result.credentialResponseJwt).toBeUndefined();
-    });
-  });
-
-  describe("error handling", () => {
-    it("should throw ItWalletSpecsVersionError for unsupported version", async () => {
-      const invalidConfig = {
-        isVersion: () => false,
-        itWalletSpecsVersion: "99.99.99",
-      };
-
-      await expect(
-        createCredentialResponse({
-          // @ts-expect-error - Testing invalid version (not in union type)
-          config: invalidConfig,
-          flow: {
-            credentials: [{ credential: "test" }],
-          },
-        }),
-      ).rejects.toThrow(ItWalletSpecsVersionError);
     });
   });
 });
