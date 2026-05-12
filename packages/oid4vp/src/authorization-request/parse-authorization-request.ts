@@ -8,6 +8,7 @@ import { decodeJwt } from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
   ValidationError,
   dispatchByVersion,
 } from "@pagopa/io-wallet-utils";
@@ -195,6 +196,7 @@ export async function parseAuthorizeRequest(
     };
   } catch (error) {
     if (
+      error instanceof ItWalletSpecsVersionError ||
       error instanceof ValidationError ||
       error instanceof Oauth2JwtParseError
     )
