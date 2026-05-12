@@ -101,6 +101,8 @@ export interface ParsedCredentialRequest {
   credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
   /** DPoP proof JWT extracted from the request headers. */
   dpopProof: string;
+  /** IT-Wallet specification version that was applied during parsing. */
+  itWalletSpecsVersion: ItWalletSpecsVersion;
   /** Normalized list of parsed proof JWTs. */
   proofs: ParsedCredentialProof[];
   /** Transaction metadata derived from flow context and request payload. */
@@ -163,13 +165,52 @@ function validateTransactionContext(options: {
   }
 }
 
+function validateProofPayloadSemantics(options: {
+  expected?: ParseCredentialRequestExpectedValues;
+  grantType: GrantType;
+  payload: ProofJwtPayload;
+}): void {
+  const { expected, grantType, payload } = options;
+
+  if (grantType === "authorization_code" && !payload.iss) {
+    throw new ValidationError(
+      "Credential proof JWT payload must include iss for authorization_code grant",
+    );
+  }
+
+  if (expected?.audience && payload.aud !== expected.audience) {
+    throw new ValidationError(
+      "Credential proof JWT aud does not match expected audience",
+    );
+  }
+
+  if (expected?.nonce && payload.nonce !== expected.nonce) {
+    throw new ValidationError(
+      "Credential proof JWT nonce does not match expected nonce",
+    );
+  }
+
+  if (expected?.issuer && payload.iss && payload.iss !== expected.issuer) {
+    throw new ValidationError(
+      "Credential proof JWT iss does not match expected issuer",
+    );
+  }
+
+  if (grantType === "authorization_code" && expected?.issuer && !payload.iss) {
+    throw new ValidationError(
+      "Credential proof JWT payload is missing expected issuer (iss)",
+    );
+  }
+}
+
 /**
  * Decodes and validates a single proof JWT, then applies semantic claim checks.
  */
 function parseProofJwt(options: {
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
-  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 | ItWalletSpecsVersion.V1_3;
+  // V1_4 uses the same proof header schema as V1_3.
+  itWalletSpecsVersion: ItWalletSpecsVersion;
   jwt: string;
 }): ParsedCredentialProof {
   const decoded = decodeJwt({
@@ -177,7 +218,8 @@ function parseProofJwt(options: {
     jwt: options.jwt,
   });
   const headerValidation =
-    options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3
+    options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3 ||
+    options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_4
       ? zProofJwtHeaderV1_3.safeParse(decoded.header)
       : zProofJwtHeaderV1_0.safeParse(decoded.header);
 
@@ -195,44 +237,11 @@ function parseProofJwt(options: {
   }
 
   const payload = payloadValidation.data;
-
-  if (options.grantType === "authorization_code" && !payload.iss) {
-    throw new ValidationError(
-      "Credential proof JWT payload must include iss for authorization_code grant",
-    );
-  }
-
-  if (options.expected?.audience && payload.aud !== options.expected.audience) {
-    throw new ValidationError(
-      "Credential proof JWT aud does not match expected audience",
-    );
-  }
-
-  if (options.expected?.nonce && payload.nonce !== options.expected.nonce) {
-    throw new ValidationError(
-      "Credential proof JWT nonce does not match expected nonce",
-    );
-  }
-
-  if (
-    options.expected?.issuer &&
-    payload.iss &&
-    payload.iss !== options.expected.issuer
-  ) {
-    throw new ValidationError(
-      "Credential proof JWT iss does not match expected issuer",
-    );
-  }
-
-  if (
-    options.grantType === "authorization_code" &&
-    options.expected?.issuer &&
-    !payload.iss
-  ) {
-    throw new ValidationError(
-      "Credential proof JWT payload is missing expected issuer (iss)",
-    );
-  }
+  validateProofPayloadSemantics({
+    expected: options.expected,
+    grantType: options.grantType,
+    payload,
+  });
 
   return {
     header: headerValidation.data,
@@ -249,7 +258,7 @@ function normalizeProofs(options: {
   credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
-  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 | ItWalletSpecsVersion.V1_3;
+  itWalletSpecsVersion: ItWalletSpecsVersion;
 }): ParsedCredentialProof[] {
   if ("proof" in options.credentialRequest) {
     return [
@@ -284,7 +293,10 @@ function toResult<
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
   isDeferredFlow: boolean;
-  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 | ItWalletSpecsVersion.V1_3;
+  itWalletSpecsVersion:
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4;
 }): ParsedCredentialRequest {
   validateExpectedValues(options.credentialRequest, options.expected);
   validateTransactionContext({
@@ -308,6 +320,7 @@ function toResult<
     },
     credentialRequest: options.credentialRequest,
     dpopProof: options.dpopProof,
+    itWalletSpecsVersion: options.itWalletSpecsVersion,
     proofs,
     transaction: {
       isDeferredFlow: options.isDeferredFlow,
@@ -406,12 +419,32 @@ function parseCredentialRequestV1_3(
   });
 }
 
+function parseCredentialRequestV1_4(
+  options: ParseCredentialRequestHandlerOptions,
+): ParsedCredentialRequest {
+  const credentialRequest = parseWithErrorHandling(
+    zCredentialRequestV1_3,
+    options.credentialRequest,
+    "Invalid credential request format for ItWalletSpecsVersion 1.4",
+  );
+  return toResult({
+    accessToken: options.accessToken,
+    credentialRequest,
+    dpopProof: options.dpopProof,
+    expected: options.expected,
+    grantType: options.grantType,
+    isDeferredFlow: options.isDeferredFlow,
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_4, // V1_4 reuses V1_3 proof schema
+  });
+}
+
 const dispatchParseCredentialRequest = createVersionDispatcher<
   ParseCredentialRequestHandlerOptions,
   ParsedCredentialRequest
->("parseCredentialRequest", {
+>({
   [ItWalletSpecsVersion.V1_0]: parseCredentialRequestV1_0,
   [ItWalletSpecsVersion.V1_3]: parseCredentialRequestV1_3,
+  [ItWalletSpecsVersion.V1_4]: parseCredentialRequestV1_4,
 });
 
 /**

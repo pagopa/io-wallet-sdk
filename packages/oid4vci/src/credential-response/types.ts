@@ -43,9 +43,15 @@ export interface CreateCredentialResponseOptionsV1_3 extends CreateCredentialRes
   flow: DeferredFlowOptionsV1_3 | ImmediateFlowOptions;
 }
 
+export interface CreateCredentialResponseOptionsV1_4 extends CreateCredentialResponseOptionsBase {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+  flow: DeferredFlowOptionsV1_3 | ImmediateFlowOptions;
+}
+
 export type CreateCredentialResponseOptions =
   | CreateCredentialResponseOptionsV1_0
-  | CreateCredentialResponseOptionsV1_3;
+  | CreateCredentialResponseOptionsV1_3
+  | CreateCredentialResponseOptionsV1_4;
 
 export interface CreateCredentialResponseResult {
   credentialResponse: CredentialResponse;

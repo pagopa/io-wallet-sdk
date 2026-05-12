@@ -96,9 +96,14 @@ export interface VerifyCredentialRequestJwtProofOptionsV1_3 extends VerifyCreden
   trustedWalletProviderIssuers: readonly string[];
 }
 
+export type VerifyCredentialRequestJwtProofOptionsV1_4 = {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+} & Omit<VerifyCredentialRequestJwtProofOptionsV1_3, "config">;
+
 export type VerifyCredentialRequestJwtProofOptions =
   | VerifyCredentialRequestJwtProofOptionsV1_0
-  | VerifyCredentialRequestJwtProofOptionsV1_3;
+  | VerifyCredentialRequestJwtProofOptionsV1_3
+  | VerifyCredentialRequestJwtProofOptionsV1_4;
 
 interface IsJwkInSetOptions {
   callbacks: Pick<CallbackContext, "hash">;
@@ -166,9 +171,13 @@ export interface VerifyCredentialRequestJwtProofResultV1_3 {
   signer: Awaited<ReturnType<typeof verifyJwt>>["signer"];
 }
 
+export type VerifyCredentialRequestJwtProofResultV1_4 =
+  VerifyCredentialRequestJwtProofResultV1_3;
+
 export type VerifyCredentialRequestJwtProofResult =
   | VerifyCredentialRequestJwtProofResultV1_0
-  | VerifyCredentialRequestJwtProofResultV1_3;
+  | VerifyCredentialRequestJwtProofResultV1_3
+  | VerifyCredentialRequestJwtProofResultV1_4;
 
 async function verifyProofV1_0(
   options: VerifyCredentialRequestJwtProofOptionsV1_0,
@@ -264,10 +273,12 @@ async function verifyProofV1_3(
 const dispatchVerifyProof = createVersionDispatcher<
   VerifyCredentialRequestJwtProofOptions,
   Promise<VerifyCredentialRequestJwtProofResult>
->("verifyCredentialRequestJwtProof", {
+>({
   [ItWalletSpecsVersion.V1_0]: (o) =>
     verifyProofV1_0(o as VerifyCredentialRequestJwtProofOptionsV1_0),
   [ItWalletSpecsVersion.V1_3]: (o) =>
+    verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
     verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
 });
 
@@ -296,7 +307,9 @@ export async function verifyCredentialRequestJwtProof(
 ): Promise<VerifyCredentialRequestJwtProofResultV1_0>;
 
 export async function verifyCredentialRequestJwtProof(
-  options: VerifyCredentialRequestJwtProofOptionsV1_3,
+  options:
+    | VerifyCredentialRequestJwtProofOptionsV1_3
+    | VerifyCredentialRequestJwtProofOptionsV1_4,
 ): Promise<VerifyCredentialRequestJwtProofResultV1_3>;
 
 export async function verifyCredentialRequestJwtProof(

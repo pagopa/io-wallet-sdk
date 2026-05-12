@@ -230,9 +230,11 @@ async function fetchMetadataV1_3(
 const dispatchFetchMetadata = createVersionDispatcher<
   FetchMetadataOptions,
   Promise<MetadataResponse>
->("fetchMetadata", {
-  [ItWalletSpecsVersion.V1_0]: fetchMetadataV1_0,
-  [ItWalletSpecsVersion.V1_3]: fetchMetadataV1_3,
+>({
+  [ItWalletSpecsVersion.V1_0]: (o) => fetchMetadataV1_0(o),
+  [ItWalletSpecsVersion.V1_3]: (o) => fetchMetadataV1_3(o),
+  // V1_4 reuses V1_3 metadata schema — no breaking changes between versions.
+  [ItWalletSpecsVersion.V1_4]: (o) => fetchMetadataV1_3(o),
 });
 
 /**
@@ -248,6 +250,8 @@ const dispatchFetchMetadata = createVersionDispatcher<
  * On failure, falls back to `.well-known/openid-credential-issuer` + optional
  * `.well-known/oauth-authorization-server`. Returns `MetadataResponseV1_3`.
  *
+ * **v1.4**: Identical behaviour to v1.3 — metadata schema is unchanged between versions.
+ *
  * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving
  * any path segment (e.g. `"https://issuer.example.it/v1"` →
  * `"https://issuer.example.it/v1/.well-known/..."`).
@@ -260,9 +264,9 @@ const dispatchFetchMetadata = createVersionDispatcher<
  *
  * @param options - Configuration for metadata fetching, including `config` for version routing
  * @returns Normalised metadata with `discoveredVia` indicating the discovery path used
- * @throws {UnexpectedStatusCodeError} If a fallback endpoint returns a non-200 status (v1.3 only)
+ * @throws {UnexpectedStatusCodeError} If a fallback endpoint returns a non-200 status (v1.3/v1.4 only)
  * @throws {ValidationError} If the response does not match the expected schema
- * @throws {ItWalletSpecsVersionError} If `config.itWalletSpecsVersion` is not V1_0 or V1_3
+ * @throws {ItWalletSpecsVersionError} If `config.itWalletSpecsVersion` is not V1_0, V1_3, or V1_4
  * @throws {FetchMetadataError} If federation discovery fails for v1.0, or for any other unexpected error
  */
 export async function fetchMetadata(

@@ -14,6 +14,7 @@ import type {
   CreateCredentialResponseOptions,
   CreateCredentialResponseOptionsV1_0,
   CreateCredentialResponseOptionsV1_3,
+  CreateCredentialResponseOptionsV1_4,
   CreateCredentialResponseResult,
   CreateCredentialResponseResultWithFlow,
   DeferredFlowOptionsV1_0,
@@ -35,7 +36,7 @@ import * as V1_3 from "./v1.3/create-credential-response";
 const dispatchBuildVersionedResponse = createVersionDispatcher<
   CreateCredentialResponseOptions,
   CredentialResponse
->("createCredentialResponse", {
+>({
   [ItWalletSpecsVersion.V1_0]: (o) =>
     V1_0.createCredentialResponseV1_0(
       (o as CreateCredentialResponseOptionsV1_0).flow,
@@ -44,12 +45,19 @@ const dispatchBuildVersionedResponse = createVersionDispatcher<
     V1_3.createCredentialResponseV1_3(
       (o as CreateCredentialResponseOptionsV1_3).flow,
     ),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    V1_3.createCredentialResponseV1_3(
+      (o as CreateCredentialResponseOptionsV1_4).flow,
+      // V1_4 reuses V1_3 credential response schema — no breaking changes between versions.
+      // Verified against compare/1.3.3...1.4.1: credential response parameters identical.
+    ),
 });
 
 export type {
   CreateCredentialResponseOptions,
   CreateCredentialResponseOptionsV1_0,
   CreateCredentialResponseOptionsV1_3,
+  CreateCredentialResponseOptionsV1_4,
   CreateCredentialResponseResult,
   CreateCredentialResponseResultWithFlow,
   DeferredFlowOptionsV1_0,

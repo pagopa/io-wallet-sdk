@@ -137,6 +137,30 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs[1]?.payload.nonce).toBe("test-nonce-2");
   });
 
+  it("parses v1.4 credential request and returns itWalletSpecsVersion V1_4", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+    });
+
+    const result = parseCredentialRequest({
+      config,
+      credentialRequest: {
+        credential_identifier: "education_degree",
+        proofs: {
+          jwt: [createProofJwtV1_3()],
+        },
+      },
+      headers: createHeaders({
+        authorization: "DPoP test-access-token",
+        dpop: VALID_DPOP_JWT,
+      }),
+    });
+
+    expect(result.itWalletSpecsVersion).toBe(ItWalletSpecsVersion.V1_4);
+    expect(result.accessToken).toBe("test-access-token");
+    expect(result.proofs).toHaveLength(1);
+  });
+
   it("throws MissingDpopProofError when DPoP header is absent (v1.0)", () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
