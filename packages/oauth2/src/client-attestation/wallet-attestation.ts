@@ -29,7 +29,7 @@ import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_4 } from "./
 const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
   VerifyWalletAttestationJwtOptions,
   Promise<VerifiedWalletAttestationJwt>
->("verifyWalletAttestationJwt", {
+>({
   [ItWalletSpecsVersion.V1_0]: (o) =>
     verifyWalletAttestationJwtV1_0(o as VerifyWalletAttestationJwtOptionsV1_0),
   [ItWalletSpecsVersion.V1_3]: (o) =>

@@ -123,12 +123,11 @@ export async function parsePushedAuthorizationRequest(
 }
 
 function getAuthorizationRequestSchema(config: IoWalletSdkConfig) {
-  return dispatchByVersion(
-    "parsePushedAuthorizationRequest",
-    config.itWalletSpecsVersion,
-    {
-      [ItWalletSpecsVersion.V1_0]: () => zAuthorizationRequestV1_0,
-      [ItWalletSpecsVersion.V1_3]: () => zAuthorizationRequestV1_3,
-    },
-  );
+  return dispatchByVersion(config.itWalletSpecsVersion, {
+    [ItWalletSpecsVersion.V1_0]: () => zAuthorizationRequestV1_0,
+    [ItWalletSpecsVersion.V1_3]: () => zAuthorizationRequestV1_3,
+    // V1_4 reuses V1_3 PAR schema — no breaking changes between versions.
+    // Verified against compare/1.3.3...1.4.1: authorization request parameters identical.
+    [ItWalletSpecsVersion.V1_4]: () => zAuthorizationRequestV1_3,
+  });
 }

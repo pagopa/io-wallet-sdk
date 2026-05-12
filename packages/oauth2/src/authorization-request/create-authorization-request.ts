@@ -120,9 +120,13 @@ export interface CreatePushedAuthorizationRequestOptionsV1_0 extends BaseCreateP
 export type CreatePushedAuthorizationRequestOptionsV1_3 =
   BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_3>;
 
+export type CreatePushedAuthorizationRequestOptionsV1_4 =
+  BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_4>;
+
 export type CreatePushedAuthorizationRequestOptions =
   | CreatePushedAuthorizationRequestOptionsV1_0
-  | CreatePushedAuthorizationRequestOptionsV1_3;
+  | CreatePushedAuthorizationRequestOptionsV1_3
+  | CreatePushedAuthorizationRequestOptionsV1_4;
 
 type CreatePushedAuthorizationRequestOptionsSigned<
   TOptions extends CreatePushedAuthorizationRequestOptions,
@@ -265,11 +269,15 @@ export async function createPushedAuthorizationRequest(
 >;
 
 export async function createPushedAuthorizationRequest(
-  options: CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_3>,
+  options:
+    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_3>
+    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_4>,
 ): Promise<PushedAuthorizationRequestUnsignedV1_3>;
 
 export async function createPushedAuthorizationRequest(
-  options: CreatePushedAuthorizationRequestOptionsV1_3,
+  options:
+    | CreatePushedAuthorizationRequestOptionsV1_3
+    | CreatePushedAuthorizationRequestOptionsV1_4,
 ): Promise<
   PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_3
 >;
@@ -362,21 +370,22 @@ function parseAuthorizationRequestByVersion(
   > &
     Pick<AuthorizationRequest, "authorization_details" | "scope">,
 ): AuthorizationRequest {
-  return dispatchByVersion(
-    "createPushedAuthorizationRequest",
-    options.config.itWalletSpecsVersion,
-    {
-      [ItWalletSpecsVersion.V1_0]: () =>
-        zAuthorizationRequestV1_0.parse({
-          ...baseAuthorizationRequest,
-          response_mode: (
-            options as CreatePushedAuthorizationRequestOptionsV1_0
-          ).responseMode,
-        }) satisfies AuthorizationRequestV1_0,
-      [ItWalletSpecsVersion.V1_3]: () =>
-        zAuthorizationRequestV1_3.parse(
-          baseAuthorizationRequest,
-        ) satisfies AuthorizationRequestV1_3,
-    },
-  );
+  return dispatchByVersion(options.config.itWalletSpecsVersion, {
+    [ItWalletSpecsVersion.V1_0]: () =>
+      zAuthorizationRequestV1_0.parse({
+        ...baseAuthorizationRequest,
+        response_mode: (options as CreatePushedAuthorizationRequestOptionsV1_0)
+          .responseMode,
+      }) satisfies AuthorizationRequestV1_0,
+    [ItWalletSpecsVersion.V1_3]: () =>
+      zAuthorizationRequestV1_3.parse(
+        baseAuthorizationRequest,
+      ) satisfies AuthorizationRequestV1_3,
+    // V1_4 reuses V1_3 authorization request schema — no breaking changes between versions.
+    // Verified against compare/1.3.3...1.4.1: authorization request parameters identical.
+    [ItWalletSpecsVersion.V1_4]: () =>
+      zAuthorizationRequestV1_3.parse(
+        baseAuthorizationRequest,
+      ) satisfies AuthorizationRequestV1_3,
+  });
 }
