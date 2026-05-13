@@ -5,7 +5,6 @@ import type {
 
 import {
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   ValidationError,
   createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
@@ -199,10 +198,7 @@ export async function createCredentialResponse(
 
     return { credentialResponse, credentialResponseJwt };
   } catch (error) {
-    if (
-      error instanceof ValidationError ||
-      error instanceof Oid4vciError
-    ) {
+    if (error instanceof ValidationError || error instanceof Oid4vciError) {
       throw error;
     }
     throw new CreateCredentialResponseError(

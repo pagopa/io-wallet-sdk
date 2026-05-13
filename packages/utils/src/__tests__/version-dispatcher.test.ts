@@ -91,6 +91,21 @@ describe("createVersionDispatcher", () => {
 
     expect(handler).toHaveBeenCalledWith(options);
   });
+
+  it("throws TypeError when an unknown version is supplied via unsafe enum cast", () => {
+    const dispatch = createVersionDispatcher({
+      [ItWalletSpecsVersion.V1_0]: vi.fn(),
+      [ItWalletSpecsVersion.V1_3]: vi.fn(),
+      [ItWalletSpecsVersion.V1_4]: vi.fn(),
+    });
+
+    const unknownVersion = "v9.9" as unknown as ItWalletSpecsVersion;
+    const options = {
+      config: { itWalletSpecsVersion: unknownVersion },
+    } as ReturnType<typeof makeOptions>;
+
+    expect(() => dispatch(options)).toThrow(TypeError);
+  });
 });
 
 describe("dispatchByVersion", () => {
@@ -146,5 +161,17 @@ describe("dispatchByVersion", () => {
 
     expect(result).toBe("async-result");
     expect(asyncHandler).toHaveBeenCalledOnce();
+  });
+
+  it("throws TypeError when an unknown version is supplied via unsafe enum cast", () => {
+    const unknownVersion = "v9.9" as unknown as ItWalletSpecsVersion;
+
+    expect(() =>
+      dispatchByVersion(unknownVersion, {
+        [ItWalletSpecsVersion.V1_0]: vi.fn(),
+        [ItWalletSpecsVersion.V1_3]: vi.fn(),
+        [ItWalletSpecsVersion.V1_4]: vi.fn(),
+      }),
+    ).toThrow(TypeError);
   });
 });
