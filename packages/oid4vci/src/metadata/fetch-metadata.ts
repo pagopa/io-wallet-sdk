@@ -266,7 +266,6 @@ const dispatchFetchMetadata = createVersionDispatcher<
  * @returns Normalised metadata with `discoveredVia` indicating the discovery path used
  * @throws {UnexpectedStatusCodeError} If a fallback endpoint returns a non-200 status (v1.3/v1.4 only)
  * @throws {ValidationError} If the response does not match the expected schema
- * @throws {ItWalletSpecsVersionError} If `config.itWalletSpecsVersion` is not V1_0, V1_3, or V1_4
  * @throws {FetchMetadataError} If federation discovery fails for v1.0, or for any other unexpected error
  */
 export async function fetchMetadata(

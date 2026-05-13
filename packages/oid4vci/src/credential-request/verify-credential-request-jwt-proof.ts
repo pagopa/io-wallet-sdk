@@ -298,7 +298,6 @@ const dispatchVerifyProof = createVersionDispatcher<
  * @returns Decoded header, payload, signer, and (v1.3) key attestation result.
  * @throws {VerifyCredentialRequestJwtProofError} If nonce is expired, proof `iat` is outside
  *   freshness bounds, signature is invalid, or the signer key is not in the attested keys.
- * @throws {ItWalletSpecsVersionError} If the configured specification version is unsupported.
  * @throws {ValidationError} If JWT header or payload schema validation fails.
  * @throws {Oauth2JwtParseError} If JWT decoding fails.
  */

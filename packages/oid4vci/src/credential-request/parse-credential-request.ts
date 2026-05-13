@@ -476,7 +476,6 @@ const dispatchParseCredentialRequest = createVersionDispatcher<
  * @throws {CredentialDpopProofError} If the `DPoP` header is absent or not a valid compact JWT.
  * @throws {ValidationError} If request body schema or semantic checks fail.
  * @throws {Oauth2JwtParseError} If a proof JWT cannot be decoded.
- * @throws {ItWalletSpecsVersionError} If the configured specification version is unsupported.
  * @throws {ParseCredentialRequestError} For unexpected parsing failures.
  */
 export function parseCredentialRequest(

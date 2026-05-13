@@ -216,7 +216,6 @@ export class WalletProvider {
    * @throws {ValidationError} When the generated wallet attestation JWT fails validation.
    * @throws {ClientAttestationError} When wallet attestation JWT creation fails unexpectedly,
    * including signing errors from the configured `signJwt` callback.
-   * @throws {ItWalletSpecsVersionError} When the configured IT-Wallet specification version is not supported.
    *
    * @example v1.0 - Basic wallet attestation with trust chain
    * const jwt = await provider.createItWalletAttestationJwt({

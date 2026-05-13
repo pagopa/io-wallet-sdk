@@ -81,7 +81,6 @@ export type {
  * @returns An object containing:
  * - `credentialResponse`: plain version-specific credential response JSON
  * - `credentialResponseJwt`: encrypted JWE string when encryption is requested
- * @throws {ItWalletSpecsVersionError} When the configured specification version is not supported.
  * @throws {ValidationError} When the generated response does not satisfy the version schema.
  * @throws {Oid4vciError} When encryption is requested but `callbacks.encryptJwe` is not provided.
  * @throws {CreateCredentialResponseError} For unexpected errors during response creation.
@@ -201,7 +200,6 @@ export async function createCredentialResponse(
     return { credentialResponse, credentialResponseJwt };
   } catch (error) {
     if (
-      error instanceof ItWalletSpecsVersionError ||
       error instanceof ValidationError ||
       error instanceof Oid4vciError
     ) {
