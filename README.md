@@ -2,11 +2,10 @@
 
 [![CI](https://github.com/pagopa/io-wallet-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/pagopa/io-wallet-sdk/actions)
 [![npm](https://img.shields.io/npm/v/@pagopa/io-wallet-utils?label=latest)](https://www.npmjs.com/search?q=%40pagopa%2Fio-wallet)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 A comprehensive TypeScript library for building applications that integrate with **Italy's national digital identity wallet**. 🇮🇹
 
-This SDK provides all the necessary tools to handle Verifiable Credentials and secure interactions according to the official Italian specifications, which are based on **OpenID for Verifiable Credentials (OpenID4VC)** and **OAuth 2.0** standards. It builds upon the foundation of the [oid4vc-ts](https://github.com/openwallet-foundation-labs/oid4vc-ts) library from the OpenWallet Foundation, extending it to meet the specific requirements of the Italian digital ecosystem.
+This SDK provides all the necessary tools to handle Verifiable Credentials and secure interactions according to the official Italian specifications, which are based on **OpenID for Verifiable Credentials (OpenID4VC)** and **OAuth 2.0** standards. 
 
 The project is structured as a monorepo using `pnpm` and is designed to be environment-agnostic (Node.js, Browser, React Native), allowing you to build services for Relying Parties, Issuers, and Wallets.
 
@@ -136,3 +135,11 @@ const config = new IoWalletSdkConfig({
 ## 🧭 Contribute
 
 For internal development conventions and contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+This project is licensed under the Apache License Version 2.0 (Apache-2.0).
+
+## Credits
+
+It builds upon the foundation of the [oid4vc-ts](https://github.com/openwallet-foundation-labs/oid4vc-ts) library from the OpenWallet Foundation, extending it to meet the specific requirements of the Italian digital ecosystem.
