@@ -108,7 +108,7 @@ export async function createAuthorizationResponse(
     // Determine which metadata to use based on client_id prefix
     const { requestObject } = options;
     const clientMetadata = requestObject.client_metadata;
-    const clientIdPrefix = extractClientIdPrefix(requestObject.client_id);
+    const { prefix: clientIdPrefix } = extractClientIdPrefix(requestObject.client_id);
 
     if (clientIdPrefix === ClientIdPrefix.X509_HASH && !clientMetadata) {
       throw new CreateAuthorizationResponseError(

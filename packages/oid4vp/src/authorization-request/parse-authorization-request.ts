@@ -31,19 +31,34 @@ export enum ClientIdPrefix {
   X509_HASH = "x509_hash",
 }
 
+export interface ClientIdParts {
+  prefix: ClientIdPrefix | string;
+  clientId: string;
+}
+
 /**
- * Extracts the prefix from a client_id string
+ * Extracts the prefix and clean clientId from a client_id string.
  * @param clientId - The client_id from the request object
- * @returns The prefix type (x509_hash, openid_federation, or none)
+ * @returns A {@link ClientIdParts} object with the resolved prefix and unprefixed clientId
  */
-export function extractClientIdPrefix(clientId: string): ClientIdPrefix {
-  if (clientId.startsWith("x509_hash:")) {
-    return ClientIdPrefix.X509_HASH;
+export function extractClientIdPrefix(clientId: string): ClientIdParts {
+  const colonIndex = clientId.indexOf(":");
+
+  if (colonIndex === -1) {
+    return { prefix: ClientIdPrefix.NONE, clientId };
   }
-  if (clientId.startsWith("openid_federation:")) {
-    return ClientIdPrefix.OPENID_FEDERATION;
+
+  const rawPrefix = clientId.slice(0, colonIndex);
+  const rest = clientId.slice(colonIndex + 1);
+
+  if (rawPrefix === ClientIdPrefix.X509_HASH) {
+    return { prefix: ClientIdPrefix.X509_HASH, clientId: rest };
   }
-  return ClientIdPrefix.NONE;
+  if (rawPrefix === ClientIdPrefix.OPENID_FEDERATION) {
+    return { prefix: ClientIdPrefix.OPENID_FEDERATION, clientId: rest };
+  }
+
+  return { prefix: rawPrefix, clientId: rest };
 }
 
 /**
@@ -66,7 +81,7 @@ function getPublicKeyForVerification(options: {
 }): JwtSigner {
   const { header, payload } = options;
 
-  const clientIdPrefix = extractClientIdPrefix(payload.client_id);
+  const { prefix: clientIdPrefix } = extractClientIdPrefix(payload.client_id);
 
   // Priority 1: x509_hash prefix - use x5c certificate chain from header
   if (clientIdPrefix === ClientIdPrefix.X509_HASH) {
