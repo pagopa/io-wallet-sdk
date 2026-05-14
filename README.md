@@ -77,7 +77,8 @@ const result = await createTokenDPoP({
     },
     hash: async (data, algorithm) => {
       // Use any hash implementation (e.g. SubtleCrypto, node:crypto)
-      return crypto.subtle.digest(algorithm, data);
+      const digest = await crypto.subtle.digest(algorithm, data);
+      return new Uint8Array(digest);
     },
     generateRandom: async (byteLength) => {
       // Use any CSPRNG available in your environment
