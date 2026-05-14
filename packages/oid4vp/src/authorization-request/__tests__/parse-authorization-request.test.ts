@@ -536,8 +536,8 @@ describe("parseAuthorizeRequest - optional verification", () => {
 describe("extractClientIdPrefix", () => {
   it("returns X509_HASH prefix and clean clientId for x509_hash scheme", () => {
     expect(extractClientIdPrefix("x509_hash:abc123")).toEqual({
-      prefix: ClientIdPrefix.X509_HASH,
       clientId: "abc123",
+      prefix: ClientIdPrefix.X509_HASH,
     });
   });
 
@@ -545,29 +545,29 @@ describe("extractClientIdPrefix", () => {
     expect(
       extractClientIdPrefix("openid_federation:https://issuer.example.com"),
     ).toEqual({
-      prefix: ClientIdPrefix.OPENID_FEDERATION,
       clientId: "https://issuer.example.com",
+      prefix: ClientIdPrefix.OPENID_FEDERATION,
     });
   });
 
   it("returns raw string prefix and clean clientId for unknown scheme", () => {
     expect(extractClientIdPrefix("unknown_prefix:some-value")).toEqual({
-      prefix: "unknown_prefix",
       clientId: "some-value",
+      prefix: "unknown_prefix",
     });
   });
 
   it("returns NONE prefix and original string when no colon is present", () => {
     expect(extractClientIdPrefix("no_prefix")).toEqual({
-      prefix: ClientIdPrefix.NONE,
       clientId: "no_prefix",
+      prefix: ClientIdPrefix.NONE,
     });
   });
 
   it("handles value containing additional colons correctly", () => {
     expect(extractClientIdPrefix("x509_hash:a:b:c")).toEqual({
-      prefix: ClientIdPrefix.X509_HASH,
       clientId: "a:b:c",
+      prefix: ClientIdPrefix.X509_HASH,
     });
   });
 });

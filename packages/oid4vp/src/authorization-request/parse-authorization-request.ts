@@ -32,8 +32,8 @@ export enum ClientIdPrefix {
 }
 
 export interface ClientIdParts {
-  prefix: ClientIdPrefix | string;
   clientId: string;
+  prefix: ClientIdPrefix | string;
 }
 
 /**
@@ -45,20 +45,20 @@ export function extractClientIdPrefix(clientId: string): ClientIdParts {
   const colonIndex = clientId.indexOf(":");
 
   if (colonIndex === -1) {
-    return { prefix: ClientIdPrefix.NONE, clientId };
+    return { clientId, prefix: ClientIdPrefix.NONE };
   }
 
   const rawPrefix = clientId.slice(0, colonIndex);
   const rest = clientId.slice(colonIndex + 1);
 
   if (rawPrefix === ClientIdPrefix.X509_HASH) {
-    return { prefix: ClientIdPrefix.X509_HASH, clientId: rest };
+    return { clientId: rest, prefix: ClientIdPrefix.X509_HASH };
   }
   if (rawPrefix === ClientIdPrefix.OPENID_FEDERATION) {
-    return { prefix: ClientIdPrefix.OPENID_FEDERATION, clientId: rest };
+    return { clientId: rest, prefix: ClientIdPrefix.OPENID_FEDERATION };
   }
 
-  return { prefix: rawPrefix, clientId: rest };
+  return { clientId: rest, prefix: rawPrefix };
 }
 
 /**
