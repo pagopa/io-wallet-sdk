@@ -240,7 +240,7 @@ describe("createAuthorizationRequest", () => {
       createAuthorizationRequest({
         authorizationRequestPayload: {
           ...authorizationRequestPayload,
-          state: undefined as unknown as string,
+          nonce: undefined as unknown as string,
         },
         callbacks,
         config: configV1_0,
@@ -252,7 +252,7 @@ describe("createAuthorizationRequest", () => {
       createAuthorizationRequest({
         authorizationRequestPayload: {
           ...authorizationRequestPayload,
-          state: undefined as unknown as string,
+          nonce: undefined as unknown as string,
         },
         callbacks,
         config: configV1_0,
