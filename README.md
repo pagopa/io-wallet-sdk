@@ -70,7 +70,10 @@ const result = await createTokenDPoP({
   callbacks: {
     signJwt: async (signer, { header, payload }) => {
       // Use any JWT library or hardware key (e.g. node-jose, jose, HSM)
-      return myJwtLibrary.sign(header, payload, myPrivateKey);
+      return {
+        jwt: myJwtLibrary.sign(header, payload, myPrivateKey),
+        signerJwk: myPublicJwk,
+      };
     },
     hash: async (data, algorithm) => {
       // Use any hash implementation (e.g. SubtleCrypto, node:crypto)
