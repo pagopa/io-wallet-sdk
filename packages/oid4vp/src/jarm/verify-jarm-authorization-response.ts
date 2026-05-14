@@ -187,7 +187,7 @@ export async function verifyJarmAuthorizationResponse(
       );
     }
 
-    if (response.iss !== expectedIssuer) {
+    if (expectedIssuer && response.iss !== expectedIssuer) {
       throw new Oauth2Error(
         `Jarm Auth Response contains 'iss' value '${response.iss}', but expected '${expectedIssuer}'.`,
       );
