@@ -13,7 +13,7 @@ import {
   dispatchByVersion,
 } from "@pagopa/io-wallet-utils";
 
-import { ParseAuthorizeRequestError } from "../errors";
+import { Oid4vpError, ParseAuthorizeRequestError } from "../errors";
 import {
   Openid4vpAuthorizationRequestHeader,
   Openid4vpAuthorizationRequestPayload,
@@ -31,19 +31,39 @@ export enum ClientIdPrefix {
   X509_HASH = "x509_hash",
 }
 
+export interface ClientIdParts {
+  clientId: string;
+  prefix: ClientIdPrefix;
+}
+
 /**
- * Extracts the prefix from a client_id string
+ * Extracts the prefix and clean clientId from a client_id string.
+ * Only the IT-Wallet profile schemes (`openid_federation`, `x509_hash`) and the
+ * prefix-less form are accepted; any other prefix causes an error.
  * @param clientId - The client_id from the request object
- * @returns The prefix type (x509_hash, openid_federation, or none)
+ * @returns A {@link ClientIdParts} object with the resolved prefix and unprefixed clientId
+ * @throws {Oid4vpError} When the prefix does not match a supported IT-Wallet scheme
  */
-export function extractClientIdPrefix(clientId: string): ClientIdPrefix {
-  if (clientId.startsWith("x509_hash:")) {
-    return ClientIdPrefix.X509_HASH;
+export function extractClientIdPrefix(clientId: string): ClientIdParts {
+  const colonIndex = clientId.indexOf(":");
+
+  if (colonIndex === -1) {
+    return { clientId, prefix: ClientIdPrefix.NONE };
   }
-  if (clientId.startsWith("openid_federation:")) {
-    return ClientIdPrefix.OPENID_FEDERATION;
+
+  const rawPrefix = clientId.slice(0, colonIndex);
+  const rest = clientId.slice(colonIndex + 1);
+
+  if (rawPrefix === ClientIdPrefix.X509_HASH) {
+    return { clientId: rest, prefix: ClientIdPrefix.X509_HASH };
   }
-  return ClientIdPrefix.NONE;
+  if (rawPrefix === ClientIdPrefix.OPENID_FEDERATION) {
+    return { clientId: rest, prefix: ClientIdPrefix.OPENID_FEDERATION };
+  }
+
+  throw new Oid4vpError(
+    `Unsupported client_id prefix "${rawPrefix}": only "openid_federation" and "x509_hash" are allowed by the IT-Wallet profile`,
+  );
 }
 
 /**
@@ -66,7 +86,7 @@ function getPublicKeyForVerification(options: {
 }): JwtSigner {
   const { header, payload } = options;
 
-  const clientIdPrefix = extractClientIdPrefix(payload.client_id);
+  const { prefix: clientIdPrefix } = extractClientIdPrefix(payload.client_id);
 
   // Priority 1: x509_hash prefix - use x5c certificate chain from header
   if (clientIdPrefix === ClientIdPrefix.X509_HASH) {
