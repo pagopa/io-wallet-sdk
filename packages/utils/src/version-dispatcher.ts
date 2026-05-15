@@ -15,7 +15,6 @@ export interface VersionedOptions {
  * intentional trade-off: compile-time exhaustiveness is preferred over
  * sparse-map flexibility.
  *
- * @param featureName - Used in the error message when version is unsupported
  * @param handlers    - Map of version → handler function
  * @returns Dispatcher function that invokes the handler for `options.config.itWalletSpecsVersion`.
  * @throws {ItWalletSpecsVersionError} If no handler is registered for the configured version.
@@ -45,7 +44,6 @@ export function createVersionDispatcher<
 /**
  * Dispatches by a bare version value (no options object needed).
  *
- * @param featureName - Used in the error message when version is unsupported
  * @param version     - The version to dispatch on
  * @param handlers    - Map of version → zero-argument handler function
  * @returns Result returned by the selected version handler.
