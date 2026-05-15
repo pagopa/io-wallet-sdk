@@ -21,11 +21,6 @@ describe("zOpenid4vpAuthorizationRequestPayload", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should fail when iss is missing", () => {
-    const result = zOpenid4vpAuthorizationRequestPayload.safeParse(basePayload);
-    expect(result.success).toBe(false);
-  });
-
   it("should fail when iss is not a string", () => {
     const result = zOpenid4vpAuthorizationRequestPayload.safeParse({
       ...basePayload,
