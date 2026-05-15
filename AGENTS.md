@@ -65,9 +65,12 @@ Each package follows a consistent structure:
 
 ### Multi-Version Support Pattern
 
-The SDK supports multiple versions of the Italian Wallet specifications simultaneously using a structured versioning pattern:
+The SDK supports multiple versions of the Italian Wallet specifications simultaneously using a structured versioning pattern.
 
-**Directory Structure:**
+#### Directory Structure
+
+A new version directory (`v1.x/`) is only created when the new version introduces **breaking changes** in protocol structure (e.g., different request/response schema). When a new spec version reuses an existing implementation, no new directory is needed — the dispatcher simply maps the new version key to the existing handler.
+
 ```
 feature-name/
 ├── types.ts                    # Shared types and version-specific option types
@@ -84,63 +87,85 @@ feature-name/
     └── version-router.test.ts  # Tests for version routing logic
 ```
 
-**Version Router Pattern:**
-- Top-level function with TypeScript overloads for each version
-- Switch statement routing based on `config.itWalletSpecsVersion`
-- Type narrowing ensures compile-time safety
-- Runtime validation for version-specific parameters
+#### Version Dispatcher (`createVersionDispatcher` / `dispatchByVersion`)
 
-**Example:**
+Routing is done via `createVersionDispatcher` and `dispatchByVersion` from `@pagopa/io-wallet-utils`. Both utilities enforce a **`Required` contract**: every version declared in `ItWalletSpecsVersion` **must** be registered. This makes exhaustiveness a compile-time guarantee rather than a runtime check.
+
 ```typescript
-// Version-specific option types
-export interface FeatureOptionsV1_0 extends BaseOptions {
-  config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_0 } & IoWalletSdkConfig;
-}
+// ✅ All versions must be present — omitting one is a compile error
+const dispatch = createVersionDispatcher<FeatureOptions, Promise<Feature>>({
+  [ItWalletSpecsVersion.V1_0]: (o) => V1_0.createFeature(o as FeatureOptionsV1_0),
+  [ItWalletSpecsVersion.V1_3]: (o) => V1_3.createFeature(o as FeatureOptionsV1_3),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    // V1_4 reuses V1_3 implementation — no breaking changes between versions.
+    // Verified against spec diff vX.X...vX.Y: parameters identical.
+    V1_3.createFeature(o as FeatureOptionsV1_3),
+});
+```
 
-export interface FeatureOptionsV1_3 extends BaseOptions {
-  config: { itWalletSpecsVersion: ItWalletSpecsVersion.V1_3 } & IoWalletSdkConfig;
-  keyAttestation: string; // Required only in v1.3
-}
+#### Adding a New Spec Version
 
+**Step 1** — Add the new value to `ItWalletSpecsVersion` in `packages/utils/src/config.ts`:
+```typescript
+export enum ItWalletSpecsVersion {
+  V1_0 = "V1_0",
+  V1_3 = "V1_3",
+  V1_4 = "V1_4", // new
+}
+```
+TypeScript will immediately flag every `createVersionDispatcher` / `dispatchByVersion` call site that is missing the new key.
+
+**Step 2a — Reusing an existing implementation** (no schema changes):
+Define a type alias in `types.ts` and map the new key to the existing handler:
+```typescript
+// types.ts
+export type FeatureOptionsV1_4 = {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+} & Omit<FeatureOptionsV1_3, "config">;
+
+export type FeatureOptions =
+  | FeatureOptionsV1_0
+  | FeatureOptionsV1_3
+  | FeatureOptionsV1_4;
+```
+```typescript
+// create-feature.ts
+[ItWalletSpecsVersion.V1_4]: (o) =>
+  // V1_4 reuses V1_3 schema — no breaking changes.
+  V1_3.createFeature(o as FeatureOptionsV1_3),
+```
+
+**Step 2b — New breaking changes** (different schema):
+Create a new `v1.4/` directory with its own implementation, Zod schemas and tests, then register the new handler in the dispatcher.
+
+**Step 3** — Add the TypeScript overload in the public-facing function:
+```typescript
 // Function overloads for type safety
 export function createFeature(options: FeatureOptionsV1_0): Promise<FeatureV1_0>;
-export function createFeature(options: FeatureOptionsV1_3): Promise<FeatureV1_3>;
+export function createFeature(options: FeatureOptionsV1_3 | FeatureOptionsV1_4): Promise<FeatureV1_3>;
 
-// Implementation routes to version-specific logic
 export async function createFeature(options: FeatureOptions): Promise<Feature> {
-  switch (options.config.itWalletSpecsVersion) {
-    case ItWalletSpecsVersion.V1_0:
-      // Validate v1.0 constraints
-      if ('keyAttestation' in options) {
-        throw new ItWalletSpecsVersionError(...);
-      }
-      return V1_0.createFeature(options);
-    case ItWalletSpecsVersion.V1_3:
-      return V1_3.createFeature(options);
-    default:
-      throw new ItWalletSpecsVersionError(...);
-  }
+  return dispatch(options);
 }
 ```
 
-**Key Principles:**
-- **No code duplication**: Shared logic stays in common files; only version-specific differences live in version directories
-- **Type safety**: TypeScript overloads ensure consumers get correct return types based on config
-- **Explicit validation**: Runtime checks prevent mixing incompatible version features
-- **Exhaustiveness**: Default case in switch ensures all versions are handled
-- **Clear separation**: Version-specific schemas and types live with their implementations
+**Step 4** — Update `types.ts` union, public `index.ts` exports, and tests. When new version directories are created, also update imports, tests, and README documentation in the same session.
+
+#### Key Principles
+- **Compile-time exhaustiveness**: missing a version key is a build error, not a silent runtime failure
+- **No code duplication**: reuse existing handlers when versions share a schema; only create new directories for breaking changes
+- **Type safety**: TypeScript overloads ensure consumers get correct return types based on the config version
+- **Clear separation**: version-specific schemas and types live with their implementations
 
 **When to add version support:**
 - New Italian Wallet specification version is released
-- Breaking changes in protocol structure (e.g., `proof` vs `proofs`)
-- New required parameters for specific versions (e.g., `keyAttestation`)
+- Breaking changes in protocol structure (e.g., `proof` vs `proofs`, new required fields)
+- New required parameters exclusive to a specific version (e.g., `keyAttestation`)
 
 **When NOT to use versioning:**
 - Backward-compatible additions (add to existing implementation)
 - Bug fixes (apply to all affected versions)
 - Internal refactoring (maintain same external API)
-
-When creating versioned folder structures (e.g., v1.0/, v1.3/), always update all related imports, tests, and README documentation in the same session.
 
 
 ## IT-Wallet Technical Specifications

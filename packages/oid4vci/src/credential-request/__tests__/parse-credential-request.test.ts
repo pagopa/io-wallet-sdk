@@ -3,7 +3,6 @@ import { Oauth2JwtParseError } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
@@ -136,6 +135,30 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs).toHaveLength(2);
     expect(result.proofs[0]?.payload.aud).toBe("https://issuer.example.com");
     expect(result.proofs[1]?.payload.nonce).toBe("test-nonce-2");
+  });
+
+  it("parses v1.4 credential request and returns itWalletSpecsVersion V1_4", () => {
+    const config = new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+    });
+
+    const result = parseCredentialRequest({
+      config,
+      credentialRequest: {
+        credential_identifier: "education_degree",
+        proofs: {
+          jwt: [createProofJwtV1_3()],
+        },
+      },
+      headers: createHeaders({
+        authorization: "DPoP test-access-token",
+        dpop: VALID_DPOP_JWT,
+      }),
+    });
+
+    expect(result.itWalletSpecsVersion).toBe(ItWalletSpecsVersion.V1_4);
+    expect(result.accessToken).toBe("test-access-token");
+    expect(result.proofs).toHaveLength(1);
   });
 
   it("throws MissingDpopProofError when DPoP header is absent (v1.0)", () => {
@@ -660,22 +683,5 @@ describe("parseCredentialRequest", () => {
         }),
       }),
     ).toThrow(Oauth2JwtParseError);
-  });
-
-  it("throws ItWalletSpecsVersionError for unsupported version", () => {
-    const unsupportedConfig = new IoWalletSdkConfig({
-      itWalletSpecsVersion: "9.9.9" as unknown as ItWalletSpecsVersion,
-    });
-
-    expect(() =>
-      parseCredentialRequest({
-        config: unsupportedConfig,
-        credentialRequest: {},
-        headers: createHeaders({
-          authorization: "DPoP test-access-token",
-          dpop: VALID_DPOP_JWT,
-        }),
-      } as unknown as Parameters<typeof parseCredentialRequest>[0]),
-    ).toThrow(ItWalletSpecsVersionError);
   });
 });

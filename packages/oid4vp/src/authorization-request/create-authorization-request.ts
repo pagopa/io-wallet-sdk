@@ -37,7 +37,9 @@ export type JarOptionsV1_0 = BaseJarOptions<JwtSignerFederation>;
 
 export type JarOptionsV1_3 = BaseJarOptions<JwtSignerX5c>;
 
-type JarOptions = JarOptionsV1_0 | JarOptionsV1_3;
+export type JarOptionsV1_4 = JarOptionsV1_3;
+
+type JarOptions = JarOptionsV1_0 | JarOptionsV1_3 | JarOptionsV1_4;
 
 interface BaseCreateAuthorizationRequestOptions<
   V extends ItWalletSpecsVersion,
@@ -84,9 +86,16 @@ export type CreateAuthorizationRequestOptionsV1_3 =
     JarOptionsV1_3
   >;
 
+export type CreateAuthorizationRequestOptionsV1_4 =
+  BaseCreateAuthorizationRequestOptions<
+    ItWalletSpecsVersion.V1_4,
+    JarOptionsV1_4
+  >;
+
 export type CreateAuthorizationRequestOptions =
   | CreateAuthorizationRequestOptionsV1_0
-  | CreateAuthorizationRequestOptionsV1_3;
+  | CreateAuthorizationRequestOptionsV1_3
+  | CreateAuthorizationRequestOptionsV1_4;
 
 interface BaseCreateAuthorizationRequestResult<TJar extends JarOptions> {
   authorizationRequest: string;
@@ -101,9 +110,13 @@ export type CreateAuthorizationRequestResultV1_0 =
 export type CreateAuthorizationRequestResultV1_3 =
   BaseCreateAuthorizationRequestResult<JarOptionsV1_3>;
 
+export type CreateAuthorizationRequestResultV1_4 =
+  BaseCreateAuthorizationRequestResult<JarOptionsV1_4>;
+
 export type CreateAuthorizationRequestResult =
   | CreateAuthorizationRequestResultV1_0
-  | CreateAuthorizationRequestResultV1_3;
+  | CreateAuthorizationRequestResultV1_3
+  | CreateAuthorizationRequestResultV1_4;
 
 /**
  * Creates an OpenID4VP authorization request URL.
@@ -119,7 +132,7 @@ export type CreateAuthorizationRequestResult =
 const dispatchCreateAuthorizationRequest = createVersionDispatcher<
   CreateAuthorizationRequestOptions,
   Promise<CreateAuthorizationRequestResult>
->("createAuthorizationRequest", {
+>({
   [ItWalletSpecsVersion.V1_0]: async (o) =>
     createAuthorizationRequestWithHeader(
       o as CreateAuthorizationRequestOptionsV1_0,
@@ -128,6 +141,12 @@ const dispatchCreateAuthorizationRequest = createVersionDispatcher<
   [ItWalletSpecsVersion.V1_3]: async (o) =>
     createAuthorizationRequestWithHeader(
       o as CreateAuthorizationRequestOptionsV1_3,
+      zOpenid4vpAuthorizationRequestHeaderV1_3,
+    ),
+  // V1_4 reuses V1_3 JAR header schema (alg, typ, kid, trust_chain, x5c) — no breaking changes.
+  [ItWalletSpecsVersion.V1_4]: async (o) =>
+    createAuthorizationRequestWithHeader(
+      o as CreateAuthorizationRequestOptionsV1_4,
       zOpenid4vpAuthorizationRequestHeaderV1_3,
     ),
 });
@@ -139,6 +158,10 @@ export async function createAuthorizationRequest(
 export async function createAuthorizationRequest(
   options: CreateAuthorizationRequestOptionsV1_3,
 ): Promise<CreateAuthorizationRequestResultV1_3>;
+
+export async function createAuthorizationRequest(
+  options: CreateAuthorizationRequestOptionsV1_4,
+): Promise<CreateAuthorizationRequestResultV1_4>;
 
 export async function createAuthorizationRequest(
   options: CreateAuthorizationRequestOptions,
