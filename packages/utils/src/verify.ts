@@ -6,7 +6,6 @@ import { CLOCK_SKEW_TOLERANCE_SECONDS, MAX_IAT_AGE_SECONDS } from "./constants";
  * @param options - Validation options.
  * @param options.iat - Issued-at timestamp in seconds.
  * @param options.now - Optional current date, defaults to the current time.
- * @returns Resolves when the issued-at value is within the accepted time window.
  * @throws {Error} If `iat` is too old or too far in the future.
  */
 export function verifyJwtIatOrThrow(options: { iat: number; now?: Date }) {

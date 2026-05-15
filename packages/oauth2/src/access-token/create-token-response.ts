@@ -111,7 +111,7 @@ export interface CreateAccessTokenResponseOptions {
  *
  * @param options - Access token response creation options.
  * @returns OAuth token response with a signed access token JWT.
- * @throws {CreateTokenResponseError} If DPoP binding is required but missing, or response creation fails.
+ * @throws {CreateTokenResponseError} If DPoP binding is required but missing, or if response creation fails, including validation failures from the generated JWT header or payload.
  * @throws {ValidationError} If the generated JWT header or payload fails validation.
  */
 export async function createAccessTokenResponse(
