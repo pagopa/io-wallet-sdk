@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { IoWalletSdkConfig, ItWalletSpecsVersion } from "../config";
+import { ItWalletSpecsVersionError } from "../errors/errors";
 import {
   createVersionDispatcher,
   dispatchByVersion,
@@ -92,7 +93,7 @@ describe("createVersionDispatcher", () => {
     expect(handler).toHaveBeenCalledWith(options);
   });
 
-  it("throws TypeError when an unknown version is supplied via unsafe enum cast", () => {
+  it("throws ItWalletSpecsVersionError when an unknown version is supplied via unsafe enum cast", () => {
     const dispatch = createVersionDispatcher({
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
@@ -104,7 +105,7 @@ describe("createVersionDispatcher", () => {
       config: { itWalletSpecsVersion: unknownVersion },
     } as ReturnType<typeof makeOptions>;
 
-    expect(() => dispatch(options)).toThrow(TypeError);
+    expect(() => dispatch(options)).toThrow(ItWalletSpecsVersionError);
   });
 });
 
@@ -163,7 +164,7 @@ describe("dispatchByVersion", () => {
     expect(asyncHandler).toHaveBeenCalledOnce();
   });
 
-  it("throws TypeError when an unknown version is supplied via unsafe enum cast", () => {
+  it("throws ItWalletSpecsVersionError when an unknown version is supplied via unsafe enum cast", () => {
     const unknownVersion = "v9.9" as unknown as ItWalletSpecsVersion;
 
     expect(() =>
@@ -172,6 +173,6 @@ describe("dispatchByVersion", () => {
         [ItWalletSpecsVersion.V1_3]: vi.fn(),
         [ItWalletSpecsVersion.V1_4]: vi.fn(),
       }),
-    ).toThrow(TypeError);
+    ).toThrow(ItWalletSpecsVersionError);
   });
 });

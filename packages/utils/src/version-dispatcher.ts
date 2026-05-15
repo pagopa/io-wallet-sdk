@@ -1,4 +1,5 @@
 import { ItWalletSpecsVersion } from "./config";
+import { ItWalletSpecsVersionError } from "./errors/errors";
 
 export interface VersionedOptions {
   config: { itWalletSpecsVersion: ItWalletSpecsVersion };
@@ -14,11 +15,9 @@ export interface VersionedOptions {
  * intentional trade-off: compile-time exhaustiveness is preferred over
  * sparse-map flexibility.
  *
- * An unknown version value supplied at runtime via an unsafe enum cast
- * will produce a `TypeError` rather than an `ItWalletSpecsVersionError`.
- * Both `createVersionDispatcher` and `dispatchByVersion` share this contract.
- *
  * @param handlers - Map of version → handler function (all versions required)
+ * @throws {ItWalletSpecsVersionError} When an unknown version is supplied at runtime
+ * (e.g. via an unsafe enum cast or external configuration)
  */
 export function createVersionDispatcher<
   TOptions extends VersionedOptions,
@@ -28,8 +27,18 @@ export function createVersionDispatcher<
     Record<ItWalletSpecsVersion, (options: TOptions) => TResult>
   >,
 ): (options: TOptions) => TResult {
-  return (options: TOptions): TResult =>
-    handlers[options.config.itWalletSpecsVersion](options);
+  return (options: TOptions): TResult => {
+    const version = options.config.itWalletSpecsVersion;
+    const handler = handlers[version];
+    if (typeof handler !== "function") {
+      throw new ItWalletSpecsVersionError(
+        "version-dispatcher",
+        version,
+        Object.keys(handlers),
+      );
+    }
+    return handler(options);
+  };
 }
 
 /**
@@ -40,10 +49,20 @@ export function createVersionDispatcher<
  *
  * @param version  - The version to dispatch on
  * @param handlers - Map of version → zero-argument handler function (all versions required)
+ * @throws {ItWalletSpecsVersionError} When an unknown version is supplied at runtime
+ * (e.g. via an unsafe enum cast or external configuration)
  */
 export function dispatchByVersion<TResult>(
   version: ItWalletSpecsVersion,
   handlers: Required<Record<ItWalletSpecsVersion, () => TResult>>,
 ): TResult {
-  return handlers[version]();
+  const handler = handlers[version];
+  if (typeof handler !== "function") {
+    throw new ItWalletSpecsVersionError(
+      "version-dispatcher",
+      version,
+      Object.keys(handlers),
+    );
+  }
+  return handler();
 }
