@@ -5,21 +5,15 @@ export interface VersionedOptions {
   config: { itWalletSpecsVersion: ItWalletSpecsVersion };
 }
 
-function getSupportedVersions<THandler>(
-  handlers: Partial<Record<ItWalletSpecsVersion, THandler>>,
-): ItWalletSpecsVersion[] {
-  return (
-    Object.entries(handlers) as [ItWalletSpecsVersion, THandler | undefined][]
-  )
-    .filter(([, handler]) => handler !== undefined)
-    .map(([version]) => version);
-}
-
 /**
  * Creates a version-aware dispatcher that routes a function call
  * based on options.config.itWalletSpecsVersion.
  *
- * Throws ItWalletSpecsVersionError for any unregistered version.
+ * All versions declared in `ItWalletSpecsVersion` must be provided
+ * (`Required` contract). Adding a new spec version therefore requires
+ * updating every `createVersionDispatcher` call site. This is an
+ * intentional trade-off: compile-time exhaustiveness is preferred over
+ * sparse-map flexibility.
  *
  * @param featureName - Used in the error message when version is unsupported
  * @param handlers    - Map of version → handler function
@@ -30,29 +24,21 @@ export function createVersionDispatcher<
   TOptions extends VersionedOptions,
   TResult,
 >(
-  featureName: string,
-  handlers: Partial<
+  handlers: Required<
     Record<ItWalletSpecsVersion, (options: TOptions) => TResult>
   >,
 ): (options: TOptions) => TResult {
-  const supportedVersions = getSupportedVersions(handlers);
-
   return (options: TOptions): TResult => {
     const version = options.config.itWalletSpecsVersion;
-
-    const handler = (handlers as Record<string, (o: TOptions) => TResult>)[
-      version
-    ];
-
-    if (handler) {
-      return handler(options);
+    const handler = handlers[version];
+    if (typeof handler !== "function") {
+      throw new ItWalletSpecsVersionError(
+        "version-dispatcher",
+        version,
+        Object.keys(handlers),
+      );
     }
-
-    throw new ItWalletSpecsVersionError(
-      featureName,
-      version,
-      supportedVersions,
-    );
+    return handler(options);
   };
 }
 
@@ -66,15 +52,16 @@ export function createVersionDispatcher<
  * @throws {ItWalletSpecsVersionError} If no handler is registered for the version.
  */
 export function dispatchByVersion<TResult>(
-  featureName: string,
   version: ItWalletSpecsVersion,
-  handlers: Partial<Record<ItWalletSpecsVersion, () => TResult>>,
+  handlers: Required<Record<ItWalletSpecsVersion, () => TResult>>,
 ): TResult {
   const handler = handlers[version];
-  if (handler) return handler();
-  throw new ItWalletSpecsVersionError(
-    featureName,
-    version,
-    getSupportedVersions(handlers),
-  );
+  if (typeof handler !== "function") {
+    throw new ItWalletSpecsVersionError(
+      "version-dispatcher",
+      version,
+      Object.keys(handlers),
+    );
+  }
+  return handler();
 }

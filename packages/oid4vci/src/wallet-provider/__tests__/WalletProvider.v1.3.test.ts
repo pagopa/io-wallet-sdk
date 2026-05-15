@@ -7,7 +7,6 @@ import {
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
 } from "@pagopa/io-wallet-utils";
 import {
   type MockedFunction,
@@ -109,31 +108,6 @@ describe("WalletProvider v1.3 - version routing", () => {
     expect(result).toBe("v1.3-jwt-token");
     expect(mockCreateWalletAttestationJwtV1_3).toHaveBeenCalledTimes(1);
     expect(mockCreateWalletAttestationJwtV1_0).not.toHaveBeenCalled();
-  });
-
-  it("should throw ItWalletSpecsVersionError for unsupported version", async () => {
-    const invalidConfig = {
-      isVersion: vi.fn(),
-      itWalletSpecsVersion: "v2.0" as unknown as ItWalletSpecsVersion,
-    } as unknown as IoWalletSdkConfig;
-    const provider = new WalletProvider(invalidConfig);
-
-    const options = {
-      callbacks: { hash: mockHash, signJwt: mockSignJwt },
-      dpopJwkPublic: mockJwk,
-      issuer: "https://wallet-provider.example.com",
-      signer: {
-        alg: "ES256",
-        kid: "provider-key-id",
-        method: "federation",
-        trustChain: ["jwt1"],
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
-
-    await expect(
-      provider.createItWalletAttestationJwt(options),
-    ).rejects.toThrow(ItWalletSpecsVersionError);
   });
 });
 

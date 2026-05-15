@@ -81,7 +81,7 @@ export type ItWalletMetadata = ItWalletMetadataV1_0 | ItWalletMetadataV1_3;
 export type ItWalletMetadataByVersion<V extends ItWalletSpecsVersion> =
   V extends ItWalletSpecsVersion.V1_0
     ? ItWalletMetadataV1_0
-    : V extends ItWalletSpecsVersion.V1_3
+    : V extends ItWalletSpecsVersion.V1_3 | ItWalletSpecsVersion.V1_4
       ? ItWalletMetadataV1_3
       : never;
 
@@ -97,10 +97,12 @@ export function isItWalletMetadataVersion<V extends ItWalletSpecsVersion>(
   metadata: unknown,
   version: V,
 ): metadata is ItWalletMetadataByVersion<V> {
-  return dispatchByVersion("isItWalletMetadataVersion", version, {
+  return dispatchByVersion(version, {
     [ItWalletSpecsVersion.V1_0]: () =>
       itWalletMetadataV1_0.safeParse(metadata).success,
     [ItWalletSpecsVersion.V1_3]: () =>
+      itWalletMetadataV1_3.safeParse(metadata).success,
+    [ItWalletSpecsVersion.V1_4]: () =>
       itWalletMetadataV1_3.safeParse(metadata).success,
   });
 }
@@ -118,22 +120,24 @@ export function parseItWalletMetadataForVersion<V extends ItWalletSpecsVersion>(
   metadata: unknown,
   version: V,
 ): ItWalletMetadataByVersion<V> {
-  return dispatchByVersion<ItWalletMetadata>(
-    "parseItWalletMetadataForVersion",
-    version,
-    {
-      [ItWalletSpecsVersion.V1_0]: () =>
-        parseWithErrorHandling(
-          itWalletMetadataV1_0,
-          metadata,
-          "invalid v1.0 metadata provided",
-        ),
-      [ItWalletSpecsVersion.V1_3]: () =>
-        parseWithErrorHandling(
-          itWalletMetadataV1_3,
-          metadata,
-          "invalid v1.3 metadata provided",
-        ),
-    },
-  ) as ItWalletMetadataByVersion<V>;
+  return dispatchByVersion<ItWalletMetadata>(version, {
+    [ItWalletSpecsVersion.V1_0]: () =>
+      parseWithErrorHandling(
+        itWalletMetadataV1_0,
+        metadata,
+        "invalid v1.0 metadata provided",
+      ),
+    [ItWalletSpecsVersion.V1_3]: () =>
+      parseWithErrorHandling(
+        itWalletMetadataV1_3,
+        metadata,
+        "invalid v1.3 metadata provided",
+      ),
+    [ItWalletSpecsVersion.V1_4]: () =>
+      parseWithErrorHandling(
+        itWalletMetadataV1_3,
+        metadata,
+        "invalid v1.4 metadata provided",
+      ),
+  }) as ItWalletMetadataByVersion<V>;
 }
