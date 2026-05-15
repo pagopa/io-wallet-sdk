@@ -165,13 +165,13 @@ export interface ParsedAuthorizeRequestResult {
  * 2. If client_id has openid_federation prefix or no prefix: pass a federation signer to the callback;
  *    trust_chain is forwarded when present, otherwise the callback must reconstruct the chain from client_id
  *
+ * Security: If `verifyJwt` callback is not provided in options, JWT signature verification is skipped.
+ *
  * @param options {@link ParseAuthorizeRequestOptions}
  * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
  * @throws {ValidationError} in case there are errors validating the Request Object structure
  * @throws {Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
  * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid (when verifyJwt is provided) or there are unexpected errors
- *
- * @security If `verifyJwt` callback is not provided in options, JWT signature verification is skipped.
  */
 export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,
