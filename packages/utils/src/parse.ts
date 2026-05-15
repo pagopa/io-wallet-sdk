@@ -22,6 +22,15 @@ function safeStringify(value: unknown): string {
   }
 }
 
+/**
+ * Parses data with a Zod schema and throws the SDK `ValidationError` on failure.
+ *
+ * @param schema - Zod schema used for validation.
+ * @param data - Unknown value to parse.
+ * @param customErrorMessage - Optional error message used when validation fails.
+ * @returns Parsed schema output.
+ * @throws {ValidationError} If the value does not satisfy the provided schema.
+ */
 export function parseWithErrorHandling<Schema extends BaseSchema>(
   schema: Schema,
   data: unknown,
@@ -40,6 +49,13 @@ export function parseWithErrorHandling<Schema extends BaseSchema>(
   return parseResult.data;
 }
 
+/**
+ * Prefixes an error message with optional contextual text.
+ *
+ * @param message - Base error message.
+ * @param prefix - Optional prefix to prepend.
+ * @returns Formatted error message.
+ */
 export function formatError(message: string, prefix?: string): string {
   return prefix ? `${prefix} ${message}` : message;
 }

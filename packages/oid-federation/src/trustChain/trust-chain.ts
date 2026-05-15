@@ -515,6 +515,7 @@ export interface ValidateTrustChainOptions {
  *
  * @param trustChain Array of compact JWTs forming the chain.
  * @param options Validation options including callbacks and trusted anchors.
+ * @returns Resolves when the trust chain is valid.
  * @throws If any signature is invalid, any element is expired, structural
  *   links are broken, or the root is not a trusted anchor.
  *

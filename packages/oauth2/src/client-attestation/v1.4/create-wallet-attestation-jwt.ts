@@ -35,6 +35,14 @@ export interface WalletAttestationOptionsV1_4 extends Omit<
   walletName: string;
 }
 
+/**
+ * Creates a wallet attestation JWT for IT-Wallet v1.4.
+ *
+ * @param options - v1.4 wallet attestation creation options.
+ * @returns Signed wallet attestation JWT.
+ * @throws {ValidationError} If temporal constraints or generated JWT validation fail.
+ * @throws {ClientAttestationError} For unexpected errors during attestation creation.
+ */
 export const createWalletAttestationJwt = async (
   options: WalletAttestationOptionsV1_4,
 ): Promise<WalletAttestationJwtV1_4> => {

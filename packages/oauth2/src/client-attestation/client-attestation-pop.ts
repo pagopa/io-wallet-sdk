@@ -70,6 +70,19 @@ export type VerifiedClientAttestationPopJwt = Awaited<
   ReturnType<typeof verifyClientAttestationPopJwt>
 >;
 
+/**
+ * Verifies a client attestation proof-of-possession JWT.
+ *
+ * @param options - Verification options.
+ * @param options.authorizationServer - Expected audience, usually the Authorization Server issuer.
+ * @param options.callbacks - Callback used to verify the JWT signature.
+ * @param options.clientAttestationPopJwt - Compact client attestation PoP JWT.
+ * @param options.clientAttestationPublicJwk - Public JWK from the wallet/client attestation confirmation claim.
+ * @param options.expectedNonce - Optional nonce expected in the JWT payload.
+ * @param options.now - Date used for temporal validation.
+ * @returns Decoded JWT header, payload, and resolved signer.
+ * @throws {Oauth2Error} If decoding, algorithm validation, signature verification, or claim validation fails.
+ */
 export async function verifyClientAttestationPopJwt(
   options: VerifyClientAttestationPopJwtOptions,
 ) {
@@ -193,6 +206,24 @@ export type CreateClientAttestationPopJwtOptionsV1_4 =
 export type CreateClientAttestationPopJwtOptions =
   CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion>;
 
+/**
+ * Creates a client attestation proof-of-possession JWT.
+ *
+ * The signer is derived from the wallet/client attestation `cnf.jwk` when it is
+ * not supplied explicitly.
+ *
+ * @param options - Client attestation PoP creation options.
+ * @param options.authorizationServer - Audience value for the Authorization Server.
+ * @param options.callbacks - Signing callback and optional random generator for `jti`.
+ * @param options.clientAttestation - Compact wallet/client attestation JWT.
+ * @param options.config - IT-Wallet specification version used to build the payload.
+ * @param options.issuedAt - Optional JWT issued-at date.
+ * @param options.jti - Optional JWT ID; generated with `callbacks.generateRandom` when omitted.
+ * @param options.signer - Optional JWK signer. Defaults to the attestation confirmation JWK.
+ * @returns Compact signed client attestation PoP JWT.
+ * @throws {Oauth2Error} If required attestation claims are missing, `jti` cannot be generated,
+ * or signing/validation fails.
+ */
 export async function createClientAttestationPopJwt<
   V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
 >(options: CreateClientAttestationPopJwtOptionsForVersion<V>): Promise<string> {

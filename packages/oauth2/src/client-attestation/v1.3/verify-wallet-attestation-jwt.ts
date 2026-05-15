@@ -18,6 +18,15 @@ export type VerifiedWalletAttestationJwtV1_3 = Awaited<
   ReturnType<typeof verifyWalletAttestationJwt>
 >;
 
+/**
+ * Verifies an IT-Wallet v1.3 wallet attestation JWT.
+ *
+ * @param options - v1.3 verification options.
+ * @returns Decoded and verified wallet attestation JWT data.
+ * @throws {ValidationError} If the JWT header or payload does not satisfy the v1.3 schema.
+ * @throws {Oauth2JwtParseError} If the JWT cannot be decoded.
+ * @throws {Oauth2JwtVerificationError} If signature verification fails.
+ */
 export async function verifyWalletAttestationJwt(
   options: VerifyWalletAttestationJwtOptionsV1_3,
 ) {

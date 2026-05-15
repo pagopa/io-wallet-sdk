@@ -23,6 +23,8 @@ function getSupportedVersions<THandler>(
  *
  * @param featureName - Used in the error message when version is unsupported
  * @param handlers    - Map of version → handler function
+ * @returns Dispatcher function that invokes the handler for `options.config.itWalletSpecsVersion`.
+ * @throws {ItWalletSpecsVersionError} If no handler is registered for the configured version.
  */
 export function createVersionDispatcher<
   TOptions extends VersionedOptions,
@@ -60,6 +62,8 @@ export function createVersionDispatcher<
  * @param featureName - Used in the error message when version is unsupported
  * @param version     - The version to dispatch on
  * @param handlers    - Map of version → zero-argument handler function
+ * @returns Result returned by the selected version handler.
+ * @throws {ItWalletSpecsVersionError} If no handler is registered for the version.
  */
 export function dispatchByVersion<TResult>(
   featureName: string,

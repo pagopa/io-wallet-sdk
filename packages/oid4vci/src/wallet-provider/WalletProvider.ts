@@ -139,6 +139,12 @@ export interface KeyAttestationOptions {
 export class WalletProvider {
   private specVersion: ItWalletSpecsVersion;
 
+  /**
+   * Creates a wallet provider bound to a specific IT-Wallet specification version.
+   *
+   * @param options - SDK configuration.
+   * @param options.itWalletSpecsVersion - Specification version used for wallet attestation routing.
+   */
   constructor(options: IoWalletSdkConfig) {
     this.specVersion = options.itWalletSpecsVersion;
   }

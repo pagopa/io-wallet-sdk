@@ -21,11 +21,18 @@ export interface CreateEntityConfigurationOptions {
 }
 
 /**
+ * Creates a signed OpenID Federation entity configuration JWT.
  *
- * Create an entity configuration
+ * The signing callback is called with the JWK selected by `header.kid` from
+ * `claims.jwks.keys` and the compact JWT signing input.
  *
- * The signing callback will be called with the `header.kid` value in the `claims.jwks.keys` and a signed JWT will be returned
- *
+ * @param options - Entity configuration creation options.
+ * @param options.claims - Entity configuration claims to sign.
+ * @param options.header - Entity configuration JWT header.
+ * @param options.signJwtCallback - Callback used to sign the JWT input.
+ * @returns Signed entity configuration JWT.
+ * @throws {ValidationError} If header or payload validation fails.
+ * @throws {Error} If the matching signing JWK cannot be selected or the JWT input cannot be created.
  */
 export const createItWalletEntityConfiguration = async ({
   claims,

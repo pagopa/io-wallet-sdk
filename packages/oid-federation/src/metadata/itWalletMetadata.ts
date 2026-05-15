@@ -85,6 +85,14 @@ export type ItWalletMetadataByVersion<V extends ItWalletSpecsVersion> =
       ? ItWalletMetadataV1_3
       : never;
 
+/**
+ * Checks whether a metadata object matches the schema for a specific IT-Wallet version.
+ *
+ * @param metadata - Metadata object to inspect.
+ * @param version - IT-Wallet specification version to validate against.
+ * @returns True when the metadata satisfies the version-specific schema.
+ * @throws {ItWalletSpecsVersionError} If the version is unsupported.
+ */
 export function isItWalletMetadataVersion<V extends ItWalletSpecsVersion>(
   metadata: unknown,
   version: V,
@@ -97,6 +105,15 @@ export function isItWalletMetadataVersion<V extends ItWalletSpecsVersion>(
   });
 }
 
+/**
+ * Parses metadata using the schema for a specific IT-Wallet version.
+ *
+ * @param metadata - Metadata object to parse.
+ * @param version - IT-Wallet specification version to validate against.
+ * @returns Version-specific IT-Wallet metadata.
+ * @throws {ValidationError} If metadata does not satisfy the selected schema.
+ * @throws {ItWalletSpecsVersionError} If the version is unsupported.
+ */
 export function parseItWalletMetadataForVersion<V extends ItWalletSpecsVersion>(
   metadata: unknown,
   version: V,

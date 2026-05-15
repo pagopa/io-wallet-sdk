@@ -130,12 +130,24 @@ export type PushedAuthorizationRequest =
   | PushedAuthorizationRequestUnsignedV1_0
   | PushedAuthorizationRequestUnsignedV1_3;
 
+/**
+ * Checks whether a pushed authorization request is represented as a signed JAR.
+ *
+ * @param par - Pushed authorization request to inspect.
+ * @returns True when the request contains a compact `request` JWT.
+ */
 export function isPushedAuthorizationRequestSigned(
   par: PushedAuthorizationRequest,
 ): par is PushedAuthorizationRequestSigned {
   return "request" in par && typeof par.request === "string";
 }
 
+/**
+ * Checks whether a pushed authorization request is represented as a plain unsigned request.
+ *
+ * @param par - Pushed authorization request to inspect.
+ * @returns True when the request contains version-specific `authorizationRequest` data.
+ */
 export function isPushedAuthorizationRequestUnsigned(
   par: PushedAuthorizationRequest,
 ): par is

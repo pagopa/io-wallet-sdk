@@ -36,6 +36,16 @@ export interface CreatePkceReturn {
   codeVerifier: string;
 }
 
+/**
+ * Creates a PKCE code verifier and challenge pair.
+ *
+ * @param options - PKCE creation options.
+ * @param options.allowedCodeChallengeMethods - Code challenge methods supported by the server.
+ * @param options.callbacks - Random generation and hashing callbacks.
+ * @param options.codeVerifier - Optional existing verifier; generated when omitted.
+ * @returns Generated verifier, challenge, and selected challenge method.
+ * @throws {Oauth2Error} If no challenge method is available or the selected method is unsupported.
+ */
 export async function createPkce(
   options: CreatePkceOptions,
 ): Promise<CreatePkceReturn> {
@@ -82,6 +92,17 @@ export interface VerifyPkceOptions {
   codeVerifier: string;
 }
 
+/**
+ * Verifies that a PKCE code verifier matches a stored code challenge.
+ *
+ * @param options - PKCE verification options.
+ * @param options.callbacks - Hashing callback.
+ * @param options.codeChallenge - Expected code challenge.
+ * @param options.codeChallengeMethod - Method used to compute the challenge.
+ * @param options.codeVerifier - Verifier supplied by the client.
+ * @returns Resolves when the verifier matches the challenge.
+ * @throws {Oauth2Error} If the verifier does not match or the challenge method is unsupported.
+ */
 export async function verifyPkce(options: VerifyPkceOptions) {
   const calculatedCodeChallenge = await calculateCodeChallenge({
     codeChallengeMethod: options.codeChallengeMethod,

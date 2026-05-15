@@ -81,6 +81,16 @@ export type ItWalletEntityStatementClaimsByVersion<
   V extends ItWalletSpecsVersion,
 > = EntityStatementClaimsWithMetadata<ItWalletMetadataByVersion<V>>;
 
+/**
+ * Checks whether entity statement claims match a specific IT-Wallet metadata version.
+ *
+ * Claims without a `metadata` member are considered compatible after base schema validation.
+ *
+ * @param claims - Entity statement claims to inspect.
+ * @param version - IT-Wallet specification version to validate metadata against.
+ * @returns True when the claims and optional metadata match the selected version.
+ * @throws {ItWalletSpecsVersionError} If the version is unsupported.
+ */
 export function isItWalletEntityStatementClaimsVersion<
   V extends ItWalletSpecsVersion,
 >(
@@ -99,6 +109,15 @@ export function isItWalletEntityStatementClaimsVersion<
   );
 }
 
+/**
+ * Parses entity statement claims and narrows the optional metadata by IT-Wallet version.
+ *
+ * @param claims - Entity statement claims to parse.
+ * @param version - IT-Wallet specification version to validate metadata against.
+ * @returns Entity statement claims with version-specific metadata.
+ * @throws {ValidationError} If claims or metadata do not satisfy the selected schemas.
+ * @throws {ItWalletSpecsVersionError} If the version is unsupported.
+ */
 export function parseItWalletEntityStatementClaimsForVersion<
   V extends ItWalletSpecsVersion,
 >(claims: unknown, version: V): ItWalletEntityStatementClaimsByVersion<V> {

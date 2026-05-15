@@ -81,6 +81,12 @@ function getMessageFromUnionErrors(unionErrors: ZodIssue[][]): string {
     .join(constants.unionSeparator);
 }
 
+/**
+ * Formats a Zod error into a readable multi-line message.
+ *
+ * @param error - Optional Zod error to format.
+ * @returns Empty string when no error is provided, otherwise a formatted issue list.
+ */
 export function formatZodError(error?: z.ZodError): string {
   if (!error) return "";
 
