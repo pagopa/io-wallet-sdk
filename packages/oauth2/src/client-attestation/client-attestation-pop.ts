@@ -213,13 +213,6 @@ export type CreateClientAttestationPopJwtOptions =
  * not supplied explicitly.
  *
  * @param options - Client attestation PoP creation options.
- * @param options.authorizationServer - Audience value for the Authorization Server.
- * @param options.callbacks - Signing callback and optional random generator for `jti`.
- * @param options.clientAttestation - Compact wallet/client attestation JWT.
- * @param options.config - IT-Wallet specification version used to build the payload.
- * @param options.issuedAt - Optional JWT issued-at date.
- * @param options.jti - Optional JWT ID; generated with `callbacks.generateRandom` when omitted.
- * @param options.signer - Optional JWK signer. Defaults to the attestation confirmation JWK.
  * @returns Compact signed client attestation PoP JWT.
  * @throws {Oauth2Error} If required attestation claims are missing, `jti` cannot be generated,
  * or signing/validation fails.

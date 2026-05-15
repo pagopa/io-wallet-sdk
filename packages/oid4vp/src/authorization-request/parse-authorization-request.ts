@@ -167,8 +167,8 @@ export interface ParsedAuthorizeRequestResult {
  *
  * @param options {@link ParseAuthorizeRequestOptions}
  * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
- * @throws {@link ValidationError} in case there are errors validating the Request Object structure
- * @throws {@link Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
+ * @throws {ValidationError} in case there are errors validating the Request Object structure
+ * @throws {Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
  * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid (when verifyJwt is provided) or there are unexpected errors
  *
  * @security If `verifyJwt` callback is not provided in options, JWT signature verification is skipped.
