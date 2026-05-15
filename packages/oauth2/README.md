@@ -13,24 +13,5 @@ TypeScript declarations and IDEs.
 pnpm add @pagopa/io-wallet-oauth2
 ```
 
-## Basic Usage
-
-```typescript
-import { createPkce, createTokenDPoP } from "@pagopa/io-wallet-oauth2";
-
-const pkce = await createPkce({
-  callbacks: { generateRandom, hash },
-});
-
-const dpop = await createTokenDPoP({
-  callbacks: { generateRandom, hash, signJwt },
-  signer,
-  tokenRequest: {
-    method: "POST",
-    url: "https://issuer.example.it/token",
-  },
-});
-```
-
 The package is environment-agnostic: provide cryptographic and HTTP operations
 through callbacks instead of relying on runtime globals.

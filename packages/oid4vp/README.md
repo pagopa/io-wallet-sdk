@@ -13,32 +13,5 @@ TypeScript declarations and IDEs.
 pnpm add @pagopa/io-wallet-oid4vp
 ```
 
-## Basic Usage
-
-```typescript
-import {
-  createAuthorizationResponse,
-  fetchAuthorizationRequest,
-  parseAuthorizeRequest,
-} from "@pagopa/io-wallet-oid4vp";
-
-const fetched = await fetchAuthorizationRequest({
-  callbacks: { fetch },
-  url: "https://wallet.example.it/cb?client_id=...",
-});
-
-const request = await parseAuthorizeRequest({
-  callbacks: { fetch, verifyJwt },
-  authorizationRequestJwt: fetched.requestObjectJwt,
-});
-
-const response = await createAuthorizationResponse({
-  callbacks: { encryptJwe, generateRandom },
-  requestObject: request.payload,
-  rpJwks,
-  vp_token,
-});
-```
-
 The package keeps cryptographic and HTTP operations injectable through callbacks
 so it can run in Node.js, browsers, and React Native.
