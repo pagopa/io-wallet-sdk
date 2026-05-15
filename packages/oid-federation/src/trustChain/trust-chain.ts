@@ -513,15 +513,14 @@ export interface ValidateTrustChainOptions {
  * statements; all but the last require `callbacks.fetch` to resolve the
  * intermediate issuer's EC for signature verification.
  *
+ * Warning: When `options.trustAnchorUrls` is omitted, the chain root is
+ * accepted unconditionally. Callers are responsible for applying their own
+ * root-of-trust verification in that case.
+ *
  * @param trustChain Array of compact JWTs forming the chain.
  * @param options Validation options including callbacks and trusted anchors.
  * @returns Resolves when the trust chain is valid.
- * @throws If any signature is invalid, any element is expired, structural
- *   links are broken, or the root is not a trusted anchor.
- *
- * @warning When `options.trustAnchorUrls` is omitted, the chain root is
- *   accepted unconditionally. Callers are responsible for applying their own
- *   root-of-trust verification in that case.
+ * @throws If any signature is invalid, any element is expired, structural links are broken, or the root is not a trusted anchor.
  */
 export async function validateTrustChain(
   trustChain: string[],
@@ -690,15 +689,14 @@ export interface FetchAndValidateTrustChainOptions {
  * statements, verifies all signatures, and returns the assembled chain as an
  * array of compact JWTs.
  *
+ * Warning: When `options.trustAnchorUrls` is omitted, the chain root is
+ * accepted unconditionally. Callers are responsible for applying their own
+ * root-of-trust verification in that case.
+ *
  * @param entityUrl URL of the leaf entity.
  * @param options Options including fetch/verifyJwt callbacks and trusted anchors.
  * @returns Ordered array of compact JWTs forming the validated trust chain.
- * @throws If the chain cannot be built, any element is expired or invalid, or
- *   the root is not a trusted anchor.
- *
- * @warning When `options.trustAnchorUrls` is omitted, the chain root is
- *   accepted unconditionally. Callers are responsible for applying their own
- *   root-of-trust verification in that case.
+ * @throws If the chain cannot be built, any element is expired or invalid, or the root is not a trusted anchor.
  */
 export async function fetchAndValidateTrustChain(
   entityUrl: string,
