@@ -7,7 +7,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
 
-import { ParseAuthorizeRequestError } from "../../errors";
+import { Oid4vpError, ParseAuthorizeRequestError } from "../../errors";
 import {
   ClientIdPrefix,
   extractClientIdPrefix,
@@ -550,11 +550,10 @@ describe("extractClientIdPrefix", () => {
     });
   });
 
-  it("returns raw string prefix and clean clientId for unknown scheme", () => {
-    expect(extractClientIdPrefix("unknown_prefix:some-value")).toEqual({
-      clientId: "some-value",
-      prefix: "unknown_prefix",
-    });
+  it("throws Oid4vpError for an unsupported prefix", () => {
+    expect(() => extractClientIdPrefix("unknown_prefix:some-value")).toThrow(
+      Oid4vpError,
+    );
   });
 
   it("returns NONE prefix and original string when no colon is present", () => {

@@ -13,7 +13,7 @@ import {
   dispatchByVersion,
 } from "@pagopa/io-wallet-utils";
 
-import { ParseAuthorizeRequestError } from "../errors";
+import { Oid4vpError, ParseAuthorizeRequestError } from "../errors";
 import {
   Openid4vpAuthorizationRequestHeader,
   Openid4vpAuthorizationRequestPayload,
@@ -33,13 +33,16 @@ export enum ClientIdPrefix {
 
 export interface ClientIdParts {
   clientId: string;
-  prefix: ClientIdPrefix | string;
+  prefix: ClientIdPrefix;
 }
 
 /**
  * Extracts the prefix and clean clientId from a client_id string.
+ * Only the IT-Wallet profile schemes (`openid_federation`, `x509_hash`) and the
+ * prefix-less form are accepted; any other prefix causes an error.
  * @param clientId - The client_id from the request object
  * @returns A {@link ClientIdParts} object with the resolved prefix and unprefixed clientId
+ * @throws {Oid4vpError} When the prefix does not match a supported IT-Wallet scheme
  */
 export function extractClientIdPrefix(clientId: string): ClientIdParts {
   const colonIndex = clientId.indexOf(":");
@@ -58,7 +61,9 @@ export function extractClientIdPrefix(clientId: string): ClientIdParts {
     return { clientId: rest, prefix: ClientIdPrefix.OPENID_FEDERATION };
   }
 
-  return { clientId: rest, prefix: rawPrefix };
+  throw new Oid4vpError(
+    `Unsupported client_id prefix "${rawPrefix}": only "openid_federation" and "x509_hash" are allowed by the IT-Wallet profile`,
+  );
 }
 
 /**
