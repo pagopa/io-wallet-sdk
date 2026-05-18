@@ -4,6 +4,10 @@ import type {
 } from "@pagopa/io-wallet-oid-federation";
 
 import { CallbackContext } from "@openid4vc/oauth2";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -95,6 +99,14 @@ const mockRpMetadataV1_3: ItWalletCredentialVerifierMetadataV1_3 = {
   },
 };
 
+const configV1_0 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+});
+
+const configV1_3 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
 beforeEach(() => {
   vi.resetAllMocks();
 });
@@ -103,6 +115,7 @@ describe("createAuthorizationResponseTests", () => {
   it("should create an encrypted authorization response successfully", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
+      config: configV1_0,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -138,6 +151,7 @@ describe("createAuthorizationResponseTests", () => {
     await expect(
       createAuthorizationResponse({
         callbacks,
+        config: configV1_0,
         requestObject: {
           client_id: MOCK_RP_CLIENT_ID,
           nonce: REQOBJ_MOCK_NONCE,
@@ -156,6 +170,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       authorization_encrypted_response_alg: "ECDH-ES",
       authorization_encrypted_response_enc: "A256GCM",
       callbacks,
+      config: configV1_3,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -175,6 +190,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
   it("should use default JARM algorithms for v1.3 metadata when not provided", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
+      config: configV1_3,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -202,6 +218,7 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
       authorization_encrypted_response_alg: "ECDH-ES",
       // Not providing authorization_encrypted_response_enc to test fallback
       callbacks,
+      config: configV1_3,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -222,9 +239,46 @@ describe("createAuthorizationResponse v1.3 metadata support", () => {
     });
   });
 
+  it("should use caller-negotiated alg even when JWK has a different embedded alg", async () => {
+    const metadataWithJwkAlg: ItWalletCredentialVerifierMetadataV1_3 = {
+      ...mockRpMetadataV1_3,
+      jwks: {
+        keys: [
+          {
+            alg: "ECDH-ES+A128KW" as never,
+            crv: "P-256",
+            kid: "key-with-embedded-alg",
+            kty: "EC",
+            x: "jE2RpcQbFQxKpMqehahgZv6smmXD0i/LTP2QRzMADk4",
+            y: "qkMx5iqt5PhPu5tfctS6HsP+FmLgrxfrzUV2GwMQuh8",
+          },
+        ],
+      },
+    };
+
+    await createAuthorizationResponse({
+      authorization_encrypted_response_alg: "ECDH-ES",
+      callbacks,
+      config: configV1_3,
+      requestObject: {
+        client_id: MOCK_RP_CLIENT_ID,
+        nonce: REQOBJ_MOCK_NONCE,
+        state: MOCK_STATE,
+      },
+      rpJwks: metadataWithJwkAlg,
+      vp_token: MOCK_VP_TOKEN,
+    });
+
+    expect(mockEncryptJwe).toHaveBeenCalledWith(
+      expect.objectContaining({ alg: "ECDH-ES" }),
+      expect.anything(),
+    );
+  });
+
   it("should maintain backward compatibility with v1.0 metadata (without explicit JARM parameters)", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
+      config: configV1_0,
       requestObject: {
         client_id: MOCK_RP_CLIENT_ID,
         nonce: REQOBJ_MOCK_NONCE,
@@ -248,6 +302,7 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
     await expect(
       createAuthorizationResponse({
         callbacks,
+        config: configV1_3,
         requestObject: {
           client_id: "x509_hash:https://rp.example.org",
           nonce: REQOBJ_MOCK_NONCE,
@@ -275,6 +330,7 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
     };
     const response = await createAuthorizationResponse({
       callbacks,
+      config: configV1_3,
       requestObject: {
         client_id: "openid_federation:https://rp.example.org",
         client_metadata: {
@@ -300,6 +356,7 @@ describe("createAuthorizationResponse client_id prefix validation", () => {
   it("should succeed when x509_hash client_id is used with client_metadata", async () => {
     const response = await createAuthorizationResponse({
       callbacks,
+      config: configV1_3,
       requestObject: {
         client_id: "x509_hash:https://rp.example.org",
         client_metadata: {
