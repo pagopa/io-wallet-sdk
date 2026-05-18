@@ -27,6 +27,7 @@ Packages use workspace dependencies via `workspace:*` and shared upstream depend
 The SDK leverages business logic from [oid4vc-ts](https://github.com/openwallet-foundation-labs/oid4vc-ts) to avoid duplicating well-tested implementations. However, **every modification to the codebase requires evaluating whether the upstream logic still meets our requirements**.
 
 **When to re-evaluate:**
+
 - Before implementing new features that touch areas using oid4vc-ts logic
 - When IT-Wallet specifications change or diverge from upstream behavior
 - When upstream implementation constraints conflict with our needs
@@ -49,6 +50,7 @@ The SDK leverages business logic from [oid4vc-ts](https://github.com/openwallet-
    - The abstraction provides clear benefits without constraints
 
 **Process:**
+
 - When modifying code that uses oid4vc-ts methods, document which upstream functions are being used and why
 - If rewriting logic, add a comment explaining why the local implementation was necessary
 - Keep track of specification divergences to inform future maintenance decisions
@@ -56,6 +58,7 @@ The SDK leverages business logic from [oid4vc-ts](https://github.com/openwallet-
 ### Code Organization Pattern
 
 Each package follows a consistent structure:
+
 - Top-level feature directories (e.g., `authorization-request/`, `access-token/`)
 - Each feature contains:
   - Main implementation file(s)
@@ -94,8 +97,10 @@ Routing is done via `createVersionDispatcher` and `dispatchByVersion` from `@pag
 ```typescript
 // ✅ All versions must be present — omitting one is a compile error
 const dispatch = createVersionDispatcher<FeatureOptions, Promise<Feature>>({
-  [ItWalletSpecsVersion.V1_0]: (o) => V1_0.createFeature(o as FeatureOptionsV1_0),
-  [ItWalletSpecsVersion.V1_3]: (o) => V1_3.createFeature(o as FeatureOptionsV1_3),
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    V1_0.createFeature(o as FeatureOptionsV1_0),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    V1_3.createFeature(o as FeatureOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
     // V1_4 reuses V1_3 implementation — no breaking changes between versions.
     // Verified against spec diff vX.X...vX.Y: parameters identical.
@@ -106,6 +111,7 @@ const dispatch = createVersionDispatcher<FeatureOptions, Promise<Feature>>({
 #### Adding a New Spec Version
 
 **Step 1** — Add the new value to `ItWalletSpecsVersion` in `packages/utils/src/config.ts`:
+
 ```typescript
 export enum ItWalletSpecsVersion {
   V1_0 = "V1_0",
@@ -113,10 +119,12 @@ export enum ItWalletSpecsVersion {
   V1_4 = "V1_4", // new
 }
 ```
+
 TypeScript will immediately flag every `createVersionDispatcher` / `dispatchByVersion` call site that is missing the new key.
 
 **Step 2a — Reusing an existing implementation** (no schema changes):
 Define a type alias in `types.ts` and map the new key to the existing handler:
+
 ```typescript
 // types.ts
 export type FeatureOptionsV1_4 = {
@@ -128,6 +136,7 @@ export type FeatureOptions =
   | FeatureOptionsV1_3
   | FeatureOptionsV1_4;
 ```
+
 ```typescript
 // create-feature.ts
 [ItWalletSpecsVersion.V1_4]: (o) =>
@@ -139,10 +148,15 @@ export type FeatureOptions =
 Create a new `v1.4/` directory with its own implementation, Zod schemas and tests, then register the new handler in the dispatcher.
 
 **Step 3** — Add the TypeScript overload in the public-facing function:
+
 ```typescript
 // Function overloads for type safety
-export function createFeature(options: FeatureOptionsV1_0): Promise<FeatureV1_0>;
-export function createFeature(options: FeatureOptionsV1_3 | FeatureOptionsV1_4): Promise<FeatureV1_3>;
+export function createFeature(
+  options: FeatureOptionsV1_0,
+): Promise<FeatureV1_0>;
+export function createFeature(
+  options: FeatureOptionsV1_3 | FeatureOptionsV1_4,
+): Promise<FeatureV1_3>;
 
 export async function createFeature(options: FeatureOptions): Promise<Feature> {
   return dispatch(options);
@@ -152,21 +166,23 @@ export async function createFeature(options: FeatureOptions): Promise<Feature> {
 **Step 4** — Update `types.ts` union, public `index.ts` exports, and tests. When new version directories are created, also update imports, tests, and README documentation in the same session.
 
 #### Key Principles
+
 - **Compile-time exhaustiveness**: missing a version key is a build error, not a silent runtime failure
 - **No code duplication**: reuse existing handlers when versions share a schema; only create new directories for breaking changes
 - **Type safety**: TypeScript overloads ensure consumers get correct return types based on the config version
 - **Clear separation**: version-specific schemas and types live with their implementations
 
 **When to add version support:**
+
 - New Italian Wallet specification version is released
 - Breaking changes in protocol structure (e.g., `proof` vs `proofs`, new required fields)
 - New required parameters exclusive to a specific version (e.g., `keyAttestation`)
 
 **When NOT to use versioning:**
+
 - Backward-compatible additions (add to existing implementation)
 - Bug fixes (apply to all affected versions)
 - Internal refactoring (maintain same external API)
-
 
 ## IT-Wallet Technical Specifications
 
@@ -175,6 +191,7 @@ This project implements features based on the IT-Wallet Technical Specifications
 ### When to Consult Specs
 
 Before implementing any feature related to:
+
 - Credential issuance, presentation, or revocation flows
 - Wallet Provider, Credential Issuer, or Relying Party endpoints
 - Trust infrastructure (OpenID Federation, trust chains, entity statements)
@@ -194,12 +211,14 @@ Always run type checks (`tsc --noEmit` or equivalent) after modifying TypeScript
 ## Development Commands
 
 ### Building
+
 ```bash
 pnpm build              # Build all packages
 pnpm types:check        # Type-check all packages
 ```
 
 ### Testing
+
 ```bash
 pnpm test               # Run all tests (uses vitest)
 pnpm test:watch         # Run tests in watch mode
@@ -207,6 +226,7 @@ vitest run <file>       # Run a specific test file
 ```
 
 ### Linting and Formatting
+
 ```bash
 pnpm lint               # Lint and auto-fix
 pnpm lint:check         # Lint without fixing
@@ -215,6 +235,7 @@ pnpm format:check       # Check formatting without changes
 ```
 
 ### Pre-commit Workflows
+
 ```bash
 pnpm pre-commit         # Format + lint
 pnpm pre-push           # Format + lint + type-check + test
@@ -222,6 +243,7 @@ pnpm code-review        # Full check suite (type + lint + format + test)
 ```
 
 ### Release
+
 ```bash
 pnpm release            # Build and publish to npm (uses changesets)
 ```
@@ -238,6 +260,7 @@ pnpm release            # Build and publish to npm (uses changesets)
 This allows consumers to either use built-in `fetch` or integrate with their own HTTP infrastructure.
 
 Example from oauth2:
+
 - High-level: `fetchTokenResponse()`
 - Low-level: `createTokenRequest()` + `zTokenResponse` schema
 
@@ -255,14 +278,19 @@ Example from oauth2:
 
 ```typescript
 // ✅ CORRECT
-import { UnexpectedStatusCodeError, hasStatusOrThrow } from "@pagopa/io-wallet-utils";
+import {
+  UnexpectedStatusCodeError,
+  hasStatusOrThrow,
+} from "@pagopa/io-wallet-utils";
 
 const response = await fetch(url, init);
 await hasStatusOrThrow(200, UnexpectedStatusCodeError)(response);
 
 // ❌ WRONG
 if (!response.ok) {
-  throw new SomeCustomError(`Failed: ${response.status} ${response.statusText}`);
+  throw new SomeCustomError(
+    `Failed: ${response.status} ${response.statusText}`,
+  );
 }
 ```
 
@@ -271,6 +299,7 @@ if (!response.ok) {
 The SDK uses a **callback injection pattern** via `CallbackContext` from `@openid4vc/oauth2` to remain crypto-agnostic and environment-agnostic. This allows consumers to provide their own implementations for cryptographic operations and HTTP requests.
 
 **Key callbacks in CallbackContext:**
+
 - `signJwt`: Sign JWTs (e.g., for proofs, request objects)
 - `generateRandom`: Generate cryptographically secure random bytes
 - `hash`: Hash data (e.g., for PKCE code challenges)
@@ -298,9 +327,10 @@ export interface CreatePushedAuthorizationRequestOptions {
 **⚠️ IMPORTANT**: When implementing SDK functions, you **MUST ALWAYS use the callbacks provided through `options.callbacks`** instead of native or global implementations. This is the core principle that makes the SDK environment-agnostic.
 
 **✅ CORRECT - Use callbacks from options:**
+
 ```typescript
 export async function fetchTokenResponse(
-  options: FetchTokenResponseOptions
+  options: FetchTokenResponseOptions,
 ): Promise<TokenResponse> {
   // Use the fetch callback from options
   const { fetch } = options.callbacks;
@@ -316,9 +346,10 @@ export async function fetchTokenResponse(
 ```
 
 **❌ WRONG - Using native fetch:**
+
 ```typescript
 export async function fetchTokenResponse(
-  options: FetchTokenResponseOptions
+  options: FetchTokenResponseOptions,
 ): Promise<TokenResponse> {
   // NEVER use native fetch directly!
   const response = await fetch(tokenEndpoint, {
@@ -332,27 +363,29 @@ export async function fetchTokenResponse(
 ```
 
 **✅ CORRECT - Use generateRandom callback:**
+
 ```typescript
 export async function createAuthorizationRequest(
-  options: CreateAuthorizationRequestOptions
+  options: CreateAuthorizationRequestOptions,
 ): Promise<AuthorizationRequest> {
   const { generateRandom } = options.callbacks;
 
-  const state = options.state ??
-    encodeToBase64Url(await generateRandom(RANDOM_BYTES_SIZE));
+  const state =
+    options.state ?? encodeToBase64Url(await generateRandom(RANDOM_BYTES_SIZE));
 
   // ... rest of implementation
 }
 ```
 
 **❌ WRONG - Using crypto.randomBytes or Math.random:**
+
 ```typescript
 export async function createAuthorizationRequest(
-  options: CreateAuthorizationRequestOptions
+  options: CreateAuthorizationRequestOptions,
 ): Promise<AuthorizationRequest> {
   // NEVER use native crypto directly!
-  const state = options.state ??
-    encodeToBase64Url(crypto.randomBytes(RANDOM_BYTES_SIZE));
+  const state =
+    options.state ?? encodeToBase64Url(crypto.randomBytes(RANDOM_BYTES_SIZE));
 
   // ... rest of implementation
 }
@@ -368,9 +401,10 @@ export async function createAuthorizationRequest(
 #### Complete Example from Credential Request
 
 **Example from [create-credential-request.ts](packages/oid4vci/src/credential-request/create-credential-request.ts):**
+
 ```typescript
 export async function createCredentialRequest(
-  options: CreateCredentialRequestOptions
+  options: CreateCredentialRequestOptions,
 ): Promise<CredentialRequest> {
   // Extract ALL required callbacks from options
   const { signJwt } = options.callbacks;
@@ -412,6 +446,7 @@ When implementing or modifying SDK functions:
 6. ✅ In tests, provide mock callbacks that verify correct usage
 
 **High-level vs Low-level functions:**
+
 - **High-level functions** (e.g., `fetchTokenResponse`): Must include `fetch` in their callbacks
 - **Low-level functions** (e.g., `createTokenRequest`): Only include the crypto callbacks they need (e.g., `signJwt`, `generateRandom`, `hash`)
 
@@ -420,15 +455,15 @@ This pattern ensures the SDK works seamlessly in Node.js, browsers, and React Na
 ### Cryptographic Values
 
 Random values (`state`, `jti`, nonces, etc.) must be either:
+
 1. Generated via the `generateRandom` callback from CallbackContext, or
 2. Passed explicitly by the consumer
 
 Never hardcode or use weak random generation. See [create-authorization-request.ts:96-100](packages/oauth2/src/authorization-request/create-authorization-request.ts) for the pattern:
+
 ```typescript
 state: options.state ??
-  encodeToBase64Url(
-    await options.callbacks.generateRandom(RANDOM_BYTES_SIZE)
-  )
+  encodeToBase64Url(await options.callbacks.generateRandom(RANDOM_BYTES_SIZE));
 ```
 
 ### Public API Surface
@@ -451,6 +486,7 @@ Third-party types and utilities needed by consumers are re-exported through pack
 - Add narrative about routine operations (e.g., "Only wrap unexpected errors")
 
 **Bad examples:**
+
 ```typescript
 // Re-throw validation errors with full context for debugging
 if (error instanceof ValidationError) {
@@ -464,6 +500,7 @@ throw new Oid4vciError(
 ```
 
 **Good example:**
+
 ```typescript
 if (error instanceof ValidationError) {
   throw error;
@@ -475,6 +512,7 @@ throw new Oid4vciError(
 ```
 
 Only add comments when:
+
 - The logic is inherently complex and non-obvious
 - There's a critical spec requirement or edge case being handled
 - The "why" cannot be expressed through code structure alone
@@ -496,6 +534,7 @@ Tests use vitest with the following patterns:
 - Type mocked functions with `vi.mocked()` for type safety
 
 Example:
+
 ```typescript
 vi.mock("@openid4vc/utils");
 const mockGenerateRandom = vi.fn();
@@ -513,6 +552,7 @@ const mockCallbacks = {
 ## Package Build Configuration
 
 Each package uses `tsup` for building:
+
 - Output formats: CJS + ESM + TypeScript declarations
 - Source maps included
 - Exports both CommonJS (`require`) and ES modules (`import`)

@@ -73,21 +73,10 @@ export interface VerifyPushedAuthorizationRequestOptions extends Omit<
  * @param options - The verification options
  * @param options.authorizationRequest - The authorization request parameters containing client_id
  * @param options.authorizationServerMetadata - Authorization server metadata
- * @param options.authorizationServerMetadata.issuer - Authorization server issuer URL
- * @param options.authorizationServerMetadata.require_signed_request_object - Whether to enforce JAR signing (defaults to false)
  * @param options.callbacks - Cryptographic callback functions for hash and JWT verification
  * @param options.authorizationRequestJwt - Optional JAR JWT and signer information
- * @param options.authorizationRequestJwt.jwt - The JAR JWT string from request parameter
- * @param options.authorizationRequestJwt.signer - The JWT signer for verification (from federation metadata)
  * @param options.dpop - Optional DPoP verification configuration
- * @param options.dpop.jwt - The DPoP JWT extracted from request headers
- * @param options.dpop.required - Whether DPoP is required (will throw if missing)
- * @param options.dpop.allowedSigningAlgs - Allowed signing algorithms for DPoP
  * @param options.clientAttestation - Optional client attestation verification configuration
- * @param options.clientAttestation.walletAttestationJwt - The wallet attestation JWT from headers
- * @param options.clientAttestation.clientAttestationPopJwt - The client attestation PoP JWT from headers
- * @param options.clientAttestation.required - Whether client attestation is required (will throw if missing)
- * @param options.clientAttestation.ensureConfirmationKeyMatchesDpopKey - Whether to verify DPoP and client attestation use the same key
  * @param options.request - The HTTP request object containing URL and headers
  * @param options.now - Optional date for time-based validation (defaults to current time)
  *

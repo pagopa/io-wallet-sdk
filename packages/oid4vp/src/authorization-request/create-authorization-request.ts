@@ -151,6 +151,16 @@ const dispatchCreateAuthorizationRequest = createVersionDispatcher<
     ),
 });
 
+/**
+ * Creates an OpenID4VP authorization request URL for the configured IT-Wallet version.
+ *
+ * This function creates a JAR request object through `createJarRequest` and
+ * serializes it into authorization request URL query parameters.
+ *
+ * @param options - Version-specific authorization request creation options.
+ * @returns Authorization request URL plus request object details used to build it.
+ * @throws {Oid4vpError} If authorization request payload validation fails.
+ */
 export async function createAuthorizationRequest(
   options: CreateAuthorizationRequestOptionsV1_0,
 ): Promise<CreateAuthorizationRequestResultV1_0>;

@@ -20,6 +20,7 @@ import { CredentialOfferError } from "../errors";
  * - If `authorization_server` is present, it MUST match one of the servers in the Credential Issuer metadata
  *
  * @param options - Validation options containing the credential offer, config, and optional metadata
+ * @returns Resolves when the credential offer satisfies IT-Wallet validation rules.
  * @throws {CredentialOfferError} If any validation rule fails
  */
 export async function validateCredentialOffer(

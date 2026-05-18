@@ -27,6 +27,9 @@ export const hasStatusOrThrow =
 
 /**
  * Utility function to parse a raw HTTP response as JSON if supported, otherwise as text.
+ *
+ * @param response - Raw HTTP response to parse.
+ * @returns Parsed JSON for JSON responses, otherwise response text.
  */
 export const parseRawHttpResponse = <T extends Record<string, unknown>>(
   response: Response,

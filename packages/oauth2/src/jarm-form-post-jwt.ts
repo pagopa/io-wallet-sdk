@@ -18,11 +18,20 @@ export interface GetJwtFromFormPostOptions<T> {
   schema: z.ZodSchema<T>;
 }
 
-/*
+/**
  * Decode a form_post.jwt and return the final JWT.
  * The formData here is in form_post.jwt format as defined in
  * JWT Secured Authorization Response Mode for OAuth 2.0 (JARM)
- <!DOCTYPE html>
+ *
+ * @param options - Form post extraction options.
+ * @param options.formData - Raw HTML form_post.jwt response body.
+ * @param options.schema - Zod schema used to validate the decoded JWT payload.
+ * @returns The compact JWT and decoded JWT data.
+ * @throws {Oauth2Error} If the response input cannot be found in the form data.
+ *
+ * @example
+ * ```html
+ * <!DOCTYPE html>
     <html>
         <head>
             <meta charset="utf-8" />
@@ -45,6 +54,7 @@ export interface GetJwtFromFormPostOptions<T> {
             </form>
         </body>
     </html>
+ * ```
  */
 export const getJwtFromFormPost = async <T>(
   options: GetJwtFromFormPostOptions<T>,

@@ -108,7 +108,9 @@ export type ClientAuthenticationCallback = (
 ) => Promise<void> | void;
 
 /**
- * Anonymous client authentication
+ * Creates a client authentication callback that leaves the request unchanged.
+ *
+ * @returns Client authentication callback for anonymous requests.
  */
 export function clientAuthenticationAnonymous(): ClientAuthenticationCallback {
   return () => {
@@ -127,6 +129,13 @@ export interface ClientAuthenticationWalletAttestationJwtOptions<
 /**
  * Client authentication using wallet attestation JWT.
  * This method adds the wallet attestation JWT and a proof-of-possession JWT to the request headers.
+ *
+ * @param options - Wallet attestation client authentication options.
+ * @param options.callbacks - Random generation and signing callbacks for the PoP JWT.
+ * @param options.config - IT-Wallet specification version used to create the PoP JWT.
+ * @param options.walletAttestationJwt - Wallet attestation JWT to attach to outgoing requests.
+ * @returns Client authentication callback that mutates request headers with attestation values.
+ * @throws {Oauth2Error} If the PoP JWT cannot be created.
  */
 export function clientAuthenticationWalletAttestationJwt<
   V extends ItWalletSpecsVersion = ItWalletSpecsVersion,

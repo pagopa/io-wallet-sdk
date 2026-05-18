@@ -67,6 +67,12 @@ export class IoWalletSdkConfig<
 > {
   public readonly itWalletSpecsVersion: V;
 
+  /**
+   * Creates an SDK configuration for a specific IT-Wallet specification version.
+   *
+   * @param options - Configuration options.
+   * @param options.itWalletSpecsVersion - IT-Wallet specification version to use.
+   */
   constructor(options: IoWalletSdkConfigOptions<V>) {
     this.itWalletSpecsVersion = options.itWalletSpecsVersion;
   }
