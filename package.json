@@ -11,7 +11,7 @@
     "types:check": "pnpm build && tsc --noEmit",
     "build": "pnpm -r build",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist",
-    "docs": "typedoc",
+    "docs": "pnpm build && typedoc",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "format": "prettier --write \"packages/**/src/**/*.{js,ts}\"",
