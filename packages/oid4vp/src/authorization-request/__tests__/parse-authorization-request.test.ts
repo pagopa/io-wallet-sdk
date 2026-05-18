@@ -563,6 +563,26 @@ describe("extractClientIdPrefix", () => {
     });
   });
 
+  it("returns NONE prefix and full URL when client_id is a https URL", () => {
+    expect(extractClientIdPrefix("https://client.example.it")).toEqual({
+      clientId: "https://client.example.it",
+      prefix: ClientIdPrefix.NONE,
+    });
+  });
+
+  it("returns NONE prefix and full URL when client_id is an http URL", () => {
+    expect(extractClientIdPrefix("http://client.example.it")).toEqual({
+      clientId: "http://client.example.it",
+      prefix: ClientIdPrefix.NONE,
+    });
+  });
+
+  it("throws Oid4vpError for a URL-like prefix that is not http or https", () => {
+    expect(() => extractClientIdPrefix("ftp://client.example.it")).toThrow(
+      Oid4vpError,
+    );
+  });
+
   it("handles value containing additional colons correctly", () => {
     expect(extractClientIdPrefix("x509_hash:a:b:c")).toEqual({
       clientId: "a:b:c",
