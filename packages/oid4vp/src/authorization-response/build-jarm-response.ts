@@ -68,10 +68,7 @@ export async function buildJarmResponse(
       encryptionEnc,
     );
 
-    const alg =
-      options.authorization_encrypted_response_alg ??
-      encryptionJwk.alg ??
-      "ECDH-ES";
+    const alg = encryptionAlg;
 
     const nonceBytes = await options.callbacks.generateRandom(32);
 

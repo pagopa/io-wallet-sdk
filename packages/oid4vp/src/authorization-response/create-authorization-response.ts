@@ -52,6 +52,7 @@ const dispatchCreateAuthorizationResponse = createVersionDispatcher<
  *   the `client_id` prefix, falling back to `rpJwks.jwks`.
  *
  * @throws {CreateAuthorizationResponseError} If response generation or encryption fails
+ * @throws {ItWalletSpecsVersionError} If `config.itWalletSpecsVersion` is not a recognised version at runtime
  */
 export async function createAuthorizationResponse(
   options: CreateAuthorizationResponseVersionedOptions,
