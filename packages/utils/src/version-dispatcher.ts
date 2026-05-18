@@ -15,9 +15,9 @@ export interface VersionedOptions {
  * intentional trade-off: compile-time exhaustiveness is preferred over
  * sparse-map flexibility.
  *
- * @param handlers - Map of version → handler function (all versions required)
- * @throws {ItWalletSpecsVersionError} When an unknown version is supplied at runtime
- * (e.g. via an unsafe enum cast or external configuration)
+ * @param handlers    - Map of version → handler function
+ * @returns Dispatcher function that invokes the handler for `options.config.itWalletSpecsVersion`.
+ * @throws {ItWalletSpecsVersionError} If no handler is registered for the configured version.
  */
 export function createVersionDispatcher<
   TOptions extends VersionedOptions,
@@ -44,13 +44,10 @@ export function createVersionDispatcher<
 /**
  * Dispatches by a bare version value (no options object needed).
  *
- * All versions declared in `ItWalletSpecsVersion` must be provided
- * (`Required` contract). See `createVersionDispatcher` for the rationale.
- *
- * @param version  - The version to dispatch on
- * @param handlers - Map of version → zero-argument handler function (all versions required)
- * @throws {ItWalletSpecsVersionError} When an unknown version is supplied at runtime
- * (e.g. via an unsafe enum cast or external configuration)
+ * @param version     - The version to dispatch on
+ * @param handlers    - Map of version → zero-argument handler function
+ * @returns Result returned by the selected version handler.
+ * @throws {ItWalletSpecsVersionError} If no handler is registered for the version.
  */
 export function dispatchByVersion<TResult>(
   version: ItWalletSpecsVersion,

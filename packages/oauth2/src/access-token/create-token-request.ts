@@ -34,6 +34,16 @@ export interface RetrieveAuthorizationCodeAccessTokenOptions {
   redirectUri: string;
 }
 
+/**
+ * Creates an OAuth 2.0 authorization-code access token request body.
+ *
+ * @param options - Access token request inputs.
+ * @param options.additionalRequestPayload - Extra form fields to include in the token request.
+ * @param options.authorizationCode - Authorization code received from the authorization response.
+ * @param options.pkceCodeVerifier - PKCE verifier associated with the authorization request.
+ * @param options.redirectUri - Redirect URI used in the authorization request.
+ * @returns URL-form-encodable authorization-code grant request data.
+ */
 export const createTokenRequest = async (
   options: RetrieveAuthorizationCodeAccessTokenOptions,
 ) =>

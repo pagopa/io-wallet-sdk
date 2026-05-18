@@ -96,13 +96,7 @@ export interface VerifyAuthorizationRequestOptions {
  * @param options.authorizationServerMetadata - Authorization server metadata including issuer
  * @param options.callbacks - Cryptographic callback functions for hash and JWT verification
  * @param options.dpop - Optional DPoP verification configuration
- * @param options.dpop.jwt - The DPoP JWT extracted from request headers
- * @param options.dpop.required - Whether DPoP is required (will throw if missing)
- * @param options.dpop.allowedSigningAlgs - Allowed signing algorithms for DPoP
  * @param options.clientAttestation - Client attestation verification configuration
- * @param options.clientAttestation.walletAttestationJwt - The wallet attestation JWT from headers
- * @param options.clientAttestation.clientAttestationPopJwt - The client attestation PoP JWT from headers
- * @param options.clientAttestation.ensureConfirmationKeyMatchesDpopKey - Whether to verify DPoP and client attestation use the same key
  * @param options.request - The HTTP request object containing URL and headers
  * @param options.now - Optional date for time-based validation (defaults to current time)
  *

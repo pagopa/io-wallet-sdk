@@ -1,6 +1,14 @@
 import { Oauth2Error } from "../errors";
 import { JarAuthorizationRequest } from "./z-jar";
 
+/**
+ * Validates that JAR parameters identify exactly one request transmission mode.
+ *
+ * @param options - Validation options.
+ * @param options.jarRequestParams - JAR request parameters to validate.
+ * @returns The request URI when the request is sent by reference.
+ * @throws {Oauth2Error} If both `request` and `request_uri` are present or both are missing.
+ */
 export function validateJarRequestParams(options: {
   jarRequestParams: JarAuthorizationRequest;
 }) {

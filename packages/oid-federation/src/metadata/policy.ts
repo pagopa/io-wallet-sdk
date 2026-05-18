@@ -20,6 +20,12 @@ export const allSupportedPolicies = {
 
 export type SupportedPolicyKey = keyof typeof allSupportedPolicies;
 
+/**
+ * Checks whether a policy key is supported by the SDK metadata policy implementation.
+ *
+ * @param key - Policy key to inspect.
+ * @returns True when the key is one of the supported policy operators.
+ */
 export const isExistingPolicyKey = (key: string): key is SupportedPolicyKey =>
   Object.hasOwn(allSupportedPolicies, key);
 

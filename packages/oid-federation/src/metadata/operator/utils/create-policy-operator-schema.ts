@@ -1,5 +1,11 @@
 import type { MetadataOperator } from "../metadata-operator";
 
+/**
+ * Converts a metadata operator definition into the policy operator schema shape.
+ *
+ * @param operator - Metadata operator definition.
+ * @returns Schema descriptor used by metadata policy validation and application.
+ */
 export const createPolicyOperatorSchema = <TKey extends string>(
   operator: MetadataOperator<TKey>,
 ) =>

@@ -97,6 +97,15 @@ export async function fetchTokenResponse(
   }
 }
 
+/**
+ * Converts an access token request object into URL-encoded form parameters.
+ *
+ * Object values are JSON-stringified so structured extension parameters such as
+ * `authorization_details` can be sent in `application/x-www-form-urlencoded` requests.
+ *
+ * @param data - Access token request payload.
+ * @returns URLSearchParams containing all defined request fields.
+ */
 export function toURLSearchParams(data: AccessTokenRequest): URLSearchParams {
   const params = new URLSearchParams();
 

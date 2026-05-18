@@ -67,6 +67,21 @@ export interface VerifyTokenDPoPOptions {
   request: RequestLike;
 }
 
+/**
+ * Verifies a DPoP proof JWT against an HTTP request and optional token binding data.
+ *
+ * @param options - DPoP verification options.
+ * @param options.accessToken - Optional access token whose hash must match the `ath` claim.
+ * @param options.allowedSigningAlgs - Optional allow-list for DPoP signing algorithms.
+ * @param options.callbacks - Hashing and JWT verification callbacks.
+ * @param options.dpopJwt - Compact DPoP JWT.
+ * @param options.expectedJwkThumbprint - Optional expected confirmation JWK thumbprint.
+ * @param options.expectedNonce - Optional nonce expected in the payload.
+ * @param options.now - Date used for temporal validation.
+ * @param options.request - HTTP request that the DPoP proof must bind to.
+ * @returns Decoded JWT header, payload, and resolved signer.
+ * @throws {Oauth2Error} If any DPoP claim, token binding, or signature validation fails.
+ */
 export async function verifyTokenDPoP(options: VerifyTokenDPoPOptions) {
   const { header, payload } = decodeJwt({
     errorMessagePrefix: "Error decoding access token DPoP JWT:",

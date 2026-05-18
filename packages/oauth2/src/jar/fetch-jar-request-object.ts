@@ -8,6 +8,16 @@ import {
 
 import { Oauth2Error } from "../errors";
 
+/**
+ * Fetches a JWT-Secured Authorization Request object from a `request_uri`.
+ *
+ * @param options - Request object fetch options.
+ * @param options.fetch - Optional fetch implementation; defaults to the runtime fetch through `createFetcher`.
+ * @param options.requestUri - URI hosting the signed authorization request object.
+ * @returns Compact JAR request object JWT.
+ * @throws {UnexpectedStatusCodeError} If the endpoint does not return HTTP 200.
+ * @throws {Oauth2Error} If the request object cannot be fetched.
+ */
 export async function fetchJarRequestObject(options: {
   fetch?: Fetch;
   requestUri: string;
