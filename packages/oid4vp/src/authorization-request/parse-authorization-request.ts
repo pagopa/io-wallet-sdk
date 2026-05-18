@@ -47,8 +47,13 @@ export interface ClientIdParts {
 export function extractClientIdPrefix(clientId: string): ClientIdParts {
   const colonIndex = clientId.indexOf(":");
 
-  // No colon, or the colon is part of a URI scheme (e.g. "https://...") → no prefix
-  if (colonIndex === -1 || clientId.slice(colonIndex + 1).startsWith("//")) {
+  // No colon → no prefix
+  if (colonIndex === -1) {
+    return { clientId, prefix: ClientIdPrefix.NONE };
+  }
+
+  // Explicitly allow HTTP(S) URL client_id values without treating the scheme as a prefix.
+  if (clientId.startsWith("https://") || clientId.startsWith("http://")) {
     return { clientId, prefix: ClientIdPrefix.NONE };
   }
 
