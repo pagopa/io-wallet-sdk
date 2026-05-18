@@ -563,6 +563,13 @@ describe("extractClientIdPrefix", () => {
     });
   });
 
+  it("returns NONE prefix and full URL when client_id is a https URL", () => {
+    expect(extractClientIdPrefix("https://client.example.it")).toEqual({
+      clientId: "https://client.example.it",
+      prefix: ClientIdPrefix.NONE,
+    });
+  });
+
   it("handles value containing additional colons correctly", () => {
     expect(extractClientIdPrefix("x509_hash:a:b:c")).toEqual({
       clientId: "a:b:c",

@@ -47,7 +47,8 @@ export interface ClientIdParts {
 export function extractClientIdPrefix(clientId: string): ClientIdParts {
   const colonIndex = clientId.indexOf(":");
 
-  if (colonIndex === -1) {
+  // No colon, or the colon is part of a URI scheme (e.g. "https://...") → no prefix
+  if (colonIndex === -1 || clientId.slice(colonIndex + 1).startsWith("//")) {
     return { clientId, prefix: ClientIdPrefix.NONE };
   }
 
