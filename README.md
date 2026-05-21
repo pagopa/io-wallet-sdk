@@ -28,6 +28,11 @@ This SDK is a monorepo containing the following packages:
 | **`@pagopa/io-wallet-oid4vp`**         | Manages **Verifiable Presentation** flows. Use this to build Relying Party services that request and verify user credentials from the IT-Wallet.          |
 | **`@pagopa/io-wallet-utils`**          | Shared types, configuration (`IoWalletSdkConfig`, `ItWalletSpecsVersion`), and utilities used across all packages.                                        |
 
+## Documentation
+
+Public SDK API documentation is published at
+[pagopa.github.io/io-wallet-sdk](https://pagopa.github.io/io-wallet-sdk/).
+
 ## Which packages do I need?
 
 The IT-Wallet ecosystem has three distinct actor roles. Install only the packages relevant to your use case.

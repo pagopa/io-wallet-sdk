@@ -11,6 +11,7 @@
     "types:check": "pnpm build && tsc --noEmit",
     "build": "pnpm -r build",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist",
+    "docs": "pnpm build && typedoc",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "format": "prettier --write \"packages/**/src/**/*.{js,ts}\"",
@@ -34,6 +35,8 @@
     "husky": "^9.1.7",
     "prettier": "^3.8.3",
     "tsup": "^8.5.1",
+    "typedoc": "^0.28.19",
+    "typedoc-material-theme": "^1.4.1",
     "typescript": "5.6.3",
     "vitest": "^3.2.4"
   },
