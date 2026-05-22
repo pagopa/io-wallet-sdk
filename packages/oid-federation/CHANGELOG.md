@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.4.2
+
+### Patch Changes
+
+- 5486f3a: Allow numeric values in credential_signing_alg_values_supported for mdoc credentials (Issuer metadata v1.3)
+- 2b10c70: Allow it_spid in Credential Issuer v1.3 trust_frameworks_supported for backward compatibility
+  - @pagopa/io-wallet-utils@1.4.2
+
 ## 1.4.1
 
 ### Patch Changes
