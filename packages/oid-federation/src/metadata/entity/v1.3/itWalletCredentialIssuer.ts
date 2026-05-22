@@ -113,13 +113,20 @@ export type SupportedCredentialMetadata = z.infer<
 
 export const SupportedCredentialMetadata = z.intersection(
   z.discriminatedUnion("format", [
-    z.object({ format: z.literal("dc+sd-jwt"), vct: z.string() }),
-    z.object({ doctype: z.string(), format: z.literal("mso_mdoc") }),
+    z.object({
+      credential_signing_alg_values_supported: z.array(z.string()),
+      format: z.literal("dc+sd-jwt"),
+      vct: z.string(),
+    }),
+    z.object({
+      credential_signing_alg_values_supported: z.array(z.number().int()),
+      doctype: z.string(),
+      format: z.literal("mso_mdoc"),
+    }),
   ]),
   z.object({
     authentic_sources: AuthenticSources,
     credential_metadata: CredentialMetadata,
-    credential_signing_alg_values_supported: z.array(z.string()),
     cryptographic_binding_methods_supported: z.array(z.string()),
     proof_types_supported: ProofTypesSupported,
     schema_id: z.string(),
