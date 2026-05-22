@@ -171,7 +171,7 @@ describe("itWalletCredentialIssuerMetadata v1.3 metadata", () => {
               },
             ],
           },
-          credential_signing_alg_values_supported: ["ES256"],
+          credential_signing_alg_values_supported: [-7],
           cryptographic_binding_methods_supported: ["cose_key"],
           doctype: "org.iso.18013.5.1.mDL",
           format: "mso_mdoc",
