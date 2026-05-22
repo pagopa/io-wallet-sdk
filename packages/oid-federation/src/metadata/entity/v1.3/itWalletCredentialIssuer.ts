@@ -119,7 +119,7 @@ export const SupportedCredentialMetadata = z.intersection(
       vct: z.string(),
     }),
     z.object({
-      credential_signing_alg_values_supported: z.array(z.number()),
+      credential_signing_alg_values_supported: z.array(z.number().int()),
       doctype: z.string(),
       format: z.literal("mso_mdoc"),
     }),
