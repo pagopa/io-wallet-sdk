@@ -163,6 +163,8 @@ export const itWalletCredentialIssuerMetadata = z.looseObject({
       z.literal("it_cie"),
       z.literal("it_wallet"),
       z.literal("it_l2+document_proof"),
+      /** @deprecated For backward compatibility only, will be removed in future versions. */
+      z.literal("it_spid"),
     ]),
   ),
 });
