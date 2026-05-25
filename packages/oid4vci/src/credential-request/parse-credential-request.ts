@@ -251,6 +251,80 @@ function parseProofJwt(options: {
   };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function canonicalizeJson(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(canonicalizeJson);
+  }
+
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  return Object.keys(value)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, key) => {
+      const property = value[key];
+      if (property !== undefined) {
+        acc[key] = canonicalizeJson(property);
+      }
+      return acc;
+    }, {});
+}
+
+function pickJwkMembers(
+  jwk: Record<string, unknown>,
+  members: string[],
+): Record<string, unknown> | undefined {
+  if (members.some((member) => jwk[member] === undefined)) {
+    return undefined;
+  }
+
+  return members.reduce<Record<string, unknown>>((acc, member) => {
+    acc[member] = jwk[member];
+    return acc;
+  }, {});
+}
+
+function getJwkThumbprintInput(
+  jwk: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  switch (jwk.kty) {
+    case "EC":
+      return pickJwkMembers(jwk, ["crv", "kty", "x", "y"]);
+    case "OKP":
+      return pickJwkMembers(jwk, ["crv", "kty", "x"]);
+    case "RSA":
+      return pickJwkMembers(jwk, ["e", "kty", "n"]);
+    case "oct":
+      return pickJwkMembers(jwk, ["k", "kty"]);
+    default:
+      return undefined;
+  }
+}
+
+function createProofJwkUniquenessKey(jwk: unknown): string {
+  const comparableJwk = isRecord(jwk)
+    ? (getJwkThumbprintInput(jwk) ?? jwk)
+    : jwk;
+  return JSON.stringify(canonicalizeJson(comparableJwk));
+}
+
+function validateProofJwkUniqueness(proofs: ParsedCredentialProof[]): void {
+  const uniqueKeys = new Set(
+    proofs.map((proof) => createProofJwkUniquenessKey(proof.header.jwk)),
+  );
+
+  if (uniqueKeys.size !== proofs.length) {
+    throw new ValidationError(
+      "Credential request proofs must use unique jwk header values",
+    );
+  }
+}
+
 /**
  * Converts version-specific proof containers (`proof` or `proofs.jwt[]`) into a normalized array.
  */
@@ -271,7 +345,7 @@ function normalizeProofs(options: {
     ];
   }
 
-  return options.credentialRequest.proofs.jwt.map((jwt) =>
+  const proofs = options.credentialRequest.proofs.jwt.map((jwt) =>
     parseProofJwt({
       expected: options.expected,
       grantType: options.grantType,
@@ -279,6 +353,10 @@ function normalizeProofs(options: {
       jwt,
     }),
   );
+
+  validateProofJwkUniqueness(proofs);
+
+  return proofs;
 }
 
 /**

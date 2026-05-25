@@ -16,6 +16,20 @@ import { parseCredentialRequest } from "../parse-credential-request";
 const VALID_DPOP_JWT =
   "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0In0.eyJodG0iOiJQT1NUIiwiaHR1IjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZS5jb20vY3JlZGVudGlhbCIsImlhdCI6MTcwMDAwMDAwMH0.signature";
 
+const PROOF_JWK = {
+  crv: "P-256",
+  kty: "EC",
+  x: "test-x-coordinate-1",
+  y: "test-y-coordinate-1",
+};
+
+const SECOND_PROOF_JWK = {
+  crv: "P-256",
+  kty: "EC",
+  x: "test-x-coordinate-2",
+  y: "test-y-coordinate-2",
+};
+
 function createHeaders(options?: {
   authorization?: string;
   dpop?: string;
@@ -37,9 +51,7 @@ function createJwt(options?: {
   const header = Buffer.from(
     JSON.stringify({
       alg: "ES256",
-      jwk: {
-        kty: "EC",
-      },
+      jwk: PROOF_JWK,
       typ: "openid4vci-proof+jwt",
       ...options?.header,
     }),
@@ -63,11 +75,13 @@ function createProofJwt(payload?: Record<string, unknown>): string {
 }
 
 function createProofJwtV1_3(options?: {
+  jwk?: Record<string, unknown>;
   keyAttestation?: string;
   payload?: Record<string, unknown>;
 }): string {
   return createJwt({
     header: {
+      jwk: options?.jwk ?? PROOF_JWK,
       key_attestation: options?.keyAttestation ?? "test-key-attestation",
     },
     payload: options?.payload,
@@ -120,7 +134,10 @@ describe("parseCredentialRequest", () => {
         proofs: {
           jwt: [
             createProofJwtV1_3(),
-            createProofJwtV1_3({ payload: { nonce: "test-nonce-2" } }),
+            createProofJwtV1_3({
+              jwk: SECOND_PROOF_JWK,
+              payload: { nonce: "test-nonce-2" },
+            }),
           ],
         },
       },
@@ -136,6 +153,35 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs[0]?.payload.aud).toBe("https://issuer.example.com");
     expect(result.proofs[1]?.payload.nonce).toBe("test-nonce-2");
   });
+
+  it.each([ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4])(
+    "throws ValidationError when batch credential request contains duplicate proof JWKs (%s)",
+    (itWalletSpecsVersion) => {
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion });
+
+      expect(() =>
+        parseCredentialRequest({
+          config,
+          credentialRequest: {
+            credential_identifier: "education_degree",
+            proofs: {
+              jwt: [
+                createProofJwtV1_3({ jwk: { ...PROOF_JWK, kid: "key-1" } }),
+                createProofJwtV1_3({
+                  jwk: { ...PROOF_JWK, kid: "key-2" },
+                  payload: { nonce: "test-nonce-2" },
+                }),
+              ],
+            },
+          },
+          headers: createHeaders({
+            authorization: "DPoP test-access-token",
+            dpop: VALID_DPOP_JWT,
+          }),
+        }),
+      ).toThrow(ValidationError);
+    },
+  );
 
   it("parses v1.4 credential request and returns itWalletSpecsVersion V1_4", () => {
     const config = new IoWalletSdkConfig({
