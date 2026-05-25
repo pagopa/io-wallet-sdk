@@ -256,23 +256,6 @@ function parseProofJwt(options: {
   };
 }
 
-async function calculateProofJwkThumbprint(options: {
-  callbacks: Pick<CallbackContext, "hash">;
-  jwk: ProofJwtHeader["jwk"];
-}): Promise<string> {
-  try {
-    return await calculateJwkThumbprint({
-      hashAlgorithm: HashAlgorithm.Sha256,
-      hashCallback: options.callbacks.hash,
-      jwk: options.jwk,
-    });
-  } catch {
-    throw new ValidationError(
-      "Credential proof JWT jwk header does not match a supported RFC7638 JWK thumbprint structure",
-    );
-  }
-}
-
 async function validateProofJwkUniqueness(options: {
   callbacks: Pick<CallbackContext, "hash">;
   proofs: ParsedCredentialProof[];
@@ -283,8 +266,9 @@ async function validateProofJwkUniqueness(options: {
 
   const thumbprints = await Promise.all(
     options.proofs.map((proof) =>
-      calculateProofJwkThumbprint({
-        callbacks: options.callbacks,
+      calculateJwkThumbprint({
+        hashAlgorithm: HashAlgorithm.Sha256,
+        hashCallback: options.callbacks.hash,
         jwk: proof.header.jwk,
       }),
     ),
