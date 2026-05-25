@@ -173,6 +173,7 @@ export async function createAuthorizationResponse(
       apu: encodeToBase64Url(nonceBytes),
       apv: encodeToBase64Url(requestObject.nonce),
       enc,
+      kid: encryptionJwk.kid,
       method: "jwk",
       publicJwk: encryptionJwk,
     };
