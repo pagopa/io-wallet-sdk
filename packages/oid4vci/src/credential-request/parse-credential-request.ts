@@ -4,12 +4,15 @@ import {
   extractDpopJwtFromHeaders,
 } from "@pagopa/io-wallet-oauth2";
 import {
+  type CallbackContext,
   FetchHeaders,
   HEADERS,
+  HashAlgorithm,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
   ValidationError,
+  calculateJwkThumbprint,
   createVersionDispatcher,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
@@ -72,6 +75,8 @@ export interface ParseCredentialRequestExpectedValues {
  * Input options for parsing a credential request.
  */
 export interface ParseCredentialRequestOptions {
+  /** Callback functions required to calculate proof JWK thumbprints. */
+  callbacks: Pick<CallbackContext, "hash">;
   /** SDK config used to route parsing logic by IT-Wallet specification version. */
   config: IoWalletSdkConfig;
   /** Credential request payload to validate and parse. */
@@ -251,31 +256,43 @@ function parseProofJwt(options: {
   };
 }
 
-function createProofJwkUniquenessKey(jwk: ProofJwtHeader["jwk"]): string {
-  switch (jwk.kty) {
-    case "EC":
-      return JSON.stringify(["EC", jwk.crv, jwk.x, jwk.y]);
-    case "OKP":
-      return JSON.stringify(["OKP", jwk.crv, jwk.x]);
-    case "RSA":
-      return JSON.stringify(["RSA", jwk.e, jwk.n]);
-    case "oct":
-      return JSON.stringify(["oct", jwk.k]);
-    default:
-      return JSON.stringify(
-        Object.entries(jwk).sort(([leftKey], [rightKey]) =>
-          leftKey.localeCompare(rightKey),
-        ),
-      );
+async function calculateProofJwkThumbprint(options: {
+  callbacks: Pick<CallbackContext, "hash">;
+  jwk: ProofJwtHeader["jwk"];
+}): Promise<string> {
+  try {
+    return await calculateJwkThumbprint({
+      hashAlgorithm: HashAlgorithm.Sha256,
+      hashCallback: options.callbacks.hash,
+      jwk: options.jwk,
+    });
+  } catch {
+    throw new ValidationError(
+      "Credential proof JWT jwk header does not match a supported RFC7638 JWK thumbprint structure",
+    );
   }
 }
 
-function validateProofJwkUniqueness(proofs: ParsedCredentialProof[]): void {
-  const uniqueKeys = new Set(
-    proofs.map((proof) => createProofJwkUniquenessKey(proof.header.jwk)),
+async function validateProofJwkUniqueness(options: {
+  callbacks: Pick<CallbackContext, "hash">;
+  proofs: ParsedCredentialProof[];
+}): Promise<void> {
+  if (options.proofs.length <= 1) {
+    return;
+  }
+
+  const thumbprints = await Promise.all(
+    options.proofs.map((proof) =>
+      calculateProofJwkThumbprint({
+        callbacks: options.callbacks,
+        jwk: proof.header.jwk,
+      }),
+    ),
   );
 
-  if (uniqueKeys.size !== proofs.length) {
+  const uniqueThumbprints = new Set(thumbprints);
+
+  if (uniqueThumbprints.size !== thumbprints.length) {
     throw new ValidationError(
       "Credential request proofs must use unique jwk header values",
     );
@@ -285,12 +302,13 @@ function validateProofJwkUniqueness(proofs: ParsedCredentialProof[]): void {
 /**
  * Converts version-specific proof containers (`proof` or `proofs.jwt[]`) into a normalized array.
  */
-function normalizeProofs(options: {
+async function normalizeProofs(options: {
+  callbacks: Pick<CallbackContext, "hash">;
   credentialRequest: CredentialRequestV1_0 | CredentialRequestV1_3;
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
   itWalletSpecsVersion: ItWalletSpecsVersion;
-}): ParsedCredentialProof[] {
+}): Promise<ParsedCredentialProof[]> {
   if ("proof" in options.credentialRequest) {
     return [
       parseProofJwt({
@@ -311,7 +329,10 @@ function normalizeProofs(options: {
     }),
   );
 
-  validateProofJwkUniqueness(proofs);
+  await validateProofJwkUniqueness({
+    callbacks: options.callbacks,
+    proofs,
+  });
 
   return proofs;
 }
@@ -319,10 +340,11 @@ function normalizeProofs(options: {
 /**
  * Builds the normalized parse result shared by v1.0 and v1.3 flows.
  */
-function toResult<
+async function toResult<
   TRequest extends CredentialRequestV1_0 | CredentialRequestV1_3,
 >(options: {
   accessToken: string;
+  callbacks: Pick<CallbackContext, "hash">;
   credentialRequest: TRequest;
   dpopProof: string;
   expected?: ParseCredentialRequestExpectedValues;
@@ -332,14 +354,15 @@ function toResult<
     | ItWalletSpecsVersion.V1_0
     | ItWalletSpecsVersion.V1_3
     | ItWalletSpecsVersion.V1_4;
-}): ParsedCredentialRequest {
+}): Promise<ParsedCredentialRequest> {
   validateExpectedValues(options.credentialRequest, options.expected);
   validateTransactionContext({
     credentialRequest: options.credentialRequest,
     isDeferredFlow: options.isDeferredFlow,
   });
 
-  const proofs = normalizeProofs({
+  const proofs = await normalizeProofs({
+    callbacks: options.callbacks,
     credentialRequest: options.credentialRequest,
     expected: options.expected,
     grantType: options.grantType,
@@ -418,7 +441,7 @@ interface ParseCredentialRequestHandlerOptions extends ParseCredentialRequestOpt
 
 function parseCredentialRequestV1_0(
   options: ParseCredentialRequestHandlerOptions,
-): ParsedCredentialRequest {
+): Promise<ParsedCredentialRequest> {
   const credentialRequest = parseWithErrorHandling(
     zCredentialRequestV1_0,
     options.credentialRequest,
@@ -426,6 +449,7 @@ function parseCredentialRequestV1_0(
   );
   return toResult({
     accessToken: options.accessToken,
+    callbacks: options.callbacks,
     credentialRequest,
     dpopProof: options.dpopProof,
     expected: options.expected,
@@ -437,7 +461,7 @@ function parseCredentialRequestV1_0(
 
 function parseCredentialRequestV1_3(
   options: ParseCredentialRequestHandlerOptions,
-): ParsedCredentialRequest {
+): Promise<ParsedCredentialRequest> {
   const credentialRequest = parseWithErrorHandling(
     zCredentialRequestV1_3,
     options.credentialRequest,
@@ -445,6 +469,7 @@ function parseCredentialRequestV1_3(
   );
   return toResult({
     accessToken: options.accessToken,
+    callbacks: options.callbacks,
     credentialRequest,
     dpopProof: options.dpopProof,
     expected: options.expected,
@@ -456,7 +481,7 @@ function parseCredentialRequestV1_3(
 
 function parseCredentialRequestV1_4(
   options: ParseCredentialRequestHandlerOptions,
-): ParsedCredentialRequest {
+): Promise<ParsedCredentialRequest> {
   const credentialRequest = parseWithErrorHandling(
     zCredentialRequestV1_3,
     options.credentialRequest,
@@ -464,6 +489,7 @@ function parseCredentialRequestV1_4(
   );
   return toResult({
     accessToken: options.accessToken,
+    callbacks: options.callbacks,
     credentialRequest,
     dpopProof: options.dpopProof,
     expected: options.expected,
@@ -475,7 +501,7 @@ function parseCredentialRequestV1_4(
 
 const dispatchParseCredentialRequest = createVersionDispatcher<
   ParseCredentialRequestHandlerOptions,
-  ParsedCredentialRequest
+  Promise<ParsedCredentialRequest>
 >({
   [ItWalletSpecsVersion.V1_0]: parseCredentialRequestV1_0,
   [ItWalletSpecsVersion.V1_3]: parseCredentialRequestV1_3,
@@ -499,23 +525,24 @@ const dispatchParseCredentialRequest = createVersionDispatcher<
  *    for deferred vs. immediate issuance flows.
  * 6. **Proof JWT structure** — decodes each proof JWT and validates its header and
  *    payload claims, including `iss` requirements for the `authorization_code` grant.
- *    For v1.3, asserts the `key_attestation` header claim is present and non-empty.
+ *    For v1.3, asserts the `key_attestation` header claim is present and non-empty,
+ *    and validates batch proof key uniqueness with RFC7638 JWK thumbprints.
  *
  * This function does not perform cryptographic signature verification on proof JWTs
  * or the DPoP proof. Both must be verified separately after parsing.
  * For DPoP proofs, the caller can use the `verifyTokenDPoP` function exported by io-wallet-oauth2.
  *
  * @param options - Parsing options and validation context.
- * @returns Normalized parsed credential request including the extracted `accessToken` and `dpopProof`.
+ * @returns Promise resolving to the normalized parsed credential request including the extracted `accessToken` and `dpopProof`.
  * @throws {CredentialAuthorizationHeaderError} If the `Authorization` header is absent or invalid.
  * @throws {CredentialDpopProofError} If the `DPoP` header is absent or not a valid compact JWT.
  * @throws {ValidationError} If request body schema or semantic checks fail.
  * @throws {Oauth2JwtParseError} If a proof JWT cannot be decoded.
  * @throws {ParseCredentialRequestError} For unexpected parsing failures.
  */
-export function parseCredentialRequest(
+export async function parseCredentialRequest(
   options: ParseCredentialRequestOptions,
-): ParsedCredentialRequest {
+): Promise<ParsedCredentialRequest> {
   const grantType = options.grantType ?? "authorization_code";
   const isDeferredFlow = options.isDeferredFlow ?? false;
 
@@ -523,7 +550,7 @@ export function parseCredentialRequest(
     const accessToken = parseAuthorizationHeader(options.headers);
     const dpopProof = parseDpopProof(options.headers);
 
-    return dispatchParseCredentialRequest({
+    return await dispatchParseCredentialRequest({
       ...options,
       accessToken,
       dpopProof,
