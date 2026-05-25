@@ -1,7 +1,6 @@
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -482,22 +481,6 @@ describe("fetchMetadata - v1.3 rejects v1.0 metadata", () => {
     });
 
     await expect(fetchMetadata(baseOptions)).rejects.toThrow(ValidationError);
-  });
-});
-
-describe("fetchMetadata - unsupported version", () => {
-  it("should throw ItWalletSpecsVersionError for an unknown version", async () => {
-    const unsupportedConfig = {
-      isVersion: () => false,
-      itWalletSpecsVersion: "V9_9" as ItWalletSpecsVersion,
-    } as unknown as IoWalletSdkConfig;
-
-    await expect(
-      fetchMetadata({
-        ...baseOptions,
-        config: unsupportedConfig,
-      }),
-    ).rejects.toThrow(ItWalletSpecsVersionError);
   });
 });
 

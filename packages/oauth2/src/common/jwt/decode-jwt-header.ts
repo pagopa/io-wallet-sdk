@@ -38,6 +38,19 @@ export interface DecodeJwtHeaderResult<
   header: InferSchemaOrDefaultOutput<HeaderSchema, typeof zJwtHeader>;
 }
 
+/**
+ * Decodes and validates the header of a compact JWT.
+ *
+ * This helper does not verify the JWT signature or parse the payload.
+ *
+ * @param options - Header decode options.
+ * @param options.errorMessagePrefix - Optional context prefix for thrown parse/validation errors.
+ * @param options.headerSchema - Optional schema for the JWT header; defaults to `zJwtHeader`.
+ * @param options.jwt - Compact JWT to decode.
+ * @returns Decoded and schema-validated JWT header.
+ * @throws {Oauth2JwtParseError} If the JWT shape or header JSON is invalid.
+ * @throws {ValidationError} If header schema validation fails.
+ */
 export function decodeJwtHeader<
   HeaderSchema extends BaseSchema | undefined = undefined,
 >(
@@ -84,6 +97,12 @@ export function decodeJwtHeader<
   };
 }
 
+/**
+ * Builds a JWT header from an SDK signer descriptor.
+ *
+ * @param signer - Signer descriptor used by SDK signing callbacks.
+ * @returns Header fields required by the signer method.
+ */
 export function jwtHeaderFromJwtSigner(signer: JwtSigner) {
   if (signer.method === "did") {
     return {

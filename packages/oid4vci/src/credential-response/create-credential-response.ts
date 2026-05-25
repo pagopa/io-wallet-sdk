@@ -5,7 +5,6 @@ import type {
 
 import {
   ItWalletSpecsVersion,
-  ItWalletSpecsVersionError,
   ValidationError,
   createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
@@ -14,6 +13,7 @@ import type {
   CreateCredentialResponseOptions,
   CreateCredentialResponseOptionsV1_0,
   CreateCredentialResponseOptionsV1_3,
+  CreateCredentialResponseOptionsV1_4,
   CreateCredentialResponseResult,
   CreateCredentialResponseResultWithFlow,
   DeferredFlowOptionsV1_0,
@@ -35,7 +35,7 @@ import * as V1_3 from "./v1.3/create-credential-response";
 const dispatchBuildVersionedResponse = createVersionDispatcher<
   CreateCredentialResponseOptions,
   CredentialResponse
->("createCredentialResponse", {
+>({
   [ItWalletSpecsVersion.V1_0]: (o) =>
     V1_0.createCredentialResponseV1_0(
       (o as CreateCredentialResponseOptionsV1_0).flow,
@@ -44,12 +44,19 @@ const dispatchBuildVersionedResponse = createVersionDispatcher<
     V1_3.createCredentialResponseV1_3(
       (o as CreateCredentialResponseOptionsV1_3).flow,
     ),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    V1_3.createCredentialResponseV1_3(
+      (o as CreateCredentialResponseOptionsV1_4).flow,
+      // V1_4 reuses V1_3 credential response schema — no breaking changes between versions.
+      // Verified against compare/1.3.3...1.4.1: credential response parameters identical.
+    ),
 });
 
 export type {
   CreateCredentialResponseOptions,
   CreateCredentialResponseOptionsV1_0,
   CreateCredentialResponseOptionsV1_3,
+  CreateCredentialResponseOptionsV1_4,
   CreateCredentialResponseResult,
   CreateCredentialResponseResultWithFlow,
   DeferredFlowOptionsV1_0,
@@ -73,7 +80,6 @@ export type {
  * @returns An object containing:
  * - `credentialResponse`: plain version-specific credential response JSON
  * - `credentialResponseJwt`: encrypted JWE string when encryption is requested
- * @throws {ItWalletSpecsVersionError} When the configured specification version is not supported.
  * @throws {ValidationError} When the generated response does not satisfy the version schema.
  * @throws {Oid4vciError} When encryption is requested but `callbacks.encryptJwe` is not provided.
  * @throws {CreateCredentialResponseError} For unexpected errors during response creation.
@@ -192,11 +198,7 @@ export async function createCredentialResponse(
 
     return { credentialResponse, credentialResponseJwt };
   } catch (error) {
-    if (
-      error instanceof ItWalletSpecsVersionError ||
-      error instanceof ValidationError ||
-      error instanceof Oid4vciError
-    ) {
+    if (error instanceof ValidationError || error instanceof Oid4vciError) {
       throw error;
     }
     throw new CreateCredentialResponseError(

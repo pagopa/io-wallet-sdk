@@ -1,0 +1,33 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "IO Wallet SDK",
+  "entryPoints": [
+    "packages/oauth2",
+    "packages/oid-federation",
+    "packages/oid4vci",
+    "packages/oid4vp",
+    "packages/utils"
+  ],
+  "entryPointStrategy": "packages",
+  "packageOptions": {
+    "entryPoints": ["src/index.ts"],
+    "validation": {
+      "notExported": false
+    }
+  },
+  "out": "dist-docs",
+  "readme": "README.md",
+  "headings": {
+    "readme": false
+  },
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "githubPages": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/pagopa/io-wallet-sdk",
+    "npm": "https://www.npmjs.com/search?q=%40pagopa%2Fio-wallet"
+  },
+  "plugin": ["typedoc-material-theme"],
+  "themeColor": "#3165C5"
+}

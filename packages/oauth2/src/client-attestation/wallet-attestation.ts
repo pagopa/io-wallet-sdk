@@ -29,7 +29,7 @@ import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_4 } from "./
 const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
   VerifyWalletAttestationJwtOptions,
   Promise<VerifiedWalletAttestationJwt>
->("verifyWalletAttestationJwt", {
+>({
   [ItWalletSpecsVersion.V1_0]: (o) =>
     verifyWalletAttestationJwtV1_0(o as VerifyWalletAttestationJwtOptionsV1_0),
   [ItWalletSpecsVersion.V1_3]: (o) =>
@@ -48,6 +48,16 @@ export type VerifyWalletAttestationJwtOptions =
   | VerifyWalletAttestationJwtOptionsV1_3
   | VerifyWalletAttestationJwtOptionsV1_4;
 
+/**
+ * Verifies a wallet/client attestation JWT according to the configured IT-Wallet version.
+ *
+ * @param options - Version-specific wallet attestation verification options.
+ * @returns Decoded and verified wallet attestation data for the configured version.
+ * @throws {ValidationError} If JWT header or payload validation fails.
+ * @throws {Oauth2JwtParseError} If the attestation JWT cannot be decoded.
+ * @throws {Oauth2JwtVerificationError} If signature verification fails.
+ * @throws {ItWalletSpecsVersionError} If the configured version is unsupported.
+ */
 export async function verifyWalletAttestationJwt(
   options: VerifyWalletAttestationJwtOptionsV1_0,
 ): Promise<VerifiedWalletAttestationJwtV1_0>;
@@ -66,6 +76,13 @@ export async function verifyWalletAttestationJwt(
   return dispatchVerifyWalletAttestationJwt(options);
 }
 
+/**
+ * Extracts wallet attestation and PoP JWT header values from request headers.
+ *
+ * @param headers - Request headers to inspect.
+ * @returns Parsed header values when both are present, `{ valid: true }` when neither is present,
+ * or `{ valid: false }` when the pair is incomplete or malformed.
+ */
 export function extractClientAttestationJwtsFromHeaders(headers: FetchHeaders):
   | {
       clientAttestationPopHeader: string;

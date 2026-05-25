@@ -36,6 +36,7 @@ export interface ParseAuthorizationRequestResult {
  * but does NOT verify cryptographic signatures. JWT signature verification
  * should be performed separately using the appropriate verification functions.
  *
+ * @param options - Authorization request parsing options.
  * @returns Parsed authorization request result containing:
  * - `dpop` - DPoP information if present (jwt)
  * - `clientAttestation` - Client attestation JWTs if present

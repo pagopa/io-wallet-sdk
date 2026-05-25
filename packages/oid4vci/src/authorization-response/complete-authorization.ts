@@ -32,8 +32,8 @@ export interface CompleteAuthorizationOptions {
 }
 
 /**
- * Combination of {@link CompleteAuthorizationOptions},
- * {@link FetchAuthorizationResponseOptions} and
+ * Combination of {@link CompleteAuthorizationOptions}, the OID4VP
+ * fetch authorization response options, and
  * {@link VerifyAuthorizationResponseFormPostJWTOptions}
  */
 export type SendAuthorizationResponseAndExtractCodeOptions =
@@ -94,7 +94,7 @@ export async function completeAuthorization(
 
 /**
  * Convenience method that combines {@link completeAuthorization},
- * oid4vp package's {@link fetchAuthorizationResponse} and {@link verifyAuthorizationResponseFormPostJWT} to retrieve the
+ * the OID4VP authorization response fetch, and {@link verifyAuthorizationResponseFormPostJWT} to retrieve the
  * access code starting from the authorization response and the response uri
  *
  * @param options {@link SendAuthorizationResponseAndExtractCodeOptions}

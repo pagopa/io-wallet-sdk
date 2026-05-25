@@ -1,203 +1,61 @@
-import type {
-  ItWalletCredentialVerifierMetadata,
-  ItWalletCredentialVerifierMetadataV1_3,
-} from "@pagopa/io-wallet-oid-federation";
-
-import { CallbackContext, JweEncryptor } from "@pagopa/io-wallet-oauth2";
-import { Jwk } from "@pagopa/io-wallet-oauth2";
-import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
-
 import {
-  ClientIdPrefix,
-  extractClientIdPrefix,
-} from "../authorization-request/parse-authorization-request";
-import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";
-import { CreateAuthorizationResponseError } from "../errors";
-import { extractEncryptionJwkFromJwks } from "../jarm/jarm-extract-jwks";
-import { VpToken } from "../vp-token/z-vp-token";
-import { Openid4vpAuthorizationResponse } from "./z-authorization-response";
+  ItWalletSpecsVersion,
+  createVersionDispatcher,
+} from "@pagopa/io-wallet-utils";
 
-export interface CreateAuthorizationResponseOptions {
-  /**
-   * JARM encryption algorithm (JWE alg), should be one of the values supported by the verifier's metadata.
-   * falls back to "ECDH-ES" if not provided.
-   */
-  authorization_encrypted_response_alg?: string;
+import type {
+  CreateAuthorizationResponseOptionsV1_3,
+  CreateAuthorizationResponseOptionsV1_4,
+  CreateAuthorizationResponseResult,
+  CreateAuthorizationResponseVersionedOptions,
+} from "./types";
 
-  /**
-   * JARM encryption encoding (JWE enc), should be one of the values supported by the verifier's metadata.
-   * falls back to "A256GCM" if not provided.
-   */
-  authorization_encrypted_response_enc?: string;
+import * as V1_3 from "./v1.3/create-authorization-response";
+import * as V1_4 from "./v1.4/create-authorization-response";
 
-  /**
-   * Callbacks for authorization response generation
-   */
-  callbacks: Pick<CallbackContext, "encryptJwe" | "generateRandom">;
+export type {
+  CreateAuthorizationResponseOptionsV1_0,
+  CreateAuthorizationResponseOptionsV1_3,
+  CreateAuthorizationResponseOptionsV1_4,
+  CreateAuthorizationResponseResult,
+  CreateAuthorizationResponseVersionedOptions,
+} from "./types";
 
-  /**
-   * Presentation's Request Object
-   */
-  requestObject: Pick<
-    Openid4vpAuthorizationRequestPayload,
-    "client_id" | "client_metadata" | "nonce" | "state"
-  >;
-
-  /**
-   * Relying Party metadata JWKS
-   */
-  rpJwks: {
-    encrypted_response_enc_values_supported?: string[];
-  } & Pick<
-    ItWalletCredentialVerifierMetadata | ItWalletCredentialVerifierMetadataV1_3,
-    "jwks"
-  >;
-
-  /**
-   * Array containing the vp_tokens of the credentials
-   * to present
-   */
-  vp_token: VpToken;
-}
-
-/**
- * Result of createAuthorizationResponse function
- * Contains the generated JARM payload and the encrypted response to send to the verifier
- */
-export interface CreateAuthorizationResponseResult {
-  authorizationResponsePayload: Openid4vpAuthorizationResponse;
-  jarm: {
-    encryptionJwk: Jwk;
-    responseJwe: string;
-  };
-}
+const dispatchCreateAuthorizationResponse = createVersionDispatcher<
+  CreateAuthorizationResponseVersionedOptions,
+  Promise<CreateAuthorizationResponseResult>
+>({
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    // V1_0 shares the v1.3 response logic — JWKS / enc resolution is identical.
+    V1_3.createAuthorizationResponse(
+      o as CreateAuthorizationResponseOptionsV1_3,
+    ),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    V1_3.createAuthorizationResponse(
+      o as CreateAuthorizationResponseOptionsV1_3,
+    ),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    V1_4.createAuthorizationResponse(
+      o as CreateAuthorizationResponseOptionsV1_4,
+    ),
+});
 
 /**
  * Creates an encrypted JARM authorization response for OpenID4VP presentation.
  *
- * This function generates a JARM (JWT Secured Authorization Response Mode) response
- * containing the VP tokens from the wallet to the verifier.
+ * Routes to the version-specific implementation based on `config.itWalletSpecsVersion`.
  *
- * **Version Compatibility:**
- * - v1.0 metadata: JARM algorithms are read from rpJwks if not explicitly provided
- * - v1.3 metadata: JARM algorithms may be provided explicitly; when omitted, values are
- *   resolved from rpJwks or fall back to implementation defaults (e.g. ECDH-ES / A256GCM)
- *
- * @param options - Configuration for creating the authorization response
- * @param options.authorization_encrypted_response_alg - Optional JARM encryption algorithm (JWE alg). If omitted, falls back to "ECDH-ES".
- * @param options.authorization_encrypted_response_enc - Optional JARM encryption encoding (JWE enc). If omitted, the first value from metadata's encrypted_response_enc_values_supported is used, or falls back to "A256GCM".
- * @param options.callbacks - Cryptographic callbacks for JWE encryption
- * @param options.requestObject - The authorization request object to respond to
- * @param options.rpJwks - Relying Party JWKS with optional enc values (v1.0 or v1.3)
- * @param options.vp_token - Array of VP tokens to include in the response
- *
- * @returns An encrypted JARM authorization response (JWE compact serialization)
+ * **Version differences:**
+ * - v1.0 / v1.3: When `openid_federation` client_id prefix is used, `client_metadata`
+ *   is ignored and `rpJwks` is used for JWKS resolution.
+ * - v1.4: `client_metadata.jwks` is used directly when present, regardless of
+ *   the `client_id` prefix, falling back to `rpJwks.jwks`.
  *
  * @throws {CreateAuthorizationResponseError} If response generation or encryption fails
+ * @throws {ItWalletSpecsVersionError} If `config.itWalletSpecsVersion` is not a recognised version at runtime
  */
 export async function createAuthorizationResponse(
-  options: CreateAuthorizationResponseOptions,
+  options: CreateAuthorizationResponseVersionedOptions,
 ): Promise<CreateAuthorizationResponseResult> {
-  try {
-    const encryptionAlg: string =
-      options.authorization_encrypted_response_alg ?? "ECDH-ES";
-
-    const encryptionEnc: string =
-      options.authorization_encrypted_response_enc ?? "A256GCM";
-
-    // Determine which metadata to use based on client_id prefix
-    const { requestObject } = options;
-    const clientMetadata = requestObject.client_metadata;
-    const clientIdPrefix = extractClientIdPrefix(requestObject.client_id);
-
-    if (clientIdPrefix === ClientIdPrefix.X509_HASH && !clientMetadata) {
-      throw new CreateAuthorizationResponseError(
-        "clientMetadata is required when client_id uses x509_hash prefix",
-      );
-    }
-
-    // When using OpenID Federation, client_metadata may be present in the request
-    // but per the Italian specification most of its content should be ignored —
-    // use rpJwks for encryption parameters instead.
-    const effectiveClientMetadata =
-      clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION
-        ? undefined
-        : clientMetadata;
-
-    const authorizationResponsePayload: Openid4vpAuthorizationResponse = {
-      state: requestObject.state,
-      vp_token: options.vp_token,
-    };
-
-    // Extract encryption JWK from effective metadata
-    const encryptionJwks = effectiveClientMetadata
-      ? effectiveClientMetadata.jwks
-      : options.rpJwks.jwks;
-    const encryptionJwk = extractEncryptionJwkFromJwks(encryptionJwks, {
-      supportedAlgValues: [encryptionAlg],
-    });
-    if (!encryptionJwk) {
-      throw new CreateAuthorizationResponseError(
-        "No encryption JWK found in metadata",
-      );
-    }
-
-    const encValuesSupported =
-      effectiveClientMetadata?.encrypted_response_enc_values_supported ??
-      options.rpJwks.encrypted_response_enc_values_supported;
-
-    let enc: string;
-    if (encValuesSupported) {
-      if (options.authorization_encrypted_response_enc !== undefined) {
-        // Explicit value provided: use it if supported, otherwise take the first supported value
-        enc =
-          encValuesSupported.find(
-            (e) => e === options.authorization_encrypted_response_enc,
-          ) ??
-          encValuesSupported[0] ??
-          options.authorization_encrypted_response_enc;
-      } else {
-        // No explicit value: take the first (most preferred) value from the metadata
-        enc = encValuesSupported[0] ?? encryptionEnc;
-      }
-    } else {
-      enc = encryptionEnc;
-    }
-
-    const alg = encryptionJwk.alg ?? encryptionAlg;
-
-    const nonceBytes = await options.callbacks.generateRandom(32);
-
-    const jweEncryptor: JweEncryptor = {
-      alg,
-      apu: encodeToBase64Url(nonceBytes),
-      apv: encodeToBase64Url(requestObject.nonce),
-      enc,
-      kid: encryptionJwk.kid,
-      method: "jwk",
-      publicJwk: encryptionJwk,
-    };
-
-    const plaintext = JSON.stringify(authorizationResponsePayload);
-
-    const { encryptionJwk: usedJwk, jwe } = await options.callbacks.encryptJwe(
-      jweEncryptor,
-      plaintext,
-    );
-
-    return {
-      authorizationResponsePayload,
-      jarm: {
-        encryptionJwk: usedJwk,
-        responseJwe: jwe,
-      },
-    };
-  } catch (error) {
-    if (error instanceof CreateAuthorizationResponseError) {
-      throw error;
-    }
-    throw new CreateAuthorizationResponseError(
-      `Unexpected error during authorization response creation: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
+  return dispatchCreateAuthorizationResponse(options);
 }

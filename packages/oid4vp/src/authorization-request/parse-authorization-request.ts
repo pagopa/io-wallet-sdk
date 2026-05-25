@@ -13,7 +13,7 @@ import {
   dispatchByVersion,
 } from "@pagopa/io-wallet-utils";
 
-import { ParseAuthorizeRequestError } from "../errors";
+import { Oid4vpError, ParseAuthorizeRequestError } from "../errors";
 import {
   Openid4vpAuthorizationRequestHeader,
   Openid4vpAuthorizationRequestPayload,
@@ -31,19 +31,45 @@ export enum ClientIdPrefix {
   X509_HASH = "x509_hash",
 }
 
+export interface ClientIdParts {
+  clientId: string;
+  prefix: ClientIdPrefix;
+}
+
 /**
- * Extracts the prefix from a client_id string
+ * Extracts the prefix and clean clientId from a client_id string.
+ * Only the IT-Wallet profile schemes (`openid_federation`, `x509_hash`) and the
+ * prefix-less form are accepted; any other prefix causes an error.
  * @param clientId - The client_id from the request object
- * @returns The prefix type (x509_hash, openid_federation, or none)
+ * @returns A {@link ClientIdParts} object with the resolved prefix and unprefixed clientId
+ * @throws {Oid4vpError} When the prefix does not match a supported IT-Wallet scheme
  */
-export function extractClientIdPrefix(clientId: string): ClientIdPrefix {
-  if (clientId.startsWith("x509_hash:")) {
-    return ClientIdPrefix.X509_HASH;
+export function extractClientIdPrefix(clientId: string): ClientIdParts {
+  const colonIndex = clientId.indexOf(":");
+
+  // No colon → no prefix
+  if (colonIndex === -1) {
+    return { clientId, prefix: ClientIdPrefix.NONE };
   }
-  if (clientId.startsWith("openid_federation:")) {
-    return ClientIdPrefix.OPENID_FEDERATION;
+
+  // Explicitly allow HTTP(S) URL client_id values without treating the scheme as a prefix.
+  if (clientId.startsWith("https://") || clientId.startsWith("http://")) {
+    return { clientId, prefix: ClientIdPrefix.NONE };
   }
-  return ClientIdPrefix.NONE;
+
+  const rawPrefix = clientId.slice(0, colonIndex);
+  const rest = clientId.slice(colonIndex + 1);
+
+  if (rawPrefix === ClientIdPrefix.X509_HASH) {
+    return { clientId: rest, prefix: ClientIdPrefix.X509_HASH };
+  }
+  if (rawPrefix === ClientIdPrefix.OPENID_FEDERATION) {
+    return { clientId: rest, prefix: ClientIdPrefix.OPENID_FEDERATION };
+  }
+
+  throw new Oid4vpError(
+    `Unsupported client_id prefix "${rawPrefix}": only "openid_federation" and "x509_hash" are allowed by the IT-Wallet profile`,
+  );
 }
 
 /**
@@ -66,7 +92,7 @@ function getPublicKeyForVerification(options: {
 }): JwtSigner {
   const { header, payload } = options;
 
-  const clientIdPrefix = extractClientIdPrefix(payload.client_id);
+  const { prefix: clientIdPrefix } = extractClientIdPrefix(payload.client_id);
 
   // Priority 1: x509_hash prefix - use x5c certificate chain from header
   if (clientIdPrefix === ClientIdPrefix.X509_HASH) {
@@ -145,13 +171,13 @@ export interface ParsedAuthorizeRequestResult {
  * 2. If client_id has openid_federation prefix or no prefix: pass a federation signer to the callback;
  *    trust_chain is forwarded when present, otherwise the callback must reconstruct the chain from client_id
  *
+ * Security: If `verifyJwt` callback is not provided in options, JWT signature verification is skipped.
+ *
  * @param options {@link ParseAuthorizeRequestOptions}
  * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
- * @throws {@link ValidationError} in case there are errors validating the Request Object structure
- * @throws {@link Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
+ * @throws {ValidationError} in case there are errors validating the Request Object structure
+ * @throws {Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
  * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid (when verifyJwt is provided) or there are unexpected errors
- *
- * @security If `verifyJwt` callback is not provided in options, JWT signature verification is skipped.
  */
 export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,
@@ -160,10 +186,12 @@ export async function parseAuthorizeRequest(
     const headerSchema = dispatchByVersion<
       | typeof zOpenid4vpAuthorizationRequestHeaderV1_0
       | typeof zOpenid4vpAuthorizationRequestHeaderV1_3
-    >("parseAuthorizeRequest", options.config.itWalletSpecsVersion, {
+    >(options.config.itWalletSpecsVersion, {
       [ItWalletSpecsVersion.V1_0]: () =>
         zOpenid4vpAuthorizationRequestHeaderV1_0,
       [ItWalletSpecsVersion.V1_3]: () =>
+        zOpenid4vpAuthorizationRequestHeaderV1_3,
+      [ItWalletSpecsVersion.V1_4]: () =>
         zOpenid4vpAuthorizationRequestHeaderV1_3,
     });
 

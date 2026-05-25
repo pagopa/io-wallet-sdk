@@ -132,6 +132,13 @@ export async function createTokenDPoP(options: CreateTokenDPoPOptions) {
   }
 }
 
+/**
+ * Extracts and validates the DPoP JWT from request headers.
+ *
+ * @param headers - Request headers to inspect.
+ * @returns The DPoP JWT when present and well-formed, `{ valid: true }` when absent,
+ * or `{ valid: false }` when the header is malformed.
+ */
 export function extractDpopJwtFromHeaders(
   headers: FetchHeaders,
 ): { dpopJwt?: string; valid: true } | { valid: false } {

@@ -48,6 +48,20 @@ export interface DecodeJwtResult<
   signature: string;
 }
 
+/**
+ * Decodes a compact JWT and validates its header and payload with Zod schemas.
+ *
+ * This helper does not verify the JWT signature.
+ *
+ * @param options - Decode options.
+ * @param options.errorMessagePrefix - Optional context prefix for thrown parse/validation errors.
+ * @param options.headerSchema - Optional schema for the JWT header; defaults to `zJwtHeader`.
+ * @param options.jwt - Compact JWT to decode.
+ * @param options.payloadSchema - Optional schema for the JWT payload; defaults to `zJwtPayload`.
+ * @returns Decoded and schema-validated JWT header, payload, and signature segment.
+ * @throws {Oauth2JwtParseError} If the JWT shape or base64url JSON segments are invalid.
+ * @throws {ValidationError} If header or payload schema validation fails.
+ */
 export function decodeJwt<
   HeaderSchema extends BaseSchema | undefined = undefined,
   PayloadSchema extends BaseSchema | undefined = undefined,

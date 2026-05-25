@@ -14,6 +14,12 @@ export interface ParsedJarRequest {
   sendBy: "reference" | "value";
 }
 
+/**
+ * Checks whether authorization request parameters contain a JAR request object or URI.
+ *
+ * @param request - Authorization request parameters to inspect.
+ * @returns True when `request` or `request_uri` is present.
+ */
 export function isJarAuthorizationRequest(
   request: JarAuthorizationRequest,
 ): request is JarAuthorizationRequest {

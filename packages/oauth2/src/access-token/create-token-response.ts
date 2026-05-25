@@ -108,6 +108,11 @@ export interface CreateAccessTokenResponseOptions {
  * The JWT payload always includes `aud`, `iss`, `sub`, `client_id`, `iat`,
  * `exp`, and a random `jti`. When `dpop` is provided, `cnf.jkt` is added using
  * the SHA-256 JWK thumbprint.
+ *
+ * @param options - Access token response creation options.
+ * @returns OAuth token response with a signed access token JWT.
+ * @throws {CreateTokenResponseError} If DPoP binding is required but missing, or if response creation fails, including validation failures from the generated JWT header or payload.
+ * @throws {ValidationError} If the generated JWT header or payload fails validation.
  */
 export async function createAccessTokenResponse(
   options: CreateAccessTokenResponseOptions,

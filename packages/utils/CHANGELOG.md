@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-utils
 
+## 1.4.1
+
+### Patch Changes
+
+- 24d0cd7: Implement version-aware dispatchers for improved version handling
+- 0209725: Added/completed JSDoc for public callable APIs reachable from package entrypoints across and trimmed packages readme to high-level overview
+
 ## 1.4.0
 
 ### Patch Changes

@@ -81,6 +81,20 @@ export interface VerifyClientAttestationOptions {
   requestClientId?: string;
 }
 
+/**
+ * Verifies wallet attestation and client attestation PoP headers as a pair.
+ *
+ * @param options - Client attestation verification options.
+ * @param options.authorizationServerMetadata - Authorization Server metadata used for issuer/audience checks.
+ * @param options.callbacks - Hashing and JWT verification callbacks.
+ * @param options.clientAttestation - Wallet attestation and PoP JWT values from the request.
+ * @param options.config - IT-Wallet specification version used to validate the wallet attestation.
+ * @param options.dpopJwkThumbprint - Optional DPoP JWK thumbprint to compare with the attestation key.
+ * @param options.now - Date used for temporal validation.
+ * @param options.requestClientId - Optional client_id that must match the attestation subject.
+ * @returns Verified wallet attestation and client attestation PoP JWT data.
+ * @throws {Oauth2Error} If required headers are missing or any attestation validation fails.
+ */
 export async function verifyClientAttestation(
   options: VerifyClientAttestationOptions,
 ) {

@@ -91,6 +91,9 @@ export class ItWalletSpecsVersionError extends Error {
   }
 }
 
+/**
+ * Error thrown when runtime validation fails.
+ */
 export class ValidationError extends Error {
   public zodError: ZodError | undefined;
 

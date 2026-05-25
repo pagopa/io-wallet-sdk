@@ -7,8 +7,12 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
 
-import { ParseAuthorizeRequestError } from "../../errors";
-import { parseAuthorizeRequest } from "../parse-authorization-request";
+import { Oid4vpError, ParseAuthorizeRequestError } from "../../errors";
+import {
+  ClientIdPrefix,
+  extractClientIdPrefix,
+  parseAuthorizeRequest,
+} from "../parse-authorization-request";
 import { Openid4vpAuthorizationRequestPayload } from "../z-authorization-request";
 
 const publicKey = {
@@ -526,5 +530,63 @@ describe("parseAuthorizeRequest - optional verification", () => {
           requestObjectJwt: invalidHeaderTypJwt,
         }),
     ).rejects.toThrow(ValidationError);
+  });
+});
+
+describe("extractClientIdPrefix", () => {
+  it("returns X509_HASH prefix and clean clientId for x509_hash scheme", () => {
+    expect(extractClientIdPrefix("x509_hash:abc123")).toEqual({
+      clientId: "abc123",
+      prefix: ClientIdPrefix.X509_HASH,
+    });
+  });
+
+  it("returns OPENID_FEDERATION prefix and clean clientId for openid_federation scheme", () => {
+    expect(
+      extractClientIdPrefix("openid_federation:https://issuer.example.com"),
+    ).toEqual({
+      clientId: "https://issuer.example.com",
+      prefix: ClientIdPrefix.OPENID_FEDERATION,
+    });
+  });
+
+  it("throws Oid4vpError for an unsupported prefix", () => {
+    expect(() => extractClientIdPrefix("unknown_prefix:some-value")).toThrow(
+      Oid4vpError,
+    );
+  });
+
+  it("returns NONE prefix and original string when no colon is present", () => {
+    expect(extractClientIdPrefix("no_prefix")).toEqual({
+      clientId: "no_prefix",
+      prefix: ClientIdPrefix.NONE,
+    });
+  });
+
+  it("returns NONE prefix and full URL when client_id is a https URL", () => {
+    expect(extractClientIdPrefix("https://client.example.it")).toEqual({
+      clientId: "https://client.example.it",
+      prefix: ClientIdPrefix.NONE,
+    });
+  });
+
+  it("returns NONE prefix and full URL when client_id is an http URL", () => {
+    expect(extractClientIdPrefix("http://client.example.it")).toEqual({
+      clientId: "http://client.example.it",
+      prefix: ClientIdPrefix.NONE,
+    });
+  });
+
+  it("throws Oid4vpError for a URL-like prefix that is not http or https", () => {
+    expect(() => extractClientIdPrefix("ftp://client.example.it")).toThrow(
+      Oid4vpError,
+    );
+  });
+
+  it("handles value containing additional colons correctly", () => {
+    expect(extractClientIdPrefix("x509_hash:a:b:c")).toEqual({
+      clientId: "a:b:c",
+      prefix: ClientIdPrefix.X509_HASH,
+    });
   });
 });

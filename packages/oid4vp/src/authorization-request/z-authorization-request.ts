@@ -39,7 +39,7 @@ export const zOpenid4vpAuthorizationRequestPayload = z
     response_type: z.literal("vp_token"),
     response_uri: z.url(),
     scope: z.string().optional(),
-    state: z.string(),
+    state: z.string().optional(),
     transaction_data: z.array(z.string()).nonempty().optional(),
     transaction_data_hashes_alg: z.array(z.string()).optional(),
     wallet_nonce: z.string().optional(),
@@ -47,7 +47,6 @@ export const zOpenid4vpAuthorizationRequestPayload = z
   .and(
     z.object({
       ...zJwtPayload.shape,
-      iss: z.string(),
     }),
   );
 

@@ -71,7 +71,7 @@ function assertV1_4Options(
 
 /**
  * @interface KeyAttestationOptions
- * @description Defines the options required to create a key attestation JWT.
+ * Defines the options required to create a key attestation JWT.
  * This attestation conveys information about the cryptographic keys managed by the wallet,
  * their storage characteristics, user authentication level, and revocation status.
  */
@@ -133,12 +133,18 @@ export interface KeyAttestationOptions {
 
 /**
  * @class WalletProvider
- * @description An implementation of a wallet provider for the OpenID4VCI protocol, tailored for the Italian ecosystem.
+ * An implementation of a wallet provider for the OpenID4VCI protocol, tailored for the Italian ecosystem.
  * It handles the creation of wallet attestations required during the credential issuance flow.
  */
 export class WalletProvider {
   private specVersion: ItWalletSpecsVersion;
 
+  /**
+   * Creates a wallet provider bound to a specific IT-Wallet specification version.
+   *
+   * @param options - SDK configuration.
+   * @param options.itWalletSpecsVersion - Specification version used for wallet attestation routing.
+   */
   constructor(options: IoWalletSdkConfig) {
     this.specVersion = options.itWalletSpecsVersion;
   }
@@ -150,7 +156,6 @@ export class WalletProvider {
    * user authentication level, and status, and can include certification and a trust chain as needed.
    *
    * @public
-   * @async
    * @param {KeyAttestationOptions} options - The options used to construct and sign the key attestation JWT.
    * @returns {Promise<string>} A promise that resolves to the signed key attestation JWT.
    * @throws {WalletProviderError} Thrown when the JWT cannot be created or signed.
@@ -208,7 +213,6 @@ export class WalletProvider {
    *   are all **required**; optional `eudi_wallet_info` claim; sets `sub` to the DPoP JWK thumbprint
    *
    * @public
-   * @async
    * @param {WalletAttestationOptions} options - The necessary parameters to build the attestation.
    * @returns {Promise<string>} A promise that resolves to the signed wallet attestation JWT as a string.
    * @throws {WalletProviderError} When the provided options do not match the configured IT-Wallet
@@ -216,7 +220,6 @@ export class WalletProvider {
    * @throws {ValidationError} When the generated wallet attestation JWT fails validation.
    * @throws {ClientAttestationError} When wallet attestation JWT creation fails unexpectedly,
    * including signing errors from the configured `signJwt` callback.
-   * @throws {ItWalletSpecsVersionError} When the configured IT-Wallet specification version is not supported.
    *
    * @example v1.0 - Basic wallet attestation with trust chain
    * const jwt = await provider.createItWalletAttestationJwt({
@@ -274,7 +277,7 @@ export class WalletProvider {
   public async createItWalletAttestationJwt(
     options: WalletAttestationOptions,
   ): Promise<string> {
-    return dispatchByVersion("createItWalletAttestationJwt", this.specVersion, {
+    return dispatchByVersion(this.specVersion, {
       [ItWalletSpecsVersion.V1_0]: () => {
         assertV1_0Options(options);
         return createWalletAttestationJwtV1_0({

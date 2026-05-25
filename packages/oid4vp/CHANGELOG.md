@@ -1,5 +1,20 @@
 # @pagopa/io-wallet-oid4vp
 
+## 1.4.1
+
+### Patch Changes
+
+- 24d0cd7: Implement version-aware dispatchers for improved version handling
+- e6e8c5f: Implement client_metadata handling for OpenID4VP authorization responses IT Wallet 1.4
+- 0209725: Added/completed JSDoc for public callable APIs reachable from package entrypoints across and trimmed packages readme to high-level overview
+- 866eac2: make state field optional in OpenID4VP authorization request payload
+- 6b47042: feat(oid4vp): extend extractClientIdPrefix to return clientId and prefix
+- Updated dependencies [24d0cd7]
+- Updated dependencies [0209725]
+  - @pagopa/io-wallet-oid-federation@1.4.1
+  - @pagopa/io-wallet-oauth2@1.4.1
+  - @pagopa/io-wallet-utils@1.4.1
+
 ## 1.4.0
 
 ### Patch Changes

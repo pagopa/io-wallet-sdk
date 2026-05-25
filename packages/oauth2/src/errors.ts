@@ -70,6 +70,9 @@ export class FetchTokenResponseError extends Oauth2Error {
   }
 }
 
+/**
+ * Error thrown when access token response creation fails.
+ */
 export class CreateTokenResponseError extends Oauth2Error {
   readonly statusCode?: number;
   constructor(
