@@ -322,7 +322,7 @@ async function normalizeProofs(options: {
 }
 
 /**
- * Builds the normalized parse result shared by v1.0 and v1.3 flows.
+ * Builds the normalized parse result shared by v1.0, v1.3 and v1.4 flows.
  */
 async function toResult<
   TRequest extends CredentialRequestV1_0 | CredentialRequestV1_3,
@@ -509,9 +509,9 @@ const dispatchParseCredentialRequest = createVersionDispatcher<
  *    for deferred vs. immediate issuance flows.
  * 6. **Proof JWT structure** — decodes each proof JWT and validates its header and
  *    payload claims, including `iss` requirements for the `authorization_code` grant.
- *    For v1.3, asserts the `key_attestation` header claim is present and non-empty,
- *    and validates batch proof key uniqueness with RFC7638 JWK thumbprints.
- *
+ *    For v1.3, asserts the `key_attestation` header claim is present and non-empty.
+ *    For requests using `proofs.jwt` (including v1.3 and v1.4), validates batch
+ *    proof key uniqueness with RFC7638 JWK thumbprints.
  * This function does not perform cryptographic signature verification on proof JWTs
  * or the DPoP proof. Both must be verified separately after parsing.
  * For DPoP proofs, the caller can use the `verifyTokenDPoP` function exported by io-wallet-oauth2.
