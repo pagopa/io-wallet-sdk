@@ -138,6 +138,7 @@ describe("createAuthorizationResponseTests", () => {
     expect(encryptArgs[0]).toMatchObject({
       apu: ENCODED_NONCE,
       apv: REQOBJ_ENCODED_NONCE,
+      kid: mockRpMetadata.jwks.keys[0]?.kid,
     });
   });
 
@@ -158,6 +159,36 @@ describe("createAuthorizationResponseTests", () => {
           state: MOCK_STATE,
         },
         rpJwks: rpMetadataWithoutKeys,
+        vp_token: MOCK_VP_TOKEN,
+      }),
+    ).rejects.toThrow(CreateAuthorizationResponseError);
+  });
+
+  it("should throw when the encryption JWK is missing a kid", async () => {
+    const rpMetadataWithoutKid: ItWalletCredentialVerifierMetadata = {
+      ...mockRpMetadata,
+      jwks: {
+        keys: [
+          //@ts-expect-error - kid intentionally mising from JWK for testing error
+          {
+            crv: "P-256",
+            kty: "EC" as "EC" | "RSA",
+            x: "jE2RpcQbFQxKpMqehahgZv6smmXD0i/LTP2QRzMADk4",
+            y: "qkMx5iqt5PhPu5tfctS6HsP+FmLgrxfrzUV2GwMQuh8",
+          },
+        ],
+      },
+    };
+    await expect(
+      createAuthorizationResponse({
+        callbacks,
+        config: configV1_0,
+        requestObject: {
+          client_id: MOCK_RP_CLIENT_ID,
+          nonce: REQOBJ_MOCK_NONCE,
+          state: MOCK_STATE,
+        },
+        rpJwks: rpMetadataWithoutKid,
         vp_token: MOCK_VP_TOKEN,
       }),
     ).rejects.toThrow(CreateAuthorizationResponseError);
