@@ -62,6 +62,12 @@ export async function buildJarmResponse(
       );
     }
 
+    if (!encryptionJwk.kid) {
+      throw new CreateAuthorizationResponseError(
+        "Encryption JWK must have a 'kid' parameter",
+      );
+    }
+
     const enc = resolveEncValue(
       options.encValuesSupported,
       options.authorization_encrypted_response_enc,
@@ -77,6 +83,7 @@ export async function buildJarmResponse(
       apu: encodeToBase64Url(nonceBytes),
       apv: encodeToBase64Url(options.requestObject.nonce),
       enc,
+      kid: encryptionJwk.kid,
       method: "jwk",
       publicJwk: encryptionJwk,
     };
