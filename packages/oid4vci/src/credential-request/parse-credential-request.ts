@@ -7,15 +7,12 @@ import {
   extractDpopJwtFromHeaders,
 } from "@pagopa/io-wallet-oauth2";
 import {
-  type CallbackContext,
   FetchHeaders,
   HEADERS,
-  HashAlgorithm,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
   ValidationError,
-  calculateJwkThumbprint,
   createVersionDispatcher,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
