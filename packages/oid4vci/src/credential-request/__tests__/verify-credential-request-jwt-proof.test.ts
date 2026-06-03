@@ -15,8 +15,9 @@ const { mockCalculateJwkThumbprint, mockVerifyJwt } = vi.hoisted(() => ({
   mockVerifyJwt: vi.fn(),
 }));
 
-vi.mock("@openid4vc/oauth2", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/oauth2")>();
+vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@pagopa/io-wallet-oauth2")>();
   return {
     ...actual,
     calculateJwkThumbprint: mockCalculateJwkThumbprint,

@@ -1,10 +1,8 @@
-import {
-  CallbackContext,
-  HashAlgorithm,
-  HashCallback,
-} from "@openid4vc/oauth2";
 import { decodeUtf8String, encodeToBase64Url } from "@pagopa/io-wallet-utils";
 
+import type { CallbackContext } from "./common/callback-context";
+
+import { HashAlgorithm, type HashCallback } from "./common/hash";
 import { Oauth2Error } from "./errors";
 
 export const PkceCodeChallengeMethod = {

@@ -2,6 +2,13 @@ import type { ZodError, z } from "zod";
 
 import { formatZodError } from "./parse";
 
+export class JsonParseError extends Error {
+  constructor(message: string, jsonString: string) {
+    super(`${message}\n${jsonString}`);
+    this.name = "JsonParseError";
+  }
+}
+
 // An error reason that supports both a string and a generic JSON object
 type GenericErrorReason = Record<string, unknown> | string;
 

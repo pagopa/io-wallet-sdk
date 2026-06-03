@@ -1,4 +1,3 @@
-import { CallbackContext } from "@openid4vc/oauth2";
 import {
   CONTENT_TYPES,
   HEADERS,
@@ -8,6 +7,8 @@ import {
   hasStatusOrThrow,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
+
+import type { CallbackContext } from "../common/callback-context";
 
 import { MrtdPopError } from "../errors";
 import { zMrtdPopVerifyResponse } from "./z-mrtd-pop";

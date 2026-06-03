@@ -1,4 +1,4 @@
-import { VerifyJwtCallback } from "@openid4vc/oauth2";
+import { VerifyJwtCallback } from "@pagopa/io-wallet-oauth2";
 import {
   UnexpectedStatusCodeError,
   ValidationError,
@@ -17,8 +17,9 @@ import {
 const mockFetch = vi.fn();
 const mockVerifyJwt = vi.fn();
 
-vi.mock("@openid4vc/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/utils")>();
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@pagopa/io-wallet-utils")>();
   return {
     ...actual,
     createFetcher: () => mockFetch,
@@ -91,6 +92,7 @@ describe("completeAuthorization tests", () => {
 
     expect(result).toEqual({
       decodedJwt: {
+        compact: mockedResponseJwt,
         header: {
           alg: "ES256",
         },

@@ -1,17 +1,16 @@
 import {
-  CallbackContext,
-  HashAlgorithm,
-  calculateJwkThumbprint,
-  verifyJwt,
-} from "@openid4vc/oauth2";
-import {
   RequestLike,
   decodeUtf8String,
   encodeToBase64Url,
   verifyJwtIatOrThrow,
 } from "@pagopa/io-wallet-utils";
 
+import type { CallbackContext } from "../common/callback-context";
+
+import { HashAlgorithm } from "../common/hash";
+import { calculateJwkThumbprint } from "../common/jwk/calculate-jwk-thumbprint";
 import { decodeJwt } from "../common/jwt/decode-jwt";
+import { verifyJwt } from "../common/jwt/verify-jwt";
 import { Oauth2Error } from "../errors";
 import { htuFromRequestUrl } from "./dpop-utils";
 import { zDpopJwtHeader, zDpopJwtPayload } from "./z-dpop";

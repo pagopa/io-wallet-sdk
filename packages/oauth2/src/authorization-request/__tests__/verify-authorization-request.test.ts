@@ -1,7 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
-import { CallbackContext } from "@openid4vc/oauth2";
+import { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -9,6 +7,8 @@ import {
   encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
+
+import type { CallbackContext } from "../../common/callback-context";
 
 import { Jwk } from "../../common/jwk/z-jwk";
 import { Oauth2Error } from "../../errors";

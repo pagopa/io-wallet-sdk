@@ -1,9 +1,9 @@
 import {
-  CallbackContext,
+  type CallbackContext,
   HashAlgorithm,
   type JwtSignerJwk,
   calculateJwkThumbprint,
-} from "@openid4vc/oauth2";
+} from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,

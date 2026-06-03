@@ -22,7 +22,7 @@ This approach gives consumers full flexibility — they can either use the built
 ---
 
 ## ⚙️ Error Handling
-- **Common errors** You can use one of `@openid4vc/utils` (e.g., `JsonParseError`, `ValidationError`) or you can define in the shared `@io-wallet/utils` package.  
+- **Common errors** Reuse shared errors from `@pagopa/io-wallet-utils` (e.g., `JsonParseError`, `ValidationError`) when they fit, or define package-specific errors when needed.  
 - **Package-specific errors** should:
   - Extend a generic base error for that package (e.g., `Oauth2Error`).  
   - Optionally define **granular errors per method** (e.g., `AuthorizationRequestParsingError`).  
@@ -39,14 +39,14 @@ This approach gives consumers full flexibility — they can either use the built
 ---
 
 ## 🧱 Dependencies
-- All packages must use **the same version** of shared dependencies (e.g., `@openid4vc/oauth2`).  
+- All packages must use **the same version** of shared third-party dependencies (e.g., `zod`, `js-base64`).  
 - Version alignment is managed via the **pnpm catalog**.  
-- Do not install duplicate or mismatched versions across packages.
+- Do not reintroduce direct `@openid4vc/*` dependencies; the required compatibility layer is vendored inside the `@pagopa/io-wallet-*` packages.
 
 ---
 
 ## 📦 Public Exports
-- Objects from third-party libraries (e.g., `Jwt`, `SignJwtCallback` from `openid4vc`) that are needed by consumers should be **re-exported from `io-wallet-sdk`**.  
+- Types and helpers needed by consumers should be exposed from the `@pagopa/io-wallet-*` packages rather than requiring consumers to import internal or vendored implementation details directly.  
 - This ensures a **consistent public API surface** across the SDK.
 
 ---

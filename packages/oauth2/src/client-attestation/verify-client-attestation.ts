@@ -1,12 +1,10 @@
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
-import {
-  CallbackContext,
-  HashAlgorithm,
-  calculateJwkThumbprint,
-} from "@openid4vc/oauth2";
+import { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
 
+import type { CallbackContext } from "../common/callback-context";
+
+import { HashAlgorithm } from "../common/hash";
+import { calculateJwkThumbprint } from "../common/jwk/calculate-jwk-thumbprint";
 import { Oauth2Error } from "../errors";
 import { verifyClientAttestationPopJwt } from "./client-attestation-pop";
 import {

@@ -1,4 +1,5 @@
-import { CallbackContext } from "@openid4vc/oauth2";
+import type { CallbackContext } from "@pagopa/io-wallet-oauth2";
+
 import {
   UnexpectedStatusCodeError,
   ValidationError,

@@ -1,6 +1,7 @@
-import { CallbackContext, JwtSignerX5c } from "@openid4vc/oauth2";
 import {
+  type CallbackContext,
   Jwk,
+  type JwtSignerX5c,
   type WalletAttestationOptionsV1_0,
   type WalletAttestationOptionsV1_3,
   type WalletAttestationOptionsV1_4,

@@ -1,4 +1,3 @@
-import { CallbackContext } from "@openid4vc/oauth2";
 import {
   CONTENT_TYPES,
   HEADERS,
@@ -7,6 +6,8 @@ import {
   createFetcher,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
+
+import type { CallbackContext } from "../common/callback-context";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import {

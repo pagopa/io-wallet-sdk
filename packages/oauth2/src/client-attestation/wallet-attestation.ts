@@ -1,4 +1,3 @@
-import { zCompactJwt } from "@openid4vc/oauth2";
 import {
   FetchHeaders,
   ItWalletSpecsVersion,
@@ -18,6 +17,7 @@ import type {
   VerifyWalletAttestationJwtOptionsV1_4,
 } from "./v1.4/verify-wallet-attestation-jwt";
 
+import { zCompactJwt } from "../common/jwt/z-jwt";
 import {
   oauthClientAttestationHeader,
   oauthClientAttestationPopHeader,

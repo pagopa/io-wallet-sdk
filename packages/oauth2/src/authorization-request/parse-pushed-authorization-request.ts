@@ -1,4 +1,3 @@
-import { CallbackContext } from "@openid4vc/oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -8,6 +7,8 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
+
+import type { CallbackContext } from "../common/callback-context";
 
 import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";

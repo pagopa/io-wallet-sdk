@@ -1,10 +1,11 @@
-import { calculateJwkThumbprint, jwtSignerFromJwt } from "@openid4vc/oauth2";
 import {
-  CallbackContext,
+  type CallbackContext,
   HashAlgorithm,
   Jwk,
   Oauth2JwtParseError,
+  calculateJwkThumbprint,
   decodeJwt,
+  jwtSignerFromJwt,
   verifyJwt,
 } from "@pagopa/io-wallet-oauth2";
 import {

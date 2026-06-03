@@ -1,4 +1,3 @@
-import { Oauth2JwtParseError } from "@openid4vc/oauth2";
 import {
   BaseSchema,
   decodeBase64,
@@ -9,6 +8,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
+import { Oauth2JwtParseError } from "../../errors";
 import { decodeJwtHeader } from "./decode-jwt-header";
 import { zJwtHeader, zJwtPayload } from "./z-jwt";
 
@@ -43,6 +43,7 @@ export interface DecodeJwtResult<
   HeaderSchema extends BaseSchema | undefined = undefined,
   PayloadSchema extends BaseSchema | undefined = undefined,
 > {
+  compact: string;
   header: InferSchemaOrDefaultOutput<HeaderSchema, typeof zJwtHeader>;
   payload: InferSchemaOrDefaultOutput<PayloadSchema, typeof zJwtPayload>;
   signature: string;
@@ -127,6 +128,7 @@ export function decodeJwt<
   );
 
   return {
+    compact: options.jwt,
     header: header as InferSchemaOrDefaultOutput<
       HeaderSchema,
       typeof zJwtHeader

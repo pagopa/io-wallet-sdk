@@ -1,4 +1,4 @@
-import type { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
+import type { CallbackContext, JwtSignerJwk } from "@pagopa/io-wallet-oauth2";
 
 import {
   IoWalletSdkConfig,

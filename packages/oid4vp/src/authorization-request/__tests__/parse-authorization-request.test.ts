@@ -1,5 +1,8 @@
-import { CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
-import { Jwk } from "@pagopa/io-wallet-oauth2";
+import {
+  type CallbackContext,
+  Jwk,
+  Oauth2JwtParseError,
+} from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,

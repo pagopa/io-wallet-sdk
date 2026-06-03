@@ -1,5 +1,8 @@
 import {
+  type CallbackContext,
+  HashAlgorithm,
   Oauth2JwtParseError,
+  calculateJwkThumbprint,
   decodeJwt,
   extractDpopJwtFromHeaders,
 } from "@pagopa/io-wallet-oauth2";

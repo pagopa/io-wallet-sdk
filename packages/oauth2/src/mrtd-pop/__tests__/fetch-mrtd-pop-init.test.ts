@@ -17,16 +17,18 @@ const { mockFetch, mockVerifyJwt, mockVerifyJwtFromOauth2 } = vi.hoisted(
   }),
 );
 
-vi.mock("@openid4vc/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/utils")>();
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@pagopa/io-wallet-utils")>();
   return {
     ...actual,
     createFetcher: () => mockFetch,
   };
 });
 
-vi.mock("@openid4vc/oauth2", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/oauth2")>();
+vi.mock("../../common/jwt/verify-jwt", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../common/jwt/verify-jwt")>();
   return {
     ...actual,
     verifyJwt: mockVerifyJwtFromOauth2,

@@ -32,8 +32,6 @@
   "dependencies": {
     "@pagopa/io-wallet-oid-federation": "workspace:*",
     "@pagopa/io-wallet-utils": "workspace:*",
-    "@openid4vc/oauth2": "catalog:",
-    "@openid4vc/utils": "catalog:",
     "zod": "catalog:",
     "js-base64": "catalog:"
   }

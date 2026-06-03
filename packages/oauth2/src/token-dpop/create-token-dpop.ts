@@ -1,12 +1,6 @@
 import {
-  CallbackContext,
-  HashAlgorithm,
-  HttpMethod,
-  JwtSignerJwk,
-  zCompactJwt,
-} from "@openid4vc/oauth2";
-import {
   FetchHeaders,
+  HttpMethod,
   ValidationError,
   dateToSeconds,
   decodeUtf8String,
@@ -15,6 +9,10 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 
+import type { CallbackContext } from "../common/callback-context";
+
+import { HashAlgorithm } from "../common/hash";
+import { type JwtSignerJwk, zCompactJwt } from "../common/jwt/z-jwt";
 import { CreateTokenDPoPError } from "../errors";
 import { htuFromRequestUrl } from "./dpop-utils";
 import {

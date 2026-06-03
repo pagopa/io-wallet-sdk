@@ -1,9 +1,7 @@
-import {
-  CallbackContext,
-  HashAlgorithm,
-  calculateJwkThumbprint,
-} from "@openid4vc/oauth2";
+import type { CallbackContext } from "../common/callback-context";
 
+import { HashAlgorithm } from "../common/hash";
+import { calculateJwkThumbprint } from "../common/jwk/calculate-jwk-thumbprint";
 import { Jwk } from "../common/jwk/z-jwk";
 import { ClientAttestationError } from "../errors";
 

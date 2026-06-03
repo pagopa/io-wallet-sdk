@@ -1,13 +1,15 @@
 import {
-  CallbackContext,
-  Fetch,
+  type CallbackContext,
   HashAlgorithm,
-  HashCallback,
-  JwtSignerJwk,
-  UnexpectedStatusCodeError,
+  type HashCallback,
+  type JwtSignerJwk,
   calculateJwkThumbprint,
-  createFetcher,
   decodeJwt,
+} from "@pagopa/io-wallet-oauth2";
+import {
+  Fetch,
+  UnexpectedStatusCodeError,
+  createFetcher,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 import z from "zod";

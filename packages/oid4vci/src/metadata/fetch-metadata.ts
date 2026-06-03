@@ -1,5 +1,8 @@
-import { CallbackContext, VerifyJwtCallback } from "@openid4vc/oauth2";
-import { decodeJwt } from "@pagopa/io-wallet-oauth2";
+import {
+  type CallbackContext,
+  type VerifyJwtCallback,
+  decodeJwt,
+} from "@pagopa/io-wallet-oauth2";
 import { itWalletEntityStatementClaimsSchema } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,

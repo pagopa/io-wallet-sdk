@@ -63,9 +63,25 @@ export {
 export * from "./client-attestation/verify-client-attestation";
 export * from "./client-attestation/wallet-attestation";
 export * from "./client-attestation/z-client-attestation-pop";
+export type {
+  ItWalletClientAttestationPopJwtHeader as ClientAttestationPopJwtHeader,
+  ItWalletClientAttestationPopJwtPayload as ClientAttestationPopJwtPayload,
+} from "./client-attestation/z-client-attestation-pop";
+export type {
+  CallbackContext,
+  DecryptJweCallback,
+  EncryptJweCallback,
+  GenerateRandomCallback,
+  RequestDpopOptions,
+  SignJwtCallback,
+  VerifyJwtCallback,
+} from "./common/callback-context";
+export * from "./common/hash";
+export * from "./common/jwk/calculate-jwk-thumbprint";
 export * from "./common/jwk/z-jwk";
 export * from "./common/jwt/decode-jwt";
 export * from "./common/jwt/decode-jwt-header";
+export { verifyJwt } from "./common/jwt/verify-jwt";
 export * from "./common/jwt/z-jwe";
 export * from "./common/jwt/z-jwt";
 export * from "./common/z-common";
@@ -85,26 +101,7 @@ export * from "./mrtd-pop/verify-mrtd-challenge";
 export * from "./mrtd-pop/z-mrtd-pop";
 export * from "./pkce";
 export * from "./token-dpop/create-token-dpop";
+
 export * from "./token-dpop/dpop-utils";
 export * from "./token-dpop/verify-token-dpop";
 export * from "./token-dpop/z-dpop";
-
-export {
-  /** @deprecated Use `CallbackContext` from `@pagopa/io-wallet-utils` instead. */
-  type CallbackContext,
-  type ClientAttestationPopJwtHeader,
-  type ClientAttestationPopJwtPayload,
-  type DecryptJweCallback,
-  type EncryptJweCallback,
-  type GenerateRandomCallback,
-  HashAlgorithm,
-  type JweEncryptor,
-  type JwtSigner,
-  /** @deprecated Use `JwtSignerJwk` from `@pagopa/io-wallet-utils` instead. */
-  type JwtSignerJwk,
-  Oauth2JwtParseError,
-  type RequestDpopOptions,
-  type SignJwtCallback,
-  type VerifyJwtCallback,
-  verifyJwt,
-} from "@openid4vc/oauth2";

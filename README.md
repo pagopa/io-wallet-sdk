@@ -5,7 +5,7 @@
 
 A comprehensive TypeScript library for building applications that integrate with **Italy's national digital identity wallet**. 🇮🇹
 
-This SDK provides all the necessary tools to handle Verifiable Credentials and secure interactions according to the official Italian specifications, which are based on **OpenID for Verifiable Credentials (OpenID4VC)** and **OAuth 2.0** standards. 
+This SDK provides all the necessary tools to handle Verifiable Credentials and secure interactions according to the official Italian specifications, which are based on **OpenID for Verifiable Credentials (OpenID4VC)** and **OAuth 2.0** standards.
 
 The project is structured as a monorepo using `pnpm` and is designed to be environment-agnostic (Node.js, Browser, React Native), allowing you to build services for Relying Parties, Issuers, and Wallets.
 
@@ -22,8 +22,8 @@ This SDK is a monorepo containing the following packages:
 
 | Package                                | Description                                                                                                                                               |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`@pagopa/io-wallet-oauth2`**         | Implements core OAuth 2.0 flows and security extensions (PAR, DPoP, PKCE, JARM) required for secure interactions.                                        |
-| **`@pagopa/io-wallet-oid-federation`** | Handles entity discovery and trust chain resolution within the Italian Federation, ensuring all actors are trusted and valid.                              |
+| **`@pagopa/io-wallet-oauth2`**         | Implements core OAuth 2.0 flows and security extensions (PAR, DPoP, PKCE, JARM) required for secure interactions.                                         |
+| **`@pagopa/io-wallet-oid-federation`** | Handles entity discovery and trust chain resolution within the Italian Federation, ensuring all actors are trusted and valid.                             |
 | **`@pagopa/io-wallet-oid4vci`**        | Manages **Verifiable Credential Issuance** flows. Use this to build Issuer services for credentials like the `mso_mdoc` (e.g., Digital Driver's License). |
 | **`@pagopa/io-wallet-oid4vp`**         | Manages **Verifiable Presentation** flows. Use this to build Relying Party services that request and verify user credentials from the IT-Wallet.          |
 | **`@pagopa/io-wallet-utils`**          | Shared types, configuration (`IoWalletSdkConfig`, `ItWalletSpecsVersion`), and utilities used across all packages.                                        |
@@ -37,11 +37,11 @@ Public SDK API documentation is published at
 
 The IT-Wallet ecosystem has three distinct actor roles. Install only the packages relevant to your use case.
 
-| Role | Description | Packages |
-| ---- | ----------- | -------- |
-| **Relying Party** (Verifier) | Requests and verifies credentials from a user's wallet | `@pagopa/io-wallet-oid4vp`, `@pagopa/io-wallet-oid-federation` |
-| **Credential Issuer** | Issues Verifiable Credentials to a wallet | `@pagopa/io-wallet-oid4vci`, `@pagopa/io-wallet-oid-federation` |
-| **Wallet Provider** | Manages wallet instance lifecycle and attestations | `@pagopa/io-wallet-oid4vci`, `@pagopa/io-wallet-oauth2`, `@pagopa/io-wallet-oid-federation` |
+| Role                         | Description                                            | Packages                                                                                    |
+| ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **Relying Party** (Verifier) | Requests and verifies credentials from a user's wallet | `@pagopa/io-wallet-oid4vp`, `@pagopa/io-wallet-oid-federation`                              |
+| **Credential Issuer**        | Issues Verifiable Credentials to a wallet              | `@pagopa/io-wallet-oid4vci`, `@pagopa/io-wallet-oid-federation`                             |
+| **Wallet Provider**          | Manages wallet instance lifecycle and attestations     | `@pagopa/io-wallet-oid4vci`, `@pagopa/io-wallet-oauth2`, `@pagopa/io-wallet-oid-federation` |
 
 All roles require `@pagopa/io-wallet-utils` for shared configuration types.
 
@@ -67,7 +67,7 @@ This SDK is **crypto-agnostic and environment-agnostic**. Instead of bundling a 
 This makes the SDK compatible with Node.js, browsers, and React Native without modification.
 
 ```typescript
-import { createTokenDPoP } from '@pagopa/io-wallet-oauth2';
+import { createTokenDPoP } from "@pagopa/io-wallet-oauth2";
 
 const result = await createTokenDPoP({
   // Provide your own implementations for cryptographic operations
@@ -89,8 +89,8 @@ const result = await createTokenDPoP({
       return crypto.getRandomValues(new Uint8Array(byteLength));
     },
   },
-  signer: { method: 'jwk', publicJwk: myPublicJwk, alg: 'ES256' },
-  tokenRequest: { method: 'POST', url: 'https://issuer.example.com/token' },
+  signer: { method: "jwk", publicJwk: myPublicJwk, alg: "ES256" },
+  tokenRequest: { method: "POST", url: "https://issuer.example.com/token" },
 });
 ```
 
@@ -123,17 +123,20 @@ To set up the repository for local development:
 
 The SDK supports multiple versions of the Italian Wallet technical specifications. You must configure the version in some methods using `IoWalletSdkConfig`.
 
-| Spec Version | Status |
-| ------------ | ------ |
+| Spec Version | Status    |
+| ------------ | --------- |
 | V1.0         | Supported |
 | V1.3         | Supported |
 | V1.4         | Supported |
 
 ```typescript
-import { IoWalletSdkConfig, ItWalletSpecsVersion } from '@pagopa/io-wallet-utils';
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 
 const config = new IoWalletSdkConfig({
-  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4 // or V1_0, V1_3
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4, // or V1_0, V1_3
 });
 ```
 
@@ -144,7 +147,3 @@ For internal development conventions and contribution guidelines, see [CONTRIBUT
 ## License
 
 This project is licensed under the Apache License Version 2.0 (Apache-2.0).
-
-## Credits
-
-It builds upon the foundation of the [oid4vc-ts](https://github.com/openwallet-foundation-labs/oid4vc-ts) library from the OpenWallet Foundation, extending it to meet the specific requirements of the Italian digital ecosystem.

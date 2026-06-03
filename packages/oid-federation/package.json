@@ -29,6 +29,7 @@
     "build": "tsup src/index.ts --format cjs,esm --dts --sourcemap"
   },
   "dependencies": {
+    "@pagopa/io-wallet-oauth2": "workspace:",
     "@pagopa/io-wallet-utils": "workspace:",
     "buffer": "catalog:",
     "zod": "catalog:"

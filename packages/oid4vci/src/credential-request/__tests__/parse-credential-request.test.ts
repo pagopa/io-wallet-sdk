@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import { Oauth2JwtParseError } from "@openid4vc/oauth2";
+import { Oauth2JwtParseError } from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,

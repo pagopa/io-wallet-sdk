@@ -1,6 +1,5 @@
-import { JwtSigner } from "@openid4vc/oauth2";
-
 import { decodeJwt } from "../common/jwt/decode-jwt";
+import { JwtSigner } from "../common/jwt/z-jwt";
 import { PushedAuthorizationRequestError } from "../errors";
 import {
   VerifiedJarRequest,

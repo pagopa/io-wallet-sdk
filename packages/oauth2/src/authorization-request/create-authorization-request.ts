@@ -1,6 +1,4 @@
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
-import { CallbackContext, RequestDpopOptions } from "@openid4vc/oauth2";
+import { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -9,6 +7,11 @@ import {
   dispatchByVersion,
   encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
+
+import type {
+  CallbackContext,
+  RequestDpopOptions,
+} from "../common/callback-context";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";

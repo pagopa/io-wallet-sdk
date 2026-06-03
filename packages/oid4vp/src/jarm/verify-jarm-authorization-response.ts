@@ -1,10 +1,10 @@
-import { jwtSignerFromJwt } from "@openid4vc/oauth2";
 import {
   type CallbackContext,
   type Jwk,
   Oauth2Error,
   decodeJwt,
   decodeJwtHeader,
+  jwtSignerFromJwt,
   zCompactJwe,
   zCompactJwt,
   zJwtHeader,

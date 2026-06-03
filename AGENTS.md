@@ -6,8 +6,6 @@ This file provides guidance to coding agents when working with code in this repo
 
 IO Wallet SDK is a TypeScript monorepo implementing Italy's national digital identity wallet specifications (IT-Wallet v1.0). It provides OpenID4VC-compliant implementations for credential issuance and presentation flows according to Italian Federation requirements.
 
-The SDK is built on top of [oid4vc-ts](https://github.com/openwallet-foundation-labs/oid4vc-ts) from the OpenWallet Foundation, extending it with Italian-specific profiles and requirements.
-
 ## Project Structure
 
 This is a pnpm monorepo with the following packages under `packages/`:
@@ -16,44 +14,11 @@ This is a pnpm monorepo with the following packages under `packages/`:
 - **oid4vci**: Credential Issuance flows (Issuer-side implementation)
 - **oid4vp**: Credential Presentation flows (Verifier/Relying Party implementation)
 - **oid-federation**: Italian Federation trust chain resolution and entity discovery
-- **utils**: Shared utilities and re-exports from upstream libraries
+- **utils**: Shared utilities and vendored compatibility primitives
 
 ### Package Dependencies
 
-Packages use workspace dependencies via `workspace:*` and shared upstream dependencies via the pnpm catalog (defined in `pnpm-workspace.yaml`). All packages must use identical versions of shared dependencies like `@openid4vc/oauth2`, `@openid4vc/utils`, `zod`, etc.
-
-### Evaluating oid4vc-ts Dependencies
-
-The SDK leverages business logic from [oid4vc-ts](https://github.com/openwallet-foundation-labs/oid4vc-ts) to avoid duplicating well-tested implementations. However, **every modification to the codebase requires evaluating whether the upstream logic still meets our requirements**.
-
-**When to re-evaluate:**
-
-- Before implementing new features that touch areas using oid4vc-ts logic
-- When IT-Wallet specifications change or diverge from upstream behavior
-- When upstream implementation constraints conflict with our needs
-
-**Decision criteria:**
-
-1. **Rewrite the logic locally** when:
-   - Upstream behavior differs from IT-Wallet specifications
-   - Future specification changes will require custom logic
-   - Example: Wallet attestation creation where oid4vc-ts includes either `x5c` OR `trust_chain` in the header, but IT-Wallet specs will require both claims
-
-2. **Upgrade oid4vc-ts version** when:
-   - The new version implements the functionality we need
-   - The upstream change aligns with IT-Wallet specifications
-   - Check the oid4vc-ts changelog and test thoroughly before upgrading
-
-3. **Continue using oid4vc-ts** when:
-   - The logic perfectly aligns with IT-Wallet requirements
-   - No specification changes are anticipated
-   - The abstraction provides clear benefits without constraints
-
-**Process:**
-
-- When modifying code that uses oid4vc-ts methods, document which upstream functions are being used and why
-- If rewriting logic, add a comment explaining why the local implementation was necessary
-- Keep track of specification divergences to inform future maintenance decisions
+Packages use workspace dependencies via `workspace:*` and shared third-party dependencies via the pnpm catalog (defined in `pnpm-workspace.yaml`). Shared dependencies such as `zod`, `js-base64`, and `jose` must stay version-aligned across packages.
 
 ### Code Organization Pattern
 
@@ -270,7 +235,7 @@ Example from oauth2:
 - Granular errors per method when needed (e.g., `PushedAuthorizationRequestError`)
 - All errors defined in package-level `errors.ts`
 - Each method wraps operations in try/catch and throws typed errors
-- Common errors from `@openid4vc/utils` (e.g., `JsonParseError`, `ValidationError`) can be reused
+- Common errors from `@pagopa/io-wallet-utils` (e.g., `JsonParseError`, `ValidationError`) can be reused
 
 #### HTTP Status Check Convention
 
@@ -296,7 +261,7 @@ if (!response.ok) {
 
 ### CallbackContext Pattern
 
-The SDK uses a **callback injection pattern** via `CallbackContext` from `@openid4vc/oauth2` to remain crypto-agnostic and environment-agnostic. This allows consumers to provide their own implementations for cryptographic operations and HTTP requests.
+The SDK uses a **callback injection pattern** via `CallbackContext` re-exported from `@pagopa/io-wallet-utils` to remain crypto-agnostic and environment-agnostic. This allows consumers to provide their own implementations for cryptographic operations and HTTP requests.
 
 **Key callbacks in CallbackContext:**
 
@@ -468,7 +433,7 @@ state: options.state ??
 
 ### Public API Surface
 
-Third-party types and utilities needed by consumers are re-exported through package `index.ts` files to maintain a clean API boundary. Example: oauth2 re-exports `SignJwtCallback`, `Jwk`, `decodeJwt`, etc. from `@openid4vc/oauth2`.
+Types and utilities needed by consumers are re-exported through package `index.ts` files to maintain a clean API boundary. Example: oauth2 re-exports vendored callback and JWT helper types without requiring consumers to import internal implementation modules directly.
 
 ### Naming Conventions
 
@@ -536,7 +501,7 @@ Tests use vitest with the following patterns:
 Example:
 
 ```typescript
-vi.mock("@openid4vc/utils");
+vi.mock("@pagopa/io-wallet-utils");
 const mockGenerateRandom = vi.fn();
 const mockCallbacks = {
   generateRandom: mockGenerateRandom,

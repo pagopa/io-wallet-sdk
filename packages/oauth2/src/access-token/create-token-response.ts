@@ -1,18 +1,17 @@
 import {
-  CallbackContext,
-  HashAlgorithm,
-  JwtSigner,
-  calculateJwkThumbprint,
-} from "@openid4vc/oauth2";
-import {
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
+import type { CallbackContext } from "../common/callback-context";
+
+import { HashAlgorithm } from "../common/hash";
+import { calculateJwkThumbprint } from "../common/jwk/calculate-jwk-thumbprint";
 import { Jwk } from "../common/jwk/z-jwk";
 import { jwtHeaderFromJwtSigner } from "../common/jwt/decode-jwt-header";
+import { JwtSigner } from "../common/jwt/z-jwt";
 import { CreateTokenResponseError } from "../errors";
 import {
   AccessTokenProfileJwtHeader,

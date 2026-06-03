@@ -1,11 +1,11 @@
 import type { ZodType } from "zod";
 
-import { jwtSignerFromJwt, verifyJwt } from "@openid4vc/oauth2";
-
 import type { JwtHeader, JwtPayload } from "../common/jwt/z-jwt";
 import type { BaseVerifyWalletAttestationJwtOptions } from "./types";
 
 import { decodeJwt } from "../common/jwt/decode-jwt";
+import { jwtSignerFromJwt } from "../common/jwt/decode-jwt-header";
+import { verifyJwt } from "../common/jwt/verify-jwt";
 
 export async function verifyWalletAttestationBase<
   THeader extends ZodType<JwtHeader>,

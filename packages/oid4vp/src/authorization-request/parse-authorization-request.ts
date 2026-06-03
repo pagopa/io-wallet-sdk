@@ -1,10 +1,10 @@
 import {
-  CallbackContext,
+  type CallbackContext,
   JwtSigner,
   Oauth2JwtParseError,
+  decodeJwt,
   verifyJwt,
-} from "@openid4vc/oauth2";
-import { decodeJwt } from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-oauth2";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,

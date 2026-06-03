@@ -1,6 +1,6 @@
-import { type CallbackContext } from "@openid4vc/oauth2";
 import { addSecondsToDate, dateToSeconds } from "@pagopa/io-wallet-utils";
 
+import type { CallbackContext } from "../common/callback-context";
 import type { Jwk } from "../common/jwk/z-jwk";
 import type { JweEncryptor, JwtSigner } from "../common/jwt/z-jwt";
 import type {

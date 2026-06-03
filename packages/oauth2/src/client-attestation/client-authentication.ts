@@ -1,6 +1,4 @@
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
-import { CallbackContext } from "@openid4vc/oauth2";
+import { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 import {
   ContentType,
   FetchHeaders,
@@ -8,6 +6,8 @@ import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
 } from "@pagopa/io-wallet-utils";
+
+import type { CallbackContext } from "../common/callback-context";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
 import {

@@ -1,10 +1,4 @@
 import {
-  CallbackContext,
-  JwtSigner,
-  jwtSignerFromJwt,
-  verifyJwt,
-} from "@openid4vc/oauth2";
-import {
   CONTENT_TYPES,
   HEADERS,
   UnexpectedStatusCodeError,
@@ -13,7 +7,12 @@ import {
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
+import type { CallbackContext } from "../common/callback-context";
+
 import { decodeJwt } from "../common/jwt/decode-jwt";
+import { jwtSignerFromJwt } from "../common/jwt/decode-jwt-header";
+import { verifyJwt } from "../common/jwt/verify-jwt";
+import { JwtSigner } from "../common/jwt/z-jwt";
 import { MrtdPopError } from "../errors";
 import {
   zMrtdPopInitResponseJwtHeader,
