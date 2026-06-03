@@ -30,9 +30,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@pagopa/io-wallet-oid-federation": "workspace:*",
     "@pagopa/io-wallet-utils": "workspace:*",
-    "zod": "catalog:",
-    "js-base64": "catalog:"
+    "js-base64": "catalog:",
+    "zod": "catalog:"
   }
 }

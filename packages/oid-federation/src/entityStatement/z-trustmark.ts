@@ -1,6 +1,5 @@
+import { zJwkSet } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
-
-import { jsonWebKeySetSchema } from "../jwk/jwk";
 
 /**
  * @example https://<federation_authority_domain>/trust_marks/<purpose>/<entity_type>
@@ -23,7 +22,7 @@ export type TrustMarkIssuer = z.input<typeof trustMarkIssuerSchema>;
 export const trustMarkOwnerSchema = z.record(
   z.string(),
   z.object({
-    jwks: jsonWebKeySetSchema,
+    jwks: zJwkSet,
     sub: z.string(),
   }),
 );

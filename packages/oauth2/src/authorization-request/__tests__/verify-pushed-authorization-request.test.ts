@@ -1,5 +1,4 @@
 /* eslint-disable max-lines-per-function */
-import { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -8,6 +7,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
+import type { BaseAuthorizationServerMetadata } from "../../authorization-server-metadata";
 import type { CallbackContext } from "../../common/callback-context";
 
 import { Jwk } from "../../common/jwk/z-jwk";
@@ -50,7 +50,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
   const mockAuthorizationServerMetadata = {
     issuer: "https://auth.example.com",
-  } as ItWalletAuthorizationServerMetadata;
+  } as BaseAuthorizationServerMetadata;
 
   const mockAuthorizationRequest = {
     client_id: "client-123",

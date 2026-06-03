@@ -1,6 +1,5 @@
+import { zJwkSet } from "@pagopa/io-wallet-oauth2";
 import { z } from "zod";
-
-import { jsonWebKeySetSchema } from "../../../jwk/jwk";
 
 /**
  *
@@ -64,7 +63,7 @@ export const itWalletCredentialIssuerMetadata = z.looseObject({
     .refine((arr) => arr.includes("vouch"), {
       message: "The evidence_supported array MUST include 'vouch'.",
     }),
-  jwks: jsonWebKeySetSchema,
+  jwks: zJwkSet,
   nonce_endpoint: z.url(),
   notification_endpoint: z.url(),
   revocation_endpoint: z.url(),

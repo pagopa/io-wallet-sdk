@@ -56,9 +56,6 @@ importers:
 
   packages/oauth2:
     dependencies:
-      '@pagopa/io-wallet-oid-federation':
-        specifier: workspace:*
-        version: link:../oid-federation
       '@pagopa/io-wallet-utils':
         specifier: workspace:*
         version: link:../utils

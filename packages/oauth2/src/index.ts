@@ -12,6 +12,7 @@ export * from "./authorization-request/parse-pushed-authorization-request";
 export * from "./authorization-request/verify-authorization-request";
 export * from "./authorization-request/verify-pushed-authorization-request";
 export * from "./authorization-request/z-authorization-request";
+export type * from "./authorization-server-metadata";
 export * from "./client-attestation/client-attestation-pop";
 export * from "./client-attestation/client-authentication";
 export type * from "./client-attestation/types";

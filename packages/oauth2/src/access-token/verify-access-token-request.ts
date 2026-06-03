@@ -1,6 +1,6 @@
-import { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
 
+import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 import type { CallbackContext } from "../common/callback-context";
 
 import { VerifiedClientAttestationPopJwt } from "../client-attestation/client-attestation-pop";
@@ -56,7 +56,7 @@ export interface VerifyAccessTokenRequestOptions {
   /**
    * The authorization server metadata
    */
-  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
+  authorizationServerMetadata: BaseAuthorizationServerMetadata;
 
   /**
    * Callbacks used during verification

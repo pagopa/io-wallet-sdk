@@ -1,4 +1,3 @@
-import { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
 import {
   ContentType,
   FetchHeaders,
@@ -7,6 +6,7 @@ import {
   ItWalletSpecsVersion,
 } from "@pagopa/io-wallet-utils";
 
+import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 import type { CallbackContext } from "../common/callback-context";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
@@ -36,7 +36,7 @@ export type SupportedClientAuthenticationMethod =
  */
 export interface IsClientAttestationSupportedOptions {
   /** Authorization server metadata containing supported authentication methods. */
-  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
+  authorizationServerMetadata: BaseAuthorizationServerMetadata;
 }
 
 /**
@@ -72,7 +72,7 @@ export interface ClientAuthenticationCallbackOptions {
   /**
    * Metadata of the authorization server
    */
-  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
+  authorizationServerMetadata: BaseAuthorizationServerMetadata;
 
   /**
    * The body as a JSON object. If content type `x-www-form-urlencoded`
