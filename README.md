@@ -147,3 +147,7 @@ For internal development conventions and contribution guidelines, see [CONTRIBUT
 ## License
 
 This project is licensed under the Apache License Version 2.0 (Apache-2.0).
+
+## Credits
+
+It builds upon the foundation of the [oid4vc-ts](https://github.com/openwallet-foundation-labs/oid4vc-ts) library from the OpenWallet Foundation, extending it to meet the specific requirements of the Italian digital ecosystem.

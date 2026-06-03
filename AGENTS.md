@@ -261,7 +261,7 @@ if (!response.ok) {
 
 ### CallbackContext Pattern
 
-The SDK uses a **callback injection pattern** via `CallbackContext` re-exported from `@pagopa/io-wallet-utils` to remain crypto-agnostic and environment-agnostic. This allows consumers to provide their own implementations for cryptographic operations and HTTP requests.
+The SDK uses a **callback injection pattern** via `CallbackContext` re-exported from `@pagopa/io-wallet-oauth2` to remain crypto-agnostic and environment-agnostic. This allows consumers to provide their own implementations for cryptographic operations and HTTP requests.
 
 **Key callbacks in CallbackContext:**
 
