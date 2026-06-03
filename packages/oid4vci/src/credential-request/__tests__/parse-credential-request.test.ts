@@ -11,10 +11,28 @@ import {
   CredentialAuthorizationHeaderError,
   MissingDpopProofError,
 } from "../../errors";
-import { parseCredentialRequest } from "../parse-credential-request";
+import {
+  type ParseCredentialRequestOptions,
+  type ParsedCredentialRequest,
+  parseCredentialRequest,
+} from "../parse-credential-request";
 
 const VALID_DPOP_JWT =
   "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0In0.eyJodG0iOiJQT1NUIiwiaHR1IjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZS5jb20vY3JlZGVudGlhbCIsImlhdCI6MTcwMDAwMDAwMH0.signature";
+
+const PROOF_JWK = {
+  crv: "P-256",
+  kty: "EC",
+  x: "test-x-coordinate-1",
+  y: "test-y-coordinate-1",
+};
+
+const SECOND_PROOF_JWK = {
+  crv: "P-256",
+  kty: "EC",
+  x: "test-x-coordinate-2",
+  y: "test-y-coordinate-2",
+};
 
 function createHeaders(options?: {
   authorization?: string;
@@ -37,9 +55,7 @@ function createJwt(options?: {
   const header = Buffer.from(
     JSON.stringify({
       alg: "ES256",
-      jwk: {
-        kty: "EC",
-      },
+      jwk: PROOF_JWK,
       typ: "openid4vci-proof+jwt",
       ...options?.header,
     }),
@@ -63,25 +79,40 @@ function createProofJwt(payload?: Record<string, unknown>): string {
 }
 
 function createProofJwtV1_3(options?: {
+  jwk?: Record<string, unknown>;
   keyAttestation?: string;
   payload?: Record<string, unknown>;
 }): string {
   return createJwt({
     header: {
+      jwk: options?.jwk ?? PROOF_JWK,
       key_attestation: options?.keyAttestation ?? "test-key-attestation",
     },
     payload: options?.payload,
   });
 }
 
+const callbacks = {
+  hash: (data: Uint8Array): Uint8Array => data,
+};
+
+function parseTestCredentialRequest(
+  options: Omit<ParseCredentialRequestOptions, "callbacks">,
+): Promise<ParsedCredentialRequest> {
+  return parseCredentialRequest({
+    callbacks,
+    ...options,
+  });
+}
+
 describe("parseCredentialRequest", () => {
-  it("parses and normalizes v1.0 credential request", () => {
+  it("parses and normalizes v1.0 credential request", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
     const jwt = createProofJwt();
 
-    const result = parseCredentialRequest({
+    const result = await parseTestCredentialRequest({
       config,
       credentialRequest: {
         credential_identifier: "UniversityDegree",
@@ -108,19 +139,22 @@ describe("parseCredentialRequest", () => {
     );
   });
 
-  it("parses and normalizes v1.3 credential request with multiple proofs", () => {
+  it("parses and normalizes v1.3 credential request with multiple proofs", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    const result = parseCredentialRequest({
+    const result = await parseTestCredentialRequest({
       config,
       credentialRequest: {
         credential_identifier: "education_degree",
         proofs: {
           jwt: [
             createProofJwtV1_3(),
-            createProofJwtV1_3({ payload: { nonce: "test-nonce-2" } }),
+            createProofJwtV1_3({
+              jwk: SECOND_PROOF_JWK,
+              payload: { nonce: "test-nonce-2" },
+            }),
           ],
         },
       },
@@ -137,12 +171,41 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs[1]?.payload.nonce).toBe("test-nonce-2");
   });
 
-  it("parses v1.4 credential request and returns itWalletSpecsVersion V1_4", () => {
+  it.each([ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4])(
+    "throws ValidationError when batch credential request contains duplicate proof JWKs (%s)",
+    async (itWalletSpecsVersion) => {
+      const config = new IoWalletSdkConfig({ itWalletSpecsVersion });
+
+      await expect(
+        parseTestCredentialRequest({
+          config,
+          credentialRequest: {
+            credential_identifier: "education_degree",
+            proofs: {
+              jwt: [
+                createProofJwtV1_3({ jwk: { ...PROOF_JWK, kid: "key-1" } }),
+                createProofJwtV1_3({
+                  jwk: { ...PROOF_JWK, kid: "key-2" },
+                  payload: { nonce: "test-nonce-2" },
+                }),
+              ],
+            },
+          },
+          headers: createHeaders({
+            authorization: "DPoP test-access-token",
+            dpop: VALID_DPOP_JWT,
+          }),
+        }),
+      ).rejects.toThrow(ValidationError);
+    },
+  );
+
+  it("parses v1.4 credential request and returns itWalletSpecsVersion V1_4", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
     });
 
-    const result = parseCredentialRequest({
+    const result = await parseTestCredentialRequest({
       config,
       credentialRequest: {
         credential_identifier: "education_degree",
@@ -161,13 +224,13 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs).toHaveLength(1);
   });
 
-  it("throws MissingDpopProofError when DPoP header is absent (v1.0)", () => {
+  it("throws MissingDpopProofError when DPoP header is absent (v1.0)", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -180,16 +243,16 @@ describe("parseCredentialRequest", () => {
           authorization: "DPoP test-access-token",
         }),
       }),
-    ).toThrow(MissingDpopProofError);
+    ).rejects.toThrow(MissingDpopProofError);
   });
 
-  it("throws MissingDpopProofError when DPoP header is absent (v1.3)", () => {
+  it("throws MissingDpopProofError when DPoP header is absent (v1.3)", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "education_degree",
@@ -201,16 +264,16 @@ describe("parseCredentialRequest", () => {
           authorization: "DPoP test-access-token",
         }),
       }),
-    ).toThrow(MissingDpopProofError);
+    ).rejects.toThrow(MissingDpopProofError);
   });
 
-  it("throws MissingDpopProofError when DPoP header value is not a valid JWT", () => {
+  it("throws MissingDpopProofError when DPoP header value is not a valid JWT", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -224,16 +287,16 @@ describe("parseCredentialRequest", () => {
           dpop: "not-a-jwt",
         }),
       }),
-    ).toThrow(MissingDpopProofError);
+    ).rejects.toThrow(MissingDpopProofError);
   });
 
-  it("throws CredentialAuthorizationHeaderError when Authorization header is absent", () => {
+  it("throws CredentialAuthorizationHeaderError when Authorization header is absent", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -246,16 +309,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(CredentialAuthorizationHeaderError);
+    ).rejects.toThrow(CredentialAuthorizationHeaderError);
   });
 
-  it("throws CredentialAuthorizationHeaderError when Authorization scheme is Bearer", () => {
+  it("throws CredentialAuthorizationHeaderError when Authorization scheme is Bearer", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "education_degree",
@@ -268,16 +331,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(CredentialAuthorizationHeaderError);
+    ).rejects.toThrow(CredentialAuthorizationHeaderError);
   });
 
-  it("throws CredentialAuthorizationHeaderError when Authorization token is missing", () => {
+  it("throws CredentialAuthorizationHeaderError when Authorization token is missing", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -291,16 +354,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(CredentialAuthorizationHeaderError);
+    ).rejects.toThrow(CredentialAuthorizationHeaderError);
   });
 
-  it("throws CredentialAuthorizationHeaderError when Authorization header has extra parts", () => {
+  it("throws CredentialAuthorizationHeaderError when Authorization header has extra parts", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "education_degree",
@@ -313,16 +376,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(CredentialAuthorizationHeaderError);
+    ).rejects.toThrow(CredentialAuthorizationHeaderError);
   });
 
-  it("throws ValidationError when transaction_id is present in immediate flow", () => {
+  it("throws ValidationError when transaction_id is present in immediate flow", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -337,16 +400,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when transaction_id is missing in deferred flow", () => {
+  it("throws ValidationError when transaction_id is missing in deferred flow", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "education_degree",
@@ -360,16 +423,16 @@ describe("parseCredentialRequest", () => {
         }),
         isDeferredFlow: true,
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when iss is missing for authorization_code grant", () => {
+  it("throws ValidationError when iss is missing for authorization_code grant", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -383,15 +446,15 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("allows missing iss for pre-authorized_code grant", () => {
+  it("allows missing iss for pre-authorized_code grant", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    const result = parseCredentialRequest({
+    const result = await parseTestCredentialRequest({
       config,
       credentialRequest: {
         credential_identifier: "education_degree",
@@ -409,12 +472,12 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs[0]?.payload.iss).toBeUndefined();
   });
 
-  it("allows missing iss for pre-authorized_code grant even when expected issuer is provided", () => {
+  it("allows missing iss for pre-authorized_code grant even when expected issuer is provided", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    const result = parseCredentialRequest({
+    const result = await parseTestCredentialRequest({
       config,
       credentialRequest: {
         credential_identifier: "education_degree",
@@ -435,13 +498,13 @@ describe("parseCredentialRequest", () => {
     expect(result.proofs[0]?.payload.iss).toBeUndefined();
   });
 
-  it("throws ValidationError when expected audience does not match", () => {
+  it("throws ValidationError when expected audience does not match", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -458,16 +521,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when expected nonce does not match", () => {
+  it("throws ValidationError when expected nonce does not match", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -484,16 +547,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when expected credential_identifier does not match", () => {
+  it("throws ValidationError when expected credential_identifier does not match", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -510,16 +573,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when expected credential_configuration_id does not match", () => {
+  it("throws ValidationError when expected credential_configuration_id does not match", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_configuration_id: "PidCredential",
@@ -535,16 +598,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when expected issuer does not match proof issuer", () => {
+  it("throws ValidationError when expected issuer does not match proof issuer", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -561,16 +624,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when proof JWT header is invalid", () => {
+  it("throws ValidationError when proof JWT header is invalid", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -588,16 +651,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError for v1.3 when key_attestation is missing in proof JWT header", () => {
+  it("throws ValidationError for v1.3 when key_attestation is missing in proof JWT header", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "education_degree",
@@ -610,16 +673,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError for v1.3 when key_attestation is empty", () => {
+  it("throws ValidationError for v1.3 when key_attestation is empty", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "education_degree",
@@ -632,16 +695,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws ValidationError when proof JWT payload is invalid", () => {
+  it("throws ValidationError when proof JWT payload is invalid", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -659,16 +722,16 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
-  it("throws Oauth2JwtParseError when proof JWT is malformed", () => {
+  it("throws Oauth2JwtParseError when proof JWT is malformed", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
 
-    expect(() =>
-      parseCredentialRequest({
+    await expect(
+      parseTestCredentialRequest({
         config,
         credentialRequest: {
           credential_identifier: "UniversityDegree",
@@ -682,6 +745,6 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).toThrow(Oauth2JwtParseError);
+    ).rejects.toThrow(Oauth2JwtParseError);
   });
 });
