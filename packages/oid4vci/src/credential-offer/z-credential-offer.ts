@@ -1,77 +1,50 @@
 import { z } from "zod";
 
-/**
- * Authorization Code Grant schema
- * IT-Wallet v1.3 specification: Section 5.1
- *
- * The authorization_code grant is REQUIRED for IT-Wallet v1.3.
- * Pre-authorized code grant is NOT supported.
- */
-export const zAuthorizationCodeGrant = z.object({
-  /**
-   * CONDITIONALLY REQUIRED. HTTPS URL of the Authorization Server.
-   * REQUIRED only when the Credential Issuer uses multiple Authorization Servers.
-   * If present, MUST match one of the authorization_servers in the Credential Issuer metadata.
-   */
-  authorization_server: z.url().optional(),
+import {
+  type AuthorizationCodeGrantV1_3,
+  type CredentialOfferGrantsV1_3,
+  type CredentialOfferV1_3,
+  zAuthorizationCodeGrantV1_3,
+  zCredentialOfferGrantsV1_3,
+  zCredentialOfferV1_3,
+} from "./v1.3/z-credential-offer";
+import {
+  type AuthorizationCodeGrantV1_4,
+  type CredentialOfferGrantsV1_4,
+  type CredentialOfferV1_4,
+  zAuthorizationCodeGrantV1_4,
+  zCredentialOfferGrantsV1_4,
+  zCredentialOfferV1_4,
+} from "./v1.4/z-credential-offer";
 
-  /**
-   * OPTIONAL. String value representing the issuer state.
-   * Used to correlate the authorization request with the credential offer.
-   */
-  issuer_state: z.string().optional(),
-
-  /**
-   * REQUIRED. OAuth 2.0 scope value.
-   * Defines the scope of access requested by the credential offer.
-   */
-  scope: z.string(),
-});
-
-/**
- * Credential Offer Grants schema
- * IT-Wallet v1.3 specification: Section 5.1
- *
- * The grants object is REQUIRED for IT-Wallet v1.3.
- * Only authorization_code grant is supported.
- */
-export const zCredentialOfferGrants = z.object({
-  /**
-   * REQUIRED. Authorization Code grant details.
-   * IT-Wallet v1.3 only supports authorization_code grant.
-   */
-  authorization_code: zAuthorizationCodeGrant,
-});
-
-/**
- * Credential Offer schema
- * IT-Wallet v1.3 specification: Section 5.1
- *
- * Represents a credential offer from a Credential Issuer to a wallet.
- */
-export const zCredentialOffer = z.object({
-  /**
-   * REQUIRED. Array of credential configuration identifiers.
-   * References the types of credentials offered as defined in the Credential Issuer metadata.
-   */
-  credential_configuration_ids: z.array(z.string()).min(1),
-
-  /**
-   * REQUIRED. HTTPS URL of the Credential Issuer.
-   * The Credential Issuer from which the wallet will request credentials.
-   */
-  credential_issuer: z.url(),
-
-  /**
-   * REQUIRED. Grant information for the credential offer.
-   * IT-Wallet v1.3 requires authorization_code grant.
-   */
-  grants: zCredentialOfferGrants,
-});
+// Re-export version-specific schemas and types.
+// v1.4 forks only the authorization_code grant (no `scope`); everything else is identical to v1.3.
+export {
+  zAuthorizationCodeGrantV1_3,
+  zCredentialOfferGrantsV1_3,
+  zCredentialOfferV1_3,
+};
+export {
+  zAuthorizationCodeGrantV1_4,
+  zCredentialOfferGrantsV1_4,
+  zCredentialOfferV1_4,
+};
+export type {
+  AuthorizationCodeGrantV1_3,
+  CredentialOfferGrantsV1_3,
+  CredentialOfferV1_3,
+};
+export type {
+  AuthorizationCodeGrantV1_4,
+  CredentialOfferGrantsV1_4,
+  CredentialOfferV1_4,
+};
 
 /**
  * Credential Offer URI schema
  * Represents a parsed credential offer URI with scheme and parameters.
+ *
+ * Version-agnostic: IT-Wallet v1.3 and v1.4 share the same invocation schemes.
  *
  * Supports three URL schemes:
  * - openid-credential-offer:// - Standard OpenID scheme (custom URL scheme)
@@ -107,19 +80,26 @@ export const zCredentialOfferUri = z
   });
 
 /**
- * TypeScript type for Authorization Code Grant
+ * TypeScript type for Authorization Code Grant.
+ * Union across supported IT-Wallet versions.
  */
-export type AuthorizationCodeGrant = z.infer<typeof zAuthorizationCodeGrant>;
+export type AuthorizationCodeGrant =
+  | AuthorizationCodeGrantV1_3
+  | AuthorizationCodeGrantV1_4;
 
 /**
- * TypeScript type for Credential Offer Grants
+ * TypeScript type for Credential Offer Grants.
+ * Union across supported IT-Wallet versions.
  */
-export type CredentialOfferGrants = z.infer<typeof zCredentialOfferGrants>;
+export type CredentialOfferGrants =
+  | CredentialOfferGrantsV1_3
+  | CredentialOfferGrantsV1_4;
 
 /**
- * TypeScript type for Credential Offer
+ * TypeScript type for Credential Offer.
+ * Union across supported IT-Wallet versions.
  */
-export type CredentialOffer = z.infer<typeof zCredentialOffer>;
+export type CredentialOffer = CredentialOfferV1_3 | CredentialOfferV1_4;
 
 /**
  * TypeScript type for Credential Offer URI

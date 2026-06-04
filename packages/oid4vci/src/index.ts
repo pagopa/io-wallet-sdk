@@ -5,17 +5,40 @@ export { extractGrantDetails } from "./credential-offer/extract-grant-details";
 export { parseCredentialOfferUri } from "./credential-offer/parse-credential-offer-uri";
 export { resolveCredentialOffer } from "./credential-offer/resolve-credential-offer";
 export type {
+  ExtractGrantDetailsOptions,
+  ExtractGrantDetailsOptionsV1_3,
+  ExtractGrantDetailsOptionsV1_4,
   ExtractGrantDetailsResult,
+  ExtractGrantDetailsResultV1_3,
+  ExtractGrantDetailsResultV1_4,
   ParseCredentialOfferUriOptions,
   ResolveCredentialOfferOptions,
+  ResolveCredentialOfferOptionsV1_3,
+  ResolveCredentialOfferOptionsV1_4,
   ValidateCredentialOfferOptions,
+  ValidateCredentialOfferOptionsV1_3,
+  ValidateCredentialOfferOptionsV1_4,
 } from "./credential-offer/types";
 export { validateCredentialOffer } from "./credential-offer/validate-credential-offer";
 export type {
   AuthorizationCodeGrant,
+  AuthorizationCodeGrantV1_3,
+  AuthorizationCodeGrantV1_4,
   CredentialOffer,
   CredentialOfferGrants,
+  CredentialOfferGrantsV1_3,
+  CredentialOfferGrantsV1_4,
   CredentialOfferUri,
+  CredentialOfferV1_3,
+  CredentialOfferV1_4,
+} from "./credential-offer/z-credential-offer";
+export {
+  zAuthorizationCodeGrantV1_3,
+  zAuthorizationCodeGrantV1_4,
+  zCredentialOfferGrantsV1_3,
+  zCredentialOfferGrantsV1_4,
+  zCredentialOfferV1_3,
+  zCredentialOfferV1_4,
 } from "./credential-offer/z-credential-offer";
 export * from "./credential-request/create-credential-request";
 export * from "./credential-request/parse-credential-request";

@@ -14,7 +14,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { FetchMetadataError } from "../errors";
+import { CredentialOfferError, FetchMetadataError } from "../errors";
 import {
   MetadataResponse,
   zMetadataResponseV1_0,
@@ -23,6 +23,15 @@ import {
 } from "./z-metadata-response";
 
 interface RawFederationResult {
+  /**
+   * Entity statement claims of the Authorization Server, present only when the
+   * selected authorization server was resolved through a federation entity
+   * distinct from the Credential Issuer. Preserves the AS metadata provenance
+   * so its trust chain remains auditable.
+   */
+  authorization_server_federation_claims?: z.infer<
+    typeof itWalletEntityStatementClaimsSchema
+  >;
   discoveredVia: "federation";
   metadata: z.infer<typeof itWalletEntityStatementClaimsSchema>["metadata"];
   openid_federation_claims: z.infer<typeof itWalletEntityStatementClaimsSchema>;
@@ -40,7 +49,40 @@ function ensureTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
 
+/**
+ * Ensures an authorization server selected from a credential offer is one of the
+ * `authorization_servers` declared by the Credential Issuer metadata.
+ *
+ * No-op when no authorization server was selected. This check mirrors (and runs
+ * ahead of) the credential offer validation step, so a metadata fetch driven by
+ * an offer fails fast on a mismatched authorization server.
+ *
+ * @throws {CredentialOfferError} If a selected authorization server is absent
+ *   from (or unsupported by) the issuer's `authorization_servers` list.
+ */
+function assertAuthorizationServerAllowed(
+  authorizationServer: string | undefined,
+  authorizationServers: readonly string[] | undefined,
+): void {
+  if (
+    authorizationServer &&
+    (!authorizationServers ||
+      !authorizationServers.includes(authorizationServer))
+  ) {
+    throw new CredentialOfferError(
+      "offer provided authorization server is not in the `authorization_servers` list defined by the issuer's config",
+    );
+  }
+}
+
 export interface FetchMetadataOptions {
+  /**
+   * Optional Authorization Server URL selected from a credential offer.
+   * When provided, it must be a valid HTTPS URL and exactly match one of
+   * the Credential Issuer metadata authorization_servers.
+   */
+  authorizationServer?: string;
+
   /** Callback providing the fetch implementation */
   callbacks: {
     /**
@@ -125,6 +167,70 @@ async function tryFederationDiscovery(
 }
 
 /**
+ * Applies the selected authorization server to a federation discovery result.
+ *
+ * When `authorizationServer` is omitted, or matches the issuer of the
+ * authorization server already attested inline in the Credential Issuer entity
+ * statement, the result is returned unchanged (no secondary fetch).
+ *
+ * When `authorizationServer` differs, the authorization server metadata is
+ * resolved through the federation trust chain of that entity. The grafted
+ * metadata replaces `oauth_authorization_server`, and the resolved entity
+ * statement is preserved under `authorization_server_federation_claims` so its
+ * provenance remains auditable.
+ *
+ * @throws {ValidationError} If the selected authorization server cannot be
+ *   resolved via federation or does not expose oauth_authorization_server metadata.
+ */
+async function applyFederationAuthorizationServerSelection(
+  fetch: ReturnType<typeof createFetcher>,
+  federationResult: RawFederationResult,
+  authorizationServer?: string,
+  verifyJwt?: VerifyJwtCallback,
+): Promise<RawFederationResult> {
+  if (!authorizationServer) {
+    return federationResult;
+  }
+
+  const inlineAuthorizationServer =
+    federationResult.metadata?.oauth_authorization_server;
+
+  if (inlineAuthorizationServer?.issuer === authorizationServer) {
+    return federationResult;
+  }
+
+  assertAuthorizationServerAllowed(
+    authorizationServer,
+    federationResult.metadata?.openid_credential_issuer?.authorization_servers,
+  );
+
+  const authorizationServerResult = await tryFederationDiscovery(
+    fetch,
+    authorizationServer,
+    verifyJwt,
+  );
+
+  const resolvedAuthorizationServer =
+    authorizationServerResult?.metadata?.oauth_authorization_server;
+
+  if (!resolvedAuthorizationServer) {
+    throw new ValidationError(
+      `Federation discovery did not yield oauth_authorization_server metadata for authorization server '${authorizationServer}'`,
+    );
+  }
+
+  return {
+    ...federationResult,
+    authorization_server_federation_claims:
+      authorizationServerResult.openid_federation_claims,
+    metadata: {
+      ...federationResult.metadata,
+      oauth_authorization_server: resolvedAuthorizationServer,
+    } as RawFederationResult["metadata"],
+  };
+}
+
+/**
  * Executes the fallback OID4VCI discovery path:
  *   1. GET {baseUrl}/.well-known/openid-credential-issuer
  *   2a. If authorization_servers[] is present → GET {authServerUrl}/.well-known/oauth-authorization-server
@@ -136,6 +242,7 @@ async function tryFederationDiscovery(
 async function fallbackDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
+  authorizationServer?: string,
 ): Promise<RawOid4vciResult> {
   const issuerUrl = new URL(
     ".well-known/openid-credential-issuer",
@@ -152,13 +259,17 @@ async function fallbackDiscovery(
   );
   const authorizationServers = issuerJson.authorization_servers;
 
+  assertAuthorizationServerAllowed(authorizationServer, authorizationServers);
+
   let oauthAuthorizationServer: Record<string, unknown>;
 
   if (authorizationServers && authorizationServers.length > 0) {
-    const parsedUrl = z.url().safeParse(authorizationServers[0]);
+    const selectedAuthorizationServer =
+      authorizationServer ?? authorizationServers[0];
+    const parsedUrl = z.url().safeParse(selectedAuthorizationServer);
     if (!parsedUrl.success || !parsedUrl.data.startsWith("https://")) {
       throw new ValidationError(
-        "authorization_servers[0] is not a valid HTTPS URL",
+        "selected authorization server is not a valid HTTPS URL",
       );
     }
 
@@ -217,9 +328,18 @@ async function fetchMetadataV1_3(
     options.credentialIssuerUrl,
     options.callbacks.verifyJwt,
   );
-  const raw =
-    federationResult ??
-    (await fallbackDiscovery(fetch, options.credentialIssuerUrl));
+  const raw = federationResult
+    ? await applyFederationAuthorizationServerSelection(
+        fetch,
+        federationResult,
+        options.authorizationServer,
+        options.callbacks.verifyJwt,
+      )
+    : await fallbackDiscovery(
+        fetch,
+        options.credentialIssuerUrl,
+        options.authorizationServer,
+      );
   return parseWithErrorHandling(
     zMetadataResponseV1_3,
     raw,
@@ -285,6 +405,7 @@ export async function fetchMetadata(
       error instanceof UnexpectedStatusCodeError ||
       error instanceof ValidationError ||
       error instanceof ItWalletSpecsVersionError ||
+      error instanceof CredentialOfferError ||
       error instanceof FetchMetadataError
     ) {
       throw error;

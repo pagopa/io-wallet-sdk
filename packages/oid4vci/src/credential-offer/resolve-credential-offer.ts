@@ -1,14 +1,50 @@
 import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  ItWalletSpecsVersionError,
   UnexpectedStatusCodeError,
   createFetcher,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
-import type { ResolveCredentialOfferOptions } from "./types";
+import type {
+  ResolveCredentialOfferOptions,
+  ResolveCredentialOfferOptionsV1_3,
+  ResolveCredentialOfferOptionsV1_4,
+} from "./types";
 
 import { CredentialOfferError } from "../errors";
 import { parseCredentialOfferUri } from "./parse-credential-offer-uri";
-import { type CredentialOffer, zCredentialOffer } from "./z-credential-offer";
+import {
+  type CredentialOffer,
+  type CredentialOfferV1_3,
+  type CredentialOfferV1_4,
+  zCredentialOfferV1_3,
+  zCredentialOfferV1_4,
+} from "./z-credential-offer";
+
+/**
+ * Parses raw credential offer JSON using the schema for the configured IT-Wallet version.
+ *
+ * @throws {ItWalletSpecsVersionError} If the configured version does not support credential offers.
+ */
+function parseCredentialOfferForVersion(
+  config: IoWalletSdkConfig,
+  data: unknown,
+): CredentialOffer {
+  switch (config.itWalletSpecsVersion) {
+    case ItWalletSpecsVersion.V1_3:
+      return zCredentialOfferV1_3.parse(data);
+    case ItWalletSpecsVersion.V1_4:
+      return zCredentialOfferV1_4.parse(data);
+    default:
+      throw new ItWalletSpecsVersionError(
+        "resolveCredentialOffer",
+        config.itWalletSpecsVersion,
+        [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+      );
+  }
+}
 
 /**
  * Resolves a credential offer from a URI or inline JSON string.
@@ -23,13 +59,19 @@ import { type CredentialOffer, zCredentialOffer } from "./z-credential-offer";
  * - `haip-vci://` - High Assurance Interoperability Profile scheme
  * - `https://` - HTTPS Universal Links (preferred)
  *
- * @param options - Resolution options containing the credential offer and fetch callback
+ * The configured IT-Wallet version selects the schema used to parse the offer:
+ * - v1.3 requires `scope` within the authorization_code grant
+ * - v1.4 no longer carries `scope`
+ *
+ * @param options - Resolution options containing the credential offer, version config, and fetch callback
  * @returns Resolved and validated credential offer object
  * @throws {CredentialOfferError} If parsing fails, HTTP request fails, or validation fails
+ * @throws {ItWalletSpecsVersionError} If the configured version does not support credential offers
  *
  * @example Resolve by-value offer (inline JSON in URI)
  * ```typescript
  * const offer = await resolveCredentialOffer({
+ *   config,
  *   credentialOffer: "openid-credential-offer://?credential_offer=%7B%22credential_issuer%22%3A...",
  *   callbacks: { fetch }
  * });
@@ -39,25 +81,35 @@ import { type CredentialOffer, zCredentialOffer } from "./z-credential-offer";
  * @example Resolve by-reference offer (fetch from remote URI)
  * ```typescript
  * const offer = await resolveCredentialOffer({
+ *   config,
  *   credentialOffer: "openid-credential-offer://?credential_offer_uri=https://issuer.example.com/offers/123",
  *   callbacks: { fetch }
  * });
- * console.log(offer.grants.authorization_code.scope);
+ * console.log(offer.grants.authorization_code.issuer_state);
  * ```
  *
  * @example Resolve from direct JSON string
  * ```typescript
  * const offerJson = '{"credential_issuer":"https://issuer.example.com","credential_configuration_ids":["UniversityDegree"],"grants":{"authorization_code":{"scope":"openid"}}}';
  * const offer = await resolveCredentialOffer({
+ *   config,
  *   credentialOffer: offerJson,
  *   callbacks: { fetch }
  * });
  * ```
  */
+export function resolveCredentialOffer(
+  options: ResolveCredentialOfferOptionsV1_3,
+): Promise<CredentialOfferV1_3>;
+
+export function resolveCredentialOffer(
+  options: ResolveCredentialOfferOptionsV1_4,
+): Promise<CredentialOfferV1_4>;
+
 export async function resolveCredentialOffer(
   options: ResolveCredentialOfferOptions,
 ): Promise<CredentialOffer> {
-  const { callbacks, credentialOffer } = options;
+  const { callbacks, config, credentialOffer } = options;
 
   try {
     // Check if the input is a URI (starts with a known scheme)
@@ -73,7 +125,7 @@ export async function resolveCredentialOffer(
       if (parsed.credential_offer) {
         const decoded = decodeURIComponent(parsed.credential_offer);
         const offerJson = JSON.parse(decoded);
-        return zCredentialOffer.parse(offerJson);
+        return parseCredentialOfferForVersion(config, offerJson);
       }
 
       // By reference - fetch from remote URI
@@ -90,18 +142,19 @@ export async function resolveCredentialOffer(
         await hasStatusOrThrow(200, UnexpectedStatusCodeError)(response);
 
         const offerJson = await response.json();
-        return zCredentialOffer.parse(offerJson);
+        return parseCredentialOfferForVersion(config, offerJson);
       }
     }
 
     // Assume it's a direct JSON string
     const offerJson = JSON.parse(credentialOffer);
-    return zCredentialOffer.parse(offerJson);
+    return parseCredentialOfferForVersion(config, offerJson);
   } catch (error) {
-    // Re-throw CredentialOfferError and UnexpectedStatusCodeError as-is
+    // Re-throw known errors as-is
     if (
       error instanceof CredentialOfferError ||
-      error instanceof UnexpectedStatusCodeError
+      error instanceof UnexpectedStatusCodeError ||
+      error instanceof ItWalletSpecsVersionError
     ) {
       throw error;
     }

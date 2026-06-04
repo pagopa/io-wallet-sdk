@@ -85,6 +85,12 @@ interface BaseCreatePushedAuthorizationRequestOptions<
   issuedAt?: Date;
 
   /**
+   * Optional issuer state from the Credential Offer authorization_code grant.
+   * Serialized as issuer_state in the authorization request.
+   */
+  issuerState?: string;
+
+  /**
    * jti parameter to use for PAR. If not provided a value will generated automatically
    */
   jti?: string;
@@ -300,6 +306,9 @@ export async function createPushedAuthorizationRequest(
     client_id: options.clientId,
     code_challenge: pkce.codeChallenge,
     code_challenge_method: pkce.codeChallengeMethod,
+    ...(options.issuerState !== undefined
+      ? { issuer_state: options.issuerState }
+      : {}),
     jti:
       options.jti ??
       encodeToBase64Url(
