@@ -9,7 +9,7 @@ import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
  * this callback receives the raw bytes to sign and returns the raw signature bytes,
  * keeping the oid-federation package independent of any higher-level JWT abstraction.
  */
-type SignCallback = (options: {
+export type SignCallback = (options: {
   jwk: Jwk;
   toBeSigned: Uint8Array;
 }) => Promise<Uint8Array>;
