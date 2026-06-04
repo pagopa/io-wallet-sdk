@@ -167,18 +167,35 @@ async function tryFederationDiscovery(
 }
 
 /**
- * Applies the selected authorization server to a federation discovery result.
+ * Resolves the authorization server for a federation discovery result, following
+ * the IT-Wallet trust model (identical across v1.3 and v1.4).
  *
- * When `authorizationServer` is omitted, or matches the issuer of the
- * authorization server already attested inline in the Credential Issuer entity
- * statement, the result is returned unchanged (no secondary fetch).
+ * Per OID4VCI, each `authorization_servers` entry is an Authorization Server
+ * identifier, and a co-located Credential Issuer uses its own identifier as the
+ * Authorization Server identifier. The inline `oauth_authorization_server` is
+ * attested within the Credential Issuer's own entity statement, so it is trusted
+ * only as the issuer's own (co-located) authorization server — i.e. only when
+ * the selected server equals the `credential_issuer` identifier. Any other
+ * authorization server is resolved through its own federation trust chain.
  *
- * When `authorizationServer` differs, the authorization server metadata is
- * resolved through the federation trust chain of that entity. The grafted
- * metadata replaces `oauth_authorization_server`, and the resolved entity
- * statement is preserved under `authorization_server_federation_claims` so its
- * provenance remains auditable.
+ * Selection of the authorization server to use:
+ * - **Explicit (from the credential offer):** the offer's `authorization_server`
+ *   must be one of the issuer's declared `authorization_servers`.
+ * - **No selection, no `authorization_servers` declared:** the Credential Issuer
+ *   is its own Authorization Server (co-located); the inline metadata is used.
+ * - **No selection, `authorization_servers` declared:** the Credential Issuer
+ *   itself when it is one of the declared servers (co-located), otherwise the
+ *   first declared server. The spec leaves the multi-server, no-selection case
+ *   undefined; defaulting to the first declared server matches the OID4VCI
+ *   fallback path.
  *
+ * When an authorization server is resolved via federation, the grafted metadata
+ * replaces `oauth_authorization_server`, and the resolved entity statement is
+ * preserved under `authorization_server_federation_claims` so its provenance
+ * remains auditable.
+ *
+ * @throws {CredentialOfferError} If an authorization server selected from the
+ *   credential offer is not among the issuer's `authorization_servers`.
  * @throws {ValidationError} If the selected authorization server cannot be
  *   resolved via federation or does not expose oauth_authorization_server metadata.
  */
@@ -188,25 +205,43 @@ async function applyFederationAuthorizationServerSelection(
   authorizationServer?: string,
   verifyJwt?: VerifyJwtCallback,
 ): Promise<RawFederationResult> {
-  if (!authorizationServer) {
-    return federationResult;
+  const credentialIssuer =
+    federationResult.metadata?.openid_credential_issuer?.credential_issuer;
+  const authorizationServers =
+    federationResult.metadata?.openid_credential_issuer?.authorization_servers;
+
+  let selectedAuthorizationServer: string | undefined;
+
+  if (authorizationServer) {
+    // Explicit selection from the credential offer: it must be one of the
+    // declared authorization servers.
+    assertAuthorizationServerAllowed(authorizationServer, authorizationServers);
+    selectedAuthorizationServer = authorizationServer;
+  } else if (authorizationServers && authorizationServers.length > 0) {
+    // No selection from the offer: prefer the Credential Issuer itself when it
+    // is one of the declared servers (co-located), otherwise default to the
+    // first declared server.
+    selectedAuthorizationServer =
+      credentialIssuer && authorizationServers.includes(credentialIssuer)
+        ? credentialIssuer
+        : authorizationServers[0];
+  } else {
+    // No declared servers: the Credential Issuer is its own Authorization Server.
+    selectedAuthorizationServer = credentialIssuer;
   }
 
-  const inlineAuthorizationServer =
-    federationResult.metadata?.oauth_authorization_server;
-
-  if (inlineAuthorizationServer?.issuer === authorizationServer) {
+  // The inline authorization server is trusted only as the issuer's own
+  // (co-located) one; everything else is resolved via federation.
+  if (
+    !selectedAuthorizationServer ||
+    selectedAuthorizationServer === credentialIssuer
+  ) {
     return federationResult;
   }
-
-  assertAuthorizationServerAllowed(
-    authorizationServer,
-    federationResult.metadata?.openid_credential_issuer?.authorization_servers,
-  );
 
   const authorizationServerResult = await tryFederationDiscovery(
     fetch,
-    authorizationServer,
+    selectedAuthorizationServer,
     verifyJwt,
   );
 
@@ -215,7 +250,7 @@ async function applyFederationAuthorizationServerSelection(
 
   if (!resolvedAuthorizationServer) {
     throw new ValidationError(
-      `Federation discovery did not yield oauth_authorization_server metadata for authorization server '${authorizationServer}'`,
+      `Federation discovery did not yield oauth_authorization_server metadata for authorization server '${selectedAuthorizationServer}'`,
     );
   }
 

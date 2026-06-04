@@ -636,19 +636,26 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
     });
   });
 
+  // A co-located issuer attests its own authorization server inline, with an
+  // issuer value equal to the Credential Issuer identifier.
+  const coLocatedAuthorizationServerMetadata = {
+    ...authorizationServerMetadata,
+    issuer: "https://issuer.example.it",
+  };
+
   describe("federation path", () => {
-    it("should accept the inline authorization server even when it is not in the issuer's list", async () => {
-      // Inline AS matches the selection: accepted via the inline shortcut,
-      // ahead of (and regardless of) the authorization_servers list check.
+    it("should not perform a secondary fetch when the offer selects the credential issuer itself", async () => {
       const federationPayload = {
         exp: 1_700_003_600,
         iat: 1_700_000_000,
         iss: "https://issuer.example.it",
         jwks: mockJwks,
         metadata: {
-          oauth_authorization_server: authorizationServerMetadata,
-          // No authorization_servers declared on the credential issuer
-          openid_credential_issuer: credentialIssuerMetadata,
+          oauth_authorization_server: coLocatedAuthorizationServerMetadata,
+          openid_credential_issuer: {
+            ...credentialIssuerMetadata,
+            authorization_servers: ["https://issuer.example.it"],
+          },
         },
         sub: "https://issuer.example.it",
       };
@@ -660,14 +667,14 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
 
       const result = await fetchMetadata({
         ...baseOptions,
-        authorizationServer: "https://auth.example.it",
+        authorizationServer: "https://issuer.example.it",
       });
 
       expect(result.discoveredVia).toBe("federation");
       expect(result.metadata.oauth_authorization_server?.issuer).toBe(
-        "https://auth.example.it",
+        "https://issuer.example.it",
       );
-      // Selected AS matches the inline one: no secondary federation fetch
+      // Selected AS is the credential issuer itself: no secondary fetch
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
@@ -795,6 +802,103 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
         }),
       ).rejects.toThrow(CredentialOfferError);
       expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    describe("without an offer-selected authorization server", () => {
+      it("should not perform a secondary fetch when the issuer lists itself", async () => {
+        const federationPayload = {
+          exp: 1_700_003_600,
+          iat: 1_700_000_000,
+          iss: "https://issuer.example.it",
+          jwks: mockJwks,
+          metadata: {
+            oauth_authorization_server: coLocatedAuthorizationServerMetadata,
+            openid_credential_issuer: {
+              ...credentialIssuerMetadata,
+              authorization_servers: [
+                "https://as2.example.it",
+                "https://issuer.example.it",
+              ],
+            },
+          },
+          sub: "https://issuer.example.it",
+        };
+
+        mockFetch.mockResolvedValueOnce({
+          status: 200,
+          text: vi
+            .fn()
+            .mockResolvedValue(buildFederationJwt(federationPayload)),
+        });
+
+        const result = await fetchMetadata(baseOptions);
+
+        expect(result.discoveredVia).toBe("federation");
+        expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+          "https://issuer.example.it",
+        );
+        // Credential issuer is one of the declared servers: no secondary fetch
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("should resolve the first declared server when the issuer does not list itself", async () => {
+        const issuerFederationPayload = {
+          exp: 1_700_003_600,
+          iat: 1_700_000_000,
+          iss: "https://issuer.example.it",
+          jwks: mockJwks,
+          metadata: {
+            // Inline block present but the issuer is not among the declared
+            // servers: it must be discarded.
+            oauth_authorization_server: authorizationServerMetadata,
+            openid_credential_issuer: {
+              ...credentialIssuerMetadata,
+              authorization_servers: ["https://as2.example.it"],
+            },
+          },
+          sub: "https://issuer.example.it",
+        };
+        const authorizationServerFederationPayload = {
+          exp: 1_700_003_600,
+          iat: 1_700_000_000,
+          iss: "https://as2.example.it",
+          jwks: mockJwks,
+          metadata: {
+            oauth_authorization_server: {
+              ...authorizationServerMetadata,
+              issuer: "https://as2.example.it",
+            },
+          },
+          sub: "https://as2.example.it",
+        };
+
+        mockFetch.mockResolvedValueOnce({
+          status: 200,
+          text: vi
+            .fn()
+            .mockResolvedValue(buildFederationJwt(issuerFederationPayload)),
+        });
+        mockFetch.mockResolvedValueOnce({
+          status: 200,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              buildFederationJwt(authorizationServerFederationPayload),
+            ),
+        });
+
+        const result = await fetchMetadata(baseOptions);
+
+        expect(result.discoveredVia).toBe("federation");
+        expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+          "https://as2.example.it",
+        );
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          2,
+          "https://as2.example.it/.well-known/openid-federation",
+        );
+      });
     });
   });
 });
