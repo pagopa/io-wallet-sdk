@@ -12,10 +12,12 @@ import type {
   JwtSignerJwk,
 } from "./jwt/z-jwt";
 
+import { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
+
 type OrPromise<T> = Promise<T> | T;
 
 export interface ClientAuthenticationCallbackOptions {
-  authorizationServerMetadata: Record<string, unknown>;
+  authorizationServerMetadata: BaseAuthorizationServerMetadata;
   body: Record<string, unknown>;
   contentType: ContentType;
   headers: FetchHeaders;
