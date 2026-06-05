@@ -70,7 +70,7 @@ function assertAuthorizationServerAllowed(
       !authorizationServers.includes(authorizationServer))
   ) {
     throw new CredentialOfferError(
-      "offer provided authorization server is not in the `authorization_servers` list defined by the issuer's config",
+      "offer provided authorization server is not in the `authorization_servers` list defined by the issuer metadata",
     );
   }
 }
@@ -239,9 +239,19 @@ async function applyFederationAuthorizationServerSelection(
     return federationResult;
   }
 
+  const parsedSelectedAuthorizationServer = z
+    .url()
+    .safeParse(selectedAuthorizationServer);
+  if (
+    !parsedSelectedAuthorizationServer.success ||
+    !parsedSelectedAuthorizationServer.data.startsWith("https://")
+  ) {
+    throw new ValidationError("selected authorization server is not a valid HTTPS URL");
+  }
+
   const authorizationServerResult = await tryFederationDiscovery(
     fetch,
-    selectedAuthorizationServer,
+    parsedSelectedAuthorizationServer.data,
     verifyJwt,
   );
 
