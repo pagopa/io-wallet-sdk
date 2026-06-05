@@ -35,5 +35,5 @@ export type MetadataResponse = MetadataResponseV1_0 | MetadataResponseV1_3;
 
 // For intermediate parsing in fallbackDiscovery:
 export const zPartialIssuerMetadata = z.looseObject({
-  authorization_servers: z.array(z.string()).optional(),
+  authorization_servers: z.tuple([z.url()], z.url()).optional(),
 });

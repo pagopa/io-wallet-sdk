@@ -14,12 +14,56 @@ import type { CredentialOffer } from "./z-credential-offer";
 import { CredentialOfferError } from "../errors";
 
 /**
+ * Ensures an authorization server selected from a credential offer is one of the
+ * `authorization_servers` declared by the Credential Issuer metadata.
+ *
+ * No-op when no authorization server was selected and the issuer specifies at least
+ * two authorization servers. This check mirrors (and runs ahead of) the credential
+ * offer validation step, so a metadata fetch driven by an offer fails fast on a
+ * mismatched authorization server.
+ *
+ * @throws {CredentialOfferError} If a selected authorization server is absent
+ *   from (or unsupported by) the issuer's `authorization_servers` list.
+ */
+export function assertAuthorizationServerAllowed(
+  authorizationServer: string | undefined,
+  authorizationServers: readonly [string, ...string[]] | undefined,
+): void {
+  if (!authorizationServer) {
+    if (authorizationServers && authorizationServers.length > 1) {
+      throw new CredentialOfferError(
+        "authorization_server is REQUIRED when Credential Issuer uses multiple Authorization Servers",
+      );
+    }
+    return;
+  }
+
+  if (!authorizationServers) {
+    throw new CredentialOfferError(
+      "credential offer specified an `authorization_server` but issuer metadata doesn't contain `authorization_servers`",
+    );
+  }
+
+  if (authorizationServers.length === 1) {
+    throw new CredentialOfferError(
+      "credential offer specified an `authorization_server` but issuer metadata's `authorization_servers` contains only an element",
+    );
+  }
+
+  if (!authorizationServers.includes(authorizationServer)) {
+    throw new CredentialOfferError(
+      `authorization_server '${authorizationServer}' does not match Credential Issuer metadata. Valid servers: ${authorizationServers.join(", ")}`,
+    );
+  }
+}
+
+/**
  * Validations shared across all IT-Wallet credential offer versions.
  *
  * @throws {CredentialOfferError} If any shared validation rule fails.
  */
 function validateBaseCredentialOffer(options: {
-  credentialIssuerMetadata?: { authorization_servers?: string[] };
+  credentialIssuerMetadata?: { authorization_servers?: [string, ...string[]] };
   credentialOffer: CredentialOffer;
   versionLabel: string;
 }): void {
@@ -53,28 +97,10 @@ function validateBaseCredentialOffer(options: {
     );
   }
 
-  // Conditional validation for authorization_server
-  // REQUIRED only when CI uses multiple authorization servers
-  if (credentialIssuerMetadata?.authorization_servers) {
-    const authServers = credentialIssuerMetadata.authorization_servers;
-
-    // If multiple authorization servers exist, authorization_server must be present
-    if (authServers.length > 1 && !authCodeGrant.authorization_server) {
-      throw new CredentialOfferError(
-        "authorization_server is REQUIRED when Credential Issuer uses multiple Authorization Servers",
-      );
-    }
-
-    // If authorization_server is present, validate it matches metadata
-    if (
-      authCodeGrant.authorization_server &&
-      !authServers.includes(authCodeGrant.authorization_server)
-    ) {
-      throw new CredentialOfferError(
-        `authorization_server '${authCodeGrant.authorization_server}' does not match Credential Issuer metadata. Valid servers: ${authServers.join(", ")}`,
-      );
-    }
-  }
+  assertAuthorizationServerAllowed(
+    authCodeGrant.authorization_server,
+    credentialIssuerMetadata?.authorization_servers,
+  );
 }
 
 async function validateCredentialOfferV1_3(

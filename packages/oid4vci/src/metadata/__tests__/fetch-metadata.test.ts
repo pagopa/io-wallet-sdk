@@ -654,7 +654,10 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
           oauth_authorization_server: coLocatedAuthorizationServerMetadata,
           openid_credential_issuer: {
             ...credentialIssuerMetadata,
-            authorization_servers: ["https://issuer.example.it"],
+            authorization_servers: [
+              "https://issuer.example.it",
+              "https://as2.example.it",
+            ],
           },
         },
         sub: "https://issuer.example.it",
@@ -689,7 +692,10 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
           oauth_authorization_server: authorizationServerMetadata,
           openid_credential_issuer: {
             ...credentialIssuerMetadata,
-            authorization_servers: ["https://as2.example.it"],
+            authorization_servers: [
+              "https://issuer.example.it",
+              "https://as2.example.it",
+            ],
           },
         },
         sub: "https://issuer.example.it",

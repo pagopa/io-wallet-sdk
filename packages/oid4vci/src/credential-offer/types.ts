@@ -123,7 +123,7 @@ interface BaseValidateCredentialOfferOptions {
    * };
    */
   credentialIssuerMetadata?: {
-    authorization_servers?: string[];
+    authorization_servers?: [string, ...string[]];
   };
 }
 

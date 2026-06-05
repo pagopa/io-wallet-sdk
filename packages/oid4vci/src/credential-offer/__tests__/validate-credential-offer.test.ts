@@ -65,6 +65,12 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {
+          authorization_servers: [
+            "https://auth.issuer.example.com",
+            "https://auth2.issuer.example.com",
+          ],
+        },
         credentialOffer: fullOffer,
       };
 
@@ -210,7 +216,7 @@ describe("validateCredentialOffer", () => {
   });
 
   describe("authorization_server conditional validation", () => {
-    it("should validate when authorization_server is present with single auth server in metadata", async () => {
+    it("should throw CredentialOfferError when authorization_server is present with a single-entry auth servers list", async () => {
       const offer: CredentialOfferV1_3 = {
         ...validCredentialOffer,
         grants: {
@@ -229,7 +235,13 @@ describe("validateCredentialOffer", () => {
         credentialOffer: offer,
       };
 
-      await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
+      await expect(validateCredentialOffer(options)).rejects.toThrow(
+        CredentialOfferError,
+      );
+
+      await expect(validateCredentialOffer(options)).rejects.toThrow(
+        "credential offer specified an `authorization_server` but issuer metadata's `authorization_servers` contains only an element",
+      );
     });
 
     it("should throw CredentialOfferError when authorization_server is missing with multiple auth servers", async () => {
@@ -341,7 +353,7 @@ describe("validateCredentialOffer", () => {
       await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
     });
 
-    it("should validate when no credentialIssuerMetadata is provided", async () => {
+    it("should throw CredentialOfferError when authorization_server is present but no credentialIssuerMetadata is provided", async () => {
       const offer: CredentialOfferV1_3 = {
         ...validCredentialOffer,
         grants: {
@@ -358,7 +370,13 @@ describe("validateCredentialOffer", () => {
         // No credentialIssuerMetadata provided
       };
 
-      await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
+      await expect(validateCredentialOffer(options)).rejects.toThrow(
+        CredentialOfferError,
+      );
+
+      await expect(validateCredentialOffer(options)).rejects.toThrow(
+        "credential offer specified an `authorization_server` but issuer metadata doesn't contain `authorization_servers`",
+      );
     });
 
     it("should validate when credentialIssuerMetadata has no authorization_servers", async () => {

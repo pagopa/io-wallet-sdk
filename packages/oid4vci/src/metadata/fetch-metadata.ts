@@ -14,6 +14,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
+import { assertAuthorizationServerAllowed } from "../credential-offer/validate-credential-offer";
 import { CredentialOfferError, FetchMetadataError } from "../errors";
 import {
   MetadataResponse,
@@ -47,32 +48,6 @@ interface RawOid4vciResult {
 
 function ensureTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
-}
-
-/**
- * Ensures an authorization server selected from a credential offer is one of the
- * `authorization_servers` declared by the Credential Issuer metadata.
- *
- * No-op when no authorization server was selected. This check mirrors (and runs
- * ahead of) the credential offer validation step, so a metadata fetch driven by
- * an offer fails fast on a mismatched authorization server.
- *
- * @throws {CredentialOfferError} If a selected authorization server is absent
- *   from (or unsupported by) the issuer's `authorization_servers` list.
- */
-function assertAuthorizationServerAllowed(
-  authorizationServer: string | undefined,
-  authorizationServers: readonly string[] | undefined,
-): void {
-  if (
-    authorizationServer &&
-    (!authorizationServers ||
-      !authorizationServers.includes(authorizationServer))
-  ) {
-    throw new CredentialOfferError(
-      "offer provided authorization server is not in the `authorization_servers` list defined by the issuer metadata",
-    );
-  }
 }
 
 export interface FetchMetadataOptions {
@@ -246,7 +221,9 @@ async function applyFederationAuthorizationServerSelection(
     !parsedSelectedAuthorizationServer.success ||
     !parsedSelectedAuthorizationServer.data.startsWith("https://")
   ) {
-    throw new ValidationError("selected authorization server is not a valid HTTPS URL");
+    throw new ValidationError(
+      "selected authorization server is not a valid HTTPS URL",
+    );
   }
 
   const authorizationServerResult = await tryFederationDiscovery(
