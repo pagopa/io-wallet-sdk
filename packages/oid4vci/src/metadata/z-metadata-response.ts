@@ -12,6 +12,13 @@ export const zMetadataResponseV1_0 = z.object({
 });
 
 export const zMetadataResponseV1_3 = z.object({
+  /**
+   * Entity statement claims of the Authorization Server, present only when the
+   * selected authorization server was resolved through a federation entity
+   * distinct from the Credential Issuer.
+   */
+  authorization_server_federation_claims:
+    itWalletEntityStatementClaimsSchema.optional(),
   discoveredVia: z.enum(["federation", "oid4vci"]),
   metadata: itWalletMetadataV1_3,
   openid_federation_claims: itWalletEntityStatementClaimsSchema.optional(),
@@ -28,5 +35,5 @@ export type MetadataResponse = MetadataResponseV1_0 | MetadataResponseV1_3;
 
 // For intermediate parsing in fallbackDiscovery:
 export const zPartialIssuerMetadata = z.looseObject({
-  authorization_servers: z.array(z.string()).optional(),
+  authorization_servers: z.tuple([z.url()], z.url()).optional(),
 });

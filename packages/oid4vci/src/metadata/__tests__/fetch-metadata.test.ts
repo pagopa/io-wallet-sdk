@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -5,8 +6,9 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FetchMetadataError } from "../../errors";
+import { CredentialOfferError, FetchMetadataError } from "../../errors";
 import { FetchMetadataOptions, fetchMetadata } from "../fetch-metadata";
+import { MetadataResponseV1_3 } from "../z-metadata-response";
 
 const mockFetch = vi.fn();
 
@@ -549,6 +551,361 @@ describe("fetchMetadata - base URL with path segment", () => {
       3,
       "https://auth.example.it/v1/.well-known/oauth-authorization-server",
     );
+  });
+});
+
+describe("fetchMetadata - offer authorization server compatibility", () => {
+  describe("oid4vci fallback path", () => {
+    it("should fetch the selected authorization server when it is in the issuer's authorization_servers list", async () => {
+      const issuerWithAuthServers = {
+        ...credentialIssuerMetadata,
+        authorization_servers: [
+          "https://auth.example.it",
+          "https://other.example.it",
+        ],
+      };
+
+      // Federation fails
+      mockFetch.mockResolvedValueOnce({ status: 500 });
+      // Credential issuer succeeds
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(issuerWithAuthServers),
+        status: 200,
+      });
+      // Selected auth server succeeds
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(authorizationServerMetadata),
+        status: 200,
+      });
+
+      const result = await fetchMetadata({
+        ...baseOptions,
+        authorizationServer: "https://auth.example.it",
+      });
+
+      expect(result.discoveredVia).toBe("oid4vci");
+      expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+        "https://auth.example.it",
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        3,
+        "https://auth.example.it/.well-known/oauth-authorization-server",
+      );
+    });
+
+    it("should throw CredentialOfferError when the selected authorization server is not in the issuer's list", async () => {
+      const issuerWithAuthServers = {
+        ...credentialIssuerMetadata,
+        authorization_servers: ["https://auth.example.it"],
+      };
+
+      // Federation fails
+      mockFetch.mockResolvedValueOnce({ status: 500 });
+      // Credential issuer succeeds
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(issuerWithAuthServers),
+        status: 200,
+      });
+
+      await expect(
+        fetchMetadata({
+          ...baseOptions,
+          authorizationServer: "https://attacker.example.it",
+        }),
+      ).rejects.toThrow(CredentialOfferError);
+      // No auth-server fetch should fire: federation + credential-issuer only
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("should throw CredentialOfferError when an authorization server is selected but the issuer declares none", async () => {
+      // Federation fails
+      mockFetch.mockResolvedValueOnce({ status: 500 });
+      // Credential issuer succeeds without an authorization_servers list
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(credentialIssuerMetadata),
+        status: 200,
+      });
+
+      await expect(
+        fetchMetadata({
+          ...baseOptions,
+          authorizationServer: "https://auth.example.it",
+        }),
+      ).rejects.toThrow(CredentialOfferError);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // A co-located issuer attests its own authorization server inline, with an
+  // issuer value equal to the Credential Issuer identifier.
+  const coLocatedAuthorizationServerMetadata = {
+    ...authorizationServerMetadata,
+    issuer: "https://issuer.example.it",
+  };
+
+  describe("federation path", () => {
+    it("should not perform a secondary fetch when the offer selects the credential issuer itself", async () => {
+      const federationPayload = {
+        exp: 1_700_003_600,
+        iat: 1_700_000_000,
+        iss: "https://issuer.example.it",
+        jwks: mockJwks,
+        metadata: {
+          oauth_authorization_server: coLocatedAuthorizationServerMetadata,
+          openid_credential_issuer: {
+            ...credentialIssuerMetadata,
+            authorization_servers: [
+              "https://issuer.example.it",
+              "https://as2.example.it",
+            ],
+          },
+        },
+        sub: "https://issuer.example.it",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        status: 200,
+        text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+      });
+
+      const result = await fetchMetadata({
+        ...baseOptions,
+        authorizationServer: "https://issuer.example.it",
+      });
+
+      expect(result.discoveredVia).toBe("federation");
+      expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+        "https://issuer.example.it",
+      );
+      // Selected AS is the credential issuer itself: no secondary fetch
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("should resolve a non-inline authorization server via federation when it is in the issuer's list", async () => {
+      const issuerFederationPayload = {
+        exp: 1_700_003_600,
+        iat: 1_700_000_000,
+        iss: "https://issuer.example.it",
+        jwks: mockJwks,
+        metadata: {
+          // Inline AS differs from the selected one
+          oauth_authorization_server: authorizationServerMetadata,
+          openid_credential_issuer: {
+            ...credentialIssuerMetadata,
+            authorization_servers: [
+              "https://issuer.example.it",
+              "https://as2.example.it",
+            ],
+          },
+        },
+        sub: "https://issuer.example.it",
+      };
+      const authorizationServerFederationPayload = {
+        exp: 1_700_003_600,
+        iat: 1_700_000_000,
+        iss: "https://as2.example.it",
+        jwks: mockJwks,
+        metadata: {
+          oauth_authorization_server: {
+            ...authorizationServerMetadata,
+            issuer: "https://as2.example.it",
+          },
+        },
+        sub: "https://as2.example.it",
+      };
+
+      // Issuer federation succeeds
+      mockFetch.mockResolvedValueOnce({
+        status: 200,
+        text: vi
+          .fn()
+          .mockResolvedValue(buildFederationJwt(issuerFederationPayload)),
+      });
+      // Selected authorization server federation succeeds
+      mockFetch.mockResolvedValueOnce({
+        status: 200,
+        text: vi
+          .fn()
+          .mockResolvedValue(
+            buildFederationJwt(authorizationServerFederationPayload),
+          ),
+      });
+
+      const result = await fetchMetadata({
+        ...baseOptions,
+        authorizationServer: "https://as2.example.it",
+      });
+
+      expect(result.discoveredVia).toBe("federation");
+      expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+        "https://as2.example.it",
+      );
+      expect(
+        (result as MetadataResponseV1_3).authorization_server_federation_claims
+          ?.iss,
+      ).toBe("https://as2.example.it");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "https://as2.example.it/.well-known/openid-federation",
+      );
+    });
+
+    it("should throw CredentialOfferError when a non-inline authorization server is not in the issuer's list", async () => {
+      const federationPayload = {
+        exp: 1_700_003_600,
+        iat: 1_700_000_000,
+        iss: "https://issuer.example.it",
+        jwks: mockJwks,
+        metadata: {
+          oauth_authorization_server: authorizationServerMetadata,
+          openid_credential_issuer: {
+            ...credentialIssuerMetadata,
+            authorization_servers: ["https://auth.example.it"],
+          },
+        },
+        sub: "https://issuer.example.it",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        status: 200,
+        text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+      });
+
+      await expect(
+        fetchMetadata({
+          ...baseOptions,
+          authorizationServer: "https://attacker.example.it",
+        }),
+      ).rejects.toThrow(CredentialOfferError);
+      // No secondary federation fetch for the rejected authorization server
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throw CredentialOfferError when a non-inline authorization server is selected but the issuer declares none", async () => {
+      const federationPayload = {
+        exp: 1_700_003_600,
+        iat: 1_700_000_000,
+        iss: "https://issuer.example.it",
+        jwks: mockJwks,
+        metadata: {
+          oauth_authorization_server: authorizationServerMetadata,
+          // No authorization_servers declared on the credential issuer
+          openid_credential_issuer: credentialIssuerMetadata,
+        },
+        sub: "https://issuer.example.it",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        status: 200,
+        text: vi.fn().mockResolvedValue(buildFederationJwt(federationPayload)),
+      });
+
+      await expect(
+        fetchMetadata({
+          ...baseOptions,
+          authorizationServer: "https://other.example.it",
+        }),
+      ).rejects.toThrow(CredentialOfferError);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    describe("without an offer-selected authorization server", () => {
+      it("should not perform a secondary fetch when the issuer lists itself", async () => {
+        const federationPayload = {
+          exp: 1_700_003_600,
+          iat: 1_700_000_000,
+          iss: "https://issuer.example.it",
+          jwks: mockJwks,
+          metadata: {
+            oauth_authorization_server: coLocatedAuthorizationServerMetadata,
+            openid_credential_issuer: {
+              ...credentialIssuerMetadata,
+              authorization_servers: [
+                "https://as2.example.it",
+                "https://issuer.example.it",
+              ],
+            },
+          },
+          sub: "https://issuer.example.it",
+        };
+
+        mockFetch.mockResolvedValueOnce({
+          status: 200,
+          text: vi
+            .fn()
+            .mockResolvedValue(buildFederationJwt(federationPayload)),
+        });
+
+        const result = await fetchMetadata(baseOptions);
+
+        expect(result.discoveredVia).toBe("federation");
+        expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+          "https://issuer.example.it",
+        );
+        // Credential issuer is one of the declared servers: no secondary fetch
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("should resolve the first declared server when the issuer does not list itself", async () => {
+        const issuerFederationPayload = {
+          exp: 1_700_003_600,
+          iat: 1_700_000_000,
+          iss: "https://issuer.example.it",
+          jwks: mockJwks,
+          metadata: {
+            // Inline block present but the issuer is not among the declared
+            // servers: it must be discarded.
+            oauth_authorization_server: authorizationServerMetadata,
+            openid_credential_issuer: {
+              ...credentialIssuerMetadata,
+              authorization_servers: ["https://as2.example.it"],
+            },
+          },
+          sub: "https://issuer.example.it",
+        };
+        const authorizationServerFederationPayload = {
+          exp: 1_700_003_600,
+          iat: 1_700_000_000,
+          iss: "https://as2.example.it",
+          jwks: mockJwks,
+          metadata: {
+            oauth_authorization_server: {
+              ...authorizationServerMetadata,
+              issuer: "https://as2.example.it",
+            },
+          },
+          sub: "https://as2.example.it",
+        };
+
+        mockFetch.mockResolvedValueOnce({
+          status: 200,
+          text: vi
+            .fn()
+            .mockResolvedValue(buildFederationJwt(issuerFederationPayload)),
+        });
+        mockFetch.mockResolvedValueOnce({
+          status: 200,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              buildFederationJwt(authorizationServerFederationPayload),
+            ),
+        });
+
+        const result = await fetchMetadata(baseOptions);
+
+        expect(result.discoveredVia).toBe("federation");
+        expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+          "https://as2.example.it",
+        );
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          2,
+          "https://as2.example.it/.well-known/openid-federation",
+        );
+      });
+    });
   });
 });
 

@@ -1,8 +1,15 @@
 /* eslint-disable max-lines-per-function */
-import { UnexpectedStatusCodeError } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  UnexpectedStatusCodeError,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CredentialOffer } from "../z-credential-offer";
+import type {
+  CredentialOfferV1_3,
+  CredentialOfferV1_4,
+} from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
 import { resolveCredentialOffer } from "../resolve-credential-offer";
@@ -18,7 +25,7 @@ vi.mock("@openid4vc/utils", async (importOriginal) => {
 });
 
 describe("resolveCredentialOffer", () => {
-  const validCredentialOffer: CredentialOffer = {
+  const validCredentialOffer: CredentialOfferV1_3 = {
     credential_configuration_ids: ["UniversityDegree"],
     credential_issuer: "https://issuer.example.com",
     grants: {
@@ -32,6 +39,9 @@ describe("resolveCredentialOffer", () => {
     callbacks: {
       fetch: mockFetch,
     },
+    config: new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+    }),
   };
 
   beforeEach(() => {
@@ -351,7 +361,7 @@ describe("resolveCredentialOffer", () => {
 
   describe("edge cases", () => {
     it("should handle credential offer with all optional fields", async () => {
-      const fullOffer: CredentialOffer = {
+      const fullOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree", "EmployeeID"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -381,7 +391,7 @@ describe("resolveCredentialOffer", () => {
     });
 
     it("should handle credential offer with multiple credential_configuration_ids", async () => {
-      const multiConfigOffer: CredentialOffer = {
+      const multiConfigOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: [
           "UniversityDegree",
           "EmployeeID",
@@ -403,6 +413,79 @@ describe("resolveCredentialOffer", () => {
       });
 
       expect(result.credential_configuration_ids).toHaveLength(3);
+    });
+  });
+
+  describe("v1.4", () => {
+    const v1_4Options = {
+      callbacks: {
+        fetch: mockFetch,
+      },
+      config: new IoWalletSdkConfig({
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+      }),
+    };
+
+    const validV1_4Offer: CredentialOfferV1_4 = {
+      credential_configuration_ids: ["UniversityDegree"],
+      credential_issuer: "https://issuer.example.com",
+      grants: {
+        authorization_code: {
+          issuer_state: "eyJhbGciOiJSU0Et...zaEJ3w",
+        },
+      },
+    };
+
+    it("should resolve a v1.4 offer without scope", async () => {
+      const jsonString = JSON.stringify(validV1_4Offer);
+
+      const result = await resolveCredentialOffer({
+        credentialOffer: jsonString,
+        ...v1_4Options,
+      });
+
+      expect(result).toEqual(validV1_4Offer);
+      expect(result.grants.authorization_code.issuer_state).toBe(
+        "eyJhbGciOiJSU0Et...zaEJ3w",
+      );
+      expect("scope" in result.grants.authorization_code).toBe(false);
+    });
+
+    it("should drop a stray scope from a v1.4 offer", async () => {
+      const offerWithScope = {
+        ...validV1_4Offer,
+        grants: {
+          authorization_code: {
+            issuer_state: "eyJhbGciOiJSU0Et...zaEJ3w",
+            scope: "openid",
+          },
+        },
+      };
+      const jsonString = JSON.stringify(offerWithScope);
+
+      const result = await resolveCredentialOffer({
+        credentialOffer: jsonString,
+        ...v1_4Options,
+      });
+
+      expect("scope" in result.grants.authorization_code).toBe(false);
+    });
+
+    it("should still require credential_issuer for a v1.4 offer", async () => {
+      const invalidOffer = {
+        credential_configuration_ids: ["UniversityDegree"],
+        grants: {
+          authorization_code: {},
+        },
+      };
+      const jsonString = JSON.stringify(invalidOffer);
+
+      await expect(
+        resolveCredentialOffer({
+          credentialOffer: jsonString,
+          ...v1_4Options,
+        }),
+      ).rejects.toThrow(CredentialOfferError);
     });
   });
 });

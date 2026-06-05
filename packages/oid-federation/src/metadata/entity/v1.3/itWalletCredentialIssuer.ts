@@ -146,7 +146,7 @@ export const SupportedCredentialMetadata = z.intersection(
  * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.3.0/en/credential-issuer-solution.html#metadata-for-openid-credential-issuer}
  */
 export const itWalletCredentialIssuerMetadata = z.looseObject({
-  authorization_servers: z.array(z.url()).optional(),
+  authorization_servers: z.tuple([z.url()], z.url()).optional(),
   batch_credential_issuance: z
     .object({
       batch_size: z.number().int().positive(),
