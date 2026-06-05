@@ -45,7 +45,7 @@ export const SupportedCredentialMetadata = z.intersection(
 );
 
 export const itWalletCredentialIssuerMetadata = z.looseObject({
-  authorization_servers: z.array(z.url()).optional(),
+  authorization_servers: z.tuple([z.url()], z.url()).optional(),
   batch_credential_issuance: z.object({
     batch_size: z.number().int(),
   }),

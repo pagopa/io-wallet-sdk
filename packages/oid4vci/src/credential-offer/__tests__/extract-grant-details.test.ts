@@ -1,10 +1,25 @@
 /* eslint-disable max-lines-per-function */
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { CredentialOffer } from "../z-credential-offer";
+import type {
+  CredentialOfferV1_3,
+  CredentialOfferV1_4,
+} from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
 import { extractGrantDetails } from "../extract-grant-details";
+
+const v1_3Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
+const v1_4Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
 
 describe("extractGrantDetails", () => {
   beforeEach(() => {
@@ -13,7 +28,7 @@ describe("extractGrantDetails", () => {
 
   describe("successful extraction", () => {
     it("should extract authorization_code grant with only required fields", () => {
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -23,7 +38,10 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       expect(result.grantType).toBe("authorization_code");
       expect(result.authorizationCodeGrant.scope).toBe("openid");
@@ -32,7 +50,7 @@ describe("extractGrantDetails", () => {
     });
 
     it("should extract authorization_code grant with all fields", () => {
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -44,7 +62,10 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       expect(result.grantType).toBe("authorization_code");
       expect(result.authorizationCodeGrant.scope).toBe("openid profile");
@@ -57,7 +78,7 @@ describe("extractGrantDetails", () => {
     });
 
     it("should extract authorization_code grant with authorization_server only", () => {
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -68,7 +89,10 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       expect(result.grantType).toBe("authorization_code");
       expect(result.authorizationCodeGrant.scope).toBe("openid");
@@ -79,7 +103,7 @@ describe("extractGrantDetails", () => {
     });
 
     it("should extract authorization_code grant with issuer_state only", () => {
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -90,7 +114,10 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       expect(result.grantType).toBe("authorization_code");
       expect(result.authorizationCodeGrant.scope).toBe("openid");
@@ -101,65 +128,73 @@ describe("extractGrantDetails", () => {
 
   describe("error cases", () => {
     it("should throw CredentialOfferError when grants is missing", () => {
-      const offer = {
+      const credentialOffer = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         // grants is missing
-      } as unknown as CredentialOffer;
+      } as unknown as CredentialOfferV1_3;
 
-      expect(() => extractGrantDetails(offer)).toThrow(CredentialOfferError);
-      expect(() => extractGrantDetails(offer)).toThrow(
-        "No grants found in credential offer",
-      );
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow(CredentialOfferError);
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow("No grants found in credential offer");
     });
 
     it("should throw CredentialOfferError when authorization_code grant is missing", () => {
-      const offer = {
+      const credentialOffer = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
           // authorization_code is missing
         },
-      } as unknown as CredentialOffer;
+      } as unknown as CredentialOfferV1_3;
 
-      expect(() => extractGrantDetails(offer)).toThrow(CredentialOfferError);
-      expect(() => extractGrantDetails(offer)).toThrow(
-        "authorization_code grant not found",
-      );
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow(CredentialOfferError);
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow("authorization_code grant not found");
     });
 
     it("should throw CredentialOfferError when grants is null", () => {
-      const offer = {
+      const credentialOffer = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: null,
-      } as unknown as CredentialOffer;
+      } as unknown as CredentialOfferV1_3;
 
-      expect(() => extractGrantDetails(offer)).toThrow(CredentialOfferError);
-      expect(() => extractGrantDetails(offer)).toThrow(
-        "No grants found in credential offer",
-      );
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow(CredentialOfferError);
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow("No grants found in credential offer");
     });
 
     it("should throw CredentialOfferError when authorization_code is null", () => {
-      const offer = {
+      const credentialOffer = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
           authorization_code: null,
         },
-      } as unknown as CredentialOffer;
+      } as unknown as CredentialOfferV1_3;
 
-      expect(() => extractGrantDetails(offer)).toThrow(CredentialOfferError);
-      expect(() => extractGrantDetails(offer)).toThrow(
-        "authorization_code grant not found",
-      );
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow(CredentialOfferError);
+      expect(() =>
+        extractGrantDetails({ config: v1_3Config, credentialOffer }),
+      ).toThrow("authorization_code grant not found");
     });
   });
 
   describe("edge cases", () => {
-    it("should always return authorization_code as grantType for IT-Wallet v1.3", () => {
-      const offer: CredentialOffer = {
+    it("should always return authorization_code as grantType for IT-Wallet", () => {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -169,14 +204,17 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
-      // IT-Wallet v1.3 only supports authorization_code grant
+      // IT-Wallet only supports authorization_code grant
       expect(result.grantType).toBe("authorization_code");
     });
 
     it("should handle complex scope values", () => {
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -186,7 +224,10 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       expect(result.authorizationCodeGrant.scope).toBe(
         "openid profile email address phone offline_access",
@@ -195,7 +236,7 @@ describe("extractGrantDetails", () => {
 
     it("should handle long issuer_state values", () => {
       const longIssuerState = "a".repeat(500);
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -206,14 +247,17 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       expect(result.authorizationCodeGrant.issuerState).toBe(longIssuerState);
       expect(result.authorizationCodeGrant.issuerState).toHaveLength(500);
     });
 
     it("should handle multiple credential_configuration_ids without affecting grant extraction", () => {
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: [
           "UniversityDegree",
           "EmployeeID",
@@ -227,7 +271,10 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       expect(result.grantType).toBe("authorization_code");
       expect(result.authorizationCodeGrant.scope).toBe("openid");
@@ -236,7 +283,7 @@ describe("extractGrantDetails", () => {
 
   describe("type correctness", () => {
     it("should return ExtractGrantDetailsResult with correct structure", () => {
-      const offer: CredentialOffer = {
+      const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
         grants: {
@@ -248,7 +295,10 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const result = extractGrantDetails(offer);
+      const result = extractGrantDetails({
+        config: v1_3Config,
+        credentialOffer,
+      });
 
       // Check result structure
       expect(result).toHaveProperty("grantType");
@@ -268,6 +318,45 @@ describe("extractGrantDetails", () => {
         "string",
       );
       expect(typeof result.authorizationCodeGrant.issuerState).toBe("string");
+    });
+  });
+
+  describe("v1.4", () => {
+    it("should extract grant details without scope for a v1.4 offer", () => {
+      const credentialOffer: CredentialOfferV1_4 = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          authorization_code: {
+            authorization_server: "https://auth.issuer.example.com",
+            issuer_state: "state-value-123",
+          },
+        },
+      };
+
+      const result = extractGrantDetails({
+        config: v1_4Config,
+        credentialOffer,
+      });
+
+      expect(result.grantType).toBe("authorization_code");
+      expect(result.authorizationCodeGrant.authorizationServer).toBe(
+        "https://auth.issuer.example.com",
+      );
+      expect(result.authorizationCodeGrant.issuerState).toBe("state-value-123");
+      expect("scope" in result.authorizationCodeGrant).toBe(false);
+    });
+
+    it("should throw CredentialOfferError when authorization_code grant is missing for a v1.4 offer", () => {
+      const credentialOffer = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {},
+      } as unknown as CredentialOfferV1_4;
+
+      expect(() =>
+        extractGrantDetails({ config: v1_4Config, credentialOffer }),
+      ).toThrow("authorization_code grant not found");
     });
   });
 });

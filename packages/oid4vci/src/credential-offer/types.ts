@@ -1,9 +1,18 @@
 import type { CallbackContext } from "@pagopa/io-wallet-oauth2";
+import type {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 
-import type { CredentialOffer } from "./z-credential-offer";
+import type {
+  CredentialOfferV1_3,
+  CredentialOfferV1_4,
+} from "./z-credential-offer";
 
 /**
- * Options for parsing a credential offer URI
+ * Options for parsing a credential offer URI.
+ *
+ * Version-agnostic: IT-Wallet v1.3 and v1.4 share the same invocation schemes.
  */
 export interface ParseCredentialOfferUriOptions {
   /**
@@ -40,9 +49,9 @@ export interface ParseCredentialOfferUriOptions {
 }
 
 /**
- * Options for resolving a credential offer
+ * Base options shared across all resolve-credential-offer versions.
  */
-export interface ResolveCredentialOfferOptions {
+interface BaseResolveCredentialOfferOptions {
   /**
    * Callback context with fetch implementation.
    *
@@ -72,9 +81,31 @@ export interface ResolveCredentialOfferOptions {
 }
 
 /**
- * Options for validating a credential offer
+ * Options for resolving a credential offer against the IT-Wallet v1.3 schema.
  */
-export interface ValidateCredentialOfferOptions {
+export interface ResolveCredentialOfferOptionsV1_3 extends BaseResolveCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
+}
+
+/**
+ * Options for resolving a credential offer against the IT-Wallet v1.4 schema.
+ */
+export interface ResolveCredentialOfferOptionsV1_4 extends BaseResolveCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+}
+
+/**
+ * Options for resolving a credential offer.
+ * The configured version selects the schema used to parse the offer.
+ */
+export type ResolveCredentialOfferOptions =
+  | ResolveCredentialOfferOptionsV1_3
+  | ResolveCredentialOfferOptionsV1_4;
+
+/**
+ * Base options shared across all validate-credential-offer versions.
+ */
+interface BaseValidateCredentialOfferOptions {
   /**
    * Optional Credential Issuer metadata for conditional validation.
    *
@@ -92,19 +123,72 @@ export interface ValidateCredentialOfferOptions {
    * };
    */
   credentialIssuerMetadata?: {
-    authorization_servers?: string[];
+    authorization_servers?: [string, ...string[]];
   };
-
-  /**
-   * The credential offer to validate against IT-Wallet specifications.
-   */
-  credentialOffer: CredentialOffer;
 }
 
 /**
- * Result of extracting grant details from a credential offer
+ * Options for validating an IT-Wallet v1.3 credential offer.
  */
-export interface ExtractGrantDetailsResult {
+export interface ValidateCredentialOfferOptionsV1_3 extends BaseValidateCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
+  /**
+   * The credential offer to validate against IT-Wallet v1.3 specifications.
+   */
+  credentialOffer: CredentialOfferV1_3;
+}
+
+/**
+ * Options for validating an IT-Wallet v1.4 credential offer.
+ */
+export interface ValidateCredentialOfferOptionsV1_4 extends BaseValidateCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+  /**
+   * The credential offer to validate against IT-Wallet v1.4 specifications.
+   */
+  credentialOffer: CredentialOfferV1_4;
+}
+
+/**
+ * Options for validating a credential offer against IT-Wallet specifications.
+ */
+export type ValidateCredentialOfferOptions =
+  | ValidateCredentialOfferOptionsV1_3
+  | ValidateCredentialOfferOptionsV1_4;
+
+/**
+ * Options for extracting grant details from an IT-Wallet v1.3 credential offer.
+ */
+export interface ExtractGrantDetailsOptionsV1_3 {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
+  /**
+   * The credential offer to extract grant details from.
+   */
+  credentialOffer: CredentialOfferV1_3;
+}
+
+/**
+ * Options for extracting grant details from an IT-Wallet v1.4 credential offer.
+ */
+export interface ExtractGrantDetailsOptionsV1_4 {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+  /**
+   * The credential offer to extract grant details from.
+   */
+  credentialOffer: CredentialOfferV1_4;
+}
+
+/**
+ * Options for extracting grant details from a credential offer.
+ */
+export type ExtractGrantDetailsOptions =
+  | ExtractGrantDetailsOptionsV1_3
+  | ExtractGrantDetailsOptionsV1_4;
+
+/**
+ * Result of extracting grant details from an IT-Wallet v1.3 credential offer.
+ */
+export interface ExtractGrantDetailsResultV1_3 {
   /**
    * Details of the authorization code grant.
    */
@@ -130,8 +214,45 @@ export interface ExtractGrantDetailsResult {
 
   /**
    * The type of grant present in the credential offer.
-   *
-   * IT-Wallet v1.3 only supports "authorization_code".
+   * IT-Wallet only supports "authorization_code".
    */
   grantType: "authorization_code";
 }
+
+/**
+ * Result of extracting grant details from an IT-Wallet v1.4 credential offer.
+ *
+ * Difference from v1.3: the credential offer no longer carries a `scope`;
+ * the wallet derives it from the credential configuration metadata instead.
+ */
+export interface ExtractGrantDetailsResultV1_4 {
+  /**
+   * Details of the authorization code grant.
+   */
+  authorizationCodeGrant: {
+    /**
+     * HTTPS URL of the Authorization Server.
+     * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
+     */
+    authorizationServer?: string;
+
+    /**
+     * String value representing the issuer state.
+     * OPTIONAL. Used to correlate the authorization request with the credential offer.
+     */
+    issuerState?: string;
+  };
+
+  /**
+   * The type of grant present in the credential offer.
+   * IT-Wallet only supports "authorization_code".
+   */
+  grantType: "authorization_code";
+}
+
+/**
+ * Result of extracting grant details from a credential offer.
+ */
+export type ExtractGrantDetailsResult =
+  | ExtractGrantDetailsResultV1_3
+  | ExtractGrantDetailsResultV1_4;
