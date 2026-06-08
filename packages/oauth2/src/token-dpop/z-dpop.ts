@@ -1,7 +1,7 @@
-import { zHttpMethod } from "@pagopa/io-wallet-utils";
-import { zJwk } from "@pagopa/io-wallet-utils";
 import {
   MAX_JTI_LENGTH,
+  zHttpMethod,
+  zJwk,
   zJwtHeader,
   zJwtPayload,
 } from "@pagopa/io-wallet-utils";

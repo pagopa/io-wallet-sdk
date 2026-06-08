@@ -2,8 +2,8 @@ import {
   ValidationError,
   addSecondsToDate,
   dateToSeconds,
+  decodeJwt,
 } from "@pagopa/io-wallet-utils";
-import { decodeJwt } from "@pagopa/io-wallet-utils";
 
 import { ClientAttestationError } from "../../errors";
 import { calculateDpopJwkThumbprint } from "../jwk-thumbprint";

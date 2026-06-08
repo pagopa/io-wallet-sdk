@@ -1,8 +1,9 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
-import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
-import { HashAlgorithm } from "@pagopa/io-wallet-utils";
-import { calculateJwkThumbprint } from "@pagopa/io-wallet-utils";
+import {
+  type CallbackContext,
+  HashAlgorithm,
+  IoWalletSdkConfig,
+  calculateJwkThumbprint,
+} from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 

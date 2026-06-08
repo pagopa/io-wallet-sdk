@@ -1,19 +1,17 @@
 import {
   type CallbackContext,
   HashAlgorithm,
-  Jwk,
-  JwtParseError,
-  calculateJwkThumbprint,
-  decodeJwt,
-  jwtSignerFromJwt,
-  verifyJwt,
-} from "@pagopa/io-wallet-utils";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
+  Jwk,
+  JwtParseError,
   ValidationError,
+  calculateJwkThumbprint,
   createVersionDispatcher,
+  decodeJwt,
+  jwtSignerFromJwt,
+  verifyJwt,
   verifyJwtIatOrThrow,
 } from "@pagopa/io-wallet-utils";
 

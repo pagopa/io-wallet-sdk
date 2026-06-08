@@ -1,11 +1,11 @@
 import {
   type CallbackContext,
   JwtParseError,
+  ValidationError,
   decodeJwt,
   jwtSignerFromJwt,
   verifyJwt,
 } from "@pagopa/io-wallet-utils";
-import { ValidationError } from "@pagopa/io-wallet-utils";
 
 import { VerifyKeyAttestationJwtError } from "../errors";
 import {

@@ -1,5 +1,5 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
 import type {
+  CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
 } from "@pagopa/io-wallet-utils";

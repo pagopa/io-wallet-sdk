@@ -1,7 +1,7 @@
-import { VerifyJwtCallback } from "@pagopa/io-wallet-utils";
 import {
   UnexpectedStatusCodeError,
   ValidationError,
+  VerifyJwtCallback,
 } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";

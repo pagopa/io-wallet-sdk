@@ -1,7 +1,9 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
-import { dateToSeconds, parseWithErrorHandling } from "@pagopa/io-wallet-utils";
-import { JwtSignerJwk } from "@pagopa/io-wallet-utils";
+import {
+  type CallbackContext,
+  JwtSignerJwk,
+  dateToSeconds,
+  parseWithErrorHandling,
+} from "@pagopa/io-wallet-utils";
 
 import { MrtdPopError } from "../errors";
 import {

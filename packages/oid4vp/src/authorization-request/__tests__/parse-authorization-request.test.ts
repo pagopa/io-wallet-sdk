@@ -1,11 +1,9 @@
 import {
   type CallbackContext,
-  Jwk,
-  JwtParseError,
-} from "@pagopa/io-wallet-utils";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  JwtParseError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";

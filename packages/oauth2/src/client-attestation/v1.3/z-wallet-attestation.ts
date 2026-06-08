@@ -1,6 +1,10 @@
-import { zJwk } from "@pagopa/io-wallet-utils";
-import { zJwtHeader, zJwtPayload } from "@pagopa/io-wallet-utils";
-import { zCertificateChain, zTrustChain } from "@pagopa/io-wallet-utils";
+import {
+  zCertificateChain,
+  zJwk,
+  zJwtHeader,
+  zJwtPayload,
+  zTrustChain,
+} from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 /**

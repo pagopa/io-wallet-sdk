@@ -1,5 +1,4 @@
-import { decodeJwt } from "@pagopa/io-wallet-utils";
-import { zCompactJwt } from "@pagopa/io-wallet-utils";
+import { decodeJwt, zCompactJwt } from "@pagopa/io-wallet-utils";
 
 import { MrtdPopError } from "../errors";
 import {

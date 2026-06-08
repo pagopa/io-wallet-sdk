@@ -1,12 +1,9 @@
-import type {
-  CallbackContext,
-  ClientAuthenticationCallback as UtilsClientAuthenticationCallback,
-  ClientAuthenticationCallbackOptions as UtilsClientAuthenticationCallbackOptions,
-} from "@pagopa/io-wallet-utils";
-
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  type ClientAuthenticationCallback as UtilsClientAuthenticationCallback,
+  type ClientAuthenticationCallbackOptions as UtilsClientAuthenticationCallbackOptions,
 } from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";

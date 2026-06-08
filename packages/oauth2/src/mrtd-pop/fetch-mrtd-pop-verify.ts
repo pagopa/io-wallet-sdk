@@ -1,7 +1,6 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
   CONTENT_TYPES,
+  type CallbackContext,
   HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,

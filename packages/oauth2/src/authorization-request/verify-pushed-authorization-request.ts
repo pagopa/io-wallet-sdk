@@ -1,5 +1,4 @@
-import { decodeJwt } from "@pagopa/io-wallet-utils";
-import { JwtSigner } from "@pagopa/io-wallet-utils";
+import { JwtSigner, decodeJwt } from "@pagopa/io-wallet-utils";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import {

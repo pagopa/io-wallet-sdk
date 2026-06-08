@@ -1,9 +1,8 @@
-import type { RequestDpopOptions } from "@pagopa/io-wallet-utils";
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  type RequestDpopOptions,
   addSecondsToDate,
   dateToSeconds,
   dispatchByVersion,

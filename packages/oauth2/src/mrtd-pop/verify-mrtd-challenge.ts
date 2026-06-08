@@ -1,9 +1,11 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
-import { decodeJwt } from "@pagopa/io-wallet-utils";
-import { jwtSignerFromJwt } from "@pagopa/io-wallet-utils";
-import { verifyJwt } from "@pagopa/io-wallet-utils";
-import { JwtPayload, JwtSigner } from "@pagopa/io-wallet-utils";
+import {
+  type CallbackContext,
+  JwtPayload,
+  JwtSigner,
+  decodeJwt,
+  jwtSignerFromJwt,
+  verifyJwt,
+} from "@pagopa/io-wallet-utils";
 
 import { MrtdPopError } from "../errors";
 import {

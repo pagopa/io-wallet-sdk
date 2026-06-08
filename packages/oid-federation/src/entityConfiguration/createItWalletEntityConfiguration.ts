@@ -1,6 +1,4 @@
-import type { Jwk } from "@pagopa/io-wallet-utils";
-
-import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
+import { type Jwk, parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
 /**
  * Low-level signing callback used by entity configuration JWT creation.

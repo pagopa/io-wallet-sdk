@@ -9,12 +9,10 @@ import {
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   type CallbackContext,
-  Jwk,
-  type JwtSignerX5c,
-} from "@pagopa/io-wallet-utils";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  type JwtSignerX5c,
   addSecondsToDate,
   dateToSeconds,
   dispatchByVersion,

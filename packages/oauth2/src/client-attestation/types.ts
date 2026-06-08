@@ -1,6 +1,4 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
-import { JwtPayload } from "@pagopa/io-wallet-utils";
+import { type CallbackContext, JwtPayload } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 export interface BaseVerifyWalletAttestationJwtOptions {

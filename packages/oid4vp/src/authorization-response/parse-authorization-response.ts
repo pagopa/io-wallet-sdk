@@ -1,5 +1,7 @@
-import { CallbackContext } from "@pagopa/io-wallet-utils";
-import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
+import {
+  CallbackContext,
+  parseWithErrorHandling,
+} from "@pagopa/io-wallet-utils";
 
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";
 import { Oid4vpError } from "../errors";

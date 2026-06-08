@@ -1,16 +1,16 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
+  type CallbackContext,
   FetchHeaders,
+  HashAlgorithm,
   HttpMethod,
+  type JwtSignerJwk,
   ValidationError,
   dateToSeconds,
   decodeUtf8String,
   encodeToBase64Url,
   parseWithErrorHandling,
+  zCompactJwt,
 } from "@pagopa/io-wallet-utils";
-import { HashAlgorithm } from "@pagopa/io-wallet-utils";
-import { type JwtSignerJwk, zCompactJwt } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 
 import { CreateTokenDPoPError } from "../errors";

@@ -1,15 +1,14 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
+  type CallbackContext,
+  HashAlgorithm,
   RequestLike,
+  calculateJwkThumbprint,
+  decodeJwt,
   decodeUtf8String,
   encodeToBase64Url,
+  verifyJwt,
   verifyJwtIatOrThrow,
 } from "@pagopa/io-wallet-utils";
-import { HashAlgorithm } from "@pagopa/io-wallet-utils";
-import { calculateJwkThumbprint } from "@pagopa/io-wallet-utils";
-import { decodeJwt } from "@pagopa/io-wallet-utils";
-import { verifyJwt } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "../errors";
 import { htuFromRequestUrl } from "./dpop-utils";

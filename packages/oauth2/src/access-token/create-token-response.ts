@@ -1,16 +1,15 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
+  type CallbackContext,
+  HashAlgorithm,
+  Jwk,
+  JwtSigner,
   addSecondsToDate,
+  calculateJwkThumbprint,
   dateToSeconds,
   encodeToBase64Url,
+  jwtHeaderFromJwtSigner,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
-import { HashAlgorithm } from "@pagopa/io-wallet-utils";
-import { calculateJwkThumbprint } from "@pagopa/io-wallet-utils";
-import { Jwk } from "@pagopa/io-wallet-utils";
-import { jwtHeaderFromJwtSigner } from "@pagopa/io-wallet-utils";
-import { JwtSigner } from "@pagopa/io-wallet-utils";
 
 import { CreateTokenResponseError } from "../errors";
 import {

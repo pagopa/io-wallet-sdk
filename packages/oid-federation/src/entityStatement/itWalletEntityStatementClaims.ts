@@ -1,7 +1,7 @@
-import { zJwkSet } from "@pagopa/io-wallet-utils";
 import {
   ItWalletSpecsVersion,
   parseWithErrorHandling,
+  zJwkSet,
 } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 

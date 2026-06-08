@@ -5,11 +5,11 @@ import {
   decodeJwt,
   decodeJwtHeader,
   jwtSignerFromJwt,
+  stringToJsonWithErrorHandling,
   zCompactJwe,
   zCompactJwt,
   zJwtHeader,
 } from "@pagopa/io-wallet-utils";
-import { stringToJsonWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";

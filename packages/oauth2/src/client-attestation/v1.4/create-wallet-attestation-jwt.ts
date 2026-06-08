@@ -2,8 +2,8 @@ import {
   ValidationError,
   addSecondsToDate,
   dateToSeconds,
+  decodeJwt,
 } from "@pagopa/io-wallet-utils";
-import { decodeJwt } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 import { ClientAttestationError } from "../../errors";

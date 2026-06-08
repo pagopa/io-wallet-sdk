@@ -1,13 +1,11 @@
 import {
   type CallbackContext,
   HashAlgorithm,
-  type JwtSignerJwk,
-  calculateJwkThumbprint,
-} from "@pagopa/io-wallet-utils";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  type JwtSignerJwk,
   ValidationError,
+  calculateJwkThumbprint,
   dateToSeconds,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";

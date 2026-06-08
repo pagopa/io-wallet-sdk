@@ -1,9 +1,12 @@
-import type { JwtHeader, JwtPayload } from "@pagopa/io-wallet-utils";
 import type { ZodType } from "zod";
 
-import { decodeJwt } from "@pagopa/io-wallet-utils";
-import { jwtSignerFromJwt } from "@pagopa/io-wallet-utils";
-import { verifyJwt } from "@pagopa/io-wallet-utils";
+import {
+  type JwtHeader,
+  type JwtPayload,
+  decodeJwt,
+  jwtSignerFromJwt,
+  verifyJwt,
+} from "@pagopa/io-wallet-utils";
 
 import type { BaseVerifyWalletAttestationJwtOptions } from "./types";
 

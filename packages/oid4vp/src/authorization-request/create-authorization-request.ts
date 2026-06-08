@@ -7,15 +7,13 @@ import {
 } from "@pagopa/io-wallet-oauth2";
 import {
   type CallbackContext,
-  JwtSignerFederation,
-  JwtSignerX5c,
-  jwtHeaderFromJwtSigner,
-} from "@pagopa/io-wallet-utils";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  JwtSignerFederation,
+  JwtSignerX5c,
   ValidationError,
   createVersionDispatcher,
+  jwtHeaderFromJwtSigner,
   objectToQueryParams,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";

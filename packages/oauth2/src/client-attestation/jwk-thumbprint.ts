@@ -1,8 +1,9 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
-import { HashAlgorithm } from "@pagopa/io-wallet-utils";
-import { calculateJwkThumbprint } from "@pagopa/io-wallet-utils";
-import { Jwk } from "@pagopa/io-wallet-utils";
+import {
+  CallbackContext,
+  HashAlgorithm,
+  Jwk,
+  calculateJwkThumbprint,
+} from "@pagopa/io-wallet-utils";
 
 import { ClientAttestationError } from "../errors";
 

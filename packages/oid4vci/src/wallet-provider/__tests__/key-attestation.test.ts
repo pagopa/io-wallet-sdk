@@ -1,8 +1,8 @@
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
-import { Jwk } from "@pagopa/io-wallet-utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
   addSecondsToDate,
   dateToSeconds,
 } from "@pagopa/io-wallet-utils";

@@ -1,7 +1,10 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
-import { decodeUtf8String, encodeToBase64Url } from "@pagopa/io-wallet-utils";
-import { HashAlgorithm, type HashCallback } from "@pagopa/io-wallet-utils";
+import {
+  type CallbackContext,
+  HashAlgorithm,
+  type HashCallback,
+  decodeUtf8String,
+  encodeToBase64Url,
+} from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "./errors";
 

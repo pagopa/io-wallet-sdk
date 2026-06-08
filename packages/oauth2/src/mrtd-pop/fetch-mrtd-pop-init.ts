@@ -1,17 +1,16 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
   CONTENT_TYPES,
+  type CallbackContext,
   HEADERS,
+  JwtSigner,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,
+  decodeJwt,
   hasStatusOrThrow,
+  jwtSignerFromJwt,
+  verifyJwt,
 } from "@pagopa/io-wallet-utils";
-import { decodeJwt } from "@pagopa/io-wallet-utils";
-import { jwtSignerFromJwt } from "@pagopa/io-wallet-utils";
-import { verifyJwt } from "@pagopa/io-wallet-utils";
-import { JwtSigner } from "@pagopa/io-wallet-utils";
 
 import { MrtdPopError } from "../errors";
 import {

@@ -1,8 +1,8 @@
 /* eslint-disable max-lines-per-function */
-import { JwtParseError } from "@pagopa/io-wallet-utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  JwtParseError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";

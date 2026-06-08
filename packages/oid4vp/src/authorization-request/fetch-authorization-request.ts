@@ -1,5 +1,6 @@
-import { type CallbackContext, JwtParseError } from "@pagopa/io-wallet-utils";
 import {
+  type CallbackContext,
+  JwtParseError,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,

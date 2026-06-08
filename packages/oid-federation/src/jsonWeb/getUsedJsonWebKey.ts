@@ -1,5 +1,4 @@
-import { zJwkSet } from "@pagopa/io-wallet-utils";
-import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
+import { parseWithErrorHandling, zJwkSet } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 export const getUsedJsonWebKey = (

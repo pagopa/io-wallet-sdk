@@ -3,8 +3,8 @@ import {
   FetchAuthorizationResponseOptions,
   fetchAuthorizationResponse,
 } from "@pagopa/io-wallet-oid4vp";
-import { type CallbackContext } from "@pagopa/io-wallet-utils";
 import {
+  type CallbackContext,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,

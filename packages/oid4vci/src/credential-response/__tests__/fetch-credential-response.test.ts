@@ -7,10 +7,12 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CredentialRequestV1_0 } from "../../credential-request/v1.0/z-credential";
-import type { FetchCredentialResponseOptions } from "../fetch-credential-response";
 
 import { FetchCredentialResponseError } from "../../errors";
-import { fetchCredentialResponse } from "../fetch-credential-response";
+import {
+  type FetchCredentialResponseOptions,
+  fetchCredentialResponse,
+} from "../fetch-credential-response";
 
 const mockFetch = vi.fn();
 

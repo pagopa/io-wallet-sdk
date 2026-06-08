@@ -1,16 +1,14 @@
 import {
   type CallbackContext,
-  JwtParseError,
-  JwtSigner,
-  decodeJwt,
-  verifyJwt,
-} from "@pagopa/io-wallet-utils";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
+  JwtParseError,
+  JwtSigner,
   ValidationError,
+  decodeJwt,
   dispatchByVersion,
+  verifyJwt,
 } from "@pagopa/io-wallet-utils";
 
 import { Oid4vpError, ParseAuthorizeRequestError } from "../errors";

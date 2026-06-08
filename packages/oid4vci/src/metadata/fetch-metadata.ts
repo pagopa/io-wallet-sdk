@@ -1,17 +1,15 @@
 import { itWalletEntityStatementClaimsSchema } from "@pagopa/io-wallet-oid-federation";
 import {
   type CallbackContext,
-  type VerifyJwtCallback,
-  decodeJwt,
-} from "@pagopa/io-wallet-utils";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
   UnexpectedStatusCodeError,
   ValidationError,
+  type VerifyJwtCallback,
   createFetcher,
   createVersionDispatcher,
+  decodeJwt,
   hasStatusOrThrow,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";

@@ -1,7 +1,9 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
-import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
-import { Jwk } from "@pagopa/io-wallet-utils";
+import {
+  type CallbackContext,
+  IoWalletSdkConfig,
+  Jwk,
+  RequestLike,
+} from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 

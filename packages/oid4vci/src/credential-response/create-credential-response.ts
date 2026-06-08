@@ -1,7 +1,7 @@
-import type { EncryptJweCallback, JweEncryptor } from "@pagopa/io-wallet-utils";
-
 import {
+  type EncryptJweCallback,
   ItWalletSpecsVersion,
+  type JweEncryptor,
   ValidationError,
   createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";

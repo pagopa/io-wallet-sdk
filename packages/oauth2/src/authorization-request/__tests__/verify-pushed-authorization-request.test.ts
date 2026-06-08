@@ -1,14 +1,13 @@
 /* eslint-disable max-lines-per-function */
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  JwtSigner,
   RequestLike,
   encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
-import { Jwk } from "@pagopa/io-wallet-utils";
-import { JwtSigner } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import type { BaseAuthorizationServerMetadata } from "../../authorization-server-metadata";

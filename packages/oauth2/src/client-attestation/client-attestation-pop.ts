@@ -1,17 +1,16 @@
-import type { CallbackContext } from "@pagopa/io-wallet-utils";
-
 import {
+  CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  JwtSignerJwk,
   addSecondsToDate,
   dateToSeconds,
+  decodeJwt,
   encodeToBase64Url,
   parseWithErrorHandling,
+  verifyJwt,
 } from "@pagopa/io-wallet-utils";
-import { Jwk } from "@pagopa/io-wallet-utils";
-import { decodeJwt } from "@pagopa/io-wallet-utils";
-import { verifyJwt } from "@pagopa/io-wallet-utils";
-import { JwtSignerJwk } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "../errors";
 import {
