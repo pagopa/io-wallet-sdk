@@ -1,11 +1,9 @@
-import {
-  type CallbackContext,
-  getJwtFromFormPost,
-} from "@pagopa/io-wallet-oauth2";
+import { getJwtFromFormPost } from "@pagopa/io-wallet-oauth2";
 import {
   FetchAuthorizationResponseOptions,
   fetchAuthorizationResponse,
 } from "@pagopa/io-wallet-oid4vp";
+import { type CallbackContext } from "@pagopa/io-wallet-utils";
 import {
   UnexpectedStatusCodeError,
   ValidationError,

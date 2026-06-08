@@ -3,7 +3,7 @@ import {
   decodeJwtHeader,
   zCompactJwe,
   zCompactJwt,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 

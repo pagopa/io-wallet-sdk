@@ -1,4 +1,4 @@
-import type { CallbackContext } from "../common/callback-context";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
 
 import { AuthorizationCodeGrantType } from "./z-token";
 

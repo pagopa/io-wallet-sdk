@@ -1,7 +1,9 @@
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
+import { Jwk } from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
-import type { CallbackContext } from "../common/callback-context";
 
 import { VerifiedClientAttestationPopJwt } from "../client-attestation/client-attestation-pop";
 import {
@@ -9,7 +11,6 @@ import {
   verifyClientAttestation,
 } from "../client-attestation/verify-client-attestation";
 import { VerifiedWalletAttestationJwt } from "../client-attestation/wallet-attestation";
-import { Jwk } from "../common/jwk/z-jwk";
 import { Oauth2Error } from "../errors";
 import { PkceCodeChallengeMethod, verifyPkce } from "../pkce";
 import { verifyTokenDPoP } from "../token-dpop/verify-token-dpop";

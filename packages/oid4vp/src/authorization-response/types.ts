@@ -3,7 +3,7 @@ import type {
   ItWalletCredentialVerifierMetadataV1_3,
 } from "@pagopa/io-wallet-oid-federation";
 
-import { CallbackContext, Jwk } from "@pagopa/io-wallet-oauth2";
+import { CallbackContext, Jwk } from "@pagopa/io-wallet-utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,

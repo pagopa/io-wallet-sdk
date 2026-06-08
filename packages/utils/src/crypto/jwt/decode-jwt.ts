@@ -1,14 +1,13 @@
+import z from "zod";
+
+import { decodeBase64, encodeToUtf8String } from "../../encoding";
+import { JwtParseError } from "../../errors/errors";
 import {
   BaseSchema,
-  decodeBase64,
-  encodeToUtf8String,
   formatError,
   parseWithErrorHandling,
   stringToJsonWithErrorHandling,
-} from "@pagopa/io-wallet-utils";
-import z from "zod";
-
-import { Oauth2JwtParseError } from "../../errors";
+} from "../../parse";
 import { decodeJwtHeader } from "./decode-jwt-header";
 import { zJwtHeader, zJwtPayload } from "./z-jwt";
 
@@ -60,7 +59,7 @@ export interface DecodeJwtResult<
  * @param options.jwt - Compact JWT to decode.
  * @param options.payloadSchema - Optional schema for the JWT payload; defaults to `zJwtPayload`.
  * @returns Decoded and schema-validated JWT header, payload, and signature segment.
- * @throws {Oauth2JwtParseError} If the JWT shape or base64url JSON segments are invalid.
+ * @throws {JwtParseError} If the JWT shape or base64url JSON segments are invalid.
  * @throws {ValidationError} If header or payload schema validation fails.
  */
 export function decodeJwt<
@@ -71,7 +70,7 @@ export function decodeJwt<
 ): DecodeJwtResult<HeaderSchema, PayloadSchema> {
   const jwtParts = options.jwt.split(".");
   if (jwtParts.length !== 3) {
-    throw new Oauth2JwtParseError(
+    throw new JwtParseError(
       formatError(
         "Unable to decode because Jwt is not a valid!",
         options.errorMessagePrefix,
@@ -83,7 +82,7 @@ export function decodeJwt<
   try {
     const payloadPart = jwtParts[1];
     if (payloadPart === undefined) {
-      throw new Oauth2JwtParseError(
+      throw new JwtParseError(
         formatError(
           "Unable to decode because Jwt is not a valid!",
           options.errorMessagePrefix,
@@ -98,7 +97,7 @@ export function decodeJwt<
       ),
     );
   } catch (error) {
-    throw new Oauth2JwtParseError(
+    throw new JwtParseError(
       formatError(
         `Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
         options.errorMessagePrefix,
@@ -108,7 +107,7 @@ export function decodeJwt<
 
   const signaturePart = jwtParts[2];
   if (signaturePart === undefined) {
-    throw new Oauth2JwtParseError(
+    throw new JwtParseError(
       formatError(
         "Unable to decode because Jwt is not a valid!",
         options.errorMessagePrefix,

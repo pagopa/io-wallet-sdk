@@ -1,5 +1,6 @@
-import { decodeJwt } from "../common/jwt/decode-jwt";
-import { JwtSigner } from "../common/jwt/z-jwt";
+import { decodeJwt } from "@pagopa/io-wallet-utils";
+import { JwtSigner } from "@pagopa/io-wallet-utils";
+
 import { PushedAuthorizationRequestError } from "../errors";
 import {
   VerifiedJarRequest,

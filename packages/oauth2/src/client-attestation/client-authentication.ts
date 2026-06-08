@@ -1,13 +1,15 @@
+import type {
+  CallbackContext,
+  ClientAuthenticationCallback as UtilsClientAuthenticationCallback,
+  ClientAuthenticationCallbackOptions as UtilsClientAuthenticationCallbackOptions,
+} from "@pagopa/io-wallet-utils";
+
 import {
-  ContentType,
-  FetchHeaders,
-  HttpMethod,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
 } from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
-import type { CallbackContext } from "../common/callback-context";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
 import {
@@ -65,47 +67,11 @@ export function isClientAttestationSupported(
   };
 }
 
-/**
- * Options for client authentication
- */
-export interface ClientAuthenticationCallbackOptions {
-  /**
-   * Metadata of the authorization server
-   */
-  authorizationServerMetadata: BaseAuthorizationServerMetadata;
+export type ClientAuthenticationCallbackOptions =
+  UtilsClientAuthenticationCallbackOptions<BaseAuthorizationServerMetadata>;
 
-  /**
-   * The body as a JSON object. If content type `x-www-form-urlencoded`
-   * is used, it will be encoded after this call.
-   *
-   * You can modify this object
-   */
-  body: Record<string, unknown>;
-
-  contentType: ContentType;
-
-  /**
-   * Headers for the request. You can modify this object
-   */
-  headers: FetchHeaders;
-
-  /**
-   * http method that will be used
-   */
-  method: HttpMethod;
-
-  /**
-   * URL to which the request will be made
-   */
-  url: string;
-}
-
-/**
- * Callback method to determine the client authentication for a request.
- */
-export type ClientAuthenticationCallback = (
-  options: ClientAuthenticationCallbackOptions,
-) => Promise<void> | void;
+export type ClientAuthenticationCallback =
+  UtilsClientAuthenticationCallback<ClientAuthenticationCallbackOptions>;
 
 /**
  * Creates a client authentication callback that leaves the request unchanged.

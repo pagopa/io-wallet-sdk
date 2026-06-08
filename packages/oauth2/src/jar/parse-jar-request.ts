@@ -1,4 +1,4 @@
-import type { CallbackContext } from "../common/callback-context";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
 
 import { fetchJarRequestObject } from "./fetch-jar-request-object";
 import { validateJarRequestParams } from "./validate-jar-request";

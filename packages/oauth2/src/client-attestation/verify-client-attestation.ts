@@ -1,10 +1,11 @@
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
+import { HashAlgorithm } from "@pagopa/io-wallet-utils";
+import { calculateJwkThumbprint } from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
-import type { CallbackContext } from "../common/callback-context";
 
-import { HashAlgorithm } from "../common/hash";
-import { calculateJwkThumbprint } from "../common/jwk/calculate-jwk-thumbprint";
 import { Oauth2Error } from "../errors";
 import { verifyClientAttestationPopJwt } from "./client-attestation-pop";
 import {

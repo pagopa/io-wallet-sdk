@@ -1,11 +1,11 @@
 /* eslint-disable max-lines-per-function */
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
+import { Jwk } from "@pagopa/io-wallet-utils";
+import { JwtSigner } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
-import type { CallbackContext } from "../../common/callback-context";
-
-import { Jwk } from "../../common/jwk/z-jwk";
-import { JwtSigner } from "../../common/jwt/z-jwt";
 import { Oauth2Error } from "../../errors";
 import {
   VerifyJarRequestOptions,

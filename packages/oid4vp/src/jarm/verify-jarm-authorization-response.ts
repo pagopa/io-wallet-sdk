@@ -1,14 +1,14 @@
+import { Oauth2Error } from "@pagopa/io-wallet-oauth2";
 import {
   type CallbackContext,
   type Jwk,
-  Oauth2Error,
   decodeJwt,
   decodeJwtHeader,
   jwtSignerFromJwt,
   zCompactJwe,
   zCompactJwt,
   zJwtHeader,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import { stringToJsonWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 

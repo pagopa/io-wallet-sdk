@@ -1,10 +1,10 @@
 import {
   type CallbackContext,
-  Oauth2JwtParseError,
+  JwtParseError,
   decodeJwt,
   jwtSignerFromJwt,
   verifyJwt,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import { ValidationError } from "@pagopa/io-wallet-utils";
 
 import { VerifyKeyAttestationJwtError } from "../errors";
@@ -72,7 +72,7 @@ export interface VerifyKeyAttestationJwtResult {
  *
  * @param options - Verification options and callbacks.
  * @returns Decoded header, payload, and signer.
- * @throws {Oauth2JwtParseError} If JWT decoding fails.
+ * @throws {JwtParseError} If JWT decoding fails.
  * @throws {ValidationError} If schema validation fails.
  */
 export async function verifyKeyAttestationJwt(
@@ -116,7 +116,7 @@ export async function verifyKeyAttestationJwt(
     if (
       error instanceof VerifyKeyAttestationJwtError ||
       error instanceof ValidationError ||
-      error instanceof Oauth2JwtParseError
+      error instanceof JwtParseError
     ) {
       throw error;
     }

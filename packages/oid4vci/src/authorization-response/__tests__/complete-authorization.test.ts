@@ -1,4 +1,4 @@
-import { VerifyJwtCallback } from "@pagopa/io-wallet-oauth2";
+import { VerifyJwtCallback } from "@pagopa/io-wallet-utils";
 import {
   UnexpectedStatusCodeError,
   ValidationError,

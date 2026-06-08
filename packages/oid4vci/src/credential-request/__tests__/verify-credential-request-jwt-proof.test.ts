@@ -15,11 +15,10 @@ const { mockCalculateJwkThumbprint, mockVerifyJwt } = vi.hoisted(() => ({
   mockVerifyJwt: vi.fn(),
 }));
 
-vi.mock("@pagopa/io-wallet-oauth2", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@pagopa/io-wallet-oauth2")>();
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
+  const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as object),
     calculateJwkThumbprint: mockCalculateJwkThumbprint,
     verifyJwt: mockVerifyJwt,
   };

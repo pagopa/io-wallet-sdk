@@ -1,11 +1,11 @@
+import type { JwtHeader, JwtPayload } from "@pagopa/io-wallet-utils";
 import type { ZodType } from "zod";
 
-import type { JwtHeader, JwtPayload } from "../common/jwt/z-jwt";
-import type { BaseVerifyWalletAttestationJwtOptions } from "./types";
+import { decodeJwt } from "@pagopa/io-wallet-utils";
+import { jwtSignerFromJwt } from "@pagopa/io-wallet-utils";
+import { verifyJwt } from "@pagopa/io-wallet-utils";
 
-import { decodeJwt } from "../common/jwt/decode-jwt";
-import { jwtSignerFromJwt } from "../common/jwt/decode-jwt-header";
-import { verifyJwt } from "../common/jwt/verify-jwt";
+import type { BaseVerifyWalletAttestationJwtOptions } from "./types";
 
 export async function verifyWalletAttestationBase<
   THeader extends ZodType<JwtHeader>,

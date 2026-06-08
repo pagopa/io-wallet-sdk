@@ -1,8 +1,11 @@
 import { zHttpMethod } from "@pagopa/io-wallet-utils";
+import { zJwk } from "@pagopa/io-wallet-utils";
+import {
+  MAX_JTI_LENGTH,
+  zJwtHeader,
+  zJwtPayload,
+} from "@pagopa/io-wallet-utils";
 import z from "zod";
-
-import { zJwk } from "../common/jwk/z-jwk";
-import { MAX_JTI_LENGTH, zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zDpopJwtPayload = z.looseObject({
   ...zJwtPayload.shape,

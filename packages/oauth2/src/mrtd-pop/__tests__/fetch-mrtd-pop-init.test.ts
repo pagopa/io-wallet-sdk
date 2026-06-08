@@ -26,9 +26,9 @@ vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
   };
 });
 
-vi.mock("../../common/jwt/verify-jwt", async (importOriginal) => {
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../../common/jwt/verify-jwt")>();
+    await importOriginal<typeof import("@pagopa/io-wallet-utils")>();
   return {
     ...actual,
     verifyJwt: mockVerifyJwtFromOauth2,

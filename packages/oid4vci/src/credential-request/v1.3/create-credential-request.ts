@@ -3,7 +3,7 @@ import {
   HashAlgorithm,
   type JwtSignerJwk,
   calculateJwkThumbprint,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,

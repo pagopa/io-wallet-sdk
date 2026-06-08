@@ -1,3 +1,5 @@
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -6,13 +8,11 @@ import {
   encodeToBase64Url,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
+import { Jwk } from "@pagopa/io-wallet-utils";
+import { decodeJwt } from "@pagopa/io-wallet-utils";
+import { verifyJwt } from "@pagopa/io-wallet-utils";
+import { JwtSignerJwk } from "@pagopa/io-wallet-utils";
 
-import type { CallbackContext } from "../common/callback-context";
-
-import { Jwk } from "../common/jwk/z-jwk";
-import { decodeJwt } from "../common/jwt/decode-jwt";
-import { verifyJwt } from "../common/jwt/verify-jwt";
-import { JwtSignerJwk } from "../common/jwt/z-jwt";
 import { Oauth2Error } from "../errors";
 import {
   IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,

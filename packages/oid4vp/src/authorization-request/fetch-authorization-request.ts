@@ -1,7 +1,4 @@
-import {
-  type CallbackContext,
-  Oauth2JwtParseError,
-} from "@pagopa/io-wallet-oauth2";
+import { type CallbackContext, JwtParseError } from "@pagopa/io-wallet-utils";
 import {
   UnexpectedStatusCodeError,
   ValidationError,
@@ -252,7 +249,7 @@ export async function fetchAuthorizationRequest(
   } catch (error) {
     if (
       error instanceof ValidationError ||
-      error instanceof Oauth2JwtParseError ||
+      error instanceof JwtParseError ||
       error instanceof Oid4vpError ||
       error instanceof UnexpectedStatusCodeError
     ) {

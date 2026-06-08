@@ -1,6 +1,6 @@
+import { HashAlgorithm } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HashAlgorithm } from "../../common/hash";
 import {
   CreateAccessTokenResponseOptions,
   createAccessTokenResponse,

@@ -1,6 +1,16 @@
 export * from "./config";
 export * from "./constants";
 export { ContentType } from "./content-type";
+export type * from "./crypto/callback-context";
+export * from "./crypto/hash";
+export * from "./crypto/jwk/calculate-jwk-thumbprint";
+export * from "./crypto/jwk/z-jwk";
+export * from "./crypto/jwt/decode-jwt";
+export * from "./crypto/jwt/decode-jwt-header";
+export * from "./crypto/jwt/verify-jwt";
+export * from "./crypto/jwt/z-jwe";
+export * from "./crypto/jwt/z-jwt";
+export * from "./crypto/z-common";
 export { addSecondsToDate, dateToSeconds } from "./date";
 export {
   decodeBase64,

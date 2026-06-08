@@ -15,6 +15,10 @@ export * from "./authorization-request/z-authorization-request";
 export type * from "./authorization-server-metadata";
 export * from "./client-attestation/client-attestation-pop";
 export * from "./client-attestation/client-authentication";
+export type {
+  ClientAuthenticationCallback,
+  ClientAuthenticationCallbackOptions,
+} from "./client-attestation/client-authentication";
 export type * from "./client-attestation/types";
 export {
   type WalletAttestationOptionsV1_0,
@@ -68,24 +72,6 @@ export type {
   ItWalletClientAttestationPopJwtHeader as ClientAttestationPopJwtHeader,
   ItWalletClientAttestationPopJwtPayload as ClientAttestationPopJwtPayload,
 } from "./client-attestation/z-client-attestation-pop";
-export type {
-  CallbackContext,
-  DecryptJweCallback,
-  EncryptJweCallback,
-  GenerateRandomCallback,
-  RequestDpopOptions,
-  SignJwtCallback,
-  VerifyJwtCallback,
-} from "./common/callback-context";
-export * from "./common/hash";
-export * from "./common/jwk/calculate-jwk-thumbprint";
-export * from "./common/jwk/z-jwk";
-export * from "./common/jwt/decode-jwt";
-export * from "./common/jwt/decode-jwt-header";
-export { verifyJwt } from "./common/jwt/verify-jwt";
-export * from "./common/jwt/z-jwe";
-export * from "./common/jwt/z-jwt";
-export * from "./common/z-common";
 export * from "./errors";
 export * from "./jar/create-jar-request";
 export * from "./jar/fetch-jar-request-object";

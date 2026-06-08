@@ -1,16 +1,8 @@
-import { dateToSeconds } from "@pagopa/io-wallet-utils";
-
 import type { VerifyJwtCallback } from "../callback-context";
 
-import { Oauth2Error } from "../../errors";
+import { dateToSeconds } from "../../date";
+import { JwtVerificationError } from "../../errors/errors";
 import { JwtHeader, JwtPayload, JwtSigner, JwtSignerWithJwk } from "./z-jwt";
-
-class Oauth2JwtVerificationError extends Oauth2Error {
-  constructor(message?: string, options?: ErrorOptions) {
-    super(message ?? "Error verifying jwt.", options);
-    this.name = "Oauth2JwtVerificationError";
-  }
-}
 
 export interface VerifyJwtOptions {
   allowedSkewInSeconds?: number;
@@ -49,16 +41,16 @@ export async function verifyJwt(
     });
 
     if (!result.verified) {
-      throw new Oauth2JwtVerificationError(errorMessage);
+      throw new JwtVerificationError(errorMessage);
     }
 
     signerJwk = result.signerJwk;
   } catch (error) {
-    if (error instanceof Oauth2JwtVerificationError) {
+    if (error instanceof JwtVerificationError) {
       throw error;
     }
 
-    throw new Oauth2JwtVerificationError(errorMessage, { cause: error });
+    throw new JwtVerificationError(errorMessage, { cause: error });
   }
 
   const nowInSeconds = dateToSeconds(options.now ?? new Date());
@@ -73,7 +65,7 @@ export async function verifyJwt(
     options.payload.nbf &&
     nowInSeconds < options.payload.nbf - skewInSeconds
   ) {
-    throw new Oauth2JwtVerificationError(
+    throw new JwtVerificationError(
       `${errorMessage} jwt 'nbf' is in the future`,
     );
   }
@@ -83,9 +75,7 @@ export async function verifyJwt(
     options.payload.exp &&
     nowInSeconds > options.payload.exp + skewInSeconds
   ) {
-    throw new Oauth2JwtVerificationError(
-      `${errorMessage} jwt 'exp' is in the past`,
-    );
+    throw new JwtVerificationError(`${errorMessage} jwt 'exp' is in the past`);
   }
 
   if (options.expectedAudience) {
@@ -94,7 +84,7 @@ export async function verifyJwt(
       (Array.isArray(aud) && !aud.includes(options.expectedAudience)) ||
       (typeof aud === "string" && aud !== options.expectedAudience)
     ) {
-      throw new Oauth2JwtVerificationError(
+      throw new JwtVerificationError(
         `${errorMessage} jwt 'aud' does not match expected value.`,
       );
     }
@@ -104,7 +94,7 @@ export async function verifyJwt(
     options.expectedIssuer &&
     options.expectedIssuer !== options.payload.iss
   ) {
-    throw new Oauth2JwtVerificationError(
+    throw new JwtVerificationError(
       `${errorMessage} jwt 'iss' does not match expected value.`,
     );
   }
@@ -113,7 +103,7 @@ export async function verifyJwt(
     options.expectedNonce &&
     options.expectedNonce !== options.payload.nonce
   ) {
-    throw new Oauth2JwtVerificationError(
+    throw new JwtVerificationError(
       `${errorMessage} jwt 'nonce' does not match expected value.`,
     );
   }
@@ -122,7 +112,7 @@ export async function verifyJwt(
     options.expectedSubject &&
     options.expectedSubject !== options.payload.sub
   ) {
-    throw new Oauth2JwtVerificationError(
+    throw new JwtVerificationError(
       `${errorMessage} jwt 'sub' does not match expected value.`,
     );
   }
@@ -130,7 +120,7 @@ export async function verifyJwt(
   if (options.requiredClaims) {
     for (const claim of options.requiredClaims) {
       if (!options.payload[claim]) {
-        throw new Oauth2JwtVerificationError(
+        throw new JwtVerificationError(
           `${errorMessage} jwt '${claim}' is missing.`,
         );
       }

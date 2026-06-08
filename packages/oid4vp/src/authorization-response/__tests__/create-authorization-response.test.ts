@@ -1,8 +1,8 @@
-import type { CallbackContext } from "@pagopa/io-wallet-oauth2";
 import type {
   ItWalletCredentialVerifierMetadata,
   ItWalletCredentialVerifierMetadataV1_3,
 } from "@pagopa/io-wallet-oid-federation";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
 
 import {
   IoWalletSdkConfig,

@@ -9,6 +9,28 @@ export class JsonParseError extends Error {
   }
 }
 
+export class JwtParseError extends Error {
+  constructor(message?: string) {
+    super(message ?? "Error parsing jwt");
+    this.name = "JwtParseError";
+  }
+}
+
+export class JwtVerificationError extends Error {
+  constructor(message?: string, options?: ErrorOptions) {
+    const errorMessage = message ?? "Error verifying jwt.";
+    const causeMessage =
+      options?.cause instanceof Error
+        ? ` ${options.cause.message}`
+        : options?.cause
+          ? ` ${String(options.cause)}`
+          : "";
+
+    super(`${errorMessage}${causeMessage}`, options);
+    this.name = "JwtVerificationError";
+  }
+}
+
 // An error reason that supports both a string and a generic JSON object
 type GenericErrorReason = Record<string, unknown> | string;
 

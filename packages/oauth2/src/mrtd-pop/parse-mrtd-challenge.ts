@@ -1,5 +1,6 @@
-import { decodeJwt } from "../common/jwt/decode-jwt";
-import { zCompactJwt } from "../common/jwt/z-jwt";
+import { decodeJwt } from "@pagopa/io-wallet-utils";
+import { zCompactJwt } from "@pagopa/io-wallet-utils";
+
 import { MrtdPopError } from "../errors";
 import {
   MrtdChallengeJwtHeader,

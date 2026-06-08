@@ -1,4 +1,4 @@
-import { zJwkSet } from "@pagopa/io-wallet-oauth2";
+import { zJwkSet } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 const walletMetadataSchema = z.looseObject({

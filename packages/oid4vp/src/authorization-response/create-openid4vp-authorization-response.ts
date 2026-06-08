@@ -1,13 +1,13 @@
+import { Oauth2Error } from "@pagopa/io-wallet-oauth2";
 import {
   type CallbackContext,
   type JweEncryptor,
   type Jwk,
   type JwkSet,
   type JwtSigner,
-  Oauth2Error,
   jwtHeaderFromJwtSigner,
   zJwkSet,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import {
   ContentType,
   addSecondsToDate,

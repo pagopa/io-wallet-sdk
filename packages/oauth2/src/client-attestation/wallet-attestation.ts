@@ -3,6 +3,7 @@ import {
   ItWalletSpecsVersion,
   createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
+import { zCompactJwt } from "@pagopa/io-wallet-utils";
 
 import type {
   VerifiedWalletAttestationJwtV1_0,
@@ -17,7 +18,6 @@ import type {
   VerifyWalletAttestationJwtOptionsV1_4,
 } from "./v1.4/verify-wallet-attestation-jwt";
 
-import { zCompactJwt } from "../common/jwt/z-jwt";
 import {
   oauthClientAttestationHeader,
   oauthClientAttestationPopHeader,

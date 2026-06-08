@@ -1,3 +1,5 @@
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -6,11 +8,9 @@ import {
   formatZodError,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
+import { decodeJwt } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import type { CallbackContext } from "../common/callback-context";
-
-import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
 import {
   isJarAuthorizationRequest,

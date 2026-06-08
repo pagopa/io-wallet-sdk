@@ -1,3 +1,6 @@
+import type { RequestDpopOptions } from "@pagopa/io-wallet-utils";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -8,10 +11,6 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
-import type {
-  CallbackContext,
-  RequestDpopOptions,
-} from "../common/callback-context";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";

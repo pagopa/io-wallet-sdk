@@ -1,4 +1,4 @@
-import { JwtSignerJwk, VerifyJwtCallback } from "@pagopa/io-wallet-oauth2";
+import { JwtSignerJwk, VerifyJwtCallback } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

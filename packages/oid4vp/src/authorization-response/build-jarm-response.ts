@@ -1,6 +1,6 @@
-import type { JwkSet } from "@pagopa/io-wallet-oauth2";
+import type { JwkSet } from "@pagopa/io-wallet-utils";
 
-import { CallbackContext, JweEncryptor } from "@pagopa/io-wallet-oauth2";
+import { CallbackContext, JweEncryptor } from "@pagopa/io-wallet-utils";
 import { encodeToBase64Url } from "@pagopa/io-wallet-utils";
 
 import type { CreateAuthorizationResponseResult } from "./types";

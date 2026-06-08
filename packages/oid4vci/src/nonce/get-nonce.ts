@@ -1,4 +1,4 @@
-import type { CallbackContext } from "@pagopa/io-wallet-oauth2";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
 
 import {
   UnexpectedStatusCodeError,

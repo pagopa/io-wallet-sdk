@@ -1,4 +1,4 @@
-import type { Jwk } from "@pagopa/io-wallet-oauth2";
+import type { Jwk } from "@pagopa/io-wallet-utils";
 
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 

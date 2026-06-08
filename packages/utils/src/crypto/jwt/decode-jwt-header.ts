@@ -1,15 +1,13 @@
+import type { InferSchemaOrDefaultOutput } from "./decode-jwt";
+
+import { decodeBase64, encodeToUtf8String } from "../../encoding";
+import { JwtParseError } from "../../errors/errors";
 import {
   BaseSchema,
-  decodeBase64,
-  encodeToUtf8String,
   formatError,
   parseWithErrorHandling,
   stringToJsonWithErrorHandling,
-} from "@pagopa/io-wallet-utils";
-
-import type { InferSchemaOrDefaultOutput } from "./decode-jwt";
-
-import { Oauth2Error, Oauth2JwtParseError } from "../../errors";
+} from "../../parse";
 import { JwtHeader, JwtPayload, JwtSigner, zJwtHeader } from "./z-jwt";
 
 export interface DecodeJwtHeaderOptions<
@@ -48,7 +46,7 @@ export interface DecodeJwtHeaderResult<
  * @param options.headerSchema - Optional schema for the JWT header; defaults to `zJwtHeader`.
  * @param options.jwt - Compact JWT to decode.
  * @returns Decoded and schema-validated JWT header.
- * @throws {Oauth2JwtParseError} If the JWT shape or header JSON is invalid.
+ * @throws {JwtParseError} If the JWT shape or header JSON is invalid.
  * @throws {ValidationError} If header schema validation fails.
  */
 export function decodeJwtHeader<
@@ -58,7 +56,7 @@ export function decodeJwtHeader<
 ): DecodeJwtHeaderResult<HeaderSchema> {
   const jwtParts = options.jwt.split(".");
   if (jwtParts.length <= 2) {
-    throw new Oauth2JwtParseError(
+    throw new JwtParseError(
       formatError(
         "Unable to decode because Jwt is not a valid!",
         options.errorMessagePrefix,
@@ -78,7 +76,7 @@ export function decodeJwtHeader<
       ),
     );
   } catch (error) {
-    throw new Oauth2JwtParseError(
+    throw new JwtParseError(
       formatError(
         `Error parsing JWT. ${error instanceof Error ? error.message : ""}`,
         options.errorMessagePrefix,
@@ -257,7 +255,7 @@ export function jwtSignerFromJwt(options: {
   }
 
   if (allowedFoundMethods.length > 0) {
-    throw new Oauth2Error(
+    throw new Error(
       `Unable to extract signer method from jwt. Found ${allowedFoundMethods.length} allowed signer method(s) but contained invalid configuration:\n${allowedFoundMethods
         .map((candidate) =>
           candidate.valid
@@ -269,7 +267,7 @@ export function jwtSignerFromJwt(options: {
   }
 
   if (found.length > 0) {
-    throw new Oauth2Error(
+    throw new Error(
       `Unable to extract signer method from jwt. Found ${found.length} signer method(s) that are not allowed:\n${found
         .map((candidate) =>
           candidate.valid
@@ -288,7 +286,7 @@ export function jwtSignerFromJwt(options: {
     };
   }
 
-  throw new Oauth2Error(
+  throw new Error(
     "Unable to extract signer method from jwt. Found no signer methods and 'custom' signer method is not allowed.",
   );
 }

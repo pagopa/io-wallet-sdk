@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import { Oauth2JwtParseError } from "@pagopa/io-wallet-oauth2";
+import { JwtParseError } from "@pagopa/io-wallet-utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -725,7 +725,7 @@ describe("parseCredentialRequest", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  it("throws Oauth2JwtParseError when proof JWT is malformed", async () => {
+  it("throws JwtParseError when proof JWT is malformed", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
@@ -745,6 +745,6 @@ describe("parseCredentialRequest", () => {
           dpop: VALID_DPOP_JWT,
         }),
       }),
-    ).rejects.toThrow(Oauth2JwtParseError);
+    ).rejects.toThrow(JwtParseError);
   });
 });

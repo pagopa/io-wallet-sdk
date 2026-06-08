@@ -1,7 +1,5 @@
-import type { Fetch, FetchHeaders, HttpMethod } from "@pagopa/io-wallet-utils";
-
-import { ContentType } from "@pagopa/io-wallet-utils";
-
+import type { Fetch, FetchHeaders } from "../globals";
+import type { HttpMethod } from "../validation";
 import type { HashCallback } from "./hash";
 import type { Jwk } from "./jwk/z-jwk";
 import type {
@@ -12,22 +10,9 @@ import type {
   JwtSignerJwk,
 } from "./jwt/z-jwt";
 
-import { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
+import { ContentType } from "../content-type";
 
 type OrPromise<T> = Promise<T> | T;
-
-export interface ClientAuthenticationCallbackOptions {
-  authorizationServerMetadata: BaseAuthorizationServerMetadata;
-  body: Record<string, unknown>;
-  contentType: ContentType;
-  headers: FetchHeaders;
-  method: HttpMethod;
-  url: string;
-}
-
-export type ClientAuthenticationCallback = (
-  options: ClientAuthenticationCallbackOptions,
-) => OrPromise<void>;
 
 export type GenerateRandomCallback = (
   byteLength: number,
@@ -85,6 +70,28 @@ export type EncryptJweCallback = (
   encryptionJwk: Jwk;
   jwe: string;
 }>;
+
+export interface ClientAuthenticationCallbackOptionsBase<
+  AuthorizationServerMetadata = unknown,
+> {
+  authorizationServerMetadata: AuthorizationServerMetadata;
+  body: Record<string, unknown>;
+  contentType: ContentType;
+  headers: FetchHeaders;
+  method: HttpMethod;
+  url: string;
+}
+
+export type ClientAuthenticationCallbackOptions<
+  AuthorizationServerMetadata = unknown,
+  ExtraOptions extends object = object,
+> = ClientAuthenticationCallbackOptionsBase<AuthorizationServerMetadata> &
+  ExtraOptions;
+
+export type ClientAuthenticationCallback<
+  Options extends ClientAuthenticationCallbackOptions =
+    ClientAuthenticationCallbackOptions,
+> = (options: Options) => OrPromise<void>;
 
 export interface CallbackContext {
   clientAuthentication: ClientAuthenticationCallback;

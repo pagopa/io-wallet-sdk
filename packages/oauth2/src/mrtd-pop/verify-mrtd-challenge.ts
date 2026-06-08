@@ -1,9 +1,10 @@
-import type { CallbackContext } from "../common/callback-context";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
 
-import { decodeJwt } from "../common/jwt/decode-jwt";
-import { jwtSignerFromJwt } from "../common/jwt/decode-jwt-header";
-import { verifyJwt } from "../common/jwt/verify-jwt";
-import { JwtPayload, JwtSigner } from "../common/jwt/z-jwt";
+import { decodeJwt } from "@pagopa/io-wallet-utils";
+import { jwtSignerFromJwt } from "@pagopa/io-wallet-utils";
+import { verifyJwt } from "@pagopa/io-wallet-utils";
+import { JwtPayload, JwtSigner } from "@pagopa/io-wallet-utils";
+
 import { MrtdPopError } from "../errors";
 import {
   MrtdChallengeJwtHeader,

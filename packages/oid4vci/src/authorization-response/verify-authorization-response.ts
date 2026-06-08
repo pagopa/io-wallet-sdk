@@ -4,7 +4,7 @@ import {
   decodeJwt,
   jwtSignerFromJwt,
   verifyJwt,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 
 import { Oid4vciError } from "../errors";
 import {

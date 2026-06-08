@@ -6,7 +6,7 @@ import {
   calculateJwkThumbprint,
   decodeJwt,
   zJwk,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import {
   Fetch,
   UnexpectedStatusCodeError,

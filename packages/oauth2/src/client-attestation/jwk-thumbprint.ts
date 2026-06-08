@@ -1,8 +1,9 @@
-import type { CallbackContext } from "../common/callback-context";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
 
-import { HashAlgorithm } from "../common/hash";
-import { calculateJwkThumbprint } from "../common/jwk/calculate-jwk-thumbprint";
-import { Jwk } from "../common/jwk/z-jwk";
+import { HashAlgorithm } from "@pagopa/io-wallet-utils";
+import { calculateJwkThumbprint } from "@pagopa/io-wallet-utils";
+import { Jwk } from "@pagopa/io-wallet-utils";
+
 import { ClientAttestationError } from "../errors";
 
 const SUPPORTED_KTY = ["RSA", "EC"] as const;

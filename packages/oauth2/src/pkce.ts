@@ -1,8 +1,8 @@
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import { decodeUtf8String, encodeToBase64Url } from "@pagopa/io-wallet-utils";
+import { HashAlgorithm, type HashCallback } from "@pagopa/io-wallet-utils";
 
-import type { CallbackContext } from "./common/callback-context";
-
-import { HashAlgorithm, type HashCallback } from "./common/hash";
 import { Oauth2Error } from "./errors";
 
 export const PkceCodeChallengeMethod = {

@@ -1,8 +1,9 @@
+import type { Jwk } from "@pagopa/io-wallet-utils";
+import type { JweEncryptor, JwtSigner } from "@pagopa/io-wallet-utils";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import { addSecondsToDate, dateToSeconds } from "@pagopa/io-wallet-utils";
 
-import type { CallbackContext } from "../common/callback-context";
-import type { Jwk } from "../common/jwk/z-jwk";
-import type { JweEncryptor, JwtSigner } from "../common/jwt/z-jwt";
 import type {
   JarAuthorizationRequest,
   JarRequestObjectHeader,

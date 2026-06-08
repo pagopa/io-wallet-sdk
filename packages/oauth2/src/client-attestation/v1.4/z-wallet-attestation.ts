@@ -1,8 +1,7 @@
+import { zJwk } from "@pagopa/io-wallet-utils";
+import { zJwtHeader, zJwtPayload } from "@pagopa/io-wallet-utils";
+import { zCertificateChain, zTrustChain } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
-
-import { zJwk } from "../../common/jwk/z-jwk";
-import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
-import { zCertificateChain, zTrustChain } from "../../common/z-common";
 
 export const zWalletAttestationStatusV1_4 = z.object({
   status_list: z.object({

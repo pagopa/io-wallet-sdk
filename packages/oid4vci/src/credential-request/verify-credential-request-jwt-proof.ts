@@ -2,12 +2,12 @@ import {
   type CallbackContext,
   HashAlgorithm,
   Jwk,
-  Oauth2JwtParseError,
+  JwtParseError,
   calculateJwkThumbprint,
   decodeJwt,
   jwtSignerFromJwt,
   verifyJwt,
-} from "@pagopa/io-wallet-oauth2";
+} from "@pagopa/io-wallet-utils";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -300,7 +300,7 @@ const dispatchVerifyProof = createVersionDispatcher<
  * @throws {VerifyCredentialRequestJwtProofError} If nonce is expired, proof `iat` is outside
  *   freshness bounds, signature is invalid, or the signer key is not in the attested keys.
  * @throws {ValidationError} If JWT header or payload schema validation fails.
- * @throws {Oauth2JwtParseError} If JWT decoding fails.
+ * @throws {JwtParseError} If JWT decoding fails.
  */
 export async function verifyCredentialRequestJwtProof(
   options: VerifyCredentialRequestJwtProofOptionsV1_0,
@@ -335,7 +335,7 @@ export async function verifyCredentialRequestJwtProof(
       error instanceof VerifyKeyAttestationJwtError ||
       error instanceof ItWalletSpecsVersionError ||
       error instanceof ValidationError ||
-      error instanceof Oauth2JwtParseError
+      error instanceof JwtParseError
     ) {
       throw error;
     }

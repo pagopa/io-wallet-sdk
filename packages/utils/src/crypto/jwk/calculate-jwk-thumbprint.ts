@@ -1,10 +1,6 @@
-import {
-  ValidationError,
-  decodeUtf8String,
-  encodeToBase64Url,
-  parseWithErrorHandling,
-} from "@pagopa/io-wallet-utils";
-
+import { decodeUtf8String, encodeToBase64Url } from "../../encoding";
+import { ValidationError } from "../../errors/errors";
+import { parseWithErrorHandling } from "../../parse";
 import { HashAlgorithm, type HashCallback } from "../hash";
 import { Jwk, zJwk } from "./z-jwk";
 

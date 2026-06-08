@@ -1,3 +1,5 @@
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
+
 import {
   CONTENT_TYPES,
   HEADERS,
@@ -6,13 +8,11 @@ import {
   createFetcher,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
+import { decodeJwt } from "@pagopa/io-wallet-utils";
+import { jwtSignerFromJwt } from "@pagopa/io-wallet-utils";
+import { verifyJwt } from "@pagopa/io-wallet-utils";
+import { JwtSigner } from "@pagopa/io-wallet-utils";
 
-import type { CallbackContext } from "../common/callback-context";
-
-import { decodeJwt } from "../common/jwt/decode-jwt";
-import { jwtSignerFromJwt } from "../common/jwt/decode-jwt-header";
-import { verifyJwt } from "../common/jwt/verify-jwt";
-import { JwtSigner } from "../common/jwt/z-jwt";
 import { MrtdPopError } from "../errors";
 import {
   zMrtdPopInitResponseJwtHeader,
