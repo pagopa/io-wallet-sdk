@@ -2243,7 +2243,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@pagopa/eslint-config@4.0.6(eslint@9.39.4)(prettier@3.8.3)(vitest@3.2.4(yaml@2.9.0))':
+  '@pagopa/eslint-config@4.0.6(eslint@9.39.4)(prettier@3.8.3)(vitest@3.2.6(yaml@2.9.0))':
     dependencies:
       '@eslint/js': 9.39.4
       eslint: 9.39.4
@@ -2548,7 +2548,7 @@ snapshots:
       debug: 4.4.3
       minimatch: 10.2.5
       semver: 7.7.4
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@5.8.3)
       typescript: 5.8.3
     transitivePeerDependencies:
