@@ -1,5 +1,21 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.5.0
+
+### Minor Changes
+
+- 0774f2b: Refined credential offer related functionalities by:
+  - adding the issuerState optional field in create-authorization-request in the oauth2 package.
+  - adding checks of the offer's authorization_server field.
+  - adding support for ITW v1.4 offer,
+  - adding the authorization_server field to fetch the metadata from the issuer-suggested server in case of a credential offer flow.
+  - improving the `fetchMetadata` federation path by making it fetch another OID-FED EC in case the `openid-credential-issuer.authorization_servers` is present and doesn't specify the issuer itself.
+
+### Patch Changes
+
+- @pagopa/io-wallet-oid-federation@1.5.0
+- @pagopa/io-wallet-utils@1.5.0
+
 ## 1.4.2
 
 ### Patch Changes
