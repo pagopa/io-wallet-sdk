@@ -113,6 +113,10 @@ export function extractGrantDetails(
 
 export function extractGrantDetails(
   options: ExtractGrantDetailsOptions,
+): ExtractGrantDetailsResult;
+
+export function extractGrantDetails(
+  options: ExtractGrantDetailsOptions,
 ): ExtractGrantDetailsResult {
   return dispatchExtractGrantDetails(options);
 }
