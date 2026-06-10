@@ -106,6 +106,10 @@ export function resolveCredentialOffer(
   options: ResolveCredentialOfferOptionsV1_4,
 ): Promise<CredentialOfferV1_4>;
 
+export function resolveCredentialOffer(
+  options: ResolveCredentialOfferOptions,
+): Promise<CredentialOffer>;
+
 export async function resolveCredentialOffer(
   options: ResolveCredentialOfferOptions,
 ): Promise<CredentialOffer> {

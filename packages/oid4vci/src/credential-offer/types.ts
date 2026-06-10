@@ -81,26 +81,28 @@ interface BaseResolveCredentialOfferOptions {
 }
 
 /**
+ * Options for resolving a credential offer.
+ *
+ * Accepts a runtime-selected SDK config and defers version support checks to
+ * the credential offer parser.
+ */
+export interface ResolveCredentialOfferOptions extends BaseResolveCredentialOfferOptions {
+  config: IoWalletSdkConfig;
+}
+
+/**
  * Options for resolving a credential offer against the IT-Wallet v1.3 schema.
  */
-export interface ResolveCredentialOfferOptionsV1_3 extends BaseResolveCredentialOfferOptions {
+export interface ResolveCredentialOfferOptionsV1_3 extends ResolveCredentialOfferOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
 }
 
 /**
  * Options for resolving a credential offer against the IT-Wallet v1.4 schema.
  */
-export interface ResolveCredentialOfferOptionsV1_4 extends BaseResolveCredentialOfferOptions {
+export interface ResolveCredentialOfferOptionsV1_4 extends ResolveCredentialOfferOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
 }
-
-/**
- * Options for resolving a credential offer.
- * The configured version selects the schema used to parse the offer.
- */
-export type ResolveCredentialOfferOptions =
-  | ResolveCredentialOfferOptionsV1_3
-  | ResolveCredentialOfferOptionsV1_4;
 
 /**
  * Base options shared across all validate-credential-offer versions.
@@ -128,9 +130,20 @@ interface BaseValidateCredentialOfferOptions {
 }
 
 /**
+ * Options for validating a credential offer against the configured IT-Wallet specification.
+ */
+export interface ValidateCredentialOfferOptions extends BaseValidateCredentialOfferOptions {
+  config: IoWalletSdkConfig;
+  /**
+   * The credential offer to validate against the configured IT-Wallet specification.
+   */
+  credentialOffer: CredentialOfferV1_3 | CredentialOfferV1_4;
+}
+
+/**
  * Options for validating an IT-Wallet v1.3 credential offer.
  */
-export interface ValidateCredentialOfferOptionsV1_3 extends BaseValidateCredentialOfferOptions {
+export interface ValidateCredentialOfferOptionsV1_3 extends ValidateCredentialOfferOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   /**
    * The credential offer to validate against IT-Wallet v1.3 specifications.
@@ -141,7 +154,7 @@ export interface ValidateCredentialOfferOptionsV1_3 extends BaseValidateCredenti
 /**
  * Options for validating an IT-Wallet v1.4 credential offer.
  */
-export interface ValidateCredentialOfferOptionsV1_4 extends BaseValidateCredentialOfferOptions {
+export interface ValidateCredentialOfferOptionsV1_4 extends ValidateCredentialOfferOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
   /**
    * The credential offer to validate against IT-Wallet v1.4 specifications.
@@ -150,16 +163,20 @@ export interface ValidateCredentialOfferOptionsV1_4 extends BaseValidateCredenti
 }
 
 /**
- * Options for validating a credential offer against IT-Wallet specifications.
+ * Options for extracting grant details from a credential offer.
  */
-export type ValidateCredentialOfferOptions =
-  | ValidateCredentialOfferOptionsV1_3
-  | ValidateCredentialOfferOptionsV1_4;
+export interface ExtractGrantDetailsOptions {
+  config: IoWalletSdkConfig;
+  /**
+   * The credential offer to extract grant details from.
+   */
+  credentialOffer: CredentialOfferV1_3 | CredentialOfferV1_4;
+}
 
 /**
  * Options for extracting grant details from an IT-Wallet v1.3 credential offer.
  */
-export interface ExtractGrantDetailsOptionsV1_3 {
+export interface ExtractGrantDetailsOptionsV1_3 extends ExtractGrantDetailsOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_3>;
   /**
    * The credential offer to extract grant details from.
@@ -170,20 +187,13 @@ export interface ExtractGrantDetailsOptionsV1_3 {
 /**
  * Options for extracting grant details from an IT-Wallet v1.4 credential offer.
  */
-export interface ExtractGrantDetailsOptionsV1_4 {
+export interface ExtractGrantDetailsOptionsV1_4 extends ExtractGrantDetailsOptions {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
   /**
    * The credential offer to extract grant details from.
    */
   credentialOffer: CredentialOfferV1_4;
 }
-
-/**
- * Options for extracting grant details from a credential offer.
- */
-export type ExtractGrantDetailsOptions =
-  | ExtractGrantDetailsOptionsV1_3
-  | ExtractGrantDetailsOptionsV1_4;
 
 /**
  * Result of extracting grant details from an IT-Wallet v1.3 credential offer.
