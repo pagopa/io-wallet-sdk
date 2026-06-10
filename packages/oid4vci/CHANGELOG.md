@@ -1,5 +1,18 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.5.2
+
+### Patch Changes
+
+- 84d98e0: - Added scope?: never to ExtractGrantDetailsResultV1_4
+  - Made credentialIssuerMetadata mandatory in BaseValidateCredentialOfferOptions
+  - Removed inline substitution of oauth_authorization_servers with the one of the external authorizationServer in the issuer EC returned by fetchMetadata.
+- f39c741: fix: allow credential-offer APIs to accept runtime-selected IoWalletSdkConfig values
+  - @pagopa/io-wallet-oauth2@1.5.2
+  - @pagopa/io-wallet-oid-federation@1.5.2
+  - @pagopa/io-wallet-oid4vp@1.5.2
+  - @pagopa/io-wallet-utils@1.5.2
+
 ## 1.5.1
 
 ### Patch Changes
