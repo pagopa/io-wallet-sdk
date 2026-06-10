@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.5.1
+
+### Patch Changes
+
+- 9bdfaea: fix: mdoc credential_signing_alg_values_supported numeric values in SupportedCredentialMetadata V1.0
+  - @pagopa/io-wallet-utils@1.5.1
+
 ## 1.5.0
 
 ### Patch Changes
