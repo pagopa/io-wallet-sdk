@@ -44,6 +44,7 @@ describe("validateCredentialOffer", () => {
     it("should validate a valid credential offer", async () => {
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: validCredentialOffer,
       };
 
@@ -94,6 +95,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: multiConfigOffer,
       };
 
@@ -110,6 +112,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: invalidOffer,
       };
 
@@ -132,6 +135,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: invalidOffer,
       };
 
@@ -154,6 +158,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: invalidOffer,
       };
 
@@ -175,6 +180,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: invalidOffer,
       };
 
@@ -202,6 +208,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: invalidOffer,
       };
 
@@ -353,7 +360,7 @@ describe("validateCredentialOffer", () => {
       await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
     });
 
-    it("should throw CredentialOfferError when authorization_server is present but no credentialIssuerMetadata is provided", async () => {
+    it("should throw CredentialOfferError when authorization_server is present but credentialIssuerMetadata has no authorization_servers", async () => {
       const offer: CredentialOfferV1_3 = {
         ...validCredentialOffer,
         grants: {
@@ -366,8 +373,8 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: offer,
-        // No credentialIssuerMetadata provided
       };
 
       await expect(validateCredentialOffer(options)).rejects.toThrow(
@@ -415,6 +422,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: offer,
       };
 
@@ -433,6 +441,7 @@ describe("validateCredentialOffer", () => {
 
       const options: ValidateCredentialOfferOptionsV1_3 = {
         config: v1_3Config,
+        credentialIssuerMetadata: {},
         credentialOffer: offer,
       };
 
@@ -454,6 +463,7 @@ describe("validateCredentialOffer", () => {
     it("should validate a v1.4 offer that carries no scope", async () => {
       const options: ValidateCredentialOfferOptionsV1_4 = {
         config: v1_4Config,
+        credentialIssuerMetadata: {},
         credentialOffer: validV1_4Offer,
       };
 
@@ -463,6 +473,7 @@ describe("validateCredentialOffer", () => {
     it("should validate a v1.4 offer with only the required fields", async () => {
       const options: ValidateCredentialOfferOptionsV1_4 = {
         config: v1_4Config,
+        credentialIssuerMetadata: {},
         credentialOffer: {
           credential_configuration_ids: ["UniversityDegree"],
           credential_issuer: "https://issuer.example.com",
@@ -478,6 +489,7 @@ describe("validateCredentialOffer", () => {
     it("should still enforce HTTPS credential_issuer for a v1.4 offer", async () => {
       const options: ValidateCredentialOfferOptionsV1_4 = {
         config: v1_4Config,
+        credentialIssuerMetadata: {},
         credentialOffer: {
           ...validV1_4Offer,
           credential_issuer: "http://issuer.example.com",
@@ -492,6 +504,7 @@ describe("validateCredentialOffer", () => {
     it("should report the v1.4 version label when grants is missing", async () => {
       const options: ValidateCredentialOfferOptionsV1_4 = {
         config: v1_4Config,
+        credentialIssuerMetadata: {},
         credentialOffer: {
           credential_configuration_ids: ["UniversityDegree"],
           credential_issuer: "https://issuer.example.com",
