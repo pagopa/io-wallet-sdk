@@ -233,12 +233,9 @@ async function applyFederationAuthorizationServerSelection(
     verifyJwt,
   );
 
-  const resolvedAuthorizationServer =
-    authorizationServerResult?.metadata?.oauth_authorization_server;
-
-  if (!resolvedAuthorizationServer) {
+  if (!authorizationServerResult) {
     throw new ValidationError(
-      `Federation discovery did not yield oauth_authorization_server metadata for authorization server '${selectedAuthorizationServer}'`,
+      `Federation discovery did not yield OpenID Federation metadata for authorization server '${selectedAuthorizationServer}'`,
     );
   }
 
@@ -246,10 +243,6 @@ async function applyFederationAuthorizationServerSelection(
     ...federationResult,
     authorization_server_federation_claims:
       authorizationServerResult.openid_federation_claims,
-    metadata: {
-      ...federationResult.metadata,
-      oauth_authorization_server: resolvedAuthorizationServer,
-    } as RawFederationResult["metadata"],
   };
 }
 

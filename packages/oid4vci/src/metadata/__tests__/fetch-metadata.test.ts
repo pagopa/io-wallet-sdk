@@ -738,12 +738,27 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
       });
 
       expect(result.discoveredVia).toBe("federation");
+      // The issuer's inline oauth_authorization_server is retained; the selected
+      // server is surfaced only through authorization_server_federation_claims.
       expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+        "https://auth.example.it",
+      );
+      // The selected authorization server's federation entity statement is
+      // present and carries its own well-formed claims.
+      const authorizationServerFederationClaims = (
+        result as MetadataResponseV1_3
+      ).authorization_server_federation_claims;
+      expect(authorizationServerFederationClaims).toBeDefined();
+      expect(authorizationServerFederationClaims?.iss).toBe(
         "https://as2.example.it",
       );
+      expect(authorizationServerFederationClaims?.sub).toBe(
+        "https://as2.example.it",
+      );
+      expect(authorizationServerFederationClaims?.jwks.keys).toHaveLength(1);
       expect(
-        (result as MetadataResponseV1_3).authorization_server_federation_claims
-          ?.iss,
+        authorizationServerFederationClaims?.metadata
+          ?.oauth_authorization_server?.issuer,
       ).toBe("https://as2.example.it");
       expect(mockFetch).toHaveBeenCalledTimes(2);
       expect(mockFetch).toHaveBeenNthCalledWith(
@@ -855,8 +870,9 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
           iss: "https://issuer.example.it",
           jwks: mockJwks,
           metadata: {
-            // Inline block present but the issuer is not among the declared
-            // servers: it must be discarded.
+            // Inline block present and retained on the result even though the
+            // issuer is not among the declared servers; the selected server is
+            // resolved separately via federation.
             oauth_authorization_server: authorizationServerMetadata,
             openid_credential_issuer: {
               ...credentialIssuerMetadata,
@@ -897,8 +913,10 @@ describe("fetchMetadata - offer authorization server compatibility", () => {
         const result = await fetchMetadata(baseOptions);
 
         expect(result.discoveredVia).toBe("federation");
+        // The issuer's inline oauth_authorization_server is retained even when
+        // the selected server is resolved separately via federation.
         expect(result.metadata.oauth_authorization_server?.issuer).toBe(
-          "https://as2.example.it",
+          "https://auth.example.it",
         );
         expect(mockFetch).toHaveBeenCalledTimes(2);
         expect(mockFetch).toHaveBeenNthCalledWith(

@@ -124,7 +124,7 @@ interface BaseValidateCredentialOfferOptions {
    *   ]
    * };
    */
-  credentialIssuerMetadata?: {
+  credentialIssuerMetadata: {
     authorization_servers?: [string, ...string[]];
   };
 }
@@ -251,6 +251,13 @@ export interface ExtractGrantDetailsResultV1_4 {
      * OPTIONAL. Used to correlate the authorization request with the credential offer.
      */
     issuerState?: string;
+
+    /**
+     * Version 1.4 has dropped support for the scope field,
+     * But typescript inference might have trouble recognizing this fact
+     * in its union type, so this is needed
+     */
+    scope?: never;
   };
 
   /**
