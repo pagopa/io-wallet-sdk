@@ -23,7 +23,7 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
               {
                 description: "Full name of the degree holder",
                 locale: "en-US",
-                name: "Full Name",
+                label: "Full Name",
               },
             ],
             mandatory: true,
@@ -39,7 +39,7 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
               "uri#integrity": "sha256-...",
             },
             description: "University degree credential",
-            label: "University Degree",
+            name: "University Degree",
             locale: "en-US",
             logo: {
               alt_text: "University logo",
@@ -76,7 +76,7 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
     "https://issuer.example.com/credential_deferred",
   display: [
     {
-      label: "Example University",
+      name: "Example University",
       locale: "en-US",
     },
   ],
@@ -115,7 +115,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             display: [
               {
-                label: "Simple Credential",
+                name: "Simple Credential",
                 locale: "en-US",
               },
             ],
@@ -154,29 +154,6 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
     ).not.toThrow();
   });
 
-  it("should reject metadata with name instead of label in credential display", () => {
-    const withNameInDisplay = {
-      ...validMetadata,
-      credential_configurations_supported: {
-        TestCred: {
-          ...validMetadata.credential_configurations_supported.UniversityDegree,
-          credential_metadata: {
-            display: [
-              {
-                locale: "en-US",
-                name: "University Degree", // name is not valid in v1.4 CredentialDisplayMetadata
-              },
-            ],
-          },
-        },
-      },
-    };
-
-    expect(() =>
-      itWalletCredentialIssuerMetadata.parse(withNameInDisplay),
-    ).toThrow();
-  });
-
   it("should reject metadata missing both label and name in credential display", () => {
     const withoutLabel = {
       ...validMetadata,
@@ -209,7 +186,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             claims: [
               {
-                display: [{ locale: "en-US", name: "Full Name" }],
+                display: [{ locale: "en-US", label: "Full Name" }],
                 path: ["name"],
               },
             ],
@@ -235,7 +212,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             display: [
               {
-                label: "Mobile Driving License",
+                name: "Mobile Driving License",
                 locale: "en-US",
               },
             ],

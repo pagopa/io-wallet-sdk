@@ -17,7 +17,7 @@ export const CredentialDisplayMetadata = z.object({
   background_color: z.string().optional(),
   background_image: ImageMetadata.optional(),
   description: z.string().optional(),
-  label: z.string(),
+  name: z.string(),
   locale: z.string(),
   logo: ImageMetadata.optional(),
   watermark_image: ImageMetadata.optional(),
@@ -27,7 +27,7 @@ export type ClaimDisplayMetadata = z.infer<typeof ClaimDisplayMetadata>;
 export const ClaimDisplayMetadata = z.object({
   description: z.string().optional(),
   locale: z.string(),
-  name: z.string(),
+  label: z.string(),
 });
 
 export type ClaimsMetadata = z.infer<typeof ClaimsMetadata>;
