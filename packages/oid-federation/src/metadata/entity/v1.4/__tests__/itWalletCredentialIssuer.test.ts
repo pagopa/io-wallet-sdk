@@ -22,8 +22,8 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
             display: [
               {
                 description: "Full name of the degree holder",
-                locale: "en-US",
                 label: "Full Name",
+                locale: "en-US",
               },
             ],
             mandatory: true,
@@ -39,13 +39,13 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
               "uri#integrity": "sha256-...",
             },
             description: "University degree credential",
-            name: "University Degree",
             locale: "en-US",
             logo: {
               alt_text: "University logo",
               uri: "https://issuer.example.org/logo.svg",
               "uri#integrity": "sha256-...",
             },
+            name: "University Degree",
             watermark_image: {
               uri: "https://issuer.example.org/watermark.svg",
               "uri#integrity": "sha256-...",
@@ -76,8 +76,8 @@ const validMetadata: ItWalletCredentialIssuerMetadata = {
     "https://issuer.example.com/credential_deferred",
   display: [
     {
-      name: "Example University",
       locale: "en-US",
+      name: "Example University",
     },
   ],
   jwks: {
@@ -115,8 +115,8 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             display: [
               {
-                name: "Simple Credential",
                 locale: "en-US",
+                name: "Simple Credential",
               },
             ],
           },
@@ -186,7 +186,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             claims: [
               {
-                display: [{ locale: "en-US", label: "Full Name" }],
+                display: [{ label: "Full Name", locale: "en-US" }],
                 path: ["name"],
               },
             ],
@@ -212,8 +212,8 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             display: [
               {
-                name: "Mobile Driving License",
                 locale: "en-US",
+                name: "Mobile Driving License",
               },
             ],
           },

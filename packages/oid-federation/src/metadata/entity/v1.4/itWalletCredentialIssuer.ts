@@ -17,17 +17,17 @@ export const CredentialDisplayMetadata = z.object({
   background_color: z.string().optional(),
   background_image: ImageMetadata.optional(),
   description: z.string().optional(),
-  name: z.string(),
   locale: z.string(),
   logo: ImageMetadata.optional(),
+  name: z.string(),
   watermark_image: ImageMetadata.optional(),
 });
 
 export type ClaimDisplayMetadata = z.infer<typeof ClaimDisplayMetadata>;
 export const ClaimDisplayMetadata = z.object({
   description: z.string().optional(),
-  locale: z.string(),
   label: z.string(),
+  locale: z.string(),
 });
 
 export type ClaimsMetadata = z.infer<typeof ClaimsMetadata>;
