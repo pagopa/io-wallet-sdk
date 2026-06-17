@@ -1,0 +1,262 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  type ItWalletCredentialIssuerMetadata,
+  itWalletCredentialIssuerMetadata,
+} from "../itWalletCredentialIssuer";
+
+const validMetadata: ItWalletCredentialIssuerMetadata = {
+  authorization_servers: ["https://auth.example.com"],
+  batch_credential_issuance: {
+    batch_size: 10,
+  },
+  credential_configurations_supported: {
+    UniversityDegree: {
+      authentic_sources: {
+        dataset_id: "university_degrees",
+        entity_id: "https://university.example.com",
+      },
+      credential_metadata: {
+        claims: [
+          {
+            display: [
+              {
+                description: "Full name of the degree holder",
+                locale: "en-US",
+                name: "Full Name",
+              },
+            ],
+            mandatory: true,
+            path: ["credentialSubject", "name"],
+            sd: "never",
+          },
+        ],
+        display: [
+          {
+            background_color: "#12107c",
+            background_image: {
+              uri: "https://issuer.example.org/bg.svg",
+              "uri#integrity": "sha256-...",
+            },
+            description: "University degree credential",
+            label: "University Degree",
+            locale: "en-US",
+            logo: {
+              alt_text: "University logo",
+              uri: "https://issuer.example.org/logo.svg",
+              "uri#integrity": "sha256-...",
+            },
+            watermark_image: {
+              uri: "https://issuer.example.org/watermark.svg",
+              "uri#integrity": "sha256-...",
+            },
+          },
+        ],
+      },
+      credential_signing_alg_values_supported: ["ES256"],
+      cryptographic_binding_methods_supported: ["jwk"],
+      format: "dc+sd-jwt",
+      proof_types_supported: {
+        jwt: {
+          key_attestations_required: {
+            key_storage: ["iso_18045_high"],
+            user_authentication: ["iso_18045_high"],
+          },
+          proof_signing_alg_values_supported: ["ES256"],
+        },
+      },
+      schema_id: "https://schema.example.org/UniversityDegree.json",
+      scope: "UniversityDegree",
+      vct: "UniversityDegree",
+    },
+  },
+  credential_endpoint: "https://issuer.example.com/credential",
+  credential_issuer: "https://issuer.example.com",
+  deferred_credential_endpoint:
+    "https://issuer.example.com/credential_deferred",
+  display: [
+    {
+      label: "Example University",
+      locale: "en-US",
+    },
+  ],
+  jwks: {
+    keys: [
+      {
+        crv: "P-256",
+        kid: "key-1",
+        kty: "EC",
+        x: "...",
+        y: "...",
+      },
+    ],
+  },
+  nonce_endpoint: "https://issuer.example.com/nonce",
+  notification_endpoint: "https://issuer.example.com/notification",
+  status_list_aggregation_endpoint: "https://issuer.example.com/status-list",
+  trust_frameworks_supported: ["it_wallet"],
+};
+
+describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
+  it("should validate complete v1.4 metadata with label field", () => {
+    expect(() =>
+      itWalletCredentialIssuerMetadata.parse(validMetadata),
+    ).not.toThrow();
+  });
+
+  it("should validate metadata with optional fields omitted", () => {
+    const minimalMetadata: ItWalletCredentialIssuerMetadata = {
+      credential_configurations_supported: {
+        SimpleCred: {
+          authentic_sources: {
+            dataset_id: "simple",
+            entity_id: "https://simple.example.com",
+          },
+          credential_metadata: {
+            display: [
+              {
+                label: "Simple Credential",
+                locale: "en-US",
+              },
+            ],
+          },
+          credential_signing_alg_values_supported: ["ES256"],
+          cryptographic_binding_methods_supported: ["jwk"],
+          format: "dc+sd-jwt",
+          proof_types_supported: {
+            jwt: {
+              proof_signing_alg_values_supported: ["ES256"],
+            },
+          },
+          schema_id: "https://schema.example.org/Simple.json",
+          scope: "SimpleCred",
+          vct: "SimpleCred",
+        },
+      },
+      credential_endpoint: "https://issuer.example.com/credential",
+      credential_issuer: "https://issuer.example.com",
+      jwks: {
+        keys: [
+          {
+            crv: "P-256",
+            kid: "key-1",
+            kty: "EC",
+            x: "...",
+            y: "...",
+          },
+        ],
+      },
+      trust_frameworks_supported: ["it_wallet"],
+    };
+
+    expect(() =>
+      itWalletCredentialIssuerMetadata.parse(minimalMetadata),
+    ).not.toThrow();
+  });
+
+  it("should reject metadata with name instead of label in credential display", () => {
+    const withNameInDisplay = {
+      ...validMetadata,
+      credential_configurations_supported: {
+        TestCred: {
+          ...validMetadata.credential_configurations_supported.UniversityDegree,
+          credential_metadata: {
+            display: [
+              {
+                locale: "en-US",
+                name: "University Degree", // name is not valid in v1.4 CredentialDisplayMetadata
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    expect(() =>
+      itWalletCredentialIssuerMetadata.parse(withNameInDisplay),
+    ).toThrow();
+  });
+
+  it("should reject metadata missing both label and name in credential display", () => {
+    const withoutLabel = {
+      ...validMetadata,
+      credential_configurations_supported: {
+        TestCred: {
+          ...validMetadata.credential_configurations_supported.UniversityDegree,
+          credential_metadata: {
+            display: [
+              {
+                locale: "en-US",
+                // label is required and missing
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    expect(() =>
+      itWalletCredentialIssuerMetadata.parse(withoutLabel),
+    ).toThrow();
+  });
+
+  it("should accept name in ClaimDisplayMetadata (unchanged from v1.3)", () => {
+    const withClaimName = {
+      ...validMetadata,
+      credential_configurations_supported: {
+        TestCred: {
+          ...validMetadata.credential_configurations_supported.UniversityDegree,
+          credential_metadata: {
+            claims: [
+              {
+                display: [{ locale: "en-US", name: "Full Name" }],
+                path: ["name"],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    expect(() =>
+      itWalletCredentialIssuerMetadata.parse(withClaimName),
+    ).not.toThrow();
+  });
+
+  it("should validate mso_mdoc format credential", () => {
+    const msoMdocMetadata = {
+      ...validMetadata,
+      credential_configurations_supported: {
+        mDL: {
+          authentic_sources: {
+            dataset_id: "driving_licenses",
+            entity_id: "https://dmv.example.gov",
+          },
+          credential_metadata: {
+            display: [
+              {
+                label: "Mobile Driving License",
+                locale: "en-US",
+              },
+            ],
+          },
+          credential_signing_alg_values_supported: [-7],
+          cryptographic_binding_methods_supported: ["cose_key"],
+          doctype: "org.iso.18013.5.1.mDL",
+          format: "mso_mdoc",
+          proof_types_supported: {
+            jwt: {
+              proof_signing_alg_values_supported: ["ES256"],
+            },
+          },
+          schema_id: "https://schema.example.org/mDL.json",
+          scope: "mDL",
+        },
+      },
+    };
+
+    expect(() =>
+      itWalletCredentialIssuerMetadata.parse(msoMdocMetadata),
+    ).not.toThrow();
+  });
+});

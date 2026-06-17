@@ -66,6 +66,22 @@ export {
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
 } from "./metadata/entity/v1.3/itWalletSolution";
 export type { ItWalletSolutionEntityMetadata as ItWalletSolutionEntityMetadataV1_3 } from "./metadata/entity/v1.3/itWalletSolution";
+export {
+  itWalletCredentialIssuerIdentifier as itWalletCredentialIssuerIdentifierV1_4,
+  itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_4,
+  zKeyStorageLevel as zKeyStorageLevelV1_4,
+} from "./metadata/entity/v1.4/itWalletCredentialIssuer";
+export type {
+  AuthenticSources as AuthenticSourcesV1_4,
+  ClaimDisplayMetadata as ClaimDisplayMetadataV1_4,
+  ClaimsMetadata as ClaimsMetadataV1_4,
+  CredentialDisplayMetadata as CredentialDisplayMetadataV1_4,
+  CredentialMetadata as CredentialMetadataV1_4,
+  ImageMetadata as ImageMetadataV1_4,
+  ItWalletCredentialIssuerMetadata as ItWalletCredentialIssuerMetadataV1_4,
+  KeyStorageLevel as KeyStorageLevelV1_4,
+  SupportedCredentialMetadata as SupportedCredentialMetadataV1_4,
+} from "./metadata/entity/v1.4/itWalletCredentialIssuer";
 export * from "./metadata/itWalletMetadata";
 export * from "./metadata/operator/metadata-merge-strategy";
 export type * from "./metadata/operator/metadata-operator";
