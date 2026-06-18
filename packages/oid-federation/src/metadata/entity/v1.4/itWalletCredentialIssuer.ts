@@ -109,7 +109,7 @@ export const SupportedCredentialMetadata = z.intersection(
  * IT Wallet Credential Issuer Metadata for v1.4 specification
  *
  * Changes from v1.3:
- * - MODIFIED: CredentialDisplayMetadata uses `label` instead of `name` (IETF draft-ietf-oauth-sd-jwt-vc-12 §claim-display-metadata)
+ * - MODIFIED: ClaimDisplayMetadata uses `label` instead of `name` (IETF draft-ietf-oauth-sd-jwt-vc-12 §claim-display-metadata)
  *
  * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.4.0/en/credential-issuer-solution.html#metadata-for-openid-credential-issuer}
  */
