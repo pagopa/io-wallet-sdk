@@ -73,7 +73,7 @@ export const itWalletMetadataV1_3 = z.strictObject({
     itWalletSolutionEntityMetadataV1_3.optional(),
 });
 
-// v1.4 combined metadata — uses v1.4 credential issuer schema (label replaces name in CredentialDisplayMetadata)
+// v1.4 combined metadata — uses v1.4 credential issuer schema (ClaimDisplayMetadata: label replaces name)
 export const itWalletMetadataV1_4 = z.strictObject({
   [itWalletAuthorizationServerIdentifierV1_3]:
     itWalletAuthorizationServerMetadataV1_3.optional(),
