@@ -172,9 +172,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
       },
     };
 
-    expect(() =>
-      itWalletCredentialIssuerMetadata.parse(withoutName),
-    ).toThrow();
+    expect(() => itWalletCredentialIssuerMetadata.parse(withoutName)).toThrow();
   });
 
   it("should reject name in ClaimDisplayMetadata (label is required in v1.4)", () => {
@@ -186,7 +184,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             claims: [
               {
-                display: [{ name: "Full Name", locale: "en-US" }],
+                display: [{ locale: "en-US", name: "Full Name" }],
                 path: ["name"],
               },
             ],
