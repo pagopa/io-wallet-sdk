@@ -177,7 +177,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
     ).toThrow();
   });
 
-  it("should accept name in ClaimDisplayMetadata (unchanged from v1.3)", () => {
+  it("should reject name in ClaimDisplayMetadata (label is required in v1.4)", () => {
     const withClaimName = {
       ...validMetadata,
       credential_configurations_supported: {
@@ -186,7 +186,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
           credential_metadata: {
             claims: [
               {
-                display: [{ label: "Full Name", locale: "en-US" }],
+                display: [{ name: "Full Name", locale: "en-US" }],
                 path: ["name"],
               },
             ],
@@ -197,7 +197,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
 
     expect(() =>
       itWalletCredentialIssuerMetadata.parse(withClaimName),
-    ).not.toThrow();
+    ).toThrow();
   });
 
   it("should validate mso_mdoc format credential", () => {
