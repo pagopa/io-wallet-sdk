@@ -154,8 +154,8 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
     ).not.toThrow();
   });
 
-  it("should reject metadata missing both label and name in credential display", () => {
-    const withoutLabel = {
+  it("should reject metadata missing required name in credential display", () => {
+    const withoutName = {
       ...validMetadata,
       credential_configurations_supported: {
         TestCred: {
@@ -164,7 +164,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
             display: [
               {
                 locale: "en-US",
-                // label is required and missing
+                // name is required and missing
               },
             ],
           },
@@ -173,7 +173,7 @@ describe("itWalletCredentialIssuerMetadata v1.4 metadata", () => {
     };
 
     expect(() =>
-      itWalletCredentialIssuerMetadata.parse(withoutLabel),
+      itWalletCredentialIssuerMetadata.parse(withoutName),
     ).toThrow();
   });
 
