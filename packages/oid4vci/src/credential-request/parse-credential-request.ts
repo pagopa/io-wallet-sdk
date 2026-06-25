@@ -278,7 +278,7 @@ async function validateProofJwkUniqueness(options: {
   const uniqueThumbprints = new Set(thumbprints);
 
   if (uniqueThumbprints.size !== thumbprints.length) {
-    throw new InvalidDpopProofError(
+    throw new ValidationError(
       "Credential request proofs must use unique jwk header values",
     );
   }
