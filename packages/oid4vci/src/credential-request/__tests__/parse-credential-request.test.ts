@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CredentialAuthorizationHeaderError,
+  InvalidDpopProofError,
   MissingDpopProofError,
 } from "../../errors";
 import {
@@ -267,7 +268,7 @@ describe("parseCredentialRequest", () => {
     ).rejects.toThrow(MissingDpopProofError);
   });
 
-  it("throws MissingDpopProofError when DPoP header value is not a valid JWT", async () => {
+  it("throws InvalidDpopProofError when DPoP header value is not a valid JWT", async () => {
     const config = new IoWalletSdkConfig({
       itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
     });
@@ -287,7 +288,7 @@ describe("parseCredentialRequest", () => {
           dpop: "not-a-jwt",
         }),
       }),
-    ).rejects.toThrow(MissingDpopProofError);
+    ).rejects.toThrow(InvalidDpopProofError);
   });
 
   it("throws CredentialAuthorizationHeaderError when Authorization header is absent", async () => {
