@@ -69,7 +69,7 @@ importers:
   packages/oid-federation:
     dependencies:
       '@pagopa/io-wallet-utils':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../utils
       buffer:
         specifier: 'catalog:'
@@ -107,13 +107,13 @@ importers:
   packages/oid4vp:
     dependencies:
       '@pagopa/io-wallet-oauth2':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../oauth2
       '@pagopa/io-wallet-oid-federation':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../oid-federation
       '@pagopa/io-wallet-utils':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../utils
       zod:
         specifier: 'catalog:'

@@ -30,10 +30,10 @@
     "test": "vitest"
   },
   "dependencies": {
-    "zod": "catalog:",
-    "@pagopa/io-wallet-utils": "workspace:",
-    "@pagopa/io-wallet-oauth2": "workspace:",
-    "@pagopa/io-wallet-oid-federation": "workspace:"
+    "@pagopa/io-wallet-oid-federation": "workspace:*",
+    "@pagopa/io-wallet-oauth2": "workspace:*",
+    "@pagopa/io-wallet-utils": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "jose": "catalog:",

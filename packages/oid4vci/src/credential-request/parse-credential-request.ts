@@ -17,7 +17,8 @@ import {
 
 import {
   CredentialAuthorizationHeaderError,
-  MissingDpopProofError as CredentialDpopProofError,
+  InvalidDpopProofError,
+  MissingDpopProofError,
   ParseCredentialRequestError,
 } from "../errors";
 import {
@@ -400,15 +401,13 @@ function parseDpopProof(headers: FetchHeaders): string {
   const extracted = extractDpopJwtFromHeaders(headers);
 
   if (!extracted.valid) {
-    throw new CredentialDpopProofError(
+    throw new InvalidDpopProofError(
       "Credential request contains a 'DPoP' header, but the value is not a valid JWT format",
     );
   }
 
   if (!extracted.dpopJwt) {
-    throw new CredentialDpopProofError(
-      "Credential request contains a 'DPoP' header, but the value is missing or empty",
-    );
+    throw new MissingDpopProofError();
   }
 
   return extracted.dpopJwt;
@@ -517,7 +516,8 @@ const dispatchParseCredentialRequest = createVersionDispatcher<
  * @param options - Parsing options and validation context.
  * @returns Promise resolving to the normalized parsed credential request including the extracted `accessToken` and `dpopProof`.
  * @throws {CredentialAuthorizationHeaderError} If the `Authorization` header is absent or invalid.
- * @throws {CredentialDpopProofError} If the `DPoP` header is absent or not a valid compact JWT.
+ * @throws {MissingDpopProofError} If the `DPoP` header is absent.
+ * @throws {InvalidDpopProofError} If the `DPoP` header is present but not a valid compact JWT.
  * @throws {ValidationError} If request body schema or semantic checks fail.
  * @throws {JwtParseError} If a proof JWT cannot be decoded.
  * @throws {ParseCredentialRequestError} For unexpected parsing failures.
@@ -545,7 +545,8 @@ export async function parseCredentialRequest(
       error instanceof JwtParseError ||
       error instanceof ValidationError ||
       error instanceof CredentialAuthorizationHeaderError ||
-      error instanceof CredentialDpopProofError
+      error instanceof MissingDpopProofError ||
+      error instanceof InvalidDpopProofError
     ) {
       throw error;
     }
