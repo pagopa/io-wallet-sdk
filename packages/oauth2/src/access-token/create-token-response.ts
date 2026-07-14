@@ -7,6 +7,7 @@ import {
   addSecondsToDate,
   calculateJwkThumbprint,
   dateToSeconds,
+  jwtHeaderFromJwtSigner,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
