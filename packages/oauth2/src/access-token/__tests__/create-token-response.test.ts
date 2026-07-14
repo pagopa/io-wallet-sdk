@@ -130,7 +130,7 @@ describe("createAccessTokenResponse", () => {
         exp: 1704067500,
         iat: 1704067200,
         iss: "https://as.example.com",
-        jti: "AQIDBA",
+        jti: RT_EXPECTED_JTI,
         sub: "subject-id",
       }),
     });
