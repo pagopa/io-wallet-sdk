@@ -76,3 +76,32 @@ export const zAccessTokenProfileJwtPayload = z.looseObject({
 export type AccessTokenProfileJwtPayload = z.infer<
   typeof zAccessTokenProfileJwtPayload
 >;
+
+export const zRefreshTokenProfileJwtHeader = z.looseObject({
+  ...zJwtHeader.shape,
+  kid: z.string(),
+  typ: z.literal("rt+jwt"),
+});
+
+export type RefreshTokenProfileJwtHeader = z.infer<
+  typeof zRefreshTokenProfileJwtHeader
+>;
+
+export const zRefreshTokenProfileJwtPayload = z.looseObject({
+  ...zJwtPayload.shape,
+  aud: z.string(),
+  client_id: z.string(),
+  cnf: z.object({
+    jkt: z.string(),
+  }),
+  exp: z.number().int(),
+  iat: z.number().int(),
+  iss: z.string(),
+  jti: z.uuidv4(),
+  nbf: z.number().int(),
+  sub: z.string(),
+});
+
+export type RefreshTokenProfileJwtPayload = z.infer<
+  typeof zRefreshTokenProfileJwtPayload
+>;
