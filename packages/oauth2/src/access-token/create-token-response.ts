@@ -1,6 +1,6 @@
 import {
   CallbackContext,
-  GenerateRandomCallback,
+  type GenerateRandomCallback,
   HashAlgorithm,
   JwtSigner,
   calculateJwkThumbprint,
