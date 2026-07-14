@@ -97,7 +97,7 @@ export const zRefreshTokenProfileJwtPayload = z.looseObject({
   exp: z.number().int(),
   iat: z.number().int(),
   iss: z.string(),
-  jti: z.uuidv4(),
+  jti: z.string().max(MAX_JTI_LENGTH),
   nbf: z.number().int(),
   sub: z.string(),
 });
