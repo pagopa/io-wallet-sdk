@@ -1,5 +1,16 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.5.3
+
+### Patch Changes
+
+- bb7ab56: feat(oid4vci): Add InvalidDpopProofError for handling invalid DPoP proof headers
+- Updated dependencies [636cf4b]
+  - @pagopa/io-wallet-oid-federation@1.5.3
+  - @pagopa/io-wallet-oid4vp@1.5.3
+  - @pagopa/io-wallet-oauth2@1.5.3
+  - @pagopa/io-wallet-utils@1.5.3
+
 ## 1.5.2
 
 ### Patch Changes
