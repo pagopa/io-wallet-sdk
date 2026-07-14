@@ -69,6 +69,9 @@ function resolveRefreshTokenKid(signer: JwtSigner): string | undefined {
   if (signer.kid) {
     return signer.kid;
   }
+  if (signer.method === "did") {
+    return signer.didUrl;
+  }
   if (signer.method === "jwk") {
     return signer.publicJwk.kid;
   }
