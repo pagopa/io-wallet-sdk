@@ -62,9 +62,11 @@ export {
   type MetadataResponse,
   type MetadataResponseV1_0,
   type MetadataResponseV1_3,
+  type MetadataResponseV1_4,
   zMetadataResponse,
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
+  zMetadataResponseV1_4,
 } from "./metadata/z-metadata-response";
 export * from "./wallet-provider/WalletProvider";
 export type * from "./wallet-provider/types";
