@@ -41,6 +41,10 @@ import {
   itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_3,
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
 } from "./entity/v1.3/itWalletSolution";
+import {
+  itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_4,
+  itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_4,
+} from "./entity/v1.4/itWalletSolution";
 
 // v1.0 combined metadata
 export const itWalletMetadataV1_0 = z.strictObject({
@@ -69,21 +73,41 @@ export const itWalletMetadataV1_3 = z.strictObject({
     itWalletSolutionEntityMetadataV1_3.optional(),
 });
 
-// Union — used by entity statement / entity configuration claims
-// v1.3 is tried first so that v1.3-specific fields are preserved during parsing
-export const itWalletMetadataSchema =
-  itWalletMetadataV1_3.or(itWalletMetadataV1_0);
+// v1.4 combined metadata (only wallet_solution diverges from v1.3)
+export const itWalletMetadataV1_4 = itWalletMetadataV1_3.extend({
+  [itWalletSolutionEntityIdentifierV1_4]:
+    itWalletSolutionEntityMetadataV1_4.optional(),
+});
 
-export type ItWalletMetadataV1_0 = z.output<typeof itWalletMetadataV1_0>;
-export type ItWalletMetadataV1_3 = z.output<typeof itWalletMetadataV1_3>;
-export type ItWalletMetadata = ItWalletMetadataV1_0 | ItWalletMetadataV1_3;
+// Union — used by entity statement / entity configuration claims.
+// Order matters: v1.4 only relaxes v1.3 wallet_solution constraints, so every v1.3
+// document also satisfies v1.4. The narrower schema must stay first, otherwise v1.3
+// documents would match the v1.4 branch. New versions go after the ones they relax.
+export const itWalletMetadataSchema = itWalletMetadataV1_3
+  .or(itWalletMetadataV1_4)
+  .or(itWalletMetadataV1_0);
+
+// Type-level registry of version -> schema. The generic constraint acts as a
+// `satisfies` for types: omitting a version is a compile error here, and every
+// version-specific metadata type derives from this single mapping.
+type SchemaByVersion<T extends Record<ItWalletSpecsVersion, z.ZodType>> = T;
+
+type ItWalletMetadataSchemaByVersion = SchemaByVersion<{
+  [ItWalletSpecsVersion.V1_0]: typeof itWalletMetadataV1_0;
+  [ItWalletSpecsVersion.V1_3]: typeof itWalletMetadataV1_3;
+  [ItWalletSpecsVersion.V1_4]: typeof itWalletMetadataV1_4;
+}>;
 
 export type ItWalletMetadataByVersion<V extends ItWalletSpecsVersion> =
-  V extends ItWalletSpecsVersion.V1_0
-    ? ItWalletMetadataV1_0
-    : V extends ItWalletSpecsVersion.V1_3 | ItWalletSpecsVersion.V1_4
-      ? ItWalletMetadataV1_3
-      : never;
+  z.output<ItWalletMetadataSchemaByVersion[V]>;
+
+export type ItWalletMetadataV1_0 =
+  ItWalletMetadataByVersion<ItWalletSpecsVersion.V1_0>;
+export type ItWalletMetadataV1_3 =
+  ItWalletMetadataByVersion<ItWalletSpecsVersion.V1_3>;
+export type ItWalletMetadataV1_4 =
+  ItWalletMetadataByVersion<ItWalletSpecsVersion.V1_4>;
+export type ItWalletMetadata = ItWalletMetadataByVersion<ItWalletSpecsVersion>;
 
 /**
  * Checks whether a metadata object matches the schema for a specific IT-Wallet version.
@@ -103,7 +127,7 @@ export function isItWalletMetadataVersion<V extends ItWalletSpecsVersion>(
     [ItWalletSpecsVersion.V1_3]: () =>
       itWalletMetadataV1_3.safeParse(metadata).success,
     [ItWalletSpecsVersion.V1_4]: () =>
-      itWalletMetadataV1_3.safeParse(metadata).success,
+      itWalletMetadataV1_4.safeParse(metadata).success,
   });
 }
 
@@ -135,7 +159,7 @@ export function parseItWalletMetadataForVersion<V extends ItWalletSpecsVersion>(
       ),
     [ItWalletSpecsVersion.V1_4]: () =>
       parseWithErrorHandling(
-        itWalletMetadataV1_3,
+        itWalletMetadataV1_4,
         metadata,
         "invalid v1.4 metadata provided",
       ),

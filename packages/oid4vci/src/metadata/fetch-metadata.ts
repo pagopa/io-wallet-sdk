@@ -20,6 +20,7 @@ import {
   MetadataResponse,
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
+  zMetadataResponseV1_4,
   zPartialIssuerMetadata,
 } from "./z-metadata-response";
 
@@ -313,6 +314,34 @@ async function fallbackDiscovery(
   };
 }
 
+/**
+ * Fetch raw metadata with federation discovery or the available fallback mechanisms.
+ * Metadata are returned raw without any version specific validation, that must be performed separately.
+ */
+const fetchMetadataWithFallbackDiscovery = async (
+  options: FetchMetadataOptions,
+): Promise<RawFederationResult | RawOid4vciResult> => {
+  const fetch = createFetcher(options.callbacks.fetch);
+  const federationResult = await tryFederationDiscovery(
+    fetch,
+    options.credentialIssuerUrl,
+    options.callbacks.verifyJwt,
+  );
+  const raw = federationResult
+    ? await applyFederationAuthorizationServerSelection(
+        fetch,
+        federationResult,
+        options.authorizationServer,
+        options.callbacks.verifyJwt,
+      )
+    : await fallbackDiscovery(
+        fetch,
+        options.credentialIssuerUrl,
+        options.authorizationServer,
+      );
+  return raw;
+};
+
 async function fetchMetadataV1_0(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
@@ -337,28 +366,22 @@ async function fetchMetadataV1_0(
 async function fetchMetadataV1_3(
   options: FetchMetadataOptions,
 ): Promise<MetadataResponse> {
-  const fetch = createFetcher(options.callbacks.fetch);
-  const federationResult = await tryFederationDiscovery(
-    fetch,
-    options.credentialIssuerUrl,
-    options.callbacks.verifyJwt,
-  );
-  const raw = federationResult
-    ? await applyFederationAuthorizationServerSelection(
-        fetch,
-        federationResult,
-        options.authorizationServer,
-        options.callbacks.verifyJwt,
-      )
-    : await fallbackDiscovery(
-        fetch,
-        options.credentialIssuerUrl,
-        options.authorizationServer,
-      );
+  const raw = await fetchMetadataWithFallbackDiscovery(options);
   return parseWithErrorHandling(
     zMetadataResponseV1_3,
     raw,
     "Failed to parse v1.3 metadata response",
+  );
+}
+
+async function fetchMetadataV1_4(
+  options: FetchMetadataOptions,
+): Promise<MetadataResponse> {
+  const raw = await fetchMetadataWithFallbackDiscovery(options);
+  return parseWithErrorHandling(
+    zMetadataResponseV1_4,
+    raw,
+    "Failed to parse v1.4 metadata response",
   );
 }
 
@@ -368,8 +391,7 @@ const dispatchFetchMetadata = createVersionDispatcher<
 >({
   [ItWalletSpecsVersion.V1_0]: (o) => fetchMetadataV1_0(o),
   [ItWalletSpecsVersion.V1_3]: (o) => fetchMetadataV1_3(o),
-  // V1_4 reuses V1_3 metadata schema — no breaking changes between versions.
-  [ItWalletSpecsVersion.V1_4]: (o) => fetchMetadataV1_3(o),
+  [ItWalletSpecsVersion.V1_4]: (o) => fetchMetadataV1_4(o),
 });
 
 /**
@@ -385,7 +407,8 @@ const dispatchFetchMetadata = createVersionDispatcher<
  * On failure, falls back to `.well-known/openid-credential-issuer` + optional
  * `.well-known/oauth-authorization-server`. Returns `MetadataResponseV1_3`.
  *
- * **v1.4**: Identical behaviour to v1.3 — metadata schema is unchanged between versions.
+ * **v1.4**: Same discovery strategy as v1.3, validated against the v1.4 metadata schema.
+ * Returns `MetadataResponseV1_4`.
  *
  * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving
  * any path segment (e.g. `"https://issuer.example.it/v1"` →
