@@ -2,6 +2,7 @@ import {
   itWalletEntityStatementClaimsSchema,
   itWalletMetadataV1_0,
   itWalletMetadataV1_3,
+  itWalletMetadataV1_4,
 } from "@pagopa/io-wallet-oid-federation";
 import { z } from "zod";
 
@@ -24,14 +25,23 @@ export const zMetadataResponseV1_3 = z.object({
   openid_federation_claims: itWalletEntityStatementClaimsSchema.optional(),
 });
 
+export const zMetadataResponseV1_4 = zMetadataResponseV1_3.extend({
+  metadata: itWalletMetadataV1_4,
+});
+
 export const zMetadataResponse = z.union([
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
+  zMetadataResponseV1_4,
 ]);
 
 export type MetadataResponseV1_0 = z.infer<typeof zMetadataResponseV1_0>;
 export type MetadataResponseV1_3 = z.infer<typeof zMetadataResponseV1_3>;
-export type MetadataResponse = MetadataResponseV1_0 | MetadataResponseV1_3;
+export type MetadataResponseV1_4 = z.infer<typeof zMetadataResponseV1_4>;
+export type MetadataResponse =
+  | MetadataResponseV1_0
+  | MetadataResponseV1_3
+  | MetadataResponseV1_4;
 
 // For intermediate parsing in fallbackDiscovery:
 export const zPartialIssuerMetadata = z.looseObject({

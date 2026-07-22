@@ -32,6 +32,23 @@ const validV1_3Metadata = {
   },
 };
 
+const validV1_4Metadata = {
+  wallet_solution: {
+    logo_uri: "https://wallet-solution.example.com/logo.svg",
+    wallet_metadata: {
+      authorization_endpoint: "https://wallet-solution.example.com/authorize",
+      client_id_prefixes_supported: ["openid_federation"],
+      credential_offer_endpoint:
+        "https://wallet-solution.example.com/credential-offer",
+      request_object_signing_alg_values_supported: ["ES256"],
+      vp_formats_supported: {
+        "dc+sd-jwt": {},
+      },
+      wallet_name: "Example Wallet",
+    },
+  },
+};
+
 describe("isItWalletMetadataVersion", () => {
   it("should identify valid v1.0 metadata", () => {
     expect(
@@ -45,12 +62,24 @@ describe("isItWalletMetadataVersion", () => {
     ).toBe(true);
   });
 
+  it("should identify valid v1.4 metadata", () => {
+    expect(
+      isItWalletMetadataVersion(validV1_4Metadata, ItWalletSpecsVersion.V1_4),
+    ).toBe(true);
+  });
+
   it("should reject metadata for a different supported version", () => {
     expect(
       isItWalletMetadataVersion(validV1_0Metadata, ItWalletSpecsVersion.V1_3),
     ).toBe(false);
     expect(
       isItWalletMetadataVersion(validV1_3Metadata, ItWalletSpecsVersion.V1_0),
+    ).toBe(false);
+    expect(
+      isItWalletMetadataVersion(validV1_0Metadata, ItWalletSpecsVersion.V1_4),
+    ).toBe(false);
+    expect(
+      isItWalletMetadataVersion(validV1_4Metadata, ItWalletSpecsVersion.V1_3),
     ).toBe(false);
   });
 });
@@ -74,6 +103,15 @@ describe("parseItWalletMetadataForVersion", () => {
     ).toEqual(validV1_3Metadata);
   });
 
+  it("should parse valid v1.4 metadata", () => {
+    expect(
+      parseItWalletMetadataForVersion(
+        validV1_4Metadata,
+        ItWalletSpecsVersion.V1_4,
+      ),
+    ).toEqual(validV1_4Metadata);
+  });
+
   it("should reject metadata for a different supported version", () => {
     expect(() =>
       parseItWalletMetadataForVersion(
@@ -84,9 +122,23 @@ describe("parseItWalletMetadataForVersion", () => {
 
     expect(() =>
       parseItWalletMetadataForVersion(
+        validV1_0Metadata,
+        ItWalletSpecsVersion.V1_4,
+      ),
+    ).toThrow(/invalid v1\.4 metadata provided/);
+
+    expect(() =>
+      parseItWalletMetadataForVersion(
         validV1_3Metadata,
         ItWalletSpecsVersion.V1_0,
       ),
     ).toThrow(/invalid v1\.0 metadata provided/);
+
+    expect(() =>
+      parseItWalletMetadataForVersion(
+        validV1_4Metadata,
+        ItWalletSpecsVersion.V1_3,
+      ),
+    ).toThrow(/invalid v1\.3 metadata provided/);
   });
 });
