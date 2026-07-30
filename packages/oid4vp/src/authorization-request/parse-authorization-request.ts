@@ -84,7 +84,8 @@ function getPublicKeyForVerification(options: {
   }
 
   throw new ParseAuthorizeRequestError(
-    "Unable to determine public key for Request Object verification with client_id prefix: " + clientIdPrefix,
+    "Unable to determine public key for Request Object verification with client_id prefix: " +
+      clientIdPrefix,
   );
 }
 
