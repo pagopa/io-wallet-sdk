@@ -75,7 +75,7 @@ export const zOpenid4vpAuthorizationRequestHeaderV1_3 =
   zOpenid4vpAuthorizationRequestHeaderBase
     .extend({
       trust_chain: zTrustChain.optional(),
-      x5c: zCertificateChain,
+      x5c: zCertificateChain.optional(),
     })
     .loose();
 

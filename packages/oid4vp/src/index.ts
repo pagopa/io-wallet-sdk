@@ -2,6 +2,7 @@ export * from "./authorization-request/create-authorization-request";
 export * from "./authorization-request/fetch-authorization-request";
 export * from "./authorization-request/parse-authorization-request";
 export * from "./authorization-request/validate-authorization-request";
+export * from "./authorization-request/validate-certificate-endpoints";
 export * from "./authorization-request/z-authorization-request";
 export * from "./authorization-request/z-authorization-request-url";
 export * from "./authorization-response/create-authorization-response";
