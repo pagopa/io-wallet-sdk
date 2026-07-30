@@ -49,32 +49,21 @@ function validateEndpointAgainstMetadata(
 ) {
   const endpointUrl = parseEndpointUrl(endpoint);
   const sanUriNames = metadata.sanUriNames ?? [];
+  const matchesUriSan = sanUriNames.some(
+    (sanUriName) => normalizeUriForComparison(sanUriName) === endpointUrl.href,
+  );
+  const sanDnsNames = metadata.sanDnsNames ?? [];
+  const matchesDnsSan = sanDnsNames.some((sanDnsName) =>
+    matchesDnsSanHostname(sanDnsName, endpointUrl.hostname),
+  );
 
-  if (sanUriNames.length > 0) {
-    const matchesUriSan = sanUriNames.some(
-      (sanUriName) =>
-        normalizeUriForComparison(sanUriName) === endpointUrl.href,
-    );
-
-    if (!matchesUriSan) {
-      throw new Oid4vpError(
-        `${endpoint.name} is not covered by the Relying Party certificate URI SAN entries`,
-      );
-    }
-
+  if (matchesUriSan || matchesDnsSan) {
     return;
   }
 
-  const sanDnsNames = metadata.sanDnsNames ?? [];
-  const matchesDnsSan = sanDnsNames.some(
-    (sanDnsName) => sanDnsName.toLowerCase() === endpointUrl.hostname,
+  throw new Oid4vpError(
+    `${endpoint.name} is not covered by the Relying Party certificate SAN entries`,
   );
-
-  if (!matchesDnsSan) {
-    throw new Oid4vpError(
-      `${endpoint.name} is not covered by the Relying Party certificate DNS SAN entries`,
-    );
-  }
 }
 
 function normalizeUriForComparison(uri: string) {
@@ -85,6 +74,34 @@ function normalizeUriForComparison(uri: string) {
       cause: error,
     });
   }
+}
+
+function matchesDnsSanHostname(sanDnsName: string, hostname: string) {
+  const normalizedSanDnsName = sanDnsName.toLowerCase();
+  const normalizedHostname = hostname.toLowerCase();
+
+  if (normalizedSanDnsName === normalizedHostname) {
+    return true;
+  }
+
+  if (!normalizedSanDnsName.includes("*")) {
+    return false;
+  }
+
+  const wildcardCount = [...normalizedSanDnsName].filter(
+    (character) => character === "*",
+  ).length;
+  const sanLabels = normalizedSanDnsName.split(".");
+  const hostnameLabels = normalizedHostname.split(".");
+
+  return (
+    wildcardCount === 1 &&
+    sanLabels[0] === "*" &&
+    sanLabels.length === hostnameLabels.length &&
+    sanLabels
+      .slice(1)
+      .every((label, index) => label === hostnameLabels[index + 1])
+  );
 }
 
 function parseEndpointUrl(endpoint: { name: string; uri: string }) {
