@@ -53,6 +53,12 @@ const openidFederationAuthorizationRequestPayload = {
   iss: "openid_federation:https://rp.example.org",
 };
 
+const legacyHttpsAuthorizationRequestPayload = {
+  ...authorizationRequestPayload,
+  client_id: "https://rp.example.org",
+  iss: "https://rp.example.org",
+};
+
 const x509HashAuthorizationRequestPayload = {
   ...authorizationRequestPayload,
   client_id: "x509_hash:certificate-hash",
@@ -217,7 +223,7 @@ describe("createAuthorizationRequest", () => {
     vi.mocked(createJarRequest).mockResolvedValue({
       authorizationRequestJwt: "signed.jwt.value",
       jarAuthorizationRequest: {
-        client_id: "client-123",
+        client_id: "x509_hash:certificate-hash",
         request_uri: "https://rp.example.org/request.jwt",
       },
       signerJwk: {
@@ -229,7 +235,7 @@ describe("createAuthorizationRequest", () => {
     });
 
     const result = await createAuthorizationRequest({
-      authorizationRequestPayload,
+      authorizationRequestPayload: x509HashAuthorizationRequestPayload,
       callbacks,
       config: configV1_3,
       jar: jarV1_3,
@@ -247,7 +253,7 @@ describe("createAuthorizationRequest", () => {
       }),
     );
     expect(result.authorizationRequest).toBe(
-      "https://wallet.example.org/authorize?existing=1&client_id=client-123&request_uri=https%3A%2F%2Frp.example.org%2Frequest.jwt",
+      "https://wallet.example.org/authorize?existing=1&client_id=x509_hash%3Acertificate-hash&request_uri=https%3A%2F%2Frp.example.org%2Frequest.jwt",
     );
   });
 
@@ -319,38 +325,31 @@ describe("createAuthorizationRequest", () => {
     );
   });
 
-  it("creates an openid_federation authorization request with an x5c signer", async () => {
-    vi.mocked(createJarRequest).mockResolvedValue({
-      authorizationRequestJwt: "signed.jwt.value",
-      jarAuthorizationRequest: {
-        client_id: "openid_federation:https://rp.example.org",
-        request_uri: "https://rp.example.org/request.jwt",
-      },
-      signerJwk: {
-        crv: "P-256",
-        kty: "EC",
-        x: "x-value",
-        y: "y-value",
-      },
-    });
-
-    await createAuthorizationRequest({
-      authorizationRequestPayload: openidFederationAuthorizationRequestPayload,
-      callbacks,
-      config: configV1_3,
-      jar: jarV1_3,
-    });
-
-    expect(createJarRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        authorizationRequestHeader: {
-          alg: "ES256",
-          kid: "kid-123",
-          typ: "oauth-authz-req+jwt",
-          x5c: ["leaf-certificate"],
-        },
+  it("rejects openid_federation authorization requests with an x5c signer before JAR creation", async () => {
+    await expect(
+      createAuthorizationRequest({
+        authorizationRequestPayload:
+          openidFederationAuthorizationRequestPayload,
+        callbacks,
+        config: configV1_3,
+        jar: jarV1_3,
       }),
-    );
+    ).rejects.toThrow(Oid4vpError);
+
+    expect(createJarRequest).not.toHaveBeenCalled();
+  });
+
+  it("rejects legacy HTTPS authorization requests with an x5c signer before JAR creation", async () => {
+    await expect(
+      createAuthorizationRequest({
+        authorizationRequestPayload: legacyHttpsAuthorizationRequestPayload,
+        callbacks,
+        config: configV1_3,
+        jar: jarV1_3,
+      }),
+    ).rejects.toThrow(Oid4vpError);
+
+    expect(createJarRequest).not.toHaveBeenCalled();
   });
 
   it("rejects x509_hash authorization requests with a federation signer before JAR creation", async () => {

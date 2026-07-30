@@ -266,4 +266,13 @@ function validateJarSignerForAuthorizationRequest(
       "x509_hash client_id requires a JAR signer with method x5c",
     );
   }
+
+  if (
+    prefix !== ClientIdPrefix.X509_HASH &&
+    jwtSigner.method !== "federation"
+  ) {
+    throw new Oid4vpError(
+      "openid_federation and legacy client_id values require a JAR signer with method federation",
+    );
+  }
 }

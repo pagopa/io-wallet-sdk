@@ -552,7 +552,7 @@ describe("parseAuthorizationRequest V1_3 and V1_4 x5c binding", () => {
     );
   });
 
-  it("should verify openid_federation with x5c through x5c", async () => {
+  it("should verify openid_federation with x5c through federation", async () => {
     const verifyJwt = vi.fn(callbacks.verifyJwt);
 
     await parseAuthorizeRequest({
@@ -563,14 +563,13 @@ describe("parseAuthorizationRequest V1_3 and V1_4 x5c binding", () => {
 
     expect(verifyJwt).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: "x5c",
-        x5c: v1_3FederationHeaderWithX5c.x5c,
+        method: "federation",
       }),
       expect.any(Object),
     );
   });
 
-  it("should verify legacy HTTPS client_id with x5c through x5c", async () => {
+  it("should verify legacy HTTPS client_id with x5c through federation", async () => {
     const verifyJwt = vi.fn(callbacks.verifyJwt);
 
     await parseAuthorizeRequest({
@@ -580,7 +579,7 @@ describe("parseAuthorizationRequest V1_3 and V1_4 x5c binding", () => {
     });
 
     expect(verifyJwt).toHaveBeenCalledWith(
-      expect.objectContaining({ method: "x5c" }),
+      expect.objectContaining({ method: "federation" }),
       expect.any(Object),
     );
   });

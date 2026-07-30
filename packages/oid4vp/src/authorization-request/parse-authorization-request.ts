@@ -43,10 +43,11 @@ export {
  * Retrieves the public key for verifying the Request Object JWT signature
  * according to IT Wallet specifications.
  *
- * Priority order:
- * 1. If x5c is present: use x5c certificate chain from header.
- * 2. Otherwise return a federation signer; if trust_chain is present it is forwarded,
- *    otherwise the verifyJwt callback is responsible for reconstructing the chain from client_id.
+ * Prefix routing:
+ * 1. If client_id uses x509_hash: use x5c certificate chain from header.
+ * 2. If client_id uses openid_federation or no prefix: return a federation signer;
+ *    if trust_chain is present it is forwarded, otherwise the verifyJwt callback is
+ *    responsible for reconstructing the chain from client_id.
  *
  * @param options - Parse options containing decoded JWT
  * @returns The JWK to use for signature verification
@@ -59,16 +60,6 @@ function getPublicKeyForVerification(options: {
   const { header, payload } = options;
 
   const { prefix: clientIdPrefix } = extractClientIdPrefix(payload.client_id);
-
-  if (Array.isArray(header.x5c) && header.x5c.length > 0) {
-    return {
-      alg: header.alg,
-      kid: header.kid,
-      method: "x5c" as const,
-      ...(header.trust_chain && { trustChain: header.trust_chain }),
-      x5c: header.x5c,
-    };
-  }
 
   if (
     clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION ||
@@ -85,6 +76,22 @@ function getPublicKeyForVerification(options: {
       kid: header.kid,
       method: "federation" as const,
       ...(header.trust_chain && { trustChain: header.trust_chain }),
+    };
+  }
+
+  if (clientIdPrefix === ClientIdPrefix.X509_HASH) {
+    if (!Array.isArray(header.x5c) || header.x5c.length === 0) {
+      throw new ParseAuthorizeRequestError(
+        "x5c is required in JWT header for x509_hash client_id",
+      );
+    }
+
+    return {
+      alg: header.alg,
+      kid: header.kid,
+      method: "x5c" as const,
+      ...(header.trust_chain && { trustChain: header.trust_chain }),
+      x5c: header.x5c,
     };
   }
 
@@ -135,8 +142,8 @@ export interface ParsedAuthorizeRequestResult {
  * This method decodes the Request Object JWT and validates its structure. If the `verifyJwt`
  * callback is provided, it also verifies the JWT signature using the public key obtained
  * according to IT Wallet specifications:
- * 1. If x5c is present: pass an x5c signer to the callback.
- * 2. Otherwise, for openid_federation and legacy HTTPS client identifiers, pass a federation signer;
+ * 1. If client_id uses x509_hash: pass an x5c signer to the callback.
+ * 2. If client_id uses openid_federation or a legacy HTTPS identifier, pass a federation signer;
  *    trust_chain is forwarded when present, otherwise the callback must reconstruct the chain from client_id.
  *
  * For x509_hash client identifiers, x5c is always required. When `callbacks.hash` is provided,
