@@ -10,6 +10,7 @@ import { Oid4vpError } from "../../errors";
 import {
   type CreateAuthorizationRequestOptionsV1_0,
   type CreateAuthorizationRequestOptionsV1_3,
+  type CreateAuthorizationRequestOptionsV1_4,
   createAuthorizationRequest,
 } from "../create-authorization-request";
 import { Openid4vpAuthorizationRequestPayload } from "../z-authorization-request";
@@ -31,6 +32,10 @@ const configV1_3 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
 });
 
+const configV1_4 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
 const authorizationRequestPayload: Openid4vpAuthorizationRequestPayload = {
   client_id: "client-123",
   dcql_query: {},
@@ -40,6 +45,18 @@ const authorizationRequestPayload: Openid4vpAuthorizationRequestPayload = {
   response_type: "vp_token",
   response_uri: "https://wallet.example.org/response",
   state: "state-123",
+};
+
+const openidFederationAuthorizationRequestPayload = {
+  ...authorizationRequestPayload,
+  client_id: "openid_federation:https://rp.example.org",
+  iss: "openid_federation:https://rp.example.org",
+};
+
+const x509HashAuthorizationRequestPayload = {
+  ...authorizationRequestPayload,
+  client_id: "x509_hash:certificate-hash",
+  iss: "x509_hash:certificate-hash",
 };
 
 const jar = {
@@ -121,7 +138,7 @@ describe("createAuthorizationRequest", () => {
     });
   });
 
-  it("narrows signer requirements by config version at compile time", () => {
+  it("narrows V1_0 signer requirements by config version at compile time", () => {
     const optionsV1_0: CreateAuthorizationRequestOptionsV1_0 = {
       authorizationRequestPayload,
       callbacks,
@@ -136,8 +153,16 @@ describe("createAuthorizationRequest", () => {
       jar: jarV1_3,
     };
 
+    const optionsV1_4: CreateAuthorizationRequestOptionsV1_4 = {
+      authorizationRequestPayload,
+      callbacks,
+      config: configV1_4,
+      jar,
+    };
+
     expect(optionsV1_0.jar.jwtSigner.method).toBe("federation");
     expect(optionsV1_3.jar.jwtSigner.method).toBe("x5c");
+    expect(optionsV1_4.jar.jwtSigner.method).toBe("federation");
 
     const invalidV1_0 = {
       authorizationRequestPayload,
@@ -147,16 +172,7 @@ describe("createAuthorizationRequest", () => {
       jar: jarV1_3,
     } satisfies CreateAuthorizationRequestOptionsV1_0;
 
-    const invalidV1_3 = {
-      authorizationRequestPayload,
-      callbacks,
-      config: configV1_3,
-      // @ts-expect-error v1.3 only accepts x5c signers
-      jar,
-    } satisfies CreateAuthorizationRequestOptionsV1_3;
-
     expect(invalidV1_0).toBeDefined();
-    expect(invalidV1_3).toBeDefined();
   });
 
   it("does not overwrite additionalJwtPayload.aud when already provided", async () => {
@@ -233,6 +249,121 @@ describe("createAuthorizationRequest", () => {
     expect(result.authorizationRequest).toBe(
       "https://wallet.example.org/authorize?existing=1&client_id=client-123&request_uri=https%3A%2F%2Frp.example.org%2Frequest.jwt",
     );
+  });
+
+  it("creates a v1.3 openid_federation authorization request with a federation signer", async () => {
+    vi.mocked(createJarRequest).mockResolvedValue({
+      authorizationRequestJwt: "signed.jwt.value",
+      jarAuthorizationRequest: {
+        client_id: "openid_federation:https://rp.example.org",
+        request_uri: "https://rp.example.org/request.jwt",
+      },
+      signerJwk: {
+        crv: "P-256",
+        kty: "EC",
+        x: "x-value",
+        y: "y-value",
+      },
+    });
+
+    await createAuthorizationRequest({
+      authorizationRequestPayload: openidFederationAuthorizationRequestPayload,
+      callbacks,
+      config: configV1_3,
+      jar,
+    });
+
+    expect(createJarRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorizationRequestHeader: {
+          alg: "ES256",
+          kid: "kid-123",
+          trust_chain: ["entity-statement-jwt"],
+          typ: "oauth-authz-req+jwt",
+        },
+      }),
+    );
+  });
+
+  it("creates a v1.4 openid_federation authorization request with a federation signer", async () => {
+    vi.mocked(createJarRequest).mockResolvedValue({
+      authorizationRequestJwt: "signed.jwt.value",
+      jarAuthorizationRequest: {
+        client_id: "openid_federation:https://rp.example.org",
+        request_uri: "https://rp.example.org/request.jwt",
+      },
+      signerJwk: {
+        crv: "P-256",
+        kty: "EC",
+        x: "x-value",
+        y: "y-value",
+      },
+    });
+
+    await createAuthorizationRequest({
+      authorizationRequestPayload: openidFederationAuthorizationRequestPayload,
+      callbacks,
+      config: configV1_4,
+      jar,
+    });
+
+    expect(createJarRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorizationRequestHeader: {
+          alg: "ES256",
+          kid: "kid-123",
+          trust_chain: ["entity-statement-jwt"],
+          typ: "oauth-authz-req+jwt",
+        },
+      }),
+    );
+  });
+
+  it("creates an openid_federation authorization request with an x5c signer", async () => {
+    vi.mocked(createJarRequest).mockResolvedValue({
+      authorizationRequestJwt: "signed.jwt.value",
+      jarAuthorizationRequest: {
+        client_id: "openid_federation:https://rp.example.org",
+        request_uri: "https://rp.example.org/request.jwt",
+      },
+      signerJwk: {
+        crv: "P-256",
+        kty: "EC",
+        x: "x-value",
+        y: "y-value",
+      },
+    });
+
+    await createAuthorizationRequest({
+      authorizationRequestPayload: openidFederationAuthorizationRequestPayload,
+      callbacks,
+      config: configV1_3,
+      jar: jarV1_3,
+    });
+
+    expect(createJarRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorizationRequestHeader: {
+          alg: "ES256",
+          kid: "kid-123",
+          typ: "oauth-authz-req+jwt",
+          x5c: ["leaf-certificate"],
+        },
+      }),
+    );
+  });
+
+  it("rejects x509_hash authorization requests with a federation signer before JAR creation", async () => {
+    await expect(
+      createAuthorizationRequest({
+        authorizationRequestPayload: x509HashAuthorizationRequestPayload,
+        callbacks,
+        config: configV1_3,
+        jar,
+      }),
+    ).rejects.toThrow(Oid4vpError);
+
+    expect(createJarRequest).not.toHaveBeenCalled();
   });
 
   it("throws Oid4vpError when authorization payload is invalid", async () => {

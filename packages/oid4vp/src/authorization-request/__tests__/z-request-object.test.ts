@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { zOpenid4vpAuthorizationRequestPayload } from "../z-authorization-request";
+import {
+  zOpenid4vpAuthorizationRequestHeaderV1_0,
+  zOpenid4vpAuthorizationRequestHeaderV1_3,
+  zOpenid4vpAuthorizationRequestPayload,
+} from "../z-authorization-request";
 
 const basePayload = {
   client_id: "https://verifier.example.com",
@@ -52,6 +56,50 @@ describe("zOpenid4vpAuthorizationRequestPayload", () => {
       response_type: basePayload.response_type,
       state: basePayload.state,
     });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("zOpenid4vpAuthorizationRequestHeader", () => {
+  it("should accept V1_3 headers with x5c", () => {
+    const result = zOpenid4vpAuthorizationRequestHeaderV1_3.safeParse({
+      alg: "ES256",
+      kid: "kid-123",
+      typ: "oauth-authz-req+jwt",
+      x5c: ["leaf-certificate"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept V1_3 headers without x5c", () => {
+    const result = zOpenid4vpAuthorizationRequestHeaderV1_3.safeParse({
+      alg: "ES256",
+      kid: "kid-123",
+      typ: "oauth-authz-req+jwt",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject V1_3 headers with an empty x5c chain", () => {
+    const result = zOpenid4vpAuthorizationRequestHeaderV1_3.safeParse({
+      alg: "ES256",
+      kid: "kid-123",
+      typ: "oauth-authz-req+jwt",
+      x5c: [],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should keep trust_chain mandatory for V1_0 headers", () => {
+    const result = zOpenid4vpAuthorizationRequestHeaderV1_0.safeParse({
+      alg: "ES256",
+      kid: "kid-123",
+      typ: "oauth-authz-req+jwt",
+    });
+
     expect(result.success).toBe(false);
   });
 });
