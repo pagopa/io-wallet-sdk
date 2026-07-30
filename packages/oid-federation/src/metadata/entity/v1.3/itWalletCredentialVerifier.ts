@@ -28,6 +28,7 @@ export const itWalletCredentialVerifierMetadata = z.looseObject({
   erasure_endpoint: z.url().optional(),
   jwks: jsonWebKeySetSchema,
   logo_uri: z.url(),
+  redirect_uris: z.array(z.url()).optional(),
   request_uris: z.array(z.url()),
   response_uris: z.array(z.url()),
   vp_formats_supported: z.record(
