@@ -59,7 +59,7 @@ interface BaseCreateAuthorizationRequestOptions<
    * Required callbacks used to create a signed/encrypted Request Object.
    */
   callbacks: Partial<Pick<CallbackContext, "encryptJwe">> &
-    Pick<CallbackContext, "hash"> &
+    Partial<Pick<CallbackContext, "hash">> &
     Pick<CallbackContext, "signJwt">;
 
   config: IoWalletSdkConfig<V>;
