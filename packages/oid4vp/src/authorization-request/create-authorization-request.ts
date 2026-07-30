@@ -19,6 +19,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { Oid4vpError } from "../errors";
+import { ClientIdPrefix, extractClientIdPrefix } from "./client-id-prefix";
 import {
   Openid4vpAuthorizationRequestPayload,
   zOpenid4vpAuthorizationRequestHeaderV1_0,
@@ -35,7 +36,7 @@ type BaseJarOptions<TSigner extends JwtSignerFederation | JwtSignerX5c> = {
 
 export type JarOptionsV1_0 = BaseJarOptions<JwtSignerFederation>;
 
-export type JarOptionsV1_3 = BaseJarOptions<JwtSignerX5c>;
+export type JarOptionsV1_3 = BaseJarOptions<JwtSignerFederation | JwtSignerX5c>;
 
 export type JarOptionsV1_4 = JarOptionsV1_3;
 
@@ -143,7 +144,7 @@ const dispatchCreateAuthorizationRequest = createVersionDispatcher<
       o as CreateAuthorizationRequestOptionsV1_3,
       zOpenid4vpAuthorizationRequestHeaderV1_3,
     ),
-  // V1_4 reuses V1_3 JAR header schema (alg, typ, kid, trust_chain, x5c) — no breaking changes.
+  // V1_4 reuses the V1_3 JAR header schema; the conditional x5c rule is a normative 1.4.4 LTS backport.
   [ItWalletSpecsVersion.V1_4]: async (o) =>
     createAuthorizationRequestWithHeader(
       o as CreateAuthorizationRequestOptionsV1_4,
@@ -204,6 +205,12 @@ async function createAuthorizationRequestWithHeader<TJar extends JarOptions>(
     options.authorizationRequestPayload,
   );
 
+  validateJarSignerForAuthorizationRequest(
+    options.config.itWalletSpecsVersion,
+    jar.jwtSigner,
+    authorizationRequestPayload,
+  );
+
   const additionalJwtPayload = !jar.additionalJwtPayload?.aud
     ? { ...jar.additionalJwtPayload, aud: jar.requestUri }
     : jar.additionalJwtPayload;
@@ -241,4 +248,22 @@ function createAuthorizationRequestUrl(
   url.search = searchParams.toString();
 
   return url.toString();
+}
+
+function validateJarSignerForAuthorizationRequest(
+  specsVersion: ItWalletSpecsVersion,
+  jwtSigner: JwtSignerFederation | JwtSignerX5c,
+  payload: Openid4vpAuthorizationRequestPayload,
+) {
+  if (specsVersion === ItWalletSpecsVersion.V1_0) {
+    return;
+  }
+
+  const { prefix } = extractClientIdPrefix(payload.client_id);
+
+  if (prefix === ClientIdPrefix.X509_HASH && jwtSigner.method !== "x5c") {
+    throw new Oid4vpError(
+      "x509_hash client_id requires a JAR signer with method x5c",
+    );
+  }
 }
