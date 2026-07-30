@@ -33,8 +33,8 @@ import {
 } from "./z-authorization-request";
 
 export {
+  type ClientIdParts,
   ClientIdPrefix,
-  ClientIdParts,
   createX509HashClientId,
   extractClientIdPrefix,
 } from "./client-id-prefix";
@@ -103,8 +103,8 @@ function getPublicKeyForVerification(options: {
 
 export interface ParseAuthorizeRequestOptions {
   /**
-   * Optional callback context for JWT signature verification.
-   * If not provided, signature verification is skipped.
+   * Optional callback context for JWT signature verification and hashing x509 client_id for digest comparison.
+   * If not provided, signature verification is skipped or hash skips the x509_hash digest comparison.
    */
   callbacks?: Partial<Pick<CallbackContext, "hash" | "verifyJwt">> &
     Partial<X509CertificateBinding>;
