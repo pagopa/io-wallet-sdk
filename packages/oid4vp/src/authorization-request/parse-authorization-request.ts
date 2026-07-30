@@ -34,6 +34,7 @@ import {
 
 export {
   ClientIdPrefix,
+  ClientIdParts,
   createX509HashClientId,
   extractClientIdPrefix,
 } from "./client-id-prefix";
