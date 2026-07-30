@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Oid4vpError, ParseAuthorizeRequestError } from "../../errors";
 import {
   ClientIdPrefix,
+  createX509HashClientId,
   extractClientIdPrefix,
   parseAuthorizeRequest,
 } from "../parse-authorization-request";
@@ -714,6 +715,32 @@ describe("parseAuthorizeRequest - optional verification", () => {
 });
 
 describe("extractClientIdPrefix", () => {
+  it("creates an x509_hash client_id from the x5c leaf certificate using the hash callback", async () => {
+    const hash = vi.fn(async () => new Uint8Array([1, 2, 3]));
+    const leafCertificate = Buffer.from("leaf-certificate").toString("base64");
+
+    await expect(
+      createX509HashClientId({
+        certificateChain: [leafCertificate, "intermediate-certificate"],
+        hash,
+      }),
+    ).resolves.toBe("x509_hash:AQID");
+
+    expect(hash).toHaveBeenCalledWith(
+      new Uint8Array(Buffer.from("leaf-certificate")),
+      HashAlgorithm.Sha256,
+    );
+  });
+
+  it("rejects empty certificate chains when creating an x509_hash client_id", async () => {
+    await expect(
+      createX509HashClientId({
+        certificateChain: [],
+        hash: vi.fn(async () => new Uint8Array([1, 2, 3])),
+      }),
+    ).rejects.toThrow(ParseAuthorizeRequestError);
+  });
+
   it("returns X509_HASH prefix and clean clientId for x509_hash scheme", () => {
     expect(extractClientIdPrefix("x509_hash:abc123")).toEqual({
       clientId: "abc123",

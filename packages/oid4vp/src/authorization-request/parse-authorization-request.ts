@@ -32,7 +32,11 @@ import {
   zOpenid4vpAuthorizationRequestPayload,
 } from "./z-authorization-request";
 
-export { ClientIdPrefix, extractClientIdPrefix } from "./client-id-prefix";
+export {
+  ClientIdPrefix,
+  createX509HashClientId,
+  extractClientIdPrefix,
+} from "./client-id-prefix";
 
 /**
  * Retrieves the public key for verifying the Request Object JWT signature

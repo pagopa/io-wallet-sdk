@@ -22,6 +22,11 @@ export interface ClientIdParts {
   prefix: ClientIdPrefix;
 }
 
+export interface CreateX509HashClientIdOptions {
+  certificateChain: string[];
+  hash: HashCallback;
+}
+
 export function extractClientIdPrefix(clientId: string): ClientIdParts {
   const colonIndex = clientId.indexOf(":");
 
@@ -48,6 +53,22 @@ export function extractClientIdPrefix(clientId: string): ClientIdParts {
   );
 }
 
+export async function createX509HashClientId(
+  options: CreateX509HashClientIdOptions,
+): Promise<string> {
+  return `${ClientIdPrefix.X509_HASH}:${await calculateX509CertificateHash(options)}`;
+}
+
+async function calculateX509CertificateHash(
+  options: CreateX509HashClientIdOptions,
+) {
+  const leafCertificate = getLeafCertificate(options.certificateChain);
+
+  return encodeToBase64Url(
+    await options.hash(decodeBase64(leafCertificate), HashAlgorithm.Sha256),
+  );
+}
+
 export async function validateAuthorizationRequestClientBinding(options: {
   hash?: HashCallback;
   header: Openid4vpAuthorizationRequestHeaderV1_3;
@@ -70,16 +91,10 @@ export async function validateAuthorizationRequestClientBinding(options: {
     return clientIdParts;
   }
 
-  const leafCertificate = x5c[0];
-  if (!leafCertificate) {
-    throw new ParseAuthorizeRequestError(
-      "x5c is required in JWT header for x509_hash client_id",
-    );
-  }
-
-  const expectedCertificateHash = encodeToBase64Url(
-    await options.hash(decodeBase64(leafCertificate), HashAlgorithm.Sha256),
-  );
+  const expectedCertificateHash = await calculateX509CertificateHash({
+    certificateChain: x5c,
+    hash: options.hash,
+  });
 
   if (expectedCertificateHash !== clientIdParts.clientId) {
     throw new ParseAuthorizeRequestError(
@@ -88,4 +103,16 @@ export async function validateAuthorizationRequestClientBinding(options: {
   }
 
   return clientIdParts;
+}
+
+function getLeafCertificate(certificateChain: string[]) {
+  const leafCertificate = certificateChain[0];
+
+  if (!leafCertificate) {
+    throw new ParseAuthorizeRequestError(
+      "Certificate chain is empty, cannot validate x509_hash",
+    );
+  }
+
+  return leafCertificate;
 }
