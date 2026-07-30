@@ -19,7 +19,11 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { Oid4vpError } from "../errors";
-import { ClientIdPrefix, extractClientIdPrefix } from "./client-id-prefix";
+import {
+  ClientIdPrefix,
+  extractClientIdPrefix,
+  validateAuthorizationRequestClientBinding,
+} from "./client-id-prefix";
 import {
   Openid4vpAuthorizationRequestPayload,
   zOpenid4vpAuthorizationRequestHeaderV1_0,
@@ -55,6 +59,7 @@ interface BaseCreateAuthorizationRequestOptions<
    * Required callbacks used to create a signed/encrypted Request Object.
    */
   callbacks: Partial<Pick<CallbackContext, "encryptJwe">> &
+    Pick<CallbackContext, "hash"> &
     Pick<CallbackContext, "signJwt">;
 
   config: IoWalletSdkConfig<V>;
@@ -210,6 +215,12 @@ async function createAuthorizationRequestWithHeader<TJar extends JarOptions>(
     jar.jwtSigner,
     authorizationRequestPayload,
   );
+
+  validateAuthorizationRequestClientBinding({
+    hash: options.callbacks.hash,
+    header: authorizationRequestHeader,
+    payload: authorizationRequestPayload,
+  });
 
   const additionalJwtPayload = !jar.additionalJwtPayload?.aud
     ? { ...jar.additionalJwtPayload, aud: jar.requestUri }
