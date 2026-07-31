@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.5.4
+
+### Patch Changes
+
+- c8c5d65: Support Wallet Solution metadata conforming to v1.4
+  - @pagopa/io-wallet-utils@1.5.4
+
 ## 1.5.3
 
 ### Patch Changes
