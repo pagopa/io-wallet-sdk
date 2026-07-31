@@ -1,5 +1,14 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.5.4
+
+### Patch Changes
+
+- 45a3616: Generate DPoP-bound Refresh Token
+- Updated dependencies [c8c5d65]
+  - @pagopa/io-wallet-oid-federation@1.5.4
+  - @pagopa/io-wallet-utils@1.5.4
+
 ## 1.5.3
 
 ### Patch Changes

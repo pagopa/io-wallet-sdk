@@ -1,5 +1,18 @@
 # @pagopa/io-wallet-oid4vci
 
+## 1.5.4
+
+### Patch Changes
+
+- c8c5d65: Support Wallet Solution metadata conforming to v1.4
+- Updated dependencies [33be7d5]
+- Updated dependencies [c8c5d65]
+- Updated dependencies [45a3616]
+  - @pagopa/io-wallet-oid4vp@1.5.4
+  - @pagopa/io-wallet-oid-federation@1.5.4
+  - @pagopa/io-wallet-oauth2@1.5.4
+  - @pagopa/io-wallet-utils@1.5.4
+
 ## 1.5.3
 
 ### Patch Changes
