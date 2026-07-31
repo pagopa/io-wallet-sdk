@@ -1,15 +1,17 @@
 import { CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
 import { Jwk } from "@pagopa/io-wallet-oauth2";
 import {
+  HashAlgorithm,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { Oid4vpError, ParseAuthorizeRequestError } from "../../errors";
 import {
   ClientIdPrefix,
+  createX509HashClientId,
   extractClientIdPrefix,
   parseAuthorizeRequest,
 } from "../parse-authorization-request";
@@ -30,6 +32,10 @@ const configV1_0 = new IoWalletSdkConfig({
 
 const configV1_3 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
+const configV1_4 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
 });
 
 const encodeJwtPart = (value: unknown): string =>
@@ -57,7 +63,7 @@ const validX5cHeader = {
   alg: "ES256",
   kid: "test-kid",
   typ: "oauth-authz-req+jwt",
-  x5c: ["MIIBxxx..."],
+  x5c: [Buffer.from("leaf-certificate").toString("base64")],
 };
 
 const wrongSignature =
@@ -125,6 +131,20 @@ const x509RequestObject: Openid4vpAuthorizationRequestPayload = {
   iss: "x509_hash:test-client-id",
 };
 
+const x509RequestObjectWithMatchingHash: Openid4vpAuthorizationRequestPayload =
+  {
+    ...correctRequestObject,
+    client_id: "x509_hash:AQID",
+    iss: "x509_hash:AQID",
+  };
+
+const x509RequestObjectWithMismatchingHash: Openid4vpAuthorizationRequestPayload =
+  {
+    ...correctRequestObject,
+    client_id: "x509_hash:mismatching-hash",
+    iss: "x509_hash:mismatching-hash",
+  };
+
 const correctRequestObjectJwt = createJwt({
   header: validFederationHeader,
   payload: correctRequestObject,
@@ -167,12 +187,28 @@ const x509RequestObjectJwt = createJwt({
   signature: "valid_x509_signature",
 });
 
-// V1_3 header for openid_federation / no-prefix without trust_chain (delegation scenario)
+const x509RequestObjectWithMatchingHashJwt = createJwt({
+  header: validX5cHeader,
+  payload: x509RequestObjectWithMatchingHash,
+  signature: "valid_x509_signature",
+});
+
+const x509RequestObjectWithMismatchingHashJwt = createJwt({
+  header: validX5cHeader,
+  payload: x509RequestObjectWithMismatchingHash,
+  signature: "valid_x509_signature",
+});
+
+// V1_3 header for openid_federation / no-prefix without trust_chain or x5c (delegation scenario)
 const v1_3FederationHeaderNoTrustChain = {
   alg: "ES256",
   kid: "test-kid",
   typ: "oauth-authz-req+jwt",
-  x5c: ["MIIBxxx..."],
+};
+
+const v1_3FederationHeaderWithX5c = {
+  ...v1_3FederationHeaderNoTrustChain,
+  x5c: [Buffer.from("openid federation leaf").toString("base64")],
 };
 
 const v1_3FederationNoTrustChainJwt = createJwt({
@@ -187,6 +223,36 @@ const v1_3FederationClientIdNoTrustChainJwt = createJwt({
     ...correctRequestObject,
     client_id: "openid_federation:test-client-id",
     iss: "openid_federation:test-client-id",
+  },
+  signature: "valid_signature",
+});
+
+const v1_3FederationClientIdWithX5cJwt = createJwt({
+  header: v1_3FederationHeaderWithX5c,
+  payload: {
+    ...correctRequestObject,
+    client_id: "openid_federation:test-client-id",
+    iss: "openid_federation:test-client-id",
+  },
+  signature: "valid_signature",
+});
+
+const legacyHttpsClientIdWithX5cJwt = createJwt({
+  header: v1_3FederationHeaderWithX5c,
+  payload: {
+    ...correctRequestObject,
+    client_id: "https://client.example.it",
+    iss: "https://client.example.it",
+  },
+  signature: "valid_signature",
+});
+
+const legacyHttpsClientIdWithoutX5cJwt = createJwt({
+  header: v1_3FederationHeaderNoTrustChain,
+  payload: {
+    ...correctRequestObject,
+    client_id: "https://client.example.it",
+    iss: "https://client.example.it",
   },
   signature: "valid_signature",
 });
@@ -265,6 +331,11 @@ const callbacks: Pick<CallbackContext, "verifyJwt"> = {
 
     return { verified: false };
   },
+};
+
+const hashCallbacks = {
+  ...callbacks,
+  hash: vi.fn(async () => new Uint8Array([1, 2, 3])),
 };
 
 describe("parseAuthorizationRequest tests", () => {
@@ -422,7 +493,7 @@ describe("parseAuthorizationRequest tests", () => {
     expect(actualRequestObject.header.x5c).toBeDefined();
   });
 
-  it("should throw a ValidationError for x509_hash client_id with missing x5c in header", async () => {
+  it("should throw a ParseAuthorizeRequestError for x509_hash client_id with missing x5c in header", async () => {
     await expect(
       async () =>
         await parseAuthorizeRequest({
@@ -430,9 +501,11 @@ describe("parseAuthorizationRequest tests", () => {
           config: configV1_3,
           requestObjectJwt: x509RequestObjectMissingX5cJwt,
         }),
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toThrow(ParseAuthorizeRequestError);
   });
+});
 
+describe("parseAuthorizationRequest V1_3 and V1_4 x5c binding", () => {
   it("should parse V1_3 request with no-prefix client_id and no trust_chain, delegating to verifyJwt", async () => {
     const result = await parseAuthorizeRequest({
       callbacks,
@@ -441,6 +514,7 @@ describe("parseAuthorizationRequest tests", () => {
     });
     expect(result.payload).toEqual(correctRequestObject);
     expect(result.header.trust_chain).toBeUndefined();
+    expect(result.header.x5c).toBeUndefined();
   });
 
   it("should parse V1_3 request with openid_federation client_id and no trust_chain, delegating to verifyJwt", async () => {
@@ -450,6 +524,103 @@ describe("parseAuthorizationRequest tests", () => {
       requestObjectJwt: v1_3FederationClientIdNoTrustChainJwt,
     });
     expect(result.header.trust_chain).toBeUndefined();
+    expect(result.header.x5c).toBeUndefined();
+  });
+
+  it("should parse V1_4 request with openid_federation client_id and no x5c", async () => {
+    const result = await parseAuthorizeRequest({
+      callbacks,
+      config: configV1_4,
+      requestObjectJwt: v1_3FederationClientIdNoTrustChainJwt,
+    });
+
+    expect(result.header.x5c).toBeUndefined();
+  });
+
+  it("should verify openid_federation without x5c through federation", async () => {
+    const verifyJwt = vi.fn(callbacks.verifyJwt);
+
+    await parseAuthorizeRequest({
+      callbacks: { verifyJwt },
+      config: configV1_3,
+      requestObjectJwt: v1_3FederationClientIdNoTrustChainJwt,
+    });
+
+    expect(verifyJwt).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "federation" }),
+      expect.any(Object),
+    );
+  });
+
+  it("should verify openid_federation with x5c through federation", async () => {
+    const verifyJwt = vi.fn(callbacks.verifyJwt);
+
+    await parseAuthorizeRequest({
+      callbacks: { verifyJwt },
+      config: configV1_3,
+      requestObjectJwt: v1_3FederationClientIdWithX5cJwt,
+    });
+
+    expect(verifyJwt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: "federation",
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("should verify legacy HTTPS client_id with x5c through federation", async () => {
+    const verifyJwt = vi.fn(callbacks.verifyJwt);
+
+    await parseAuthorizeRequest({
+      callbacks: { verifyJwt },
+      config: configV1_3,
+      requestObjectJwt: legacyHttpsClientIdWithX5cJwt,
+    });
+
+    expect(verifyJwt).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "federation" }),
+      expect.any(Object),
+    );
+  });
+
+  it("should verify legacy HTTPS client_id without x5c through federation", async () => {
+    const verifyJwt = vi.fn(callbacks.verifyJwt);
+
+    await parseAuthorizeRequest({
+      callbacks: { verifyJwt },
+      config: configV1_3,
+      requestObjectJwt: legacyHttpsClientIdWithoutX5cJwt,
+    });
+
+    expect(verifyJwt).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "federation" }),
+      expect.any(Object),
+    );
+  });
+
+  it("should accept x509_hash when the hash callback matches the leaf certificate", async () => {
+    const result = await parseAuthorizeRequest({
+      callbacks: hashCallbacks,
+      config: configV1_3,
+      requestObjectJwt: x509RequestObjectWithMatchingHashJwt,
+    });
+
+    expect(result.payload).toEqual(x509RequestObjectWithMatchingHash);
+    expect(hashCallbacks.hash).toHaveBeenCalledWith(
+      expect.any(Uint8Array),
+      HashAlgorithm.Sha256,
+    );
+  });
+
+  it("should reject x509_hash when the hash callback does not match the leaf certificate", async () => {
+    await expect(
+      parseAuthorizeRequest({
+        callbacks: hashCallbacks,
+        config: configV1_3,
+        requestObjectJwt: x509RequestObjectWithMismatchingHashJwt,
+      }),
+    ).rejects.toThrow(ParseAuthorizeRequestError);
   });
 });
 
@@ -488,6 +659,15 @@ describe("parseAuthorizeRequest - optional verification", () => {
 
     expect(result.payload).toEqual(x509RequestObject);
     expect(result.header.x5c).toBeDefined();
+  });
+
+  it("should reject x509_hash without x5c even when verification is disabled", async () => {
+    await expect(
+      parseAuthorizeRequest({
+        config: configV1_3,
+        requestObjectJwt: x509RequestObjectMissingX5cJwt,
+      }),
+    ).rejects.toThrow(ParseAuthorizeRequestError);
   });
 
   it("should accept wrongly signed JWT when verification is disabled", async () => {
@@ -534,6 +714,32 @@ describe("parseAuthorizeRequest - optional verification", () => {
 });
 
 describe("extractClientIdPrefix", () => {
+  it("creates an x509_hash client_id from the x5c leaf certificate using the hash callback", async () => {
+    const hash = vi.fn(async () => new Uint8Array([1, 2, 3]));
+    const leafCertificate = Buffer.from("leaf-certificate").toString("base64");
+
+    await expect(
+      createX509HashClientId({
+        certificateChain: [leafCertificate, "intermediate-certificate"],
+        hash,
+      }),
+    ).resolves.toBe("x509_hash:AQID");
+
+    expect(hash).toHaveBeenCalledWith(
+      new Uint8Array(Buffer.from("leaf-certificate")),
+      HashAlgorithm.Sha256,
+    );
+  });
+
+  it("rejects empty certificate chains when creating an x509_hash client_id", async () => {
+    await expect(
+      createX509HashClientId({
+        certificateChain: [],
+        hash: vi.fn(async () => new Uint8Array([1, 2, 3])),
+      }),
+    ).rejects.toThrow(ParseAuthorizeRequestError);
+  });
+
   it("returns X509_HASH prefix and clean clientId for x509_hash scheme", () => {
     expect(extractClientIdPrefix("x509_hash:abc123")).toEqual({
       clientId: "abc123",

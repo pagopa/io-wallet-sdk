@@ -8,6 +8,10 @@ import {
 
 import { Oid4vpError } from "../errors";
 import { validateAuthorizationRequestParams } from "./validate-authorization-request";
+import {
+  X509CertificateBinding,
+  validateCertificateEndpoints,
+} from "./validate-certificate-endpoints";
 import { zAuthorizationRequestUrlParams } from "./z-authorization-request-url";
 
 export interface FetchAuthorizationRequestOptions {
@@ -43,6 +47,14 @@ export interface FetchAuthorizationRequestOptions {
    * Optional wallet nonce for replay attack prevention (RECOMMENDED per spec)
    */
   walletNonce?: string;
+
+  /**
+   * Optional RP certificate context used to bind `request_uri` to the certificate SAN entries.
+   */
+  x509Certificate?: {
+    binding: X509CertificateBinding;
+    leafCertificate: string;
+  };
 }
 
 export interface ParsedQrCode {
@@ -222,6 +234,19 @@ export async function fetchAuthorizationRequest(
     if (validatedParams.request) {
       requestObjectJwt = validatedParams.request;
     } else {
+      if (options.x509Certificate) {
+        await validateCertificateEndpoints({
+          callbacks: options.x509Certificate.binding,
+          certificate: options.x509Certificate.leafCertificate,
+          endpoints: [
+            {
+              name: "request_uri",
+              uri: validatedParams.request_uri,
+            },
+          ],
+        });
+      }
+
       // Type system guarantees request_uri is defined here due to validation
       requestObjectJwt = await fetchRequestObjectJwt(
         validatedParams.request_uri as string,

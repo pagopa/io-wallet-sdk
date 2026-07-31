@@ -9,6 +9,10 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
+import {
+  X509CertificateBinding,
+  validateCertificateEndpoints,
+} from "../authorization-request/validate-certificate-endpoints";
 import { FetchAuthorizationResponseError } from "../errors";
 import {
   Openid4vpAuthorizationResponseResult,
@@ -34,6 +38,16 @@ export interface FetchAuthorizationResponseOptions {
    * The response_uri field contained in the {@link Openid4vpAuthorizationRequestPayload}
    */
   presentationResponseUri: string;
+
+  /**
+   * Optional RP certificate context from the parsed Request Object.
+   * When provided, `presentationResponseUri` and the returned `redirect_uri`
+   * are checked against the certificate SAN entries through the supplied callback.
+   */
+  x509Certificate?: {
+    binding: X509CertificateBinding;
+    leafCertificate: string;
+  };
 }
 
 /**
@@ -50,6 +64,16 @@ export async function fetchAuthorizationResponse(
   options: FetchAuthorizationResponseOptions,
 ): Promise<Openid4vpAuthorizationResponseResult> {
   try {
+    if (options.x509Certificate) {
+      await validateCertificateEndpoints({
+        callbacks: options.x509Certificate.binding,
+        certificate: options.x509Certificate.leafCertificate,
+        endpoints: [
+          { name: "response_uri", uri: options.presentationResponseUri },
+        ],
+      });
+    }
+
     const fetch = createFetcher(options.callbacks.fetch);
     const authorizationResponseResult = await fetch(
       options.presentationResponseUri,
@@ -73,14 +97,30 @@ export async function fetchAuthorizationResponse(
       await authorizationResponseResult.json();
 
     //Response could be anything, so it's returned as is for further processing
-    return parseWithErrorHandling(
+    const parsedAuthorizationResponseResult = parseWithErrorHandling(
       zOpenid4vpAuthorizationResponseResult,
       authorizationResponseResultJson,
     );
+
+    if (options.x509Certificate) {
+      await validateCertificateEndpoints({
+        callbacks: options.x509Certificate.binding,
+        certificate: options.x509Certificate.leafCertificate,
+        endpoints: [
+          {
+            name: "redirect_uri",
+            uri: parsedAuthorizationResponseResult.redirect_uri,
+          },
+        ],
+      });
+    }
+
+    return parsedAuthorizationResponseResult;
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
-      error instanceof ValidationError
+      error instanceof ValidationError ||
+      error instanceof FetchAuthorizationResponseError
     ) {
       throw error;
     }
