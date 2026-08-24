@@ -237,7 +237,7 @@ export async function parseAuthorizeRequest(
     if (
       error instanceof ItWalletSpecsVersionError ||
       error instanceof ValidationError ||
-      error instanceof Oauth2JwtParseError ||
+      error instanceof JwtParseError ||
       error instanceof Oid4vpError
     )
       throw error;
