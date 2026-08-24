@@ -1,6 +1,5 @@
-import { JwtSigner } from "@openid4vc/oauth2";
+import { JwtSigner, decodeJwt } from "@pagopa/io-wallet-utils";
 
-import { decodeJwt } from "../common/jwt/decode-jwt";
 import { PushedAuthorizationRequestError } from "../errors";
 import {
   VerifiedJarRequest,

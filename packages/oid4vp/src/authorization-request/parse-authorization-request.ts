@@ -1,16 +1,14 @@
 import {
-  CallbackContext,
-  JwtSigner,
-  Oauth2JwtParseError,
-  verifyJwt,
-} from "@openid4vc/oauth2";
-import { decodeJwt } from "@pagopa/io-wallet-oauth2";
-import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
+  JwtParseError,
+  JwtSigner,
   ValidationError,
+  decodeJwt,
   dispatchByVersion,
+  verifyJwt,
 } from "@pagopa/io-wallet-utils";
 
 import { Oid4vpError, ParseAuthorizeRequestError } from "../errors";
@@ -154,7 +152,7 @@ export interface ParsedAuthorizeRequestResult {
  * @param options {@link ParseAuthorizeRequestOptions}
  * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
  * @throws {ValidationError} in case there are errors validating the Request Object structure
- * @throws {Oauth2JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
+ * @throws {JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
  * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid (when verifyJwt is provided) or there are unexpected errors
  */
 export async function parseAuthorizeRequest(
@@ -239,7 +237,7 @@ export async function parseAuthorizeRequest(
     if (
       error instanceof ItWalletSpecsVersionError ||
       error instanceof ValidationError ||
-      error instanceof Oauth2JwtParseError ||
+      error instanceof JwtParseError ||
       error instanceof Oid4vpError
     )
       throw error;

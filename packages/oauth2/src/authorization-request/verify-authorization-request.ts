@@ -1,7 +1,11 @@
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
+import {
+  type CallbackContext,
+  IoWalletSdkConfig,
+  Jwk,
+  RequestLike,
+} from "@pagopa/io-wallet-utils";
 
-import { CallbackContext } from "@openid4vc/oauth2";
-import { IoWalletSdkConfig, RequestLike } from "@pagopa/io-wallet-utils";
+import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 
 import { VerifiedClientAttestationPopJwt } from "../client-attestation/client-attestation-pop";
 import {
@@ -9,7 +13,6 @@ import {
   verifyClientAttestation,
 } from "../client-attestation/verify-client-attestation";
 import { VerifiedWalletAttestationJwt } from "../client-attestation/wallet-attestation";
-import { Jwk } from "../common/jwk/z-jwk";
 import { Oauth2Error } from "../errors";
 import { verifyTokenDPoP } from "../token-dpop/verify-token-dpop";
 
@@ -63,7 +66,7 @@ export interface VerifyAuthorizationRequestOptions {
     client_id?: string;
   };
 
-  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
+  authorizationServerMetadata: BaseAuthorizationServerMetadata;
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
 
   clientAttestation: ClientAttestationOptions;

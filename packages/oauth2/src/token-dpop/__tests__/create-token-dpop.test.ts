@@ -1,4 +1,4 @@
-import { HashAlgorithm } from "@openid4vc/oauth2";
+import { HashAlgorithm } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createTokenDPoP } from "../create-token-dpop";

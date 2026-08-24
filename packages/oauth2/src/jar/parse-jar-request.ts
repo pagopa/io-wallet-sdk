@@ -1,4 +1,4 @@
-import { CallbackContext } from "@openid4vc/oauth2";
+import type { CallbackContext } from "@pagopa/io-wallet-utils";
 
 import { fetchJarRequestObject } from "./fetch-jar-request-object";
 import { validateJarRequestParams } from "./validate-jar-request";

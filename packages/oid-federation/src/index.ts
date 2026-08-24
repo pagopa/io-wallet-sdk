@@ -5,7 +5,6 @@ export * from "./entityStatement/itWalletEntityStatementClaims";
 export * from "./entityStatement/z-constraint";
 export * from "./entityStatement/z-trustmark";
 export * from "./errors";
-export * from "./jwk/jwk";
 export * from "./metadata/common";
 export * from "./metadata/entity/itWalletFederationEntity";
 export {
@@ -89,4 +88,3 @@ export type ItWalletAuthorizationServerMetadata =
   | import("./metadata/entity/v1.0/itWalletAuthorizationServer").ItWalletAuthorizationServerMetadata
   | import("./metadata/entity/v1.3/itWalletAuthorizationServer").ItWalletAuthorizationServerMetadata;
 export * from "./trustChain/trust-chain";
-export type * from "./utils/types";

@@ -1,12 +1,12 @@
 import {
-  CallbackContext,
+  type CallbackContext,
+  JwtPayload,
   JwtSigner,
+  decodeJwt,
   jwtSignerFromJwt,
   verifyJwt,
-} from "@openid4vc/oauth2";
+} from "@pagopa/io-wallet-utils";
 
-import { decodeJwt } from "../common/jwt/decode-jwt";
-import { JwtPayload } from "../common/jwt/z-jwt";
 import { MrtdPopError } from "../errors";
 import {
   MrtdChallengeJwtHeader,

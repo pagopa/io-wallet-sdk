@@ -1,9 +1,10 @@
-import { CallbackContext, Oauth2JwtParseError } from "@openid4vc/oauth2";
-import { Jwk } from "@pagopa/io-wallet-oauth2";
 import {
+  type CallbackContext,
   HashAlgorithm,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  JwtParseError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
@@ -387,14 +388,14 @@ describe("parseAuthorizationRequest tests", () => {
     expect(actualRequestObject.header.kid).toBeDefined();
   });
 
-  it("should throw an Oauth2JwtParseError because of a malformed jwt", async () => {
+  it("should throw an JwtParseError because of a malformed jwt", async () => {
     await expect(async () =>
       parseAuthorizeRequest({
         callbacks,
         config: configV1_0,
         requestObjectJwt: "this is not a JWT",
       }),
-    ).rejects.toThrow(Oauth2JwtParseError);
+    ).rejects.toThrow(JwtParseError);
   });
 
   it("should throw an ParseAuthroizeRequestError because of a malformed signature", async () => {
@@ -689,7 +690,7 @@ describe("parseAuthorizeRequest - optional verification", () => {
           config: configV1_0,
           requestObjectJwt: malformedJwt,
         }),
-    ).rejects.toThrow(Oauth2JwtParseError);
+    ).rejects.toThrow(JwtParseError);
   });
 
   it("should still validate payload schema even without verification", async () => {

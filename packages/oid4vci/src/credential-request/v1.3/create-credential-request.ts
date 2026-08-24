@@ -1,13 +1,11 @@
 import {
-  CallbackContext,
+  type CallbackContext,
   HashAlgorithm,
-  type JwtSignerJwk,
-  calculateJwkThumbprint,
-} from "@openid4vc/oauth2";
-import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  type JwtSignerJwk,
   ValidationError,
+  calculateJwkThumbprint,
   dateToSeconds,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";

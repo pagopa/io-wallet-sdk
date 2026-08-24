@@ -1,5 +1,5 @@
-import { CallbackContext } from "@openid4vc/oauth2";
 import {
+  type CallbackContext,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,

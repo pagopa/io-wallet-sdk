@@ -1,6 +1,4 @@
-import { CallbackContext, JwtSignerX5c } from "@openid4vc/oauth2";
 import {
-  Jwk,
   type WalletAttestationOptionsV1_0,
   type WalletAttestationOptionsV1_3,
   type WalletAttestationOptionsV1_4,
@@ -10,8 +8,11 @@ import {
 } from "@pagopa/io-wallet-oauth2";
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  type JwtSignerX5c,
   addSecondsToDate,
   dateToSeconds,
   dispatchByVersion,

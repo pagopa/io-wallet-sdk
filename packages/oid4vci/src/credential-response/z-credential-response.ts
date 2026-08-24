@@ -1,4 +1,4 @@
-import { zAlgValueNotNone, zJwk } from "@pagopa/io-wallet-oauth2";
+import { zAlgValueNotNone, zJwk } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 import type { CredentialResponseV1_0 } from "./v1.0/z-credential-response";

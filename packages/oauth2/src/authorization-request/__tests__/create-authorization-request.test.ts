@@ -11,8 +11,9 @@ import {
 } from "../create-authorization-request";
 
 vi.mock("../../pkce");
-vi.mock(import("@openid4vc/utils"), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@pagopa/io-wallet-utils")>();
   return {
     ...actual,
     encodeToBase64Url: vi.fn((data) => `base64url_${data}`),

@@ -1,8 +1,8 @@
-import type { CallbackContext, JwtSignerJwk } from "@openid4vc/oauth2";
-
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  type JwtSignerJwk,
   ValidationError,
   dateToSeconds,
   parseWithErrorHandling,

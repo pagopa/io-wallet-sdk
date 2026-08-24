@@ -1,15 +1,15 @@
-import { jwtSignerFromJwt } from "@openid4vc/oauth2";
+import { Oauth2Error } from "@pagopa/io-wallet-oauth2";
 import {
   type CallbackContext,
   type Jwk,
-  Oauth2Error,
   decodeJwt,
   decodeJwtHeader,
+  jwtSignerFromJwt,
+  stringToJsonWithErrorHandling,
   zCompactJwe,
   zCompactJwt,
   zJwtHeader,
-} from "@pagopa/io-wallet-oauth2";
-import { stringToJsonWithErrorHandling } from "@pagopa/io-wallet-utils";
+} from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";

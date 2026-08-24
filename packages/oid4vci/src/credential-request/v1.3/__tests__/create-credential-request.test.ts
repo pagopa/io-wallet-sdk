@@ -12,10 +12,10 @@ import {
   createCredentialRequest,
 } from "../create-credential-request";
 
-vi.mock("@openid4vc/oauth2", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/oauth2")>();
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
+  const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as object),
     calculateJwkThumbprint: vi.fn(({ jwk }) => jwk.kid),
   };
 });

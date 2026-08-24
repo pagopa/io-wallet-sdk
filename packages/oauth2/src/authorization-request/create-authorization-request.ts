@@ -1,14 +1,15 @@
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
-import { CallbackContext, RequestDpopOptions } from "@openid4vc/oauth2";
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  type RequestDpopOptions,
   addSecondsToDate,
   dateToSeconds,
   dispatchByVersion,
   encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
+
+import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";
@@ -63,7 +64,7 @@ interface BaseCreatePushedAuthorizationRequestOptions<
    */
   clientId: string;
 
-  codeChallengeMethodsSupported: ItWalletAuthorizationServerMetadata["code_challenge_methods_supported"];
+  codeChallengeMethodsSupported: BaseAuthorizationServerMetadata["code_challenge_methods_supported"];
 
   config: IoWalletSdkConfig<V>;
 

@@ -1,6 +1,9 @@
+import {
+  MAX_JTI_LENGTH,
+  zJwtHeader,
+  zJwtPayload,
+} from "@pagopa/io-wallet-utils";
 import { z } from "zod";
-
-import { MAX_JTI_LENGTH, zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
   z.object({
