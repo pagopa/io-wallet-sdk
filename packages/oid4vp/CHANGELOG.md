@@ -1,5 +1,16 @@
 # @pagopa/io-wallet-oid4vp
 
+## 1.5.4
+
+### Patch Changes
+
+- 33be7d5: Backport the IT-Wallet 1.4.4 LTS conditional `x5c` Request Object rule to OID4VP SDK profiles V1_3 and V1_4, allowing federation signers when `client_id` uses `openid_federation` while preserving x5c requirements for `x509_hash`.
+- Updated dependencies [c8c5d65]
+- Updated dependencies [45a3616]
+  - @pagopa/io-wallet-oid-federation@1.5.4
+  - @pagopa/io-wallet-oauth2@1.5.4
+  - @pagopa/io-wallet-utils@1.5.4
+
 ## 1.5.3
 
 ### Patch Changes

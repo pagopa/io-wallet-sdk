@@ -9,6 +9,10 @@ import {
 
 import { Oid4vpError } from "../errors";
 import { validateAuthorizationRequestParams } from "./validate-authorization-request";
+import {
+  X509CertificateBinding,
+  validateCertificateEndpoints,
+} from "./validate-certificate-endpoints";
 import { zAuthorizationRequestUrlParams } from "./z-authorization-request-url";
 
 export interface FetchAuthorizationRequestOptions {
@@ -44,6 +48,14 @@ export interface FetchAuthorizationRequestOptions {
    * Optional wallet nonce for replay attack prevention (RECOMMENDED per spec)
    */
   walletNonce?: string;
+
+  /**
+   * Optional RP certificate context used to bind `request_uri` to the certificate SAN entries.
+   */
+  x509Certificate?: {
+    binding: X509CertificateBinding;
+    leafCertificate: string;
+  };
 }
 
 export interface ParsedQrCode {
@@ -51,6 +63,11 @@ export interface ParsedQrCode {
    * The `client_id` from the authorization URL
    */
   clientId: string;
+
+  /**
+   * It contains the base64url-encoded and signed Request Object. For the content of the Request Object, see {@link Openid4vpAuthorizationRequestPayload}.
+   */
+  request?: string;
   /**
    * The `request_uri` from the authorization URL
    */
@@ -79,6 +96,39 @@ export interface FetchAuthorizationRequestResult {
    * - "reference": Request Object JWT fetched from `request_uri`
    */
   sendBy: "reference" | "value";
+}
+
+/**
+ * Parses an authorization request URL and builds a {@link ParsedQrCode} object.
+ *
+ * @param authorizeRequestUrl - The authorization URL extracted from the QR code
+ * @returns The parsed QR code data including `clientId`, `requestUri`, and `requestUriMethod`
+ * @throws {ValidationError} If URL parameters fail schema validation or business logic checks
+ */
+export function createParsedQrCode(authorizeRequestUrl: string): ParsedQrCode {
+  const url = new URL(authorizeRequestUrl);
+
+  const rawParams = {
+    client_id: url.searchParams.get("client_id") ?? undefined,
+    request: url.searchParams.get("request") ?? undefined,
+    request_uri: url.searchParams.get("request_uri") ?? undefined,
+    request_uri_method: url.searchParams.get("request_uri_method") ?? undefined,
+    state: url.searchParams.get("state") ?? undefined,
+  };
+
+  const parsedParams = zAuthorizationRequestUrlParams.parse(rawParams);
+  const validatedParams = validateAuthorizationRequestParams(parsedParams);
+  const sendBy = validatedParams.request ? "value" : "reference";
+
+  return {
+    clientId: validatedParams.client_id,
+    request: validatedParams.request,
+    requestUri: validatedParams.request_uri,
+    requestUriMethod:
+      sendBy === "reference"
+        ? (validatedParams.request_uri_method ?? "get")
+        : undefined,
+  };
 }
 
 /**
@@ -161,7 +211,7 @@ export async function fetchRequestObjectJwt(
  *
  * @example By Value mode
  * ```typescript
- * const url = "https://wallet.example.org/authorize?" +
+ * const url = "[https://wallet.example.org/authorize](https://wallet.example.org/authorize)?" +
  *   "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
  *   "&request=eyJhbGciOiJFUzI1NiIs...";
  *
@@ -175,7 +225,7 @@ export async function fetchRequestObjectJwt(
  *
  * @example By Reference mode with POST
  * ```typescript
- * const url = "https://wallet.example.org/authorize?" +
+ * const url = "[https://wallet.example.org/authorize](https://wallet.example.org/authorize)?" +
  *   "client_id=openid_federation%23https%3A%2F%2Frp.example.org" +
  *   "&request_uri=https%3A%2F%2Frp.example.org%2Frequest" +
  *   "&request_uri_method=post";
@@ -184,7 +234,7 @@ export async function fetchRequestObjectJwt(
  *   authorizeRequestUrl: url,
  *   callbacks: { fetch },
  *   walletMetadata: {
- *     authorization_endpoint: "https://wallet.example.org/authorize",
+ *     authorization_endpoint: "[https://wallet.example.org/authorize](https://wallet.example.org/authorize)",
  *     response_types_supported: ["vp_token"],
  *   },
  *   walletNonce: "random-nonce",
@@ -197,38 +247,32 @@ export async function fetchAuthorizationRequest(
   options: FetchAuthorizationRequestOptions,
 ): Promise<FetchAuthorizationRequestResult> {
   try {
-    const url = new URL(options.authorizeRequestUrl);
-
-    // Extract and validate URL parameters using Zod schema
-    const rawParams = {
-      client_id: url.searchParams.get("client_id") ?? undefined,
-      request: url.searchParams.get("request") ?? undefined,
-      request_uri: url.searchParams.get("request_uri") ?? undefined,
-      request_uri_method:
-        url.searchParams.get("request_uri_method") ?? undefined,
-      state: url.searchParams.get("state") ?? undefined,
-    };
-
-    // Parse and validate URL parameters with Zod schema
-    const parsedParams = zAuthorizationRequestUrlParams.parse(rawParams);
-
-    // Validate business logic (mutual exclusivity, etc.)
-    const validatedParams = validateAuthorizationRequestParams(parsedParams);
-
-    // Determine transmission mode
-    const sendBy = validatedParams.request ? "value" : "reference";
+    const parsedQrCode = createParsedQrCode(options.authorizeRequestUrl);
 
     // Get JWT: either inline or fetch from URI
     let requestObjectJwt: string;
-    if (validatedParams.request) {
-      requestObjectJwt = validatedParams.request;
+    if (parsedQrCode.request) {
+      requestObjectJwt = parsedQrCode.request;
     } else {
+      if (options.x509Certificate) {
+        await validateCertificateEndpoints({
+          callbacks: options.x509Certificate.binding,
+          certificate: options.x509Certificate.leafCertificate,
+          endpoints: [
+            {
+              name: "request_uri",
+              uri: parsedQrCode.requestUri,
+            },
+          ],
+        });
+      }
+
       // Type system guarantees request_uri is defined here due to validation
       requestObjectJwt = await fetchRequestObjectJwt(
-        validatedParams.request_uri as string,
+        parsedQrCode.requestUri as string,
         {
           fetch: options.callbacks.fetch,
-          method: validatedParams.request_uri_method ?? "get",
+          method: parsedQrCode.requestUriMethod ?? "get",
           walletMetadata: options.walletMetadata,
           walletNonce: options.walletNonce,
         },
@@ -236,16 +280,9 @@ export async function fetchAuthorizationRequest(
     }
 
     return {
-      parsedQrCode: {
-        clientId: validatedParams.client_id,
-        requestUri: validatedParams.request_uri,
-        requestUriMethod:
-          sendBy === "reference"
-            ? (validatedParams.request_uri_method ?? "get")
-            : undefined,
-      },
+      parsedQrCode,
       requestObjectJwt,
-      sendBy,
+      sendBy: parsedQrCode.request ? "value" : "reference",
     };
   } catch (error) {
     if (
