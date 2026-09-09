@@ -1,5 +1,7 @@
 # @pagopa/io-wallet-utils
 
+## 1.5.6
+
 ## 1.5.5
 
 ## 1.5.4
