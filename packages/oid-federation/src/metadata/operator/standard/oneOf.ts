@@ -10,15 +10,13 @@ export const oneOfOperator = createPolicyOperatorSchema({
   mergeStrategy: MetadataMergeStrategy.Intersection,
   operatorJsonValues: [
     z.array(z.string()),
-    // TODO: See how we want to we handle the comparison of objects
-    // z.array(z.record(z.string().or(z.number()), z.unknown())),
+    z.array(z.record(z.string(), z.unknown())),
     z.array(z.number()),
   ],
   orderOfApplication: MetadataOrderOfApplication.AfterDefault,
   parameterJsonValues: [
     z.string(),
-    // TODO: See how we want to we handle the comparison of objects
-    // z.record(z.string().or(z.number()), z.unknown()),
+    z.record(z.string(), z.unknown()),
     z.number(),
   ],
 });
