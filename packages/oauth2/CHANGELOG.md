@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oauth2
 
+## 1.5.5
+
+### Patch Changes
+
+- @pagopa/io-wallet-oid-federation@1.5.5
+- @pagopa/io-wallet-utils@1.5.5
+
 ## 1.5.4
 
 ### Patch Changes
