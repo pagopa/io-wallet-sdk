@@ -33,12 +33,6 @@ describe("verifyWalletAttestationJwt v1.4", () => {
     exp: Math.floor(new Date("2099-01-01").getTime() / 1000),
     iat: Math.floor(Date.now() / 1000),
     iss: "https://wallet-provider.example.com",
-    status: {
-      status_list: {
-        idx: 12,
-        uri: "https://status.example.com/list",
-      },
-    },
     sub: "test-client-id",
     wallet_link: "https://wallet.example.com",
     wallet_name: "Test Wallet",
@@ -61,41 +55,9 @@ describe("verifyWalletAttestationJwt v1.4", () => {
     });
 
     expect(result.header.x5c).toEqual(mockX5c);
-    expect(result.payload.status).toEqual(validPayload.status);
     expect(result.payload.wallet_link).toBe("https://wallet.example.com");
     expect(result.payload.wallet_name).toBe("Test Wallet");
     expect(result.signer).toBeDefined();
-  });
-
-  it("should verify a valid v1.4 wallet attestation JWT with eudi_wallet_info", async () => {
-    const jwt = buildJwt(validHeader, {
-      ...validPayload,
-      eudi_wallet_info: {
-        general_info: {
-          wallet_provider_name: "PagoPA",
-          wallet_solution_certification_information:
-            "https://certification-reference.example.it",
-          wallet_solution_id: "wallet-solution-id",
-          wallet_solution_version: "1.0.0",
-        },
-      },
-    });
-
-    const result = await verifyWalletAttestationJwt({
-      callbacks: { verifyJwt: mockVerifyJwt },
-      config: mockConfig,
-      walletAttestationJwt: jwt,
-    });
-
-    expect(result.payload.eudi_wallet_info).toEqual({
-      general_info: {
-        wallet_provider_name: "PagoPA",
-        wallet_solution_certification_information:
-          "https://certification-reference.example.it",
-        wallet_solution_id: "wallet-solution-id",
-        wallet_solution_version: "1.0.0",
-      },
-    });
   });
 
   it("should reject a JWT missing wallet_link", async () => {
@@ -104,7 +66,6 @@ describe("verifyWalletAttestationJwt v1.4", () => {
       exp: validPayload.exp,
       iat: validPayload.iat,
       iss: validPayload.iss,
-      status: validPayload.status,
       sub: validPayload.sub,
       wallet_name: validPayload.wallet_name,
     };
@@ -125,7 +86,6 @@ describe("verifyWalletAttestationJwt v1.4", () => {
       exp: validPayload.exp,
       iat: validPayload.iat,
       iss: validPayload.iss,
-      status: validPayload.status,
       sub: validPayload.sub,
       wallet_link: validPayload.wallet_link,
     };
@@ -140,36 +100,30 @@ describe("verifyWalletAttestationJwt v1.4", () => {
     ).rejects.toThrow();
   });
 
-  it("should reject a JWT missing status", async () => {
-    const payloadWithoutStatus: Record<string, unknown> = {
-      cnf: validPayload.cnf,
-      exp: validPayload.exp,
-      iat: validPayload.iat,
-      iss: validPayload.iss,
-      sub: validPayload.sub,
-      wallet_link: validPayload.wallet_link,
-      wallet_name: validPayload.wallet_name,
-    };
-    const jwt = buildJwt(validHeader, payloadWithoutStatus);
-
-    await expect(
-      verifyWalletAttestationJwt({
-        callbacks: { verifyJwt: mockVerifyJwt },
-        config: mockConfig,
-        walletAttestationJwt: jwt,
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("should reject malformed eudi_wallet_info", async () => {
+  it("should accept a JWT carrying claims unknown to v1.4.6", async () => {
     const jwt = buildJwt(validHeader, {
       ...validPayload,
-      eudi_wallet_info: {
-        general_info: {
-          wallet_provider_name: "PagoPA",
-        },
-      },
+      status: { status_list: { idx: 12, uri: "https://status.example.com" } },
     });
+
+    const result = await verifyWalletAttestationJwt({
+      callbacks: { verifyJwt: mockVerifyJwt },
+      config: mockConfig,
+      walletAttestationJwt: jwt,
+    });
+
+    expect(result.payload.wallet_name).toBe("Test Wallet");
+  });
+
+  it("should reject a JWT missing kid in the header", async () => {
+    const jwt = buildJwt(
+      {
+        alg: validHeader.alg,
+        typ: validHeader.typ,
+        x5c: validHeader.x5c,
+      },
+      validPayload,
+    );
 
     await expect(
       verifyWalletAttestationJwt({

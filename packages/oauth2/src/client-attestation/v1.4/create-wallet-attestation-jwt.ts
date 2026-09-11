@@ -3,7 +3,6 @@ import {
   addSecondsToDate,
   dateToSeconds,
 } from "@pagopa/io-wallet-utils";
-import { z } from "zod";
 
 import { decodeJwt } from "../../common/jwt/decode-jwt";
 import { ClientAttestationError } from "../../errors";
@@ -11,17 +10,18 @@ import { calculateDpopJwkThumbprint } from "../jwk-thumbprint";
 import { BaseWalletAttestationOptions } from "../types";
 import {
   WalletAttestationJwtV1_4,
-  zEudiWalletInfoV1_4,
   zWalletAttestationJwtHeaderV1_4,
   zWalletAttestationJwtPayloadV1_4,
-  zWalletAttestationStatusV1_4,
 } from "./z-wallet-attestation";
+
+const DEFAULT_EXPIRATION_SECONDS = 3600;
+
+const MAX_EXPIRATION_SECONDS = 86400;
 
 export interface WalletAttestationOptionsV1_4 extends Omit<
   BaseWalletAttestationOptions,
   "walletLink" | "walletName"
 > {
-  eudiWalletInfo?: z.infer<typeof zEudiWalletInfoV1_4>;
   nbf?: Date;
   signer: {
     alg: string;
@@ -30,7 +30,6 @@ export interface WalletAttestationOptionsV1_4 extends Omit<
     trustChain?: [string, ...string[]];
     x5c: [string, ...string[]];
   };
-  status: z.infer<typeof zWalletAttestationStatusV1_4>;
   walletLink: string;
   walletName: string;
 }
@@ -49,9 +48,17 @@ export const createWalletAttestationJwt = async (
   try {
     const { signJwt } = options.callbacks;
     const iat = new Date();
-    const exp = options.expiresAt ?? addSecondsToDate(iat, 3600); // Default expiration of 1 hour
+    const exp =
+      options.expiresAt ?? addSecondsToDate(iat, DEFAULT_EXPIRATION_SECONDS);
 
-    // Validate temporal constraints
+    if (exp <= iat) {
+      throw new ValidationError("exp must be after iat");
+    }
+
+    if (exp > addSecondsToDate(iat, MAX_EXPIRATION_SECONDS)) {
+      throw new ValidationError("exp must not be more than 24 hours after iat");
+    }
+
     if (options.nbf && options.nbf >= exp) {
       throw new ValidationError("nbf must be before exp");
     }
@@ -63,14 +70,10 @@ export const createWalletAttestationJwt = async (
       exp: dateToSeconds(exp),
       iat: dateToSeconds(iat),
       iss: options.issuer,
-      status: options.status,
       sub: dpopJwkThumbprint,
       wallet_link: options.walletLink,
       wallet_name: options.walletName,
       ...(options.nbf && { nbf: dateToSeconds(options.nbf) }),
-      ...(options.eudiWalletInfo && {
-        eudi_wallet_info: options.eudiWalletInfo,
-      }),
     };
 
     const header = {

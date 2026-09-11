@@ -62,11 +62,6 @@ function assertV1_4Options(
       `Version mismatch: provider is configured for v1.4 but 'walletName' is required and missing`,
     );
   }
-  if (!("status" in options) || !options.status) {
-    throw new WalletProviderError(
-      `Version mismatch: provider is configured for v1.4 but 'status' is required and missing`,
-    );
-  }
 }
 
 /**
@@ -209,14 +204,14 @@ export class WalletProvider {
    * Version Differences:
    * - v1.0: Uses only `trust_chain` in header (federation method); no `status` claim
    * - v1.3: Requires `x5c` in header, optional `trust_chain`; supports optional `nbf` and `status` claims
-   * - v1.4: Requires `x5c` in header, optional `trust_chain`; `status`, `wallet_link`, and `wallet_name`
-   *   are all **required**; optional `eudi_wallet_info` claim; sets `sub` to the DPoP JWK thumbprint
+   * - v1.4: Requires `x5c` in header, optional `trust_chain`; `wallet_link` and `wallet_name` are
+   *   **required**; no `status` claim; sets `sub` to the DPoP JWK thumbprint
    *
    * @public
    * @param {WalletAttestationOptions} options - The necessary parameters to build the attestation.
    * @returns {Promise<string>} A promise that resolves to the signed wallet attestation JWT as a string.
    * @throws {WalletProviderError} When the provided options do not match the configured IT-Wallet
-   * specification version, or when v1.4 options are missing `walletLink`, `walletName`, or `status`.
+   * specification version, or when v1.4 options are missing `walletLink` or `walletName`.
    * @throws {ValidationError} When the generated wallet attestation JWT fails validation.
    * @throws {ClientAttestationError} When wallet attestation JWT creation fails unexpectedly,
    * including signing errors from the configured `signJwt` callback.
@@ -248,7 +243,7 @@ export class WalletProvider {
    *   status: { status_list: { idx: 2, uri: "https://status.example.com" } } // Optional
    * });
    *
-   * @example v1.4 - Wallet attestation with required status and optional eudi_wallet_info
+   * @example v1.4 - Wallet attestation with required wallet_link and wallet_name
    * const jwt = await provider.createItWalletAttestationJwt({
    *   callbacks: { hash: myHashCallback, signJwt: mySignJwtCallback },
    *   dpopJwkPublic: myJwk,
@@ -260,17 +255,9 @@ export class WalletProvider {
    *     x5c: ["cert1-base64", "cert2-base64"],
    *     trustChain: ["trust-anchor-jwt"] // Optional
    *   },
-   *   status: { status_list: { idx: 2, uri: "https://status.example.com" } }, // Required
    *   walletLink: "https://wallet.example.com", // Required
    *   walletName: "My Wallet", // Required
-   *   eudiWalletInfo: { // Optional
-   *     general_info: {
-   *       wallet_provider_name: "PagoPA",
-   *       wallet_solution_certification_information: "certification-ref",
-   *       wallet_solution_id: "wallet-solution-id",
-   *       wallet_solution_version: "1.0.0"
-   *     }
-   *   }
+   *   nbf: new Date('2025-01-01') // Optional
    * });
    */
 
@@ -310,11 +297,9 @@ export class WalletProvider {
         return createWalletAttestationJwtV1_4({
           callbacks: options.callbacks,
           dpopJwkPublic: options.dpopJwkPublic,
-          eudiWalletInfo: options.eudiWalletInfo,
           expiresAt: options.expiresAt,
           issuer: options.issuer,
           signer: options.signer,
-          status: options.status,
           walletLink: options.walletLink,
           walletName: options.walletName,
         });
