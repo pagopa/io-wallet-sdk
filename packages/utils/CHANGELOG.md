@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-utils
 
+## 1.5.7
+
+### Patch Changes
+
+- 530d96b: Alignement of SDK V1_4 to ITW specs 1.4.6
+
 ## 1.5.6
 
 ## 1.5.5
