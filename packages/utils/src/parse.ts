@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ValidationError } from "./errors/errors";
+import { JsonParseError, ValidationError } from "./errors/errors";
 
 export type BaseSchema = z.ZodTypeAny;
 
@@ -31,6 +31,32 @@ function safeStringify(value: unknown): string {
  * @returns Parsed schema output.
  * @throws {ValidationError} If the value does not satisfy the provided schema.
  */
+export function stringToJsonWithErrorHandling(
+  value: string,
+  errorMessage?: string,
+): Record<string, unknown> {
+  try {
+    return JSON.parse(value) as Record<string, unknown>;
+  } catch {
+    throw new JsonParseError(
+      errorMessage ?? "Unable to parse string to JSON.",
+      value,
+    );
+  }
+}
+
+export function parseIfJson<T>(data: T): Record<string, unknown> | T {
+  if (typeof data !== "string") {
+    return data;
+  }
+
+  try {
+    return JSON.parse(data) as Record<string, unknown>;
+  } catch {
+    return data;
+  }
+}
+
 export function parseWithErrorHandling<Schema extends BaseSchema>(
   schema: Schema,
   data: unknown,

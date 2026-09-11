@@ -1,4 +1,4 @@
-import { zJwk } from "@pagopa/io-wallet-oauth2";
+import { zJwk } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 const zBaseProofJwtHeader = z.object({

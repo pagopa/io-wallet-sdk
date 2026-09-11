@@ -1,5 +1,5 @@
-import type { CallbackContext } from "@openid4vc/oauth2";
 import type {
+  CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
 } from "@pagopa/io-wallet-utils";

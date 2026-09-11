@@ -1,30 +1,29 @@
-import { zCompactJwt } from "@openid4vc/oauth2";
 import {
   FetchHeaders,
   ItWalletSpecsVersion,
   createVersionDispatcher,
+  zCompactJwt,
 } from "@pagopa/io-wallet-utils";
-
-import type {
-  VerifiedWalletAttestationJwtV1_0,
-  VerifyWalletAttestationJwtOptionsV1_0,
-} from "./v1.0/verify-wallet-attestation-jwt";
-import type {
-  VerifiedWalletAttestationJwtV1_3,
-  VerifyWalletAttestationJwtOptionsV1_3,
-} from "./v1.3/verify-wallet-attestation-jwt";
-import type {
-  VerifiedWalletAttestationJwtV1_4,
-  VerifyWalletAttestationJwtOptionsV1_4,
-} from "./v1.4/verify-wallet-attestation-jwt";
 
 import {
   oauthClientAttestationHeader,
   oauthClientAttestationPopHeader,
 } from "./types";
-import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_0 } from "./v1.0/verify-wallet-attestation-jwt";
-import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_3 } from "./v1.3/verify-wallet-attestation-jwt";
-import { verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_4 } from "./v1.4/verify-wallet-attestation-jwt";
+import {
+  type VerifiedWalletAttestationJwtV1_0,
+  type VerifyWalletAttestationJwtOptionsV1_0,
+  verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_0,
+} from "./v1.0/verify-wallet-attestation-jwt";
+import {
+  type VerifiedWalletAttestationJwtV1_3,
+  type VerifyWalletAttestationJwtOptionsV1_3,
+  verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_3,
+} from "./v1.3/verify-wallet-attestation-jwt";
+import {
+  type VerifiedWalletAttestationJwtV1_4,
+  type VerifyWalletAttestationJwtOptionsV1_4,
+  verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_4,
+} from "./v1.4/verify-wallet-attestation-jwt";
 
 const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
   VerifyWalletAttestationJwtOptions,

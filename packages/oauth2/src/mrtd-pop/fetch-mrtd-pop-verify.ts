@@ -1,6 +1,6 @@
-import { CallbackContext } from "@openid4vc/oauth2";
 import {
   CONTENT_TYPES,
+  type CallbackContext,
   HEADERS,
   UnexpectedStatusCodeError,
   ValidationError,

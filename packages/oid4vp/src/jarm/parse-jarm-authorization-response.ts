@@ -1,10 +1,10 @@
 import {
   type CallbackContext,
   decodeJwtHeader,
+  parseWithErrorHandling,
   zCompactJwe,
   zCompactJwt,
-} from "@pagopa/io-wallet-oauth2";
-import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
+} from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 import { Openid4vpAuthorizationRequestPayload } from "../authorization-request/z-authorization-request";

@@ -1,13 +1,12 @@
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
-import { CallbackContext } from "@openid4vc/oauth2";
 import {
-  ContentType,
-  FetchHeaders,
-  HttpMethod,
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  type ClientAuthenticationCallback as UtilsClientAuthenticationCallback,
+  type ClientAuthenticationCallbackOptions as UtilsClientAuthenticationCallbackOptions,
 } from "@pagopa/io-wallet-utils";
+
+import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 
 import { createClientAttestationPopJwt } from "./client-attestation-pop";
 import {
@@ -36,7 +35,7 @@ export type SupportedClientAuthenticationMethod =
  */
 export interface IsClientAttestationSupportedOptions {
   /** Authorization server metadata containing supported authentication methods. */
-  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
+  authorizationServerMetadata: BaseAuthorizationServerMetadata;
 }
 
 /**
@@ -65,47 +64,11 @@ export function isClientAttestationSupported(
   };
 }
 
-/**
- * Options for client authentication
- */
-export interface ClientAuthenticationCallbackOptions {
-  /**
-   * Metadata of the authorization server
-   */
-  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
+export type ClientAuthenticationCallbackOptions =
+  UtilsClientAuthenticationCallbackOptions<BaseAuthorizationServerMetadata>;
 
-  /**
-   * The body as a JSON object. If content type `x-www-form-urlencoded`
-   * is used, it will be encoded after this call.
-   *
-   * You can modify this object
-   */
-  body: Record<string, unknown>;
-
-  contentType: ContentType;
-
-  /**
-   * Headers for the request. You can modify this object
-   */
-  headers: FetchHeaders;
-
-  /**
-   * http method that will be used
-   */
-  method: HttpMethod;
-
-  /**
-   * URL to which the request will be made
-   */
-  url: string;
-}
-
-/**
- * Callback method to determine the client authentication for a request.
- */
-export type ClientAuthenticationCallback = (
-  options: ClientAuthenticationCallbackOptions,
-) => Promise<void> | void;
+export type ClientAuthenticationCallback =
+  UtilsClientAuthenticationCallback<ClientAuthenticationCallbackOptions>;
 
 /**
  * Creates a client authentication callback that leaves the request unchanged.

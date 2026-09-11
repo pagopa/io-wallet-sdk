@@ -1,6 +1,9 @@
+import {
+  MAX_JTI_LENGTH,
+  zJwtHeader,
+  zJwtPayload,
+} from "@pagopa/io-wallet-utils";
 import z from "zod";
-
-import { MAX_JTI_LENGTH, zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES = [
   "ES256",

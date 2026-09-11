@@ -1,19 +1,19 @@
 import {
-  type CallbackContext,
   type CreateJarRequestOptions,
   CreateJarRequestResult,
   JarAuthorizationRequest,
-  JwtSignerFederation,
-  JwtSignerX5c,
   createJarRequest,
-  jwtHeaderFromJwtSigner,
   signedAuthorizationRequestJwtHeaderTyp,
 } from "@pagopa/io-wallet-oauth2";
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  JwtSignerFederation,
+  JwtSignerX5c,
   ValidationError,
   createVersionDispatcher,
+  jwtHeaderFromJwtSigner,
   objectToQueryParams,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";

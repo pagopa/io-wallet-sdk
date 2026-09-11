@@ -109,7 +109,7 @@ export const zJwtConfirmationPayload = z.looseObject({
 });
 
 export const zJwtPayload = z.looseObject({
-  aud: z.string().optional(),
+  aud: z.string().or(z.array(z.string())).optional(),
   cnf: zJwtConfirmationPayload.optional(),
   exp: z.number().int().optional(),
   iat: z.number().int().optional(),
@@ -119,6 +119,7 @@ export const zJwtPayload = z.looseObject({
   nonce: z.string().optional(),
   // Reserved for status parameters
   status: z.record(z.string(), z.any()).optional(),
+  sub: z.string().optional(),
   // Reserved for OpenID Federation
   trust_chain: zTrustChain.optional(),
 });

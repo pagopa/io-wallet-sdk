@@ -1,8 +1,8 @@
-import { Jwk } from "@openid4vc/oauth2";
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
   addSecondsToDate,
   dateToSeconds,
 } from "@pagopa/io-wallet-utils";
@@ -19,8 +19,8 @@ import { WalletProviderError } from "../../errors";
 import { KeyAttestationOptions, WalletProvider } from "../WalletProvider";
 import { KeyAttestationStatus } from "../z-key-attestation";
 
-vi.mock("@openid4vc/utils", async () => {
-  const actual = await vi.importActual("@openid4vc/utils");
+vi.mock("@pagopa/io-wallet-utils", async () => {
+  const actual = await vi.importActual("@pagopa/io-wallet-utils");
   return {
     ...actual,
     addSecondsToDate: vi.fn(),

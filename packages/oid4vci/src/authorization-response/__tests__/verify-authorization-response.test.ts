@@ -1,4 +1,4 @@
-import { JwtSignerJwk, VerifyJwtCallback } from "@openid4vc/oauth2";
+import { JwtSignerJwk, VerifyJwtCallback } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -82,6 +82,14 @@ describe("verifyAuthorizationResponseFormPostJWT tests", () => {
       true,
     ),
     authorizationResponseDecoded: {
+      compact: payloadToJwt(
+        {
+          code: TEST_ACCESS_CODE,
+          iss: TEST_ISSUER,
+          state: TEST_STATE,
+        },
+        true,
+      ),
       header: {
         alg: "ES256",
       },

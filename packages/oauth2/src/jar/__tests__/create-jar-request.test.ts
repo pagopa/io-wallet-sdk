@@ -1,6 +1,6 @@
+import { Jwk } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { Jwk } from "../../common/jwk/z-jwk";
 import { Oauth2Error } from "../../errors";
 import {
   CreateJarRequestOptions,

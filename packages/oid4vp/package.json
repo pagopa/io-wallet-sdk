@@ -30,9 +30,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@openid4vc/oauth2": "catalog:",
-    "@openid4vc/utils": "catalog:",
-    "@openid4vc/openid4vp": "catalog:",
     "@pagopa/io-wallet-oid-federation": "workspace:*",
     "@pagopa/io-wallet-oauth2": "workspace:*",
     "@pagopa/io-wallet-utils": "workspace:*",

@@ -30,8 +30,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "zod": "catalog:",
-    "@openid4vc/utils": "catalog:",
-    "@openid4vc/oauth2": "catalog:"
+    "zod": "catalog:"
   }
 }

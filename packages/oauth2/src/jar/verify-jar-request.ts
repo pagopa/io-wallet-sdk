@@ -1,14 +1,14 @@
 import {
-  CallbackContext,
+  type CallbackContext,
   JwtSigner,
   JwtSignerWithJwk,
+  decodeJwt,
+  parseWithErrorHandling,
   verifyJwt,
   zCompactJwe,
   zCompactJwt,
-} from "@openid4vc/oauth2";
-import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
+} from "@pagopa/io-wallet-utils";
 
-import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
 import {
   JarRequestObjectPayload,

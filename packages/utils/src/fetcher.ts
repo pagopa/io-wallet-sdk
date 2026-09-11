@@ -1,4 +1,28 @@
+import type { Fetch } from "./globals";
+
 import { UnexpectedStatusCodeError } from "./errors/errors";
+
+const defaultFetcher = fetch;
+
+export function createFetcher(fetcher: Fetch = defaultFetcher): Fetch {
+  return (input, init) =>
+    fetcher(
+      input,
+      init
+        ? {
+            ...init,
+            body:
+              init.body instanceof URLSearchParams
+                ? init.body.toString()
+                : init.body,
+          }
+        : undefined,
+    ).catch((error) => {
+      throw new Error(
+        `Unknown error occurred during fetch to '${String(input)}'\nCause: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+}
 
 /**
  * Check if a response is in the expected status, otherwise throw an error

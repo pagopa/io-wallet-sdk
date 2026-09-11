@@ -1,15 +1,17 @@
-import { CallbackContext, JwtSignerJwk, verifyJwt } from "@openid4vc/oauth2";
 import {
+  CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  JwtSignerJwk,
   addSecondsToDate,
   dateToSeconds,
+  decodeJwt,
   encodeToBase64Url,
   parseWithErrorHandling,
+  verifyJwt,
 } from "@pagopa/io-wallet-utils";
 
-import { Jwk } from "../common/jwk/z-jwk";
-import { decodeJwt } from "../common/jwt/decode-jwt";
 import { Oauth2Error } from "../errors";
 import {
   IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
