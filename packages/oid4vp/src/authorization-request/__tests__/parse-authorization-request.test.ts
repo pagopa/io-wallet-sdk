@@ -67,6 +67,12 @@ const validX5cHeader = {
   x5c: [Buffer.from("leaf-certificate").toString("base64")],
 };
 
+const validX5cHeaderNoKid = {
+  alg: "ES256",
+  typ: "oauth-authz-req+jwt",
+  x5c: [Buffer.from("leaf-certificate").toString("base64")],
+};
+
 const wrongSignature =
   "hz5ipVxKrKozy-QFaer1E_5GowddzQr-wtAiKv_GQpSKj6ySi7UklVw4TXjur_FvpqK_uh37xrPdUsW4qQ3YdQ";
 
@@ -184,6 +190,12 @@ const invalidHeaderTypJwt = createJwt({
 
 const x509RequestObjectJwt = createJwt({
   header: validX5cHeader,
+  payload: x509RequestObject,
+  signature: "valid_x509_signature",
+});
+
+const x509RequestObjectNoKidJwt = createJwt({
+  header: validX5cHeaderNoKid,
   payload: x509RequestObject,
   signature: "valid_x509_signature",
 });
@@ -491,6 +503,17 @@ describe("parseAuthorizationRequest tests", () => {
       requestObjectJwt: x509RequestObjectJwt,
     });
     expect(actualRequestObject.payload).toEqual(x509RequestObject);
+    expect(actualRequestObject.header.x5c).toBeDefined();
+  });
+
+  it("should parse and verify an x509_hash request object with no kid in header", async () => {
+    const actualRequestObject = await parseAuthorizeRequest({
+      callbacks,
+      config: configV1_3,
+      requestObjectJwt: x509RequestObjectNoKidJwt,
+    });
+    expect(actualRequestObject.payload).toEqual(x509RequestObject);
+    expect(actualRequestObject.header.kid).toBeUndefined();
     expect(actualRequestObject.header.x5c).toBeDefined();
   });
 

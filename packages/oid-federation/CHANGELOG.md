@@ -1,5 +1,18 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.5.6
+
+### Patch Changes
+
+- fd73233: fix: support object values in one_of operator for metadata_policy
+  - @pagopa/io-wallet-utils@1.5.6
+
+## 1.5.5
+
+### Patch Changes
+
+- @pagopa/io-wallet-utils@1.5.5
+
 ## 1.5.4
 
 ### Patch Changes

@@ -74,6 +74,8 @@ export type Openid4vpAuthorizationRequestHeaderV1_0 = z.infer<
 export const zOpenid4vpAuthorizationRequestHeaderV1_3 =
   zOpenid4vpAuthorizationRequestHeaderBase
     .extend({
+      // kid is only mandatory for openid_federation/legacy; x509_hash RPs use x5c instead (see getPublicKeyForVerification).
+      kid: z.string().optional(),
       trust_chain: zTrustChain.optional(),
       x5c: zCertificateChain.optional(),
     })
