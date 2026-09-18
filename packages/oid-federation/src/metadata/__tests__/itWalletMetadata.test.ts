@@ -49,6 +49,15 @@ const validV1_4Metadata = {
   },
 };
 
+const federationEntityMetadataWithoutUris = {
+  contacts: ["info@pagopa.it"],
+  federation_resolve_endpoint: "https://wallet.example.com/resolve",
+  logo_uri: "https://io.italia.it/assets/img/io-it-logo-blue.svg",
+  organization_name: "PagoPa S.p.A.",
+  policy_uri: "https://io.italia.it/privacy-policy",
+  tos_uri: "https://io.italia.it/privacy-policy",
+};
+
 describe("isItWalletMetadataVersion", () => {
   it("should identify valid v1.0 metadata", () => {
     expect(
@@ -141,4 +150,96 @@ describe("parseItWalletMetadataForVersion", () => {
       ),
     ).toThrow(/invalid v1\.3 metadata provided/);
   });
+});
+
+describe("v1.4 federation_entity metadata", () => {
+  it.each([
+    {
+      expectedMetadata: {
+        federation_entity: {
+          ...federationEntityMetadataWithoutUris,
+          homepage_uri: "https://io.italia.it",
+        },
+      },
+      label: "homepage_uri",
+    },
+    {
+      expectedMetadata: {
+        federation_entity: {
+          ...federationEntityMetadataWithoutUris,
+          organization_uri: "https://www.pagopa.it",
+        },
+      },
+      label: "organization_uri",
+    },
+    {
+      expectedMetadata: {
+        federation_entity: {
+          ...federationEntityMetadataWithoutUris,
+          homepage_uri: "https://io.italia.it",
+          organization_uri: "https://www.pagopa.it",
+        },
+      },
+      label: "both URI claims",
+    },
+  ])(
+    "should parse v1.4 federation_entity metadata with $label",
+    ({ expectedMetadata }) => {
+      expect(
+        parseItWalletMetadataForVersion(
+          expectedMetadata,
+          ItWalletSpecsVersion.V1_4,
+        ),
+      ).toEqual(expectedMetadata);
+    },
+  );
+
+  it("should reject v1.4 federation_entity metadata without homepage_uri and organization_uri", () => {
+    expect(() =>
+      parseItWalletMetadataForVersion(
+        { federation_entity: federationEntityMetadataWithoutUris },
+        ItWalletSpecsVersion.V1_4,
+      ),
+    ).toThrow(/at least one of homepage_uri or organization_uri is required/);
+  });
+
+  it.each([
+    {
+      federationEntityMetadata: {
+        ...federationEntityMetadataWithoutUris,
+        homepage_uri: "not-a-url",
+      },
+      label: "homepage_uri",
+    },
+    {
+      federationEntityMetadata: {
+        ...federationEntityMetadataWithoutUris,
+        organization_uri: "not-a-url",
+      },
+      label: "organization_uri",
+    },
+  ])(
+    "should reject invalid v1.4 $label values",
+    ({ federationEntityMetadata }) => {
+      expect(() =>
+        parseItWalletMetadataForVersion(
+          { federation_entity: federationEntityMetadata },
+          ItWalletSpecsVersion.V1_4,
+        ),
+      ).toThrow(/invalid v1\.4 metadata provided/);
+    },
+  );
+
+  it.each([ItWalletSpecsVersion.V1_0, ItWalletSpecsVersion.V1_3])(
+    "should keep accepting federation_entity metadata without URI claims for %s",
+    (version) => {
+      const metadata = {
+        federation_entity: federationEntityMetadataWithoutUris,
+      };
+
+      expect(parseItWalletMetadataForVersion(metadata, version)).toEqual(
+        metadata,
+      );
+    },
+  );
 });

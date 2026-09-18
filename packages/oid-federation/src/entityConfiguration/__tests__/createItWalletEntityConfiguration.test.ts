@@ -1,5 +1,6 @@
+import { ItWalletSpecsVersion } from "@pagopa/io-wallet-utils";
 import { Base64 } from "js-base64";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createItWalletEntityConfiguration } from "../createItWalletEntityConfiguration";
 
@@ -47,6 +48,19 @@ const mockClaims = {
 const mockSignJwtCallback = vi.fn(async ({ jwk, toBeSigned }) => {
   const signatureString = `signed-${toBeSigned}-${jwk.kid}`;
   return new TextEncoder().encode(signatureString);
+});
+
+const mockFederationEntityMetadataWithoutUris = {
+  contacts: ["info@pagopa.it"],
+  federation_resolve_endpoint: "https://wallet.example.com/resolve",
+  logo_uri: "https://io.italia.it/assets/img/io-it-logo-blue.svg",
+  organization_name: "PagoPa S.p.A.",
+  policy_uri: "https://io.italia.it/privacy-policy",
+  tos_uri: "https://io.italia.it/privacy-policy",
+};
+
+beforeEach(() => {
+  mockSignJwtCallback.mockClear();
 });
 
 describe("createItWalletEntityConfiguration", () => {
@@ -151,6 +165,60 @@ describe("createItWalletEntityConfiguration", () => {
         signJwtCallback: mockSignJwtCallback,
       }),
     ).rejects.toThrow("invalid payload claims provided");
+  });
+});
+
+describe("createItWalletEntityConfiguration v1.4 metadata", () => {
+  it("should create a signed entity configuration JWT with organization_uri-only federation_entity metadata", async () => {
+    const mockClaimsV1_4 = {
+      ...mockClaims,
+      metadata: {
+        federation_entity: {
+          ...mockFederationEntityMetadataWithoutUris,
+          organization_uri: "https://www.pagopa.it",
+        },
+      },
+    };
+
+    const result = await createItWalletEntityConfiguration({
+      claims: mockClaimsV1_4,
+      header: mockHeader,
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+      signJwtCallback: mockSignJwtCallback,
+    });
+
+    expect(typeof result).toBe("string");
+    const parts = result.split(".");
+    expect(parts).toHaveLength(3);
+
+    const payloadB64 = parts[1];
+    if (!payloadB64) throw new Error("JWT payload missing");
+    const decodedPayload = JSON.parse(Base64.decode(payloadB64));
+    expect(decodedPayload.metadata.federation_entity.organization_uri).toBe(
+      "https://www.pagopa.it",
+    );
+    expect(mockSignJwtCallback).toHaveBeenCalledOnce();
+  });
+
+  it("should reject v1.4 federation_entity metadata without homepage_uri and organization_uri before signing", async () => {
+    const invalidClaimsV1_4 = {
+      ...mockClaims,
+      metadata: {
+        federation_entity: mockFederationEntityMetadataWithoutUris,
+      },
+    };
+
+    await expect(
+      createItWalletEntityConfiguration({
+        claims: invalidClaimsV1_4,
+        header: mockHeader,
+        itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+        signJwtCallback: mockSignJwtCallback,
+      }),
+    ).rejects.toThrow(
+      /at least one of homepage_uri or organization_uri is required/,
+    );
+    expect(mockSignJwtCallback).not.toHaveBeenCalled();
   });
 });
 
