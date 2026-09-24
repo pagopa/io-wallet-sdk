@@ -38,6 +38,11 @@ const dispatchCreateAuthorizationResponse = createVersionDispatcher<
     V1_4.createAuthorizationResponse(
       o as CreateAuthorizationResponseOptionsV1_4,
     ),
+  // V1_5 reuses V1_4 authorization response schema — no breaking changes between versions.
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    V1_4.createAuthorizationResponse(
+      o as CreateAuthorizationResponseOptionsV1_4,
+    ),
 });
 
 /**

@@ -304,6 +304,19 @@ export class WalletProvider {
           walletName: options.walletName,
         });
       },
+      // V1_5 reuses V1_4 attestation schema — no breaking changes between versions.
+      [ItWalletSpecsVersion.V1_5]: () => {
+        assertV1_4Options(options);
+        return createWalletAttestationJwtV1_4({
+          callbacks: options.callbacks,
+          dpopJwkPublic: options.dpopJwkPublic,
+          expiresAt: options.expiresAt,
+          issuer: options.issuer,
+          signer: options.signer,
+          walletLink: options.walletLink,
+          walletName: options.walletName,
+        });
+      },
     });
   }
 }

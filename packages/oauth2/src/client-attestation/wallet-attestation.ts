@@ -36,6 +36,8 @@ const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
     verifyWalletAttestationJwtV1_3(o as VerifyWalletAttestationJwtOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
     verifyWalletAttestationJwtV1_4(o as VerifyWalletAttestationJwtOptionsV1_4),
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    verifyWalletAttestationJwtV1_4(o as VerifyWalletAttestationJwtOptionsV1_4),
 });
 
 export type VerifiedWalletAttestationJwt =

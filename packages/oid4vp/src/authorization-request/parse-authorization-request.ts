@@ -171,6 +171,8 @@ export async function parseAuthorizeRequest(
         zOpenid4vpAuthorizationRequestHeaderV1_3,
       [ItWalletSpecsVersion.V1_4]: () =>
         zOpenid4vpAuthorizationRequestHeaderV1_3,
+      [ItWalletSpecsVersion.V1_5]: () =>
+        zOpenid4vpAuthorizationRequestHeaderV1_3,
     });
 
     const decoded = decodeJwt({

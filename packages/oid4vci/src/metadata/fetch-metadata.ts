@@ -392,6 +392,8 @@ const dispatchFetchMetadata = createVersionDispatcher<
   [ItWalletSpecsVersion.V1_0]: (o) => fetchMetadataV1_0(o),
   [ItWalletSpecsVersion.V1_3]: (o) => fetchMetadataV1_3(o),
   [ItWalletSpecsVersion.V1_4]: (o) => fetchMetadataV1_4(o),
+  // V1_5 reuses V1_4 metadata schema — no breaking changes between versions.
+  [ItWalletSpecsVersion.V1_5]: (o) => fetchMetadataV1_4(o),
 });
 
 /**

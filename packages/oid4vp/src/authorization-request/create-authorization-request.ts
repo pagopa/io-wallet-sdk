@@ -44,7 +44,13 @@ export type JarOptionsV1_3 = BaseJarOptions<JwtSignerFederation | JwtSignerX5c>;
 
 export type JarOptionsV1_4 = JarOptionsV1_3;
 
-type JarOptions = JarOptionsV1_0 | JarOptionsV1_3 | JarOptionsV1_4;
+export type JarOptionsV1_5 = JarOptionsV1_3;
+
+type JarOptions =
+  | JarOptionsV1_0
+  | JarOptionsV1_3
+  | JarOptionsV1_4
+  | JarOptionsV1_5;
 
 interface BaseCreateAuthorizationRequestOptions<
   V extends ItWalletSpecsVersion,
@@ -96,6 +102,12 @@ export type CreateAuthorizationRequestOptionsV1_4 =
   BaseCreateAuthorizationRequestOptions<
     ItWalletSpecsVersion.V1_4,
     JarOptionsV1_4
+  >;
+
+export type CreateAuthorizationRequestOptionsV1_5 =
+  BaseCreateAuthorizationRequestOptions<
+    ItWalletSpecsVersion.V1_5,
+    JarOptionsV1_5
   >;
 
 export type CreateAuthorizationRequestOptions =
@@ -151,6 +163,12 @@ const dispatchCreateAuthorizationRequest = createVersionDispatcher<
     ),
   // V1_4 reuses the V1_3 JAR header schema; the conditional x5c rule is a normative 1.4.4 LTS backport.
   [ItWalletSpecsVersion.V1_4]: async (o) =>
+    createAuthorizationRequestWithHeader(
+      o as CreateAuthorizationRequestOptionsV1_4,
+      zOpenid4vpAuthorizationRequestHeaderV1_3,
+    ),
+  // V1_5 reuses V1_4 JAR header schema — no breaking changes between versions.
+  [ItWalletSpecsVersion.V1_5]: async (o) =>
     createAuthorizationRequestWithHeader(
       o as CreateAuthorizationRequestOptionsV1_4,
       zOpenid4vpAuthorizationRequestHeaderV1_3,

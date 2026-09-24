@@ -26,6 +26,9 @@ const dispatchCreateCredentialRequest = createVersionDispatcher<
     // V1_4 reuses V1_3 credential request schema — no breaking changes between versions.
     // Verified against compare/1.3.3...1.4.1: credential request parameters (format, proofs, key_attestation) identical.
     V1_3.createCredentialRequest(o as V1_3.CredentialRequestOptionsV1_3),
+  // V1_5 reuses V1_3 credential request schema — no breaking changes between versions.
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    V1_3.createCredentialRequest(o as V1_3.CredentialRequestOptionsV1_3),
 });
 
 /**

@@ -396,5 +396,10 @@ function parseAuthorizationRequestByVersion(
       zAuthorizationRequestV1_3.parse(
         baseAuthorizationRequest,
       ) satisfies AuthorizationRequestV1_3,
+    // V1_5 reuses V1_3 authorization request schema — no breaking changes between versions.
+    [ItWalletSpecsVersion.V1_5]: () =>
+      zAuthorizationRequestV1_3.parse(
+        baseAuthorizationRequest,
+      ) satisfies AuthorizationRequestV1_3,
   });
 }

@@ -280,6 +280,9 @@ const dispatchVerifyProof = createVersionDispatcher<
     verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
     verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
+  // V1_5 reuses V1_3 credential verify schema — no breaking changes between versions.
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
 });
 
 /**
