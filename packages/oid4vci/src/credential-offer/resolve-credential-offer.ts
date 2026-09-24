@@ -11,6 +11,7 @@ import type {
   ResolveCredentialOfferOptions,
   ResolveCredentialOfferOptionsV1_3,
   ResolveCredentialOfferOptionsV1_4,
+  ResolveCredentialOfferOptionsV1_5,
 } from "./types";
 
 import { CredentialOfferError } from "../errors";
@@ -19,8 +20,10 @@ import {
   type CredentialOffer,
   type CredentialOfferV1_3,
   type CredentialOfferV1_4,
+  type CredentialOfferV1_5,
   zCredentialOfferV1_3,
   zCredentialOfferV1_4,
+  zCredentialOfferV1_5,
 } from "./z-credential-offer";
 
 /**
@@ -37,11 +40,17 @@ function parseCredentialOfferForVersion(
       return zCredentialOfferV1_3.parse(data);
     case ItWalletSpecsVersion.V1_4:
       return zCredentialOfferV1_4.parse(data);
+    case ItWalletSpecsVersion.V1_5:
+      return zCredentialOfferV1_5.parse(data);
     default:
       throw new ItWalletSpecsVersionError(
         "resolveCredentialOffer",
         config.itWalletSpecsVersion,
-        [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+        [
+          ItWalletSpecsVersion.V1_3,
+          ItWalletSpecsVersion.V1_4,
+          ItWalletSpecsVersion.V1_5,
+        ],
       );
   }
 }
@@ -62,6 +71,7 @@ function parseCredentialOfferForVersion(
  * The configured IT-Wallet version selects the schema used to parse the offer:
  * - v1.3 requires `scope` within the authorization_code grant
  * - v1.4 no longer carries `scope`
+ * - v1.5 introduces pre-authorized_code grant support
  *
  * @param options - Resolution options containing the credential offer, version config, and fetch callback
  * @returns Resolved and validated credential offer object
@@ -105,6 +115,10 @@ export function resolveCredentialOffer(
 export function resolveCredentialOffer(
   options: ResolveCredentialOfferOptionsV1_4,
 ): Promise<CredentialOfferV1_4>;
+
+export function resolveCredentialOffer(
+  options: ResolveCredentialOfferOptionsV1_5,
+): Promise<CredentialOfferV1_5>;
 
 export function resolveCredentialOffer(
   options: ResolveCredentialOfferOptions,
