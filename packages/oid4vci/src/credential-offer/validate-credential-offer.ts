@@ -8,10 +8,16 @@ import type {
   ValidateCredentialOfferOptions,
   ValidateCredentialOfferOptionsV1_3,
   ValidateCredentialOfferOptionsV1_4,
+  ValidateCredentialOfferOptionsV1_5,
 } from "./types";
-import type { CredentialOffer } from "./z-credential-offer";
+import type {
+  CredentialOfferV1_3,
+  CredentialOfferV1_4,
+  CredentialOfferV1_5,
+} from "./z-credential-offer";
 
 import { CredentialOfferError } from "../errors";
+import { CREDENTIAL_OFFER_GRANTS } from "./v1.5/z-credential-offer";
 
 /**
  * Ensures an authorization server selected from a credential offer is one of the
@@ -58,13 +64,13 @@ export function assertAuthorizationServerAllowed(
 }
 
 /**
- * Validations shared across all IT-Wallet credential offer versions.
+ * Validations for IT-Wallet credential offer versions v1.3 and v1.4.
  *
  * @throws {CredentialOfferError} If any shared validation rule fails.
  */
 function validateBaseCredentialOffer(options: {
   credentialIssuerMetadata?: { authorization_servers?: [string, ...string[]] };
-  credentialOffer: CredentialOffer;
+  credentialOffer: CredentialOfferV1_3 | CredentialOfferV1_4;
   versionLabel: string;
 }): void {
   const { credentialIssuerMetadata, credentialOffer, versionLabel } = options;
@@ -103,6 +109,70 @@ function validateBaseCredentialOffer(options: {
   );
 }
 
+/**
+ * Validations for IT-Wallet v1.5 credential offer.
+ *
+ * @throws {CredentialOfferError} If any shared validation rule fails.
+ */
+function validateBaseCredentialOfferV1_5(options: {
+  credentialIssuerMetadata?: { authorization_servers?: [string, ...string[]] };
+  credentialOffer: CredentialOfferV1_5;
+  versionLabel: string;
+}): void {
+  const { credentialIssuerMetadata, credentialOffer, versionLabel } = options;
+
+  // Validate credential_issuer is HTTPS
+  if (!credentialOffer.credential_issuer.startsWith("https://")) {
+    throw new CredentialOfferError("credential_issuer must be an HTTPS URL");
+  }
+
+  // Validate credential_configuration_ids is not empty
+  if (credentialOffer.credential_configuration_ids.length === 0) {
+    throw new CredentialOfferError(
+      "credential_configuration_ids must contain at least one identifier",
+    );
+  }
+
+  // grants is REQUIRED
+  if (!credentialOffer.grants) {
+    throw new CredentialOfferError(
+      `grants is REQUIRED for IT-Wallet ${versionLabel}`,
+    );
+  }
+
+  // authorization_code and pre-authorized_code grants are not supported simultaneously
+  if (
+    CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants &&
+    CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants
+  ) {
+    throw new CredentialOfferError(
+      "both authorization_code and pre-authorized_code grants are not supported simultaneously",
+    );
+  }
+
+  let grant;
+
+  if (CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants) {
+    grant = credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE];
+  }
+
+  if (CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants) {
+    grant = credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE];
+  }
+
+  // authorization_code or pre-authorized code grant is REQUIRED
+  if (!grant) {
+    throw new CredentialOfferError(
+      "either one of authorization_code or pre-authorized code grant is required",
+    );
+  }
+
+  assertAuthorizationServerAllowed(
+    grant.authorization_server,
+    credentialIssuerMetadata?.authorization_servers,
+  );
+}
+
 async function validateCredentialOfferV1_3(
   options: ValidateCredentialOfferOptionsV1_3,
 ): Promise<void> {
@@ -129,6 +199,17 @@ async function validateCredentialOfferV1_4(
   });
 }
 
+async function validateCredentialOfferV1_5(
+  options: ValidateCredentialOfferOptionsV1_5,
+): Promise<void> {
+  // IT-Wallet v1.5: the credential offer now supports pre-authorized code grants
+  validateBaseCredentialOfferV1_5({
+    credentialIssuerMetadata: options.credentialIssuerMetadata,
+    credentialOffer: options.credentialOffer,
+    versionLabel: "v1.5",
+  });
+}
+
 const dispatchValidateCredentialOffer = createVersionDispatcher<
   ValidateCredentialOfferOptions,
   Promise<void>
@@ -137,13 +218,19 @@ const dispatchValidateCredentialOffer = createVersionDispatcher<
     throw new ItWalletSpecsVersionError(
       "validateCredentialOffer",
       ItWalletSpecsVersion.V1_0,
-      [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+      [
+        ItWalletSpecsVersion.V1_3,
+        ItWalletSpecsVersion.V1_4,
+        ItWalletSpecsVersion.V1_5,
+      ],
     );
   },
   [ItWalletSpecsVersion.V1_3]: (o) =>
     validateCredentialOfferV1_3(o as ValidateCredentialOfferOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
     validateCredentialOfferV1_4(o as ValidateCredentialOfferOptionsV1_4),
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    validateCredentialOfferV1_5(o as ValidateCredentialOfferOptionsV1_5),
 });
 
 /**

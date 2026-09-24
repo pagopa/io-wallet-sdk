@@ -398,7 +398,6 @@ describe("extractGrantDetails", () => {
         credential_issuer: "https://issuer.example.com",
         grants: {
           "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
-            authorization_server: "https://auth.issuer.example.com",
             "pre-authorized_code": "pre-authorized-code-value",
           },
         },
@@ -413,9 +412,6 @@ describe("extractGrantDetails", () => {
         "urn:ietf:params:oauth:grant-type:pre-authorized_code",
       );
 
-      expect(result.preAuthorizedCodeGrant?.authorizationServer).toBe(
-        "https://auth.issuer.example.com",
-      );
       expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
         "pre-authorized-code-value",
       );
@@ -427,7 +423,6 @@ describe("extractGrantDetails", () => {
         credential_issuer: "https://issuer.example.com",
         grants: {
           "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
-            authorization_server: "https://auth.issuer.example.com",
             "pre-authorized_code": "pre-authorized-code-value",
             tx_code: {},
           },
@@ -443,9 +438,6 @@ describe("extractGrantDetails", () => {
         "urn:ietf:params:oauth:grant-type:pre-authorized_code",
       );
 
-      expect(result.preAuthorizedCodeGrant?.authorizationServer).toBe(
-        "https://auth.issuer.example.com",
-      );
       expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
         "pre-authorized-code-value",
       );

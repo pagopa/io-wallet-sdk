@@ -8,10 +8,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type {
   ValidateCredentialOfferOptionsV1_3,
   ValidateCredentialOfferOptionsV1_4,
+  ValidateCredentialOfferOptionsV1_5,
 } from "../types";
 import type {
   CredentialOfferV1_3,
   CredentialOfferV1_4,
+  CredentialOfferV1_5,
 } from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
@@ -23,6 +25,10 @@ const v1_3Config = new IoWalletSdkConfig({
 
 const v1_4Config = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
+const v1_5Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
 });
 
 describe("validateCredentialOffer", () => {
@@ -537,6 +543,64 @@ describe("validateCredentialOffer", () => {
 
       await expect(validateCredentialOffer(options)).rejects.toThrow(
         "authorization_server 'https://unknown-auth.example.com' does not match Credential Issuer metadata",
+      );
+    });
+  });
+
+  describe("v1.5", () => {
+    const validV1_5Offer: CredentialOfferV1_5 = {
+      credential_configuration_ids: ["UniversityDegree"],
+      credential_issuer: "https://issuer.example.com",
+      grants: {
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+          "pre-authorized_code": "pre-authorized-code-value",
+          tx_code: {},
+        },
+      },
+    };
+
+    const invalidV1_5Offer = {
+      ...validV1_5Offer,
+      grants: {
+        authorization_code: {},
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {},
+      },
+    } as unknown as CredentialOfferV1_5;
+
+    it("should validate a v1.5 offer that carries no authorization_code grant", async () => {
+      const options: ValidateCredentialOfferOptionsV1_5 = {
+        config: v1_5Config,
+        credentialIssuerMetadata: {},
+        credentialOffer: validV1_5Offer,
+      };
+
+      await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
+    });
+
+    it("should reject a credential that contains bot authorization_code grant and pre-authorized_code grant", async () => {
+      const options: ValidateCredentialOfferOptionsV1_5 = {
+        config: v1_5Config,
+        credentialIssuerMetadata: {},
+        credentialOffer: invalidV1_5Offer,
+      };
+
+      await expect(validateCredentialOffer(options)).rejects.toThrow(
+        CredentialOfferError,
+      );
+    });
+
+    it("should reject an offer that carries no grant", async () => {
+      const options: ValidateCredentialOfferOptionsV1_5 = {
+        config: v1_5Config,
+        credentialIssuerMetadata: {},
+        credentialOffer: {
+          credential_configuration_ids: ["UniversityDegree"],
+          credential_issuer: "https://issuer.example.com",
+        } as unknown as CredentialOfferV1_5,
+      };
+
+      await expect(validateCredentialOffer(options)).rejects.toThrow(
+        CredentialOfferError,
       );
     });
   });

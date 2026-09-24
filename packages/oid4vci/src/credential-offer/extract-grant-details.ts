@@ -58,6 +58,15 @@ function requireAuthorizationCodeOrPreAuthorizedCodeGrant(
     throw new CredentialOfferError("No grants found in credential offer");
   }
 
+  if (
+    CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants &&
+    CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants
+  ) {
+    throw new CredentialOfferError(
+      "both authorization_code and pre-authorized_code grants are not supported simultaneously",
+    );
+  }
+
   let authCodeGrant;
 
   if (CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants) {
