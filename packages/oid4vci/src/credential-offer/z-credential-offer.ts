@@ -16,6 +16,15 @@ import {
   zCredentialOfferGrantsV1_4,
   zCredentialOfferV1_4,
 } from "./v1.4/z-credential-offer";
+import {
+  type AuthorizationCodeGrantV1_5,
+  type CredentialOfferGrantsV1_5,
+  type CredentialOfferV1_5,
+  PreAuthorizedCodeGrantV1_5,
+  zAuthorizationCodeGrantV1_5,
+  zCredentialOfferGrantsV1_5,
+  zCredentialOfferV1_5,
+} from "./v1.5/z-credential-offer";
 
 // Re-export version-specific schemas and types.
 // v1.4 forks only the authorization_code grant (no `scope`); everything else is identical to v1.3.
@@ -29,6 +38,11 @@ export {
   zCredentialOfferGrantsV1_4,
   zCredentialOfferV1_4,
 };
+export {
+  zAuthorizationCodeGrantV1_5,
+  zCredentialOfferGrantsV1_5,
+  zCredentialOfferV1_5,
+};
 export type {
   AuthorizationCodeGrantV1_3,
   CredentialOfferGrantsV1_3,
@@ -39,6 +53,13 @@ export type {
   CredentialOfferGrantsV1_4,
   CredentialOfferV1_4,
 };
+export type {
+  AuthorizationCodeGrantV1_5,
+  CredentialOfferGrantsV1_5,
+  CredentialOfferV1_5,
+};
+
+export type { PreAuthorizedCodeGrantV1_5 };
 
 /**
  * Credential Offer URI schema
@@ -85,7 +106,14 @@ export const zCredentialOfferUri = z
  */
 export type AuthorizationCodeGrant =
   | AuthorizationCodeGrantV1_3
-  | AuthorizationCodeGrantV1_4;
+  | AuthorizationCodeGrantV1_4
+  | AuthorizationCodeGrantV1_5;
+
+/**
+ * TypeScript type for Pre Authorized Code Grant.
+ * Union across supported IT-Wallet versions.
+ */
+export type PreAuthorizedCodeGrant = PreAuthorizedCodeGrantV1_5;
 
 /**
  * TypeScript type for Credential Offer Grants.
@@ -93,13 +121,17 @@ export type AuthorizationCodeGrant =
  */
 export type CredentialOfferGrants =
   | CredentialOfferGrantsV1_3
-  | CredentialOfferGrantsV1_4;
+  | CredentialOfferGrantsV1_4
+  | CredentialOfferGrantsV1_5;
 
 /**
  * TypeScript type for Credential Offer.
  * Union across supported IT-Wallet versions.
  */
-export type CredentialOffer = CredentialOfferV1_3 | CredentialOfferV1_4;
+export type CredentialOffer =
+  | CredentialOfferV1_3
+  | CredentialOfferV1_4
+  | CredentialOfferV1_5;
 
 /**
  * TypeScript type for Credential Offer URI
