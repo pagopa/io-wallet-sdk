@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type {
   CredentialOfferV1_3,
   CredentialOfferV1_4,
+  CredentialOfferV1_5,
 } from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
@@ -19,6 +20,10 @@ const v1_3Config = new IoWalletSdkConfig({
 
 const v1_4Config = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
+const v1_5Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
 });
 
 describe("extractGrantDetails", () => {
@@ -357,6 +362,107 @@ describe("extractGrantDetails", () => {
       expect(() =>
         extractGrantDetails({ config: v1_4Config, credentialOffer }),
       ).toThrow("authorization_code grant not found");
+    });
+  });
+
+  describe("v1.5", () => {
+    it("should accept a credential offer without pre-authorized code grant for a v1.5 offer", () => {
+      const credentialOffer: CredentialOfferV1_5 = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          authorization_code: {
+            authorization_server: "https://auth.issuer.example.com",
+            issuer_state: "state-value-123",
+          },
+        },
+      };
+
+      const result = extractGrantDetails({
+        config: v1_5Config,
+        credentialOffer,
+      });
+
+      expect(result.grantType).toBe("authorization_code");
+      expect(result.authorizationCodeGrant?.authorizationServer).toBe(
+        "https://auth.issuer.example.com",
+      );
+      expect(result.authorizationCodeGrant?.issuerState).toBe(
+        "state-value-123",
+      );
+    });
+
+    it("should accept a credential offer with pre-authorized code grant for a v1.5 offer", () => {
+      const credentialOffer: CredentialOfferV1_5 = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            authorization_server: "https://auth.issuer.example.com",
+            "pre-authorized_code": "pre-authorized-code-value",
+          },
+        },
+      };
+
+      const result = extractGrantDetails({
+        config: v1_5Config,
+        credentialOffer,
+      });
+
+      expect(result.grantType).toBe(
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+      );
+
+      expect(result.preAuthorizedCodeGrant?.authorizationServer).toBe(
+        "https://auth.issuer.example.com",
+      );
+      expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
+        "pre-authorized-code-value",
+      );
+    });
+
+    it("should accept a credential offer with pre-authorized code grant with transaction code empty object for a v1.5 offer", () => {
+      const credentialOffer: CredentialOfferV1_5 = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            authorization_server: "https://auth.issuer.example.com",
+            "pre-authorized_code": "pre-authorized-code-value",
+            tx_code: {},
+          },
+        },
+      };
+
+      const result = extractGrantDetails({
+        config: v1_5Config,
+        credentialOffer,
+      });
+
+      expect(result.grantType).toBe(
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+      );
+
+      expect(result.preAuthorizedCodeGrant?.authorizationServer).toBe(
+        "https://auth.issuer.example.com",
+      );
+      expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
+        "pre-authorized-code-value",
+      );
+    });
+
+    it("should throw CredentialOfferError when neither authorization_code nor pre authorized code grant is omitted for a v1.5 offer", () => {
+      const credentialOffer = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {},
+      } as unknown as CredentialOfferV1_5;
+
+      expect(() =>
+        extractGrantDetails({ config: v1_5Config, credentialOffer }),
+      ).toThrow(
+        "either one of authorization_code or pre-authorized code grant is required",
+      );
     });
   });
 });

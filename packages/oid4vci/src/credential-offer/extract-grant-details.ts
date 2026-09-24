@@ -8,16 +8,22 @@ import type {
   ExtractGrantDetailsOptions,
   ExtractGrantDetailsOptionsV1_3,
   ExtractGrantDetailsOptionsV1_4,
+  ExtractGrantDetailsOptionsV1_5,
   ExtractGrantDetailsResult,
   ExtractGrantDetailsResultV1_3,
   ExtractGrantDetailsResultV1_4,
+  ExtractGrantDetailsResultV1_5,
 } from "./types";
-import type {
-  AuthorizationCodeGrantV1_3,
-  AuthorizationCodeGrantV1_4,
-} from "./z-credential-offer";
 
 import { CredentialOfferError } from "../errors";
+import { CREDENTIAL_OFFER_GRANTS } from "./v1.5/z-credential-offer";
+import {
+  type AuthorizationCodeGrantV1_3,
+  type AuthorizationCodeGrantV1_4,
+  type AuthorizationCodeGrantV1_5,
+  type CredentialOfferV1_5,
+  type PreAuthorizedCodeGrantV1_5,
+} from "./z-credential-offer";
 
 /**
  * Resolves the authorization_code grant from a credential offer, enforcing its presence.
@@ -35,6 +41,39 @@ function requireAuthorizationCodeGrant<
 
   if (!authCodeGrant) {
     throw new CredentialOfferError("authorization_code grant not found");
+  }
+
+  return authCodeGrant;
+}
+
+/**
+ * Resolves the authorization_code grant from a credential offer, enforcing its presence.
+ *
+ * @throws {CredentialOfferError} If grants or the either authorization_code or pre-authorized_code grants are missing.
+ */
+function requireAuthorizationCodeOrPreAuthorizedCodeGrant(
+  credentialOffer: CredentialOfferV1_5,
+): AuthorizationCodeGrantV1_5 | PreAuthorizedCodeGrantV1_5 {
+  if (!credentialOffer.grants) {
+    throw new CredentialOfferError("No grants found in credential offer");
+  }
+
+  let authCodeGrant;
+
+  if (CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants) {
+    authCodeGrant =
+      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE];
+  }
+
+  if (CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants) {
+    authCodeGrant =
+      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE];
+  }
+
+  if (!authCodeGrant) {
+    throw new CredentialOfferError(
+      "either one of authorization_code or pre-authorized code grant is required",
+    );
   }
 
   return authCodeGrant;
@@ -69,6 +108,33 @@ function extractGrantDetailsV1_4(
   };
 }
 
+function extractGrantDetailsV1_5(
+  options: ExtractGrantDetailsOptionsV1_5,
+): ExtractGrantDetailsResultV1_5 {
+  const authCodeGrant = requireAuthorizationCodeOrPreAuthorizedCodeGrant(
+    options.credentialOffer,
+  );
+
+  if ("pre-authorized_code" in authCodeGrant) {
+    return {
+      grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+      preAuthorizedCodeGrant: {
+        authorizationServer: authCodeGrant.authorization_server,
+        preAuthorizedCode: authCodeGrant["pre-authorized_code"],
+        txCode: authCodeGrant.tx_code,
+      },
+    };
+  }
+
+  return {
+    authorizationCodeGrant: {
+      authorizationServer: authCodeGrant.authorization_server,
+      issuerState: authCodeGrant.issuer_state,
+    },
+    grantType: CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
+  };
+}
+
 const dispatchExtractGrantDetails = createVersionDispatcher<
   ExtractGrantDetailsOptions,
   ExtractGrantDetailsResult
@@ -77,13 +143,19 @@ const dispatchExtractGrantDetails = createVersionDispatcher<
     throw new ItWalletSpecsVersionError(
       "extractGrantDetails",
       ItWalletSpecsVersion.V1_0,
-      [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+      [
+        ItWalletSpecsVersion.V1_3,
+        ItWalletSpecsVersion.V1_4,
+        ItWalletSpecsVersion.V1_5,
+      ],
     );
   },
   [ItWalletSpecsVersion.V1_3]: (o) =>
     extractGrantDetailsV1_3(o as ExtractGrantDetailsOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
     extractGrantDetailsV1_4(o as ExtractGrantDetailsOptionsV1_4),
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    extractGrantDetailsV1_5(o as ExtractGrantDetailsOptionsV1_5),
 });
 
 /**
@@ -110,6 +182,10 @@ export function extractGrantDetails(
 export function extractGrantDetails(
   options: ExtractGrantDetailsOptionsV1_4,
 ): ExtractGrantDetailsResultV1_4;
+
+export function extractGrantDetails(
+  options: ExtractGrantDetailsOptionsV1_5,
+): ExtractGrantDetailsResultV1_5;
 
 export function extractGrantDetails(
   options: ExtractGrantDetailsOptions,
