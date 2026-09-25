@@ -1,4 +1,7 @@
-import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
+import {
+  ItWalletSpecsVersion,
+  parseWithErrorHandling,
+} from "@pagopa/io-wallet-utils";
 import { Buffer } from "buffer";
 
 import type { SignCallback } from "../utils/types";
@@ -8,6 +11,7 @@ import { base64ToBase64URL } from "../utils/encoding";
 import {
   ItWalletEntityConfigurationClaimsOptions,
   itWalletEntityConfigurationClaimsSchema,
+  parseItWalletEntityConfigurationClaimsForVersion,
 } from "./itWalletEntityConfigurationClaims";
 import {
   EntityConfigurationHeaderOptions,
@@ -17,6 +21,7 @@ import {
 export interface CreateEntityConfigurationOptions {
   claims: ItWalletEntityConfigurationClaimsOptions;
   header: EntityConfigurationHeaderOptions;
+  itWalletSpecsVersion?: ItWalletSpecsVersion;
   signJwtCallback: SignCallback;
 }
 
@@ -29,6 +34,7 @@ export interface CreateEntityConfigurationOptions {
  * @param options - Entity configuration creation options.
  * @param options.claims - Entity configuration claims to sign.
  * @param options.header - Entity configuration JWT header.
+ * @param options.itWalletSpecsVersion - Optional version used for version-specific metadata validation.
  * @param options.signJwtCallback - Callback used to sign the JWT input.
  * @returns Signed entity configuration JWT.
  * @throws {ValidationError} If header or payload validation fails.
@@ -37,6 +43,7 @@ export interface CreateEntityConfigurationOptions {
 export const createItWalletEntityConfiguration = async ({
   claims,
   header,
+  itWalletSpecsVersion,
   signJwtCallback,
 }: CreateEntityConfigurationOptions) => {
   const validatedHeader = parseWithErrorHandling(
@@ -44,11 +51,17 @@ export const createItWalletEntityConfiguration = async ({
     header,
     "invalid header claims provided",
   );
-  const validatedClaims = parseWithErrorHandling(
-    itWalletEntityConfigurationClaimsSchema,
-    claims,
-    "invalid payload claims provided",
-  );
+  const validatedClaims =
+    itWalletSpecsVersion === undefined
+      ? parseWithErrorHandling(
+          itWalletEntityConfigurationClaimsSchema,
+          claims,
+          "invalid payload claims provided",
+        )
+      : parseItWalletEntityConfigurationClaimsForVersion(
+          claims,
+          itWalletSpecsVersion,
+        );
 
   const toBeSigned = createJwtSignableInput(header, claims);
 

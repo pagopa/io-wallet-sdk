@@ -42,6 +42,10 @@ import {
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
 } from "./entity/v1.3/itWalletSolution";
 import {
+  itWalletFederationEntityIdentifier as itWalletFederationEntityIdentifierV1_4,
+  itWalletFederationEntityMetadata as itWalletFederationEntityMetadataV1_4,
+} from "./entity/v1.4/itWalletFederationEntity";
+import {
   itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_4,
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_4,
 } from "./entity/v1.4/itWalletSolution";
@@ -73,8 +77,10 @@ export const itWalletMetadataV1_3 = z.strictObject({
     itWalletSolutionEntityMetadataV1_3.optional(),
 });
 
-// v1.4 combined metadata (only wallet_solution diverges from v1.3)
+// v1.4 combined metadata
 export const itWalletMetadataV1_4 = itWalletMetadataV1_3.extend({
+  [itWalletFederationEntityIdentifierV1_4]:
+    itWalletFederationEntityMetadataV1_4.optional(),
   [itWalletSolutionEntityIdentifierV1_4]:
     itWalletSolutionEntityMetadataV1_4.optional(),
 });
