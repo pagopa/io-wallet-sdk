@@ -104,6 +104,22 @@ export const AuthenticSources = z.object({
 });
 
 /**
+ * @deprecated Use `error_description` in the Issuer response: https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/credential-issuer-endpoint.html#credential-response
+ *
+ * Localized message for an error that occurs during issuance.
+ */
+const LegacyIssuanceErrorSupported = z.object({
+  display: z.array(
+    z.object({
+      description: z.string(),
+      locale: z.string(),
+      title: z.string(),
+    }),
+  ),
+  status_code: z.number().optional(),
+});
+
+/**
  * Enhanced metadata for a credential supported by an Issuer
  * Includes new mandatory credential_metadata, schema_id, and authentic_sources
  */
@@ -128,6 +144,15 @@ export const SupportedCredentialMetadata = z.intersection(
     authentic_sources: AuthenticSources,
     credential_metadata: CredentialMetadata,
     cryptographic_binding_methods_supported: z.array(z.string()),
+    /**
+     * @deprecated Use `error_description` in the Issuer response: https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/credential-issuer-endpoint.html#credential-response
+     *
+     * Map of errors that can occur during credential issuance. Retained from the legacy
+     * specifications while waiting for full compliance with the new error specifications.
+     */
+    issuance_errors_supported: z
+      .record(z.string(), LegacyIssuanceErrorSupported)
+      .optional(),
     proof_types_supported: ProofTypesSupported,
     schema_id: z.string(),
     scope: z.string(),
