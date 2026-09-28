@@ -12,6 +12,7 @@ import {
   type AuthorizationCodeGrantV1_4,
   type CredentialOfferGrantsV1_4,
   type CredentialOfferV1_4,
+  PreAuthorizedCodeGrantV1_4,
   zAuthorizationCodeGrantV1_4,
   zCredentialOfferGrantsV1_4,
   zCredentialOfferV1_4,
@@ -29,6 +30,7 @@ export {
   zCredentialOfferGrantsV1_4,
   zCredentialOfferV1_4,
 };
+
 export type {
   AuthorizationCodeGrantV1_3,
   CredentialOfferGrantsV1_3,
@@ -39,6 +41,8 @@ export type {
   CredentialOfferGrantsV1_4,
   CredentialOfferV1_4,
 };
+
+export type { PreAuthorizedCodeGrantV1_4 };
 
 /**
  * Credential Offer URI schema
@@ -86,6 +90,12 @@ export const zCredentialOfferUri = z
 export type AuthorizationCodeGrant =
   | AuthorizationCodeGrantV1_3
   | AuthorizationCodeGrantV1_4;
+
+/**
+ * TypeScript type for Pre Authorized Code Grant.
+ * Union across supported IT-Wallet versions.
+ */
+export type PreAuthorizedCodeGrant = PreAuthorizedCodeGrantV1_4;
 
 /**
  * TypeScript type for Credential Offer Grants.
