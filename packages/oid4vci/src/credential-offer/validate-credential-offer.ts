@@ -12,6 +12,7 @@ import type {
 import type { CredentialOffer } from "./z-credential-offer";
 
 import { CredentialOfferError } from "../errors";
+import { CREDENTIAL_OFFER_GRANTS } from "./v1.4/z-credential-offer";
 
 /**
  * Ensures an authorization server selected from a credential offer is one of the
@@ -63,11 +64,10 @@ export function assertAuthorizationServerAllowed(
  * @throws {CredentialOfferError} If any shared validation rule fails.
  */
 function validateBaseCredentialOffer(options: {
-  credentialIssuerMetadata?: { authorization_servers?: [string, ...string[]] };
   credentialOffer: CredentialOffer;
   versionLabel: string;
 }): void {
-  const { credentialIssuerMetadata, credentialOffer, versionLabel } = options;
+  const { credentialOffer, versionLabel } = options;
 
   // Validate credential_issuer is HTTPS
   if (!credentialOffer.credential_issuer.startsWith("https://")) {
@@ -87,6 +87,16 @@ function validateBaseCredentialOffer(options: {
       `grants is REQUIRED for IT-Wallet ${versionLabel}`,
     );
   }
+}
+
+async function validateCredentialOfferV1_3(
+  options: ValidateCredentialOfferOptionsV1_3,
+): Promise<void> {
+  const versionLabel = "v1.3";
+
+  const { credentialIssuerMetadata, credentialOffer } = options;
+
+  validateBaseCredentialOffer({ credentialOffer, versionLabel });
 
   const authCodeGrant = credentialOffer.grants.authorization_code;
 
@@ -101,16 +111,6 @@ function validateBaseCredentialOffer(options: {
     authCodeGrant.authorization_server,
     credentialIssuerMetadata?.authorization_servers,
   );
-}
-
-async function validateCredentialOfferV1_3(
-  options: ValidateCredentialOfferOptionsV1_3,
-): Promise<void> {
-  validateBaseCredentialOffer({
-    credentialIssuerMetadata: options.credentialIssuerMetadata,
-    credentialOffer: options.credentialOffer,
-    versionLabel: "v1.3",
-  });
 
   // IT-Wallet v1.3: scope is REQUIRED within the authorization_code grant
   if (!options.credentialOffer.grants.authorization_code.scope) {
@@ -121,12 +121,44 @@ async function validateCredentialOfferV1_3(
 async function validateCredentialOfferV1_4(
   options: ValidateCredentialOfferOptionsV1_4,
 ): Promise<void> {
+  const versionLabel = "v1.4";
+
+  const { credentialIssuerMetadata, credentialOffer } = options;
+
   // IT-Wallet v1.4: the credential offer no longer carries a `scope`
-  validateBaseCredentialOffer({
-    credentialIssuerMetadata: options.credentialIssuerMetadata,
-    credentialOffer: options.credentialOffer,
-    versionLabel: "v1.4",
-  });
+  validateBaseCredentialOffer({ credentialOffer, versionLabel });
+
+  // authorization_code and pre-authorized_code grants are not supported simultaneously
+  if (
+    CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants &&
+    CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants
+  ) {
+    throw new CredentialOfferError(
+      "both authorization_code and pre-authorized_code grants are not supported simultaneously",
+    );
+  }
+
+  let grant;
+
+  if (CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants) {
+    grant = credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE];
+  }
+
+  if (CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants) {
+    grant = credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE];
+  }
+
+  // authorization_code or pre-authorized code grant is REQUIRED
+  if (!grant) {
+    throw new CredentialOfferError(
+      "either one of authorization_code or pre-authorized code grant is required",
+    );
+  }
+
+  assertAuthorizationServerAllowed(
+    grant.authorization_server,
+    credentialIssuerMetadata?.authorization_servers,
+  );
 }
 
 const dispatchValidateCredentialOffer = createVersionDispatcher<

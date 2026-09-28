@@ -540,4 +540,60 @@ describe("validateCredentialOffer", () => {
       );
     });
   });
+
+  const validV1_4Offer: CredentialOfferV1_4 = {
+    credential_configuration_ids: ["UniversityDegree"],
+    credential_issuer: "https://issuer.example.com",
+    grants: {
+      "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+        "pre-authorized_code": "pre-authorized-code-value",
+        tx_code: {},
+      },
+    },
+  };
+
+  const invalidV1_4Offer = {
+    ...validV1_4Offer,
+    grants: {
+      authorization_code: {},
+      "urn:ietf:params:oauth:grant-type:pre-authorized_code": {},
+    },
+  } as unknown as CredentialOfferV1_4;
+
+  it("should validate a v1.5 offer that carries no authorization_code grant", async () => {
+    const options: ValidateCredentialOfferOptionsV1_4 = {
+      config: v1_4Config,
+      credentialIssuerMetadata: {},
+      credentialOffer: validV1_4Offer,
+    };
+
+    await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
+  });
+
+  it("should reject a credential that contains bot authorization_code grant and pre-authorized_code grant", async () => {
+    const options: ValidateCredentialOfferOptionsV1_4 = {
+      config: v1_4Config,
+      credentialIssuerMetadata: {},
+      credentialOffer: invalidV1_4Offer,
+    };
+
+    await expect(validateCredentialOffer(options)).rejects.toThrow(
+      CredentialOfferError,
+    );
+  });
+
+  it("should reject an offer that carries no grant", async () => {
+    const options: ValidateCredentialOfferOptionsV1_4 = {
+      config: v1_4Config,
+      credentialIssuerMetadata: {},
+      credentialOffer: {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+      } as unknown as CredentialOfferV1_4,
+    };
+
+    await expect(validateCredentialOffer(options)).rejects.toThrow(
+      CredentialOfferError,
+    );
+  });
 });
