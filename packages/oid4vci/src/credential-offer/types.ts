@@ -239,7 +239,7 @@ export interface ExtractGrantDetailsResultV1_4 {
   /**
    * Details of the authorization code grant.
    */
-  authorizationCodeGrant: {
+  authorizationCodeGrant?: {
     /**
      * HTTPS URL of the Authorization Server.
      * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
@@ -262,9 +262,54 @@ export interface ExtractGrantDetailsResultV1_4 {
 
   /**
    * The type of grant present in the credential offer.
-   * IT-Wallet only supports "authorization_code".
+   * IT-Wallet supports "authorization_code" and "urn:ietf:params:oauth:grant-type:pre-authorized_code".
    */
-  grantType: "authorization_code";
+  grantType:
+    | "authorization_code"
+    | "urn:ietf:params:oauth:grant-type:pre-authorized_code";
+
+  /**
+   * Details of the pre authorized code grant.
+   */
+  preAuthorizedCodeGrant?: {
+    /**
+     * HTTPS URL of the Authorization Server.
+     * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
+     */
+    authorizationServer?: string;
+
+    /**
+     * REQUIRED. The code representing the Credential Issuer's authorization for
+     * the Wallet to obtain Credentials of a certain type
+     */
+    preAuthorizedCode: string;
+
+    /**
+     * OPTIONAL. Object indicating that a Transaction Code is required if present, even if empty.
+     * It describes the requirements for a Transaction Code, which the Authorization Server expects
+     * the End-User to present along with the Token Request in a Pre-Authorized Code Flow.
+     * If the Authorization Server does not expect a Transaction Code, this object is absent;
+     */
+    txCode?: {
+      /**
+       * OPTIONAL. String containing guidance for the Holder
+       * of the Wallet on how to obtain the Transaction Code.
+       */
+      description?: string;
+
+      /**
+       * OPTIONAL. String specifying the input character set.
+       * Possible values are numeric (only digits) and text (any characters).
+       * The default is numeric.
+       */
+      inputMode?: "digit" | "numeric";
+
+      /**
+       * OPTIONAL. Integer specifying the length of the Transaction Code.
+       */
+      length?: number;
+    };
+  };
 }
 
 /**
