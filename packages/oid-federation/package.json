@@ -1,6 +1,6 @@
 {
   "name": "@pagopa/io-wallet-oid-federation",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "files": [
     "dist"
   ],

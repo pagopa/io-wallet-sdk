@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-oid-federation
 
+## 1.5.8
+
+### Patch Changes
+
+- b12ccc4: Added `issuance_errors_supported` to the v1.3 Issuer's metadata zod validator for backward compatibility.
+  - @pagopa/io-wallet-utils@1.5.8
+
 ## 1.5.7
 
 ### Patch Changes

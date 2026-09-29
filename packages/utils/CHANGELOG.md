@@ -1,5 +1,7 @@
 # @pagopa/io-wallet-utils
 
+## 1.5.8
+
 ## 1.5.7
 
 ### Patch Changes
