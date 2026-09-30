@@ -88,22 +88,18 @@ export const zPreAuthorizedCodeGrantV1_4 = z.object({
  *
  * The grants object is REQUIRED for IT-Wallet v1.4.
  */
-export const zCredentialOfferGrantsV1_4 = z.union([
+export const zCredentialOfferGrantsV1_4 = z.object({
   /**
    * OPTIONAL. Authorization Code grant details.
    */
-  z.object({
-    authorization_code: zAuthorizationCodeGrantV1_4,
-  }),
+  authorization_code: zAuthorizationCodeGrantV1_4.optional(),
 
   /**
    * OPTIONAL. Pre-Authorized Code grant details.
    */
-  z.object({
-    "urn:ietf:params:oauth:grant-type:pre-authorized_code":
-      zPreAuthorizedCodeGrantV1_4,
-  }),
-]);
+  "urn:ietf:params:oauth:grant-type:pre-authorized_code":
+    zPreAuthorizedCodeGrantV1_4.optional(),
+});
 
 /**
  * Credential Offer schema

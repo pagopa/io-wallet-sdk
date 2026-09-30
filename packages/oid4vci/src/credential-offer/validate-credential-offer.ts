@@ -123,35 +123,20 @@ async function validateCredentialOfferV1_4(
 ): Promise<void> {
   const versionLabel = "v1.4";
 
-  const { credentialIssuerMetadata, credentialOffer } = options;
+  const {
+    credentialIssuerMetadata,
+    credentialOffer,
+    grantType = CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
+  } = options;
 
-  // IT-Wallet v1.4: the credential offer no longer carries a `scope`
   validateBaseCredentialOffer({ credentialOffer, versionLabel });
 
-  // authorization_code and pre-authorized_code grants are not supported simultaneously
-  if (
-    CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants &&
-    CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants
-  ) {
-    throw new CredentialOfferError(
-      "both authorization_code and pre-authorized_code grants are not supported simultaneously",
-    );
-  }
-
-  let grant;
-
-  if (CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants) {
-    grant = credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE];
-  }
-
-  if (CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants) {
-    grant = credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE];
-  }
+  const grant = credentialOffer.grants[grantType];
 
   // authorization_code or pre-authorized code grant is REQUIRED
   if (!grant) {
     throw new CredentialOfferError(
-      "either one of authorization_code or pre-authorized code grant is required",
+      `${grantType} grant as specified is REQUIRED for IT-Wallet ${versionLabel}`,
     );
   }
 

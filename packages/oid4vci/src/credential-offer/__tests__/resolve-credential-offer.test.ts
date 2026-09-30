@@ -447,7 +447,7 @@ describe("resolveCredentialOffer", () => {
 
       expect(result).toEqual(validV1_4Offer);
 
-      if (!("authorization_code" in result.grants)) return;
+      if (!result.grants.authorization_code) return;
 
       expect(result.grants.authorization_code.issuer_state).toBe(
         "eyJhbGciOiJSU0Et...zaEJ3w",
@@ -473,7 +473,7 @@ describe("resolveCredentialOffer", () => {
         ...v1_4Options,
       });
 
-      if (!("authorization_code" in result.grants)) return;
+      if (!result.grants.authorization_code) return;
 
       expect("scope" in result.grants.authorization_code).toBe(false);
     });
@@ -539,11 +539,11 @@ describe("resolveCredentialOffer", () => {
         true,
       );
 
-      if (CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in result.grants) {
-        expect(result.grants.authorization_code.issuer_state).toBe(
-          "eyJhbGciOiJSU0Et...zaEJ3w",
-        );
-      }
+      if (!result.grants.authorization_code) return;
+
+      expect(result.grants.authorization_code.issuer_state).toBe(
+        "eyJhbGciOiJSU0Et...zaEJ3w",
+      );
     });
 
     it("should resolve a v1.4 offer with pre-authorized_code grant", async () => {
@@ -560,13 +560,13 @@ describe("resolveCredentialOffer", () => {
         true,
       );
 
-      if (CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in result.grants) {
-        expect(
-          result.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE][
-            "pre-authorized_code"
-          ],
-        ).toBe("oaKazRN8I0IbtZ0C7JuMn5");
-      }
+      if (!result.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]) return;
+
+      expect(
+        result.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE][
+          "pre-authorized_code"
+        ],
+      ).toBe("oaKazRN8I0IbtZ0C7JuMn5");
     });
 
     it("should reject a v1.4 offer with pre-authorized_code grant without pre-authorized_code", async () => {

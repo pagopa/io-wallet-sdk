@@ -46,45 +46,37 @@ function requireAuthorizationCodeGrant<
 }
 
 /**
- * Resolves the proper authorization code or pre-authorized code grant from a credential offer.
+ * Resolves the list of authorization_code or pre-authorized_code grants from a credential offer, enforcing their presence.
  *
  * @throws {CredentialOfferError} If grants or the either authorization_code or pre-authorized_code grants are missing.
  */
 function requireAuthorizationCodeOrPreAuthorizedCodeGrant(
   credentialOffer: CredentialOfferV1_4,
-): AuthorizationCodeGrantV1_4 | PreAuthorizedCodeGrantV1_4 {
+): (AuthorizationCodeGrantV1_4 | PreAuthorizedCodeGrantV1_4)[] {
   if (!credentialOffer.grants) {
     throw new CredentialOfferError("No grants found in credential offer");
   }
 
-  if (
-    CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants &&
-    CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants
-  ) {
-    throw new CredentialOfferError(
-      "both authorization_code and pre-authorized_code grants are not supported simultaneously",
+  const grants = [];
+
+  if (credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE])
+    grants.push(
+      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE],
+    );
+
+  if (credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE]) {
+    grants.push(
+      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE],
     );
   }
 
-  let authCodeGrant;
-
-  if (CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in credentialOffer.grants) {
-    authCodeGrant =
-      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE];
-  }
-
-  if (CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in credentialOffer.grants) {
-    authCodeGrant =
-      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE];
-  }
-
-  if (!authCodeGrant) {
+  if (!grants.length) {
     throw new CredentialOfferError(
       "either one of authorization_code or pre-authorized code grant is required",
     );
   }
 
-  return authCodeGrant;
+  return grants;
 }
 
 function extractGrantDetailsV1_3(
@@ -105,28 +97,30 @@ function extractGrantDetailsV1_3(
 function extractGrantDetailsV1_4(
   options: ExtractGrantDetailsOptionsV1_4,
 ): ExtractGrantDetailsResultV1_4 {
-  const authCodeGrant = requireAuthorizationCodeOrPreAuthorizedCodeGrant(
+  const grants = requireAuthorizationCodeOrPreAuthorizedCodeGrant(
     options.credentialOffer,
   );
 
-  if ("pre-authorized_code" in authCodeGrant) {
-    return {
-      grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
-      preAuthorizedCodeGrant: {
-        authorizationServer: authCodeGrant.authorization_server,
-        preAuthorizedCode: authCodeGrant["pre-authorized_code"],
-        txCode: authCodeGrant.tx_code,
-      },
-    };
-  }
+  return grants.map((grant) => {
+    if ("pre-authorized_code" in grant) {
+      return {
+        grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+        preAuthorizedCodeGrant: {
+          authorizationServer: grant.authorization_server,
+          preAuthorizedCode: grant["pre-authorized_code"],
+          txCode: grant.tx_code,
+        },
+      };
+    }
 
-  return {
-    authorizationCodeGrant: {
-      authorizationServer: authCodeGrant.authorization_server,
-      issuerState: authCodeGrant.issuer_state,
-    },
-    grantType: CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
-  };
+    return {
+      authorizationCodeGrant: {
+        authorizationServer: grant.authorization_server,
+        issuerState: grant.issuer_state,
+      },
+      grantType: CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
+    };
+  });
 }
 
 const dispatchExtractGrantDetails = createVersionDispatcher<
@@ -150,8 +144,6 @@ const dispatchExtractGrantDetails = createVersionDispatcher<
  * Extracts grant details from a credential offer according to the configured
  * Italian Wallet specification version.
  *
- * IT-Wallet only supports the `authorization_code` grant type. Pre-authorized
- * code grants are NOT supported.
  *
  * Version Differences:
  * - v1.3: extracts `scope` (REQUIRED), `authorization_server` (OPTIONAL), `issuer_state` (OPTIONAL)

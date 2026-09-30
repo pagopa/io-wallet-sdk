@@ -9,6 +9,8 @@ import type {
   CredentialOfferV1_4,
 } from "./z-credential-offer";
 
+import { CREDENTIAL_OFFER_GRANTS } from "./v1.4/z-credential-offer";
+
 /**
  * Options for parsing a credential offer URI.
  *
@@ -160,6 +162,12 @@ export interface ValidateCredentialOfferOptionsV1_4 extends ValidateCredentialOf
    * The credential offer to validate against IT-Wallet v1.4 specifications.
    */
   credentialOffer: CredentialOfferV1_4;
+
+  /**
+   * The grant type to validate against IT-Wallet v1.4 specifications.
+   * OPTIONAL, default is "authorization_code".
+   */
+  grantType?: CREDENTIAL_OFFER_GRANTS;
 }
 
 /**
@@ -232,85 +240,95 @@ export interface ExtractGrantDetailsResultV1_3 {
 /**
  * Result of extracting grant details from an IT-Wallet v1.4 credential offer.
  *
- * Difference from v1.3: the credential offer no longer carries a `scope`;
- * the wallet derives it from the credential configuration metadata instead.
+ * It is an array of discriminated union objects: each element represents a single grant
+ * and is discriminated by `grantType` (either `authorization_code` or `urn:ietf:params:oauth:grant-type:pre-authorized_code`).
+ *
+ * Difference from v1.3:
+ * - Returns an array, since v1.4 credential offers may contain multiple grants.
+ * - The credential offer no longer carries a `scope`; the wallet derives it from
+ *   the credential configuration metadata instead.
  */
-export interface ExtractGrantDetailsResultV1_4 {
-  /**
-   * Details of the authorization code grant.
-   */
-  authorizationCodeGrant?: {
-    /**
-     * HTTPS URL of the Authorization Server.
-     * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
-     */
-    authorizationServer?: string;
-
-    /**
-     * String value representing the issuer state.
-     * OPTIONAL. Used to correlate the authorization request with the credential offer.
-     */
-    issuerState?: string;
-
-    /**
-     * Version 1.4 has dropped support for the scope field,
-     * But typescript inference might have trouble recognizing this fact
-     * in its union type, so this is needed
-     */
-    scope?: never;
-  };
-
-  /**
-   * The type of grant present in the credential offer.
-   * IT-Wallet supports "authorization_code" and "urn:ietf:params:oauth:grant-type:pre-authorized_code".
-   */
-  grantType:
-    | "authorization_code"
-    | "urn:ietf:params:oauth:grant-type:pre-authorized_code";
-
-  /**
-   * Details of the pre authorized code grant.
-   */
-  preAuthorizedCodeGrant?: {
-    /**
-     * HTTPS URL of the Authorization Server.
-     * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
-     */
-    authorizationServer?: string;
-
-    /**
-     * REQUIRED. The code representing the Credential Issuer's authorization for
-     * the Wallet to obtain Credentials of a certain type
-     */
-    preAuthorizedCode: string;
-
-    /**
-     * OPTIONAL. Object indicating that a Transaction Code is required if present, even if empty.
-     * It describes the requirements for a Transaction Code, which the Authorization Server expects
-     * the End-User to present along with the Token Request in a Pre-Authorized Code Flow.
-     * If the Authorization Server does not expect a Transaction Code, this object is absent;
-     */
-    txCode?: {
+export type ExtractGrantDetailsResultV1_4 = (
+  | {
       /**
-       * OPTIONAL. String containing guidance for the Holder
-       * of the Wallet on how to obtain the Transaction Code.
+       * Details of the authorization code grant.
        */
-      description?: string;
+      authorizationCodeGrant: {
+        /**
+         * HTTPS URL of the Authorization Server.
+         * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
+         */
+        authorizationServer?: string;
+
+        /**
+         * String value representing the issuer state.
+         * OPTIONAL. Used to correlate the authorization request with the credential offer.
+         */
+        issuerState?: string;
+
+        /**
+         * Version 1.4 has dropped support for the scope field,
+         * But typescript inference might have trouble recognizing this fact
+         * in its union type, so this is needed
+         */
+        scope?: never;
+      };
 
       /**
-       * OPTIONAL. String specifying the input character set.
-       * Possible values are numeric (only digits) and text (any characters).
-       * The default is numeric.
+       * The type of grant: authorization code flow.
        */
-      inputMode?: "digit" | "numeric";
+      grantType: CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE;
+    }
+  | {
+      /**
+       * The type of grant: pre-authorized code flow.
+       */
+      grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE;
 
       /**
-       * OPTIONAL. Integer specifying the length of the Transaction Code.
+       * Details of the pre-authorized code grant.
        */
-      length?: number;
-    };
-  };
-}
+      preAuthorizedCodeGrant: {
+        /**
+         * HTTPS URL of the Authorization Server.
+         * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
+         */
+        authorizationServer?: string;
+
+        /**
+         * REQUIRED. The code representing the Credential Issuer's authorization for
+         * the Wallet to obtain Credentials of a certain type.
+         */
+        preAuthorizedCode: string;
+
+        /**
+         * OPTIONAL. Object indicating that a Transaction Code is required if present, even if empty.
+         * It describes the requirements for a Transaction Code, which the Authorization Server expects
+         * the End-User to present along with the Token Request in a Pre-Authorized Code Flow.
+         * If the Authorization Server does not expect a Transaction Code, this object is absent.
+         */
+        txCode?: {
+          /**
+           * OPTIONAL. String containing guidance for the Holder
+           * of the Wallet on how to obtain the Transaction Code.
+           */
+          description?: string;
+
+          /**
+           * OPTIONAL. String specifying the input character set.
+           * Possible values are numeric (only digits) and text (any characters).
+           * The default is numeric.
+           */
+          inputMode?: "digit" | "numeric";
+
+          /**
+           * OPTIONAL. Integer specifying the length of the Transaction Code.
+           */
+          length?: number;
+        };
+      };
+    }
+)[];
 
 /**
  * Result of extracting grant details from a credential offer.
