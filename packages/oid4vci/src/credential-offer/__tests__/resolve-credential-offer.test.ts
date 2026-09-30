@@ -13,6 +13,7 @@ import type {
 
 import { CredentialOfferError } from "../../errors";
 import { resolveCredentialOffer } from "../resolve-credential-offer";
+import { CREDENTIAL_OFFER_GRANTS } from "../v1.4/z-credential-offer";
 
 const mockFetch = vi.fn();
 
@@ -445,9 +446,13 @@ describe("resolveCredentialOffer", () => {
       });
 
       expect(result).toEqual(validV1_4Offer);
+
+      if (!result.grants.authorization_code) return;
+
       expect(result.grants.authorization_code.issuer_state).toBe(
         "eyJhbGciOiJSU0Et...zaEJ3w",
       );
+
       expect("scope" in result.grants.authorization_code).toBe(false);
     });
 
@@ -468,6 +473,8 @@ describe("resolveCredentialOffer", () => {
         ...v1_4Options,
       });
 
+      if (!result.grants.authorization_code) return;
+
       expect("scope" in result.grants.authorization_code).toBe(false);
     });
 
@@ -479,6 +486,91 @@ describe("resolveCredentialOffer", () => {
         },
       };
       const jsonString = JSON.stringify(invalidOffer);
+
+      await expect(
+        resolveCredentialOffer({
+          credentialOffer: jsonString,
+          ...v1_4Options,
+        }),
+      ).rejects.toThrow(CredentialOfferError);
+    });
+
+    const validV1_4OfferWithPreAuthorizedCode: CredentialOfferV1_4 = {
+      ...validV1_4Offer,
+      grants: {
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+          "pre-authorized_code": "oaKazRN8I0IbtZ0C7JuMn5",
+          tx_code: {
+            description:
+              "Please provide the one-time code that was sent via e-mail",
+            input_mode: "numeric",
+            length: 4,
+          },
+        },
+      },
+    };
+
+    /**
+     * this credential offer isn't valid because the urn:ietf:params:oauth:grant-type:pre-authorized_code
+     * grant is expecting a pre-authorized_code to be provided in grant details
+     */
+    const invalidV1_4Offer = {
+      ...validV1_4Offer,
+      grants: {
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+          tx_code: {
+            length: 4,
+          },
+        },
+      },
+    } as unknown as CredentialOfferV1_4;
+
+    it("should resolve a v1.4 offer with authorization_code grant", async () => {
+      const jsonString = JSON.stringify(validV1_4Offer);
+
+      const result = await resolveCredentialOffer({
+        credentialOffer: jsonString,
+        ...v1_4Options,
+      });
+
+      expect(result).toEqual(validV1_4Offer);
+
+      expect(CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in result.grants).toBe(
+        true,
+      );
+
+      if (!result.grants.authorization_code) return;
+
+      expect(result.grants.authorization_code.issuer_state).toBe(
+        "eyJhbGciOiJSU0Et...zaEJ3w",
+      );
+    });
+
+    it("should resolve a v1.4 offer with pre-authorized_code grant", async () => {
+      const jsonString = JSON.stringify(validV1_4OfferWithPreAuthorizedCode);
+
+      const result = await resolveCredentialOffer({
+        credentialOffer: jsonString,
+        ...v1_4Options,
+      });
+
+      expect(result).toEqual(validV1_4OfferWithPreAuthorizedCode);
+
+      expect(CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in result.grants).toBe(
+        true,
+      );
+
+      if (!result.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]) return;
+
+      expect(
+        result.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE][
+          "pre-authorized_code"
+        ],
+      ).toBe("oaKazRN8I0IbtZ0C7JuMn5");
+    });
+
+    it("should reject a v1.4 offer with pre-authorized_code grant without pre-authorized_code", async () => {
+      const jsonString = JSON.stringify(invalidV1_4Offer);
 
       await expect(
         resolveCredentialOffer({
