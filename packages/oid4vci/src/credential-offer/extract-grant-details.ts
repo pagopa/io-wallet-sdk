@@ -57,18 +57,7 @@ function requireAuthorizationCodeOrPreAuthorizedCodeGrant(
     throw new CredentialOfferError("No grants found in credential offer");
   }
 
-  const grants = [];
-
-  if (credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE])
-    grants.push(
-      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE],
-    );
-
-  if (credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE]) {
-    grants.push(
-      credentialOffer.grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE],
-    );
-  }
+  const grants = Object.values(credentialOffer.grants);
 
   if (!grants.length) {
     throw new CredentialOfferError(
