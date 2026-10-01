@@ -82,9 +82,6 @@ describe("WalletProvider v1.4 routing", () => {
         ...baseSigner,
         x5c: ["cert1-base64", "cert2-base64"] as [string, ...string[]],
       },
-      status: {
-        status_list: { idx: 2, uri: "https://status.example.com/list" },
-      },
       walletLink: "https://wallet.example.com",
       walletName: "Wallet v1.4",
     };
@@ -97,22 +94,10 @@ describe("WalletProvider v1.4 routing", () => {
     expect(mockCreateWalletAttestationJwtV1_3).not.toHaveBeenCalled();
   });
 
-  it("should pass all options to v1.4 implementation including eudiWalletInfo", async () => {
-    const status = {
-      status_list: { idx: 42, uri: "https://status.example.com/list" },
-    };
-    const eudiWalletInfo = {
-      general_info: {
-        wallet_provider_name: "PagoPA",
-        wallet_solution_certification_information: "certification-reference",
-        wallet_solution_id: "wallet-solution-id",
-        wallet_solution_version: "1.0.0",
-      },
-    };
+  it("should pass all options to v1.4 implementation", async () => {
     const options: WalletAttestationOptionsV1_4 = {
       callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
-      eudiWalletInfo,
       expiresAt: new Date("2025-06-01T00:00:00Z"),
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -120,7 +105,6 @@ describe("WalletProvider v1.4 routing", () => {
         trustChain: ["jwt1", "jwt2"] as [string, ...string[]],
         x5c: ["cert1-base64", "cert2-base64"] as [string, ...string[]],
       },
-      status,
       walletLink: "https://wallet.example.com",
       walletName: "Premium Wallet",
     };
@@ -130,7 +114,6 @@ describe("WalletProvider v1.4 routing", () => {
     expect(mockCreateWalletAttestationJwtV1_4).toHaveBeenCalledWith({
       callbacks: { hash: mockHash, signJwt: mockSignJwt },
       dpopJwkPublic: mockJwk,
-      eudiWalletInfo,
       expiresAt: new Date("2025-06-01T00:00:00Z"),
       issuer: "https://wallet-provider.example.com",
       signer: {
@@ -140,7 +123,6 @@ describe("WalletProvider v1.4 routing", () => {
         trustChain: ["jwt1", "jwt2"],
         x5c: ["cert1-base64", "cert2-base64"],
       },
-      status,
       walletLink: "https://wallet.example.com",
       walletName: "Premium Wallet",
     });
@@ -163,7 +145,6 @@ describe("WalletProvider v1.4 routing", () => {
         method: "x5c" as const,
         x5c: ["cert1-base64"] as [string, ...string[]],
       },
-      status: { status_list: { idx: 1, uri: "https://status.example.com" } },
       walletLink: "https://wallet.example.com",
       walletName: "My Wallet",
     };
@@ -171,7 +152,6 @@ describe("WalletProvider v1.4 routing", () => {
     it.each([
       ["walletLink is missing", { ...baseOptions, walletLink: undefined }],
       ["walletName is missing", { ...baseOptions, walletName: undefined }],
-      ["status is missing", { ...baseOptions, status: undefined }],
       [
         "v1.3-shaped options are passed (all required fields absent)",
         {

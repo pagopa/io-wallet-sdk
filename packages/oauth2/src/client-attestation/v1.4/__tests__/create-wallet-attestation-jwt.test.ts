@@ -23,6 +23,8 @@ describe("createWalletAttestationJwt v1.4", () => {
   const mockSignJwt = vi.fn();
   const mockJwkThumbprint = "AQID";
 
+  const expiresAt = new Date(Date.now() + 3600 * 1000);
+
   const mockJwk = {
     crv: "P-256",
     kid: "test-key-id",
@@ -39,19 +41,13 @@ describe("createWalletAttestationJwt v1.4", () => {
   const baseOptions: WalletAttestationOptionsV1_4 = {
     callbacks: { hash: mockHash, signJwt: mockSignJwt },
     dpopJwkPublic: mockJwk,
-    expiresAt: new Date("2025-01-25T00:00:00Z"),
+    expiresAt,
     issuer: "https://wallet-provider.example.com",
     signer: {
       alg: "ES256",
       kid: "test-kid",
       method: "x5c",
       x5c: mockX5c,
-    },
-    status: {
-      status_list: {
-        idx: 7,
-        uri: "https://status.example.com/list",
-      },
     },
     walletLink: "https://wallet.example.com",
     walletName: "Test Wallet",
@@ -79,15 +75,9 @@ describe("createWalletAttestationJwt v1.4", () => {
         },
         payload: expect.objectContaining({
           cnf: { jwk: mockJwk },
-          exp: dateToSeconds(new Date("2025-01-25T00:00:00Z")),
+          exp: dateToSeconds(expiresAt),
           iat: expect.any(Number),
           iss: "https://wallet-provider.example.com",
-          status: {
-            status_list: {
-              idx: 7,
-              uri: "https://status.example.com/list",
-            },
-          },
           sub: mockJwkThumbprint,
           wallet_link: "https://wallet.example.com",
           wallet_name: "Test Wallet",
@@ -96,7 +86,7 @@ describe("createWalletAttestationJwt v1.4", () => {
     );
   });
 
-  it("should create a valid wallet attestation JWT without eudi_wallet_info", async () => {
+  it("should not include the status and eudi_wallet_info claims removed in v1.4.6", async () => {
     await createWalletAttestationJwt(baseOptions);
 
     expect(mockSignJwt).toHaveBeenCalledWith(
@@ -104,6 +94,7 @@ describe("createWalletAttestationJwt v1.4", () => {
       expect.objectContaining({
         payload: expect.not.objectContaining({
           eudi_wallet_info: expect.anything(),
+          status: expect.anything(),
         }),
       }),
     );
@@ -133,32 +124,6 @@ describe("createWalletAttestationJwt v1.4", () => {
     );
   });
 
-  it("should create a valid wallet attestation JWT with eudi_wallet_info", async () => {
-    const options: WalletAttestationOptionsV1_4 = {
-      ...baseOptions,
-      eudiWalletInfo: {
-        general_info: {
-          wallet_provider_name: "PagoPA",
-          wallet_solution_certification_information:
-            "https://certification-reference.example.it",
-          wallet_solution_id: "wallet-solution-id",
-          wallet_solution_version: "1.0.0",
-        },
-      },
-    };
-
-    await createWalletAttestationJwt(options);
-
-    expect(mockSignJwt).toHaveBeenCalledWith(
-      options.signer,
-      expect.objectContaining({
-        payload: expect.objectContaining({
-          eudi_wallet_info: options.eudiWalletInfo,
-        }),
-      }),
-    );
-  });
-
   it("should fail when walletLink is missing", async () => {
     const options = {
       ...baseOptions,
@@ -181,29 +146,47 @@ describe("createWalletAttestationJwt v1.4", () => {
     );
   });
 
-  it("should fail when status is missing", async () => {
-    const options = {
+  it("should fail when expiresAt is not after iat", async () => {
+    const options: WalletAttestationOptionsV1_4 = {
       ...baseOptions,
-      status: undefined,
-    } as unknown as WalletAttestationOptionsV1_4;
+      expiresAt: new Date(Date.now() - 1000),
+    };
 
     await expect(createWalletAttestationJwt(options)).rejects.toThrow(
-      ValidationError,
+      /exp must be after iat/,
     );
   });
 
-  it("should fail when eudi_wallet_info is malformed", async () => {
-    const options = {
+  it("should fail when expiresAt is more than 24 hours after iat", async () => {
+    const options: WalletAttestationOptionsV1_4 = {
       ...baseOptions,
-      eudiWalletInfo: {
-        general_info: {
-          wallet_provider_name: "PagoPA",
-        },
-      },
-    } as unknown as WalletAttestationOptionsV1_4;
+      expiresAt: new Date(Date.now() + (86400 + 60) * 1000),
+    };
 
     await expect(createWalletAttestationJwt(options)).rejects.toThrow(
-      ValidationError,
+      /exp must not be more than 24 hours after iat/,
+    );
+  });
+
+  it("should accept an expiration exactly at the 24 hour boundary", async () => {
+    const options: WalletAttestationOptionsV1_4 = {
+      ...baseOptions,
+      expiresAt: new Date(Date.now() + 86400 * 1000 - 1000),
+    };
+
+    await expect(createWalletAttestationJwt(options)).resolves.toBeTypeOf(
+      "string",
+    );
+  });
+
+  it("should fail when nbf is not before exp", async () => {
+    const options: WalletAttestationOptionsV1_4 = {
+      ...baseOptions,
+      nbf: new Date(expiresAt.getTime() + 1000),
+    };
+
+    await expect(createWalletAttestationJwt(options)).rejects.toThrow(
+      /nbf must be before exp/,
     );
   });
 
