@@ -5,6 +5,7 @@ export * from "./entityStatement/itWalletEntityStatementClaims";
 export * from "./entityStatement/z-constraint";
 export * from "./entityStatement/z-trustmark";
 export * from "./errors";
+export * from "./jwk/z-federation-jwk";
 export * from "./metadata/common";
 export * from "./metadata/entity/itWalletFederationEntity";
 export {

@@ -169,6 +169,7 @@ describe("createAuthorizationResponseTests", () => {
       ...mockRpMetadata,
       jwks: {
         keys: [
+          //@ts-expect-error - kid intentionally mising from JWK for testing error
           {
             crv: "P-256",
             kty: "EC" as "EC" | "RSA",

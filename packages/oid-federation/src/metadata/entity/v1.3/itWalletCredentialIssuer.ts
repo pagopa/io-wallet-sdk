@@ -1,5 +1,6 @@
-import { zJwkSet } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
+
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 /**
  * Image metadata with integrity hash support
@@ -184,7 +185,7 @@ export const itWalletCredentialIssuerMetadata = z.looseObject({
   credential_issuer: z.url(),
   deferred_credential_endpoint: z.url().optional(),
   display: z.array(CredentialDisplayMetadata).optional(),
-  jwks: zJwkSet,
+  jwks: zFederationJwkSet,
   nonce_endpoint: z.url().optional(),
   notification_endpoint: z.url().optional(),
   status_list_aggregation_endpoint: z.url().optional(),

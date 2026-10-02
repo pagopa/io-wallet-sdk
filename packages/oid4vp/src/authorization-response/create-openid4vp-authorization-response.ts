@@ -6,9 +6,11 @@ import {
   type Jwk,
   type JwkSet,
   type JwtSigner,
+  UnexpectedStatusCodeError,
   addSecondsToDate,
   dateToSeconds,
   encodeToBase64Url,
+  hasStatusOrThrow,
   jwtHeaderFromJwtSigner,
   parseWithErrorHandling,
   zJwkSet,
@@ -126,11 +128,7 @@ async function fetchJwks(
     },
   });
 
-  if (!response.ok) {
-    throw new Oauth2Error(
-      `Fetching JWKs from jwks_uri '${jwksUrl}' resulted in an unsuccessful response with status code '${response.status}'.`,
-    );
-  }
+  await hasStatusOrThrow(200, UnexpectedStatusCodeError)(response);
 
   return parseWithErrorHandling(
     zJwkSet,
@@ -225,7 +223,8 @@ export async function createOpenid4vpAuthorizationResponse(
   }
 
   if (
-    clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION &&
+    (clientIdPrefix === ClientIdPrefix.OPENID_FEDERATION ||
+      clientIdPrefix === ClientIdPrefix.NONE) &&
     !options.clientMetadata
   ) {
     throw new Oauth2Error(

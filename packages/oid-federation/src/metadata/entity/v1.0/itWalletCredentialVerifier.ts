@@ -1,5 +1,6 @@
-import { zJwkSet } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
+
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 /**
  *
@@ -16,7 +17,7 @@ export const itWalletCredentialVerifierMetadata = z.looseObject({
   client_id: z.url(),
   client_name: z.string(),
   erasure_endpoint: z.url().optional(),
-  jwks: zJwkSet,
+  jwks: zFederationJwkSet,
   redirect_uris: z.array(z.url()).optional(),
   request_uris: z.array(z.url()),
   response_uris: z.array(z.url()),

@@ -1,5 +1,6 @@
-import { zJwkSet } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
+
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 /**
  * IT Wallet Credential Verifier Metadata for OpenID Federation v1.3.3
@@ -25,7 +26,7 @@ export const itWalletCredentialVerifierMetadata = z.looseObject({
   client_name: z.string(),
   encrypted_response_enc_values_supported: z.array(z.string()).min(1),
   erasure_endpoint: z.url().optional(),
-  jwks: zJwkSet,
+  jwks: zFederationJwkSet,
   logo_uri: z.url(),
   redirect_uris: z.array(z.url()).optional(),
   request_uris: z.array(z.url()),

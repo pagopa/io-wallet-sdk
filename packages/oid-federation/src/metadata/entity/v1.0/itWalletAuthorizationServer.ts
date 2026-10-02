@@ -1,5 +1,6 @@
-import { zJwkSet } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
+
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 /**
  *
@@ -26,7 +27,7 @@ export const itWalletAuthorizationServerMetadata = z.looseObject({
         "The grant_types_supported array MUST include 'authorization_code'.",
     }),
   issuer: z.url(),
-  jwks: zJwkSet,
+  jwks: zFederationJwkSet,
   pushed_authorization_request_endpoint: z.url(),
   request_object_signing_alg_values_supported: z.array(z.string()),
   require_signed_request_object: z.boolean().optional(),

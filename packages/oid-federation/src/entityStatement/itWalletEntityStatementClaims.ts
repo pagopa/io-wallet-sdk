@@ -1,10 +1,10 @@
 import {
   ItWalletSpecsVersion,
   parseWithErrorHandling,
-  zJwkSet,
 } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
+import { zFederationJwkSet } from "../jwk/z-federation-jwk";
 import {
   ItWalletMetadataByVersion,
   isItWalletMetadataVersion,
@@ -30,7 +30,7 @@ const baseSchema = z.object({
     .number()
     .describe("Issued-at time as a UNIX timestamp in seconds since epoch"),
   iss: z.string(),
-  jwks: zJwkSet,
+  jwks: zFederationJwkSet,
   metadata: itWalletMetadataSchema.optional(),
   metadata_policy: z
     .record(z.string(), z.record(z.string(), metadataPolicySchema).optional())

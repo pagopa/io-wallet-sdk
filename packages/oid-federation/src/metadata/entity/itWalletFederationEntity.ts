@@ -1,6 +1,6 @@
-import { zJwkSet } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
+import { zFederationJwkSet } from "../../jwk/z-federation-jwk";
 import { createEntity } from "../../utils/create-entity";
 
 export const federationEntityMetadata = createEntity({
@@ -27,7 +27,7 @@ export type FederationEntityMetadata = z.input<
  */
 export const itWalletFederationEntityMetadata = federationEntityMetadata.schema
   .extend({
-    jwks: zJwkSet.optional(),
+    jwks: zFederationJwkSet.optional(),
     tos_uri: z.url().optional(),
   })
   .loose();
