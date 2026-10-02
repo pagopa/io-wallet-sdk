@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { Oauth2Error } from "../../errors";
 import { parseAccessTokenRequest } from "../parse-token-request";
+import { preAuthorizedCodeGrantIdentifier } from "../z-grant-type";
 
 const VALID_DPOP_JWT =
   "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0In0.eyJodG0iOiJQT1NUIiwiaHR1IjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZS5jb20iLCJpYXQiOjE2NDQ5OTk5OTksImp0aSI6InRlc3QtanRpIn0.signature";
@@ -146,6 +147,104 @@ describe("parseAccessTokenRequest", () => {
         redirect_uri: "https://client.example.com/callback",
       });
     });
+  });
+
+  describe("Pre-authorized code grant", () => {
+    it.each([undefined, "001234", "A+%&= code"])(
+      "parses a pre-authorized request with transaction code %s without requiring PKCE",
+      (txCode) => {
+        const accessTokenRequest = {
+          grant_type: preAuthorizedCodeGrantIdentifier,
+          "pre-authorized_code": "opaque%2F+&= code",
+          tx_code: txCode,
+        };
+
+        const result = parseAccessTokenRequest({
+          accessTokenRequest,
+          request: createMockRequest(createValidHeaders()),
+        });
+
+        expect(result.accessTokenRequest).toEqual(accessTokenRequest);
+        expect(result.grant).toEqual({
+          grantType: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+          preAuthorizedCode: "opaque%2F+&= code",
+          txCode,
+        });
+        expect(result.pkceCodeVerifier).toBeUndefined();
+        expect(result.dpop.jwt).toBe(VALID_DPOP_JWT);
+        expect(result.clientAttestation).toEqual({
+          clientAttestationPopJwt: VALID_CLIENT_ATTESTATION_POP_JWT,
+          walletAttestationJwt: VALID_CLIENT_ATTESTATION_JWT,
+        });
+      },
+    );
+
+    it.each([undefined, "", null, 123456])(
+      "rejects a missing, empty or non-string pre-authorized code: %s",
+      (code) => {
+        expect(() =>
+          parseAccessTokenRequest({
+            accessTokenRequest: {
+              grant_type: preAuthorizedCodeGrantIdentifier,
+              "pre-authorized_code": code,
+            },
+            request: createMockRequest(createValidHeaders()),
+          }),
+        ).toThrow("Access token request validation failed");
+      },
+    );
+
+    it.each([123456, null, { length: 6 }])(
+      "rejects a non-string transaction code: %s",
+      (txCode) => {
+        expect(() =>
+          parseAccessTokenRequest({
+            accessTokenRequest: {
+              grant_type: preAuthorizedCodeGrantIdentifier,
+              "pre-authorized_code": "issuer-code",
+              tx_code: txCode,
+            },
+            request: createMockRequest(createValidHeaders()),
+          }),
+        ).toThrow("Access token request validation failed");
+      },
+    );
+
+    it("does not interpret authorization-code parameters as pre-authorized parameters", () => {
+      expect(() =>
+        parseAccessTokenRequest({
+          accessTokenRequest: {
+            code: "authorization-code",
+            code_verifier: "verifier",
+            grant_type: preAuthorizedCodeGrantIdentifier,
+            redirect_uri: "https://wallet.example.com/callback",
+          },
+          request: createMockRequest(createValidHeaders()),
+        }),
+      ).toThrow("Access token request validation failed");
+    });
+
+    it.each([
+      "DPoP",
+      "OAuth-Client-Attestation",
+      "OAuth-Client-Attestation-PoP",
+    ])(
+      "still requires the %s header for pre-authorized requests",
+      (headerName) => {
+        const headers = createValidHeaders();
+        headers.delete(headerName);
+
+        expect(() =>
+          parseAccessTokenRequest({
+            accessTokenRequest: {
+              grant_type: preAuthorizedCodeGrantIdentifier,
+              "pre-authorized_code": "issuer-code",
+            },
+            request: createMockRequest(headers),
+          }),
+        ).toThrow(Oauth2Error);
+      },
+    );
   });
 
   describe("Refresh token grant", () => {
