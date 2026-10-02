@@ -9,8 +9,10 @@ import { Oauth2Error } from "../errors";
 import { extractDpopJwtFromHeaders } from "../token-dpop/create-token-dpop";
 import {
   AuthorizationCodeGrantIdentifier,
+  PreAuthorizedCodeGrantIdentifier,
   RefreshTokenGrantIdentifier,
   authorizationCodeGrantIdentifier,
+  preAuthorizedCodeGrantIdentifier,
   refreshTokenGrantIdentifier,
 } from "./z-grant-type";
 import { AccessTokenRequest, zAccessTokenRequest } from "./z-token";
@@ -25,8 +27,15 @@ export interface ParsedAccessTokenRefreshTokenRequestGrant {
   refreshToken: string;
 }
 
-type ParsedAccessTokenRequestGrant =
+export interface ParsedAccessTokenPreAuthorizedCodeRequestGrant {
+  grantType: PreAuthorizedCodeGrantIdentifier;
+  preAuthorizedCode: string;
+  txCode?: string;
+}
+
+export type ParsedAccessTokenRequestGrant =
   | ParsedAccessTokenAuthorizationCodeRequestGrant
+  | ParsedAccessTokenPreAuthorizedCodeRequestGrant
   | ParsedAccessTokenRefreshTokenRequestGrant;
 
 export interface ParseAccessTokenRequestResult {
@@ -69,7 +78,7 @@ export interface ParseAccessTokenRequestOptions {
  *
  * This function performs the following steps:
  * 1. Validates the request body against the access token request schema
- * 2. Extracts and validates grant-specific parameters (authorization code or refresh token)
+ * 2. Extracts grant parameters for authorization code, pre-authorized code or refresh token
  * 3. Parses security headers (DPoP and Client Attestation JWTs)
  * 4. Extracts PKCE code verifier if present
  *
@@ -149,8 +158,16 @@ function parseGrantParameters(
     };
   }
 
+  if (accessTokenRequest.grant_type === preAuthorizedCodeGrantIdentifier) {
+    return {
+      grantType: preAuthorizedCodeGrantIdentifier,
+      preAuthorizedCode: accessTokenRequest["pre-authorized_code"],
+      txCode: accessTokenRequest.tx_code,
+    };
+  }
+
   throw new Oauth2Error(
-    `Unsupported grant type. Supported types are: '${authorizationCodeGrantIdentifier}', '${refreshTokenGrantIdentifier}'`,
+    `Unsupported grant type. Supported types are: '${authorizationCodeGrantIdentifier}', '${refreshTokenGrantIdentifier}', '${preAuthorizedCodeGrantIdentifier}'`,
   );
 }
 

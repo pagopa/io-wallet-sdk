@@ -15,10 +15,12 @@ import { Oauth2Error } from "../../errors";
 import { PkceCodeChallengeMethod } from "../../pkce";
 import {
   VerifyAccessTokenRequestOptions,
+  VerifyPreAuthorizedCodeAccessTokenRequestOptions,
   verifyAccessTokenRequest,
 } from "../verify-access-token-request";
+import { preAuthorizedCodeGrantIdentifier } from "../z-grant-type";
 
-describe("verifyAuthorizationCodeTokenRequest", () => {
+describe("verifyAccessTokenRequest", () => {
   const mockJwk: Jwk = {
     crv: "P-256",
     kty: "EC",
@@ -155,6 +157,245 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       ...overrides,
     };
   };
+
+  describe("Pre-authorized code grant", () => {
+    const createPreAuthorizedOptions = (
+      overrides: Partial<VerifyPreAuthorizedCodeAccessTokenRequestOptions> = {},
+    ): VerifyPreAuthorizedCodeAccessTokenRequestOptions => {
+      const common = createValidOptions();
+      return {
+        accessTokenRequest: {
+          grant_type: preAuthorizedCodeGrantIdentifier,
+          "pre-authorized_code": "issuer-pre-authorized-code",
+        },
+        authorizationServerMetadata: common.authorizationServerMetadata,
+        callbacks: common.callbacks,
+        clientAttestation: common.clientAttestation,
+        config: common.config,
+        dpop: common.dpop,
+        expectedPreAuthorizedCode: "issuer-pre-authorized-code",
+        grant: {
+          grantType: preAuthorizedCodeGrantIdentifier,
+          preAuthorizedCode: "issuer-pre-authorized-code",
+        },
+        now: common.now,
+        request: common.request,
+        ...overrides,
+      };
+    };
+
+    it.each([undefined, "001234", "A+%&= code"])(
+      "verifies transaction code %s without PKCE and retains verified security proofs",
+      async (txCode) => {
+        const options = createPreAuthorizedOptions({ expectedTxCode: txCode });
+        options.accessTokenRequest.tx_code = txCode;
+        options.grant.txCode = txCode;
+
+        const result = await verifyAccessTokenRequest(options);
+
+        expect(options).not.toHaveProperty("pkce");
+        expect(result.dpop.jwk).toEqual(mockJwk);
+        expect(result.dpop.jwkThumbprint).toEqual(expect.any(String));
+        expect(result.clientAttestation.clientAttestation.payload.sub).toBe(
+          "client-123",
+        );
+        expect(result.clientAttestation.clientAttestationPop.payload.iss).toBe(
+          "client-123",
+        );
+      },
+    );
+
+    it.each(["different-issued-code", ""])(
+      "rejects a pre-authorized code when the stored expected value is %s",
+      async (expectedPreAuthorizedCode) => {
+        const options = createPreAuthorizedOptions({
+          expectedPreAuthorizedCode,
+        });
+
+        await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+          "Invalid 'pre-authorized_code' provided",
+        );
+      },
+    );
+
+    it("rejects a body code that differs from the parsed grant", async () => {
+      const options = createPreAuthorizedOptions();
+      options.accessTokenRequest["pre-authorized_code"] = "different-body-code";
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Invalid 'pre-authorized_code' provided",
+      );
+    });
+
+    it("rejects a mismatched grant type", async () => {
+      const options = createPreAuthorizedOptions();
+      options.accessTokenRequest =
+        mockAccessTokenRequest as unknown as VerifyPreAuthorizedCodeAccessTokenRequestOptions["accessTokenRequest"];
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Grant type does not match the access token request",
+      );
+    });
+
+    it("accepts a code before its expiration", async () => {
+      const options = createPreAuthorizedOptions();
+      options.preAuthorizedCodeExpiresAt = new Date(
+        (options.now ?? new Date()).getTime() + 60000,
+      );
+
+      await expect(verifyAccessTokenRequest(options)).resolves.toHaveProperty(
+        "dpop",
+      );
+    });
+
+    it("rejects an expired code using the supplied clock", async () => {
+      const options = createPreAuthorizedOptions();
+      options.preAuthorizedCodeExpiresAt = new Date(
+        (options.now ?? new Date()).getTime() - 1,
+      );
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Expired 'pre-authorized_code' provided",
+      );
+    });
+
+    it("checks expiration using the current time when now is omitted", async () => {
+      const options = createPreAuthorizedOptions({
+        now: undefined,
+        preAuthorizedCodeExpiresAt: new Date(Date.now() - 60000),
+      });
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Expired 'pre-authorized_code' provided",
+      );
+    });
+
+    it("rejects an invalid expiration date", async () => {
+      const options = createPreAuthorizedOptions({
+        preAuthorizedCodeExpiresAt: new Date("invalid"),
+      });
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Invalid expiration date for 'pre-authorized_code'",
+      );
+    });
+
+    it.each([
+      {
+        expectedTxCode: "001234",
+        label: "missing",
+        message: "Missing required 'tx_code' in request",
+        txCode: undefined,
+      },
+      {
+        expectedTxCode: undefined,
+        label: "unexpected",
+        message: "Request contains 'tx_code' that was not expected",
+        txCode: "001234",
+      },
+      {
+        expectedTxCode: "001234",
+        label: "incorrect",
+        message: "Invalid 'tx_code' provided",
+        txCode: "009999",
+      },
+      {
+        expectedTxCode: "001234",
+        label: "without leading zeros",
+        message: "Invalid 'tx_code' provided",
+        txCode: "1234",
+      },
+    ])(
+      "rejects a $label transaction code",
+      async ({ expectedTxCode, message, txCode }) => {
+        const options = createPreAuthorizedOptions({ expectedTxCode });
+        options.accessTokenRequest.tx_code = txCode;
+        options.grant.txCode = txCode;
+
+        await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+          message,
+        );
+      },
+    );
+
+    it("rejects a transaction code that differs between the body and parsed grant", async () => {
+      const options = createPreAuthorizedOptions({ expectedTxCode: "001234" });
+      options.accessTokenRequest.tx_code = "009999";
+      options.grant.txCode = "001234";
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        "Transaction code does not match the access token request",
+      );
+    });
+
+    it.each(["", "invalid-jwt"])(
+      "rejects an invalid DPoP proof: %s",
+      async (jwt) => {
+        const options = createPreAuthorizedOptions({ dpop: { jwt } });
+
+        await expect(verifyAccessTokenRequest(options)).rejects.toThrow();
+      },
+    );
+
+    it("still rejects an incorrect DPoP nonce", async () => {
+      const options = createPreAuthorizedOptions();
+      options.dpop = {
+        expectedNonce: "expected-nonce",
+        jwt: createMockDpopJwt({
+          htm: "POST",
+          htu: mockRequest.url,
+          iat: Math.floor((options.now ?? new Date()).getTime() / 1000),
+          jti: "pre-authorized-dpop-jti",
+          nonce: "wrong-nonce",
+        }),
+      };
+
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        /expected nonce value/,
+      );
+    });
+
+    it.each(["walletAttestationJwt", "clientAttestationPopJwt"] as const)(
+      "still requires %s",
+      async (field) => {
+        const options = createPreAuthorizedOptions();
+        options.clientAttestation[field] = "";
+
+        await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+          /Missing required client attestation parameters/,
+        );
+      },
+    );
+
+    it.each([
+      { label: "DPoP", validSignaturesBeforeFailure: 0 },
+      { label: "wallet attestation", validSignaturesBeforeFailure: 1 },
+      { label: "client attestation PoP", validSignaturesBeforeFailure: 2 },
+    ])(
+      "rejects a failed $label signature verification",
+      async ({ validSignaturesBeforeFailure }) => {
+        const verifyJwt = vi.fn(mockCallbacks.verifyJwt);
+        for (let index = 0; index < validSignaturesBeforeFailure; index++) {
+          verifyJwt.mockResolvedValueOnce({
+            signerJwk: mockJwk,
+            verified: true,
+          });
+        }
+        verifyJwt.mockResolvedValueOnce({
+          signerJwk: mockJwk,
+          verified: false,
+        });
+        const options = createPreAuthorizedOptions({
+          callbacks: { ...mockCallbacks, verifyJwt },
+        });
+
+        await expect(verifyAccessTokenRequest(options)).rejects.toThrow();
+        expect(verifyJwt).toHaveBeenCalledTimes(
+          validSignaturesBeforeFailure + 1,
+        );
+      },
+    );
+  });
 
   describe("Successful verification", () => {
     it("should verify authorization code token request with all valid inputs", async () => {
