@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ValidationError } from "./errors/errors";
+import { JsonParseError, ValidationError } from "./errors/errors";
 
 export type BaseSchema = z.ZodTypeAny;
 
@@ -23,14 +23,39 @@ function safeStringify(value: unknown): string {
 }
 
 /**
- * Parses data with a Zod schema and throws the SDK `ValidationError` on failure.
+ * Parses a JSON string and throws the SDK `JsonParseError` on failure.
  *
- * @param schema - Zod schema used for validation.
- * @param data - Unknown value to parse.
- * @param customErrorMessage - Optional error message used when validation fails.
- * @returns Parsed schema output.
- * @throws {ValidationError} If the value does not satisfy the provided schema.
+ * @param value - JSON string to parse.
+ * @param errorMessage - Optional error message used when parsing fails.
+ * @returns Parsed JSON object.
+ * @throws {JsonParseError} If the value is not valid JSON.
  */
+export function stringToJsonWithErrorHandling(
+  value: string,
+  errorMessage?: string,
+): Record<string, unknown> {
+  try {
+    return JSON.parse(value) as Record<string, unknown>;
+  } catch {
+    throw new JsonParseError(
+      errorMessage ?? "Unable to parse string to JSON.",
+      value,
+    );
+  }
+}
+
+export function parseIfJson<T>(data: T): Record<string, unknown> | T {
+  if (typeof data !== "string") {
+    return data;
+  }
+
+  try {
+    return JSON.parse(data) as Record<string, unknown>;
+  } catch {
+    return data;
+  }
+}
+
 export function parseWithErrorHandling<Schema extends BaseSchema>(
   schema: Schema,
   data: unknown,

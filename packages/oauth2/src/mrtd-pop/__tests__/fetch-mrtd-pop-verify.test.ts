@@ -11,8 +11,9 @@ import { fetchMrtdPopVerify } from "../fetch-mrtd-pop-verify";
 
 const mockFetch = vi.fn();
 
-vi.mock("@openid4vc/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/utils")>();
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@pagopa/io-wallet-utils")>();
   return {
     ...actual,
     createFetcher: () => mockFetch,

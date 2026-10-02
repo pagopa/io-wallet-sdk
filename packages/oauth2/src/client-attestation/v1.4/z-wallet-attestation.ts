@@ -1,8 +1,11 @@
+import {
+  zCertificateChain,
+  zJwk,
+  zJwtHeader,
+  zJwtPayload,
+  zTrustChain,
+} from "@pagopa/io-wallet-utils";
 import { z } from "zod";
-
-import { zJwk } from "../../common/jwk/z-jwk";
-import { zJwtHeader, zJwtPayload } from "../../common/jwt/z-jwt";
-import { zCertificateChain, zTrustChain } from "../../common/z-common";
 
 export const zWalletAttestationJwtHeaderV1_4 = z.looseObject({
   ...zJwtHeader.shape,

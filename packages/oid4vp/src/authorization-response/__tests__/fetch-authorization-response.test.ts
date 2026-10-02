@@ -9,8 +9,9 @@ const MOCK_REDIRECT_URI = "https://redirect-uri.org";
 const MOCK_RESPONSE_URI = "https://response-uri.org";
 const MOCK_JARM = "MOCK_JARM";
 
-vi.mock("@openid4vc/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@openid4vc/utils")>();
+vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@pagopa/io-wallet-utils")>();
   return {
     ...actual,
     createFetcher: () => mockFetch,

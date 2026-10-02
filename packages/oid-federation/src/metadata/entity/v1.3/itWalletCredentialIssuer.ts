@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../../jwk/jwk";
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 /**
  * Image metadata with integrity hash support
@@ -185,7 +185,7 @@ export const itWalletCredentialIssuerMetadata = z.looseObject({
   credential_issuer: z.url(),
   deferred_credential_endpoint: z.url().optional(),
   display: z.array(CredentialDisplayMetadata).optional(),
-  jwks: jsonWebKeySetSchema,
+  jwks: zFederationJwkSet,
   nonce_endpoint: z.url().optional(),
   notification_endpoint: z.url().optional(),
   status_list_aggregation_endpoint: z.url().optional(),

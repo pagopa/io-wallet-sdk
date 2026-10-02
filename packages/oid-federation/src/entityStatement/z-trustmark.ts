@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../jwk/jwk";
+import { zFederationJwkSet } from "../jwk/z-federation-jwk";
 
 /**
  * @example https://<federation_authority_domain>/trust_marks/<purpose>/<entity_type>
@@ -23,7 +23,7 @@ export type TrustMarkIssuer = z.input<typeof trustMarkIssuerSchema>;
 export const trustMarkOwnerSchema = z.record(
   z.string(),
   z.object({
-    jwks: jsonWebKeySetSchema,
+    jwks: zFederationJwkSet,
     sub: z.string(),
   }),
 );

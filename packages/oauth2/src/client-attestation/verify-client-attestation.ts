@@ -1,11 +1,11 @@
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
 import {
-  CallbackContext,
+  type CallbackContext,
   HashAlgorithm,
+  IoWalletSdkConfig,
   calculateJwkThumbprint,
-} from "@openid4vc/oauth2";
-import { IoWalletSdkConfig } from "@pagopa/io-wallet-utils";
+} from "@pagopa/io-wallet-utils";
+
+import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 
 import { Oauth2Error } from "../errors";
 import { verifyClientAttestationPopJwt } from "./client-attestation-pop";
@@ -40,7 +40,7 @@ export interface VerifyClientAttestationOptions {
   /**
    * The authorization server metadata.
    */
-  authorizationServerMetadata: ItWalletAuthorizationServerMetadata;
+  authorizationServerMetadata: BaseAuthorizationServerMetadata;
 
   /**
    * Callbacks for hashing and JWT verification.

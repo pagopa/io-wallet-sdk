@@ -1,4 +1,4 @@
-import type { JwkSet } from "@pagopa/io-wallet-oauth2";
+import type { JwkSet } from "@pagopa/io-wallet-utils";
 
 /**
  * Selects an encryption JWK from a JWKS.
