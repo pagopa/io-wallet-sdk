@@ -1,6 +1,13 @@
-import { CallbackContext } from "@openid4vc/oauth2";
-
-import { AuthorizationCodeGrantType } from "./z-token";
+import {
+  AuthorizationCodeGrantIdentifier,
+  PreAuthorizedCodeGrantIdentifier,
+  authorizationCodeGrantIdentifier,
+  preAuthorizedCodeGrantIdentifier,
+} from "./z-grant-type";
+import {
+  AuthorizationCodeGrantType,
+  PreAuthorizedCodeGrantType,
+} from "./z-token";
 
 export interface RetrieveAuthorizationCodeAccessTokenOptions {
   /**
@@ -14,13 +21,8 @@ export interface RetrieveAuthorizationCodeAccessTokenOptions {
    */
   authorizationCode: string;
 
-  /**
-   * Callbacks to use for requesting access token
-   */
-  callbacks: Pick<
-    CallbackContext,
-    "clientAuthentication" | "fetch" | "generateRandom" | "hash" | "signJwt"
-  >;
+  /** The authorization_code grant type. */
+  grantType?: AuthorizationCodeGrantIdentifier;
 
   /**
    * PKCE Code verifier that was used in the authorization request.
@@ -34,23 +36,52 @@ export interface RetrieveAuthorizationCodeAccessTokenOptions {
   redirectUri: string;
 }
 
+export interface RetrievePreAuthorizedCodeAccessTokenOptions {
+  /** Additional form fields, such as client_id or authorization_details. */
+  additionalRequestPayload?: Record<string, unknown>;
+
+  /** The pre_authorized_code grant type. */
+  grantType: PreAuthorizedCodeGrantIdentifier;
+
+  /** The pre-authorized code received in the credential offer. */
+  preAuthorizedCode: string;
+
+  /** Required when the credential offer contains a tx_code object. */
+  txCode?: string;
+}
+
+export type CreateTokenRequestOptions =
+  | RetrieveAuthorizationCodeAccessTokenOptions
+  | RetrievePreAuthorizedCodeAccessTokenOptions;
+
 /**
- * Creates an OAuth 2.0 authorization-code access token request body.
+ * Creates an authorization-code or pre-authorized-code access token request body.
+ *
+ * Authorization-code requests retain the existing default grant and require PKCE
+ * and a redirect URI. Pre-authorized requests use preAuthorizedCode and optional
+ * txCode, without PKCE or a redirect URI.
  *
  * @param options - Access token request inputs.
  * @param options.additionalRequestPayload - Extra form fields to include in the token request.
- * @param options.authorizationCode - Authorization code received from the authorization response.
- * @param options.pkceCodeVerifier - PKCE verifier associated with the authorization request.
- * @param options.redirectUri - Redirect URI used in the authorization request.
- * @returns URL-form-encodable authorization-code grant request data.
+ * @returns URL-form-encodable grant request data.
  */
-export const createTokenRequest = async (
-  options: RetrieveAuthorizationCodeAccessTokenOptions,
-) =>
-  ({
+export async function createTokenRequest(
+  options: CreateTokenRequestOptions,
+): Promise<AuthorizationCodeGrantType | PreAuthorizedCodeGrantType> {
+  if (options.grantType === preAuthorizedCodeGrantIdentifier) {
+    return {
+      ...options.additionalRequestPayload,
+      grant_type: preAuthorizedCodeGrantIdentifier,
+      "pre-authorized_code": options.preAuthorizedCode,
+      tx_code: options.txCode,
+    };
+  }
+
+  return {
     ...options.additionalRequestPayload,
     code: options.authorizationCode,
     code_verifier: options.pkceCodeVerifier,
-    grant_type: "authorization_code",
+    grant_type: authorizationCodeGrantIdentifier,
     redirect_uri: options.redirectUri,
-  }) satisfies AuthorizationCodeGrantType;
+  };
+}

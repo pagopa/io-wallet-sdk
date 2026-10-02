@@ -24,7 +24,7 @@ export interface FetchTokenResponseOptions {
   accessTokenEndpoint: string;
 
   /**
-   * The access token request payload
+   * The authorization-code, pre-authorized-code or refresh-token request payload.
    */
   accessTokenRequest: AccessTokenRequest;
 

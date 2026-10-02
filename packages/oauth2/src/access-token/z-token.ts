@@ -1,18 +1,28 @@
 import { z } from "zod";
 
 import { MAX_JTI_LENGTH, zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
+import {
+  zAuthorizationCodeGrantIdentifier,
+  zPreAuthorizedCodeGrantIdentifier,
+  zRefreshTokenGrantIdentifier,
+} from "./z-grant-type";
 
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
   z.object({
     code: z.string().nonempty(),
     code_verifier: z.string().nonempty(),
-    grant_type: z.literal("authorization_code"),
+    grant_type: zAuthorizationCodeGrantIdentifier,
     redirect_uri: z.string().nonempty(),
   }),
   z.object({
-    grant_type: z.literal("refresh_token"),
+    grant_type: zRefreshTokenGrantIdentifier,
     refresh_token: z.string().nonempty(),
     scope: z.string().optional(),
+  }),
+  z.object({
+    grant_type: zPreAuthorizedCodeGrantIdentifier,
+    "pre-authorized_code": z.string().nonempty(),
+    tx_code: z.string().optional(),
   }),
 ]);
 
@@ -21,6 +31,11 @@ export type AccessTokenRequest = z.infer<typeof zAccessTokenRequest>;
 export type AuthorizationCodeGrantType = Extract<
   AccessTokenRequest,
   { grant_type: "authorization_code" }
+>;
+
+export type PreAuthorizedCodeGrantType = Extract<
+  AccessTokenRequest,
+  { grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code" }
 >;
 
 export type RefreshTokenGrantType = Extract<
