@@ -21,13 +21,6 @@ export class Oauth2Error extends Error {
   }
 }
 
-export class Oauth2JwtParseError extends Oauth2Error {
-  constructor(message?: string) {
-    super(message ?? "Error parsing jwt");
-    this.name = "Oauth2JwtParseError";
-  }
-}
-
 /**
  * Custom error thrown when pushed authorization request operations fail
  */

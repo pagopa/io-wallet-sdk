@@ -295,6 +295,34 @@ describe("createOpenid4vpAuthorizationResponse - client JWKS resolution", () => 
       ),
     ).rejects.toThrow("Invalid 'enc' value A128CBC-HS256");
   });
+
+  it.each([
+    ["authorization_encrypted_response_alg", "RSA-OAEP-256"],
+    ["authorization_encrypted_response_enc", "A128CBC-HS256"],
+    ["authorization_signed_response_alg", "PS256"],
+  ])(
+    "throws when the client declares an unsupported %s",
+    async (field, value) => {
+      await expect(
+        createOpenid4vpAuthorizationResponse(
+          createOptions({
+            authorizationRequestPayload: createRequest(
+              "x509_hash:certificate-hash",
+              { ...REQUEST_CLIENT_METADATA, [field]: value },
+            ),
+            jarm: {
+              encryption: { nonce: "wallet-nonce" },
+              serverMetadata: {
+                ...SERVER_METADATA,
+                authorization_signed_response_alg_values_supported: ["ES256"],
+              },
+            },
+          }),
+        ),
+      ).rejects.toThrow(`Invalid ${field} ${value}`);
+      expect(encryptJwe).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("createOpenid4vpAuthorizationResponse - signed responses", () => {

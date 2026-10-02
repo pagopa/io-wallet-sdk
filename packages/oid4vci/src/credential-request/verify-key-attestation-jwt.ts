@@ -86,7 +86,6 @@ export async function verifyKeyAttestationJwt(
       payloadSchema: zKeyAttestationPayload,
     });
 
-    // Upstream verifyJwt/jwtSignerFromJwt still match IT-Wallet signature checks.
     const { signer } = await verifyJwt({
       compact: options.keyAttestationJwt,
       errorMessage: "Key attestation JWT verification failed.",

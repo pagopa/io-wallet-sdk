@@ -67,6 +67,11 @@ export interface CreateOpenid4vpAuthorizationResponseOptions {
     state?: never;
   } & Openid4vpAuthorizationResponsePayload;
   callbacks: Pick<CallbackContext, "encryptJwe" | "fetch" | "signJwt">;
+  /**
+   * Verifier metadata resolved and verified outside the request. Required when the
+   * client_id refers to an OpenID Federation entity, whose metadata must come from
+   * the Trust Chain rather than the request's `client_metadata`.
+   */
   clientMetadata?: JarmClientMetadata;
   jarm?: {
     audience?: string;
@@ -75,6 +80,10 @@ export interface CreateOpenid4vpAuthorizationResponseOptions {
       jwk?: Jwk;
       nonce: string;
     };
+    /**
+     * Lifetime of the signed JARM response, in seconds from now; `exp` is set to
+     * now + this value. Defaults to 600 seconds.
+     */
     expiresInSeconds?: number;
     jwtSigner?: JwtSigner;
     serverMetadata: JarmServerMetadata;
@@ -85,6 +94,10 @@ export interface CreateOpenid4vpAuthorizationResponseOptions {
 export interface CreateOpenid4vpAuthorizationResponseResult {
   authorizationResponsePayload: Openid4vpAuthorizationResponsePayload;
   jarm?: {
+    /**
+     * The JWK returned by the `encryptJwe` callback. Only defined when the
+     * response is encrypted.
+     */
     encryptionJwk?: Jwk;
     responseJwt: string;
   };
@@ -110,6 +123,45 @@ function assertValueSupported(options: {
     throw new Oauth2Error(errorMessage);
   }
   return found;
+}
+
+function assertClientJarmMetadataSupported(
+  clientMetadata: JarmClientMetadata,
+  serverMetadata: JarmServerMetadata,
+) {
+  const {
+    authorization_encrypted_response_alg: encryptedAlg,
+    authorization_encrypted_response_enc: encryptedEnc,
+    authorization_signed_response_alg: signedAlg,
+  } = clientMetadata;
+
+  if (encryptedAlg) {
+    assertValueSupported({
+      actual: encryptedAlg,
+      errorMessage: `Invalid authorization_encrypted_response_alg ${encryptedAlg}`,
+      supported: serverMetadata.authorization_encryption_alg_values_supported,
+    });
+  }
+
+  if (encryptedEnc) {
+    assertValueSupported({
+      actual: encryptedEnc,
+      errorMessage: `Invalid authorization_encrypted_response_enc ${encryptedEnc}`,
+      supported: serverMetadata.authorization_encryption_enc_values_supported,
+    });
+  }
+
+  if (
+    signedAlg &&
+    serverMetadata.authorization_signed_response_alg_values_supported
+  ) {
+    assertValueSupported({
+      actual: signedAlg,
+      errorMessage: `Invalid authorization_signed_response_alg ${signedAlg}`,
+      supported:
+        serverMetadata.authorization_signed_response_alg_values_supported,
+    });
+  }
 }
 
 async function fetchJwks(
@@ -255,6 +307,8 @@ export async function createOpenid4vpAuthorizationResponse(
       "Missing 'jwks' or 'jwks_uri' in client metadata. Cannot extract encryption JWK.",
     );
   }
+
+  assertClientJarmMetadataSupported(clientMetadata, jarm.serverMetadata);
 
   const encryptionJwk =
     jarm.encryption?.jwk ??

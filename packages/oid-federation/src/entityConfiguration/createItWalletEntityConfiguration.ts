@@ -1,17 +1,4 @@
 import { type Jwk, parseWithErrorHandling } from "@pagopa/io-wallet-utils";
-
-/**
- * Low-level signing callback used by entity configuration JWT creation.
- *
- * Unlike {@link SignJwtCallback} (which operates on structured JWT header/payload),
- * this callback receives the raw bytes to sign and returns the raw signature bytes,
- * keeping the oid-federation package independent of any higher-level JWT abstraction.
- */
-export type SignCallback = (options: {
-  jwk: Jwk;
-  toBeSigned: Uint8Array;
-}) => Promise<Uint8Array>;
-
 import { Buffer } from "buffer";
 
 import { getUsedJsonWebKey } from "../jsonWeb/getUsedJsonWebKey";
@@ -24,6 +11,18 @@ import {
   EntityConfigurationHeaderOptions,
   entityConfigurationHeaderSchema,
 } from "./z-entity-configuration-header";
+
+/**
+ * Low-level signing callback used by entity configuration JWT creation.
+ *
+ * Unlike {@link SignJwtCallback} (which operates on structured JWT header/payload),
+ * this callback receives the raw bytes to sign and returns the raw signature bytes,
+ * keeping the oid-federation package independent of any higher-level JWT abstraction.
+ */
+export type SignCallback = (options: {
+  jwk: Jwk;
+  toBeSigned: Uint8Array;
+}) => Promise<Uint8Array>;
 
 export interface CreateEntityConfigurationOptions {
   claims: ItWalletEntityConfigurationClaimsOptions;

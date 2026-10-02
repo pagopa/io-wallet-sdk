@@ -53,7 +53,7 @@ export type VerifyWalletAttestationJwtOptions =
  * @param options - Version-specific wallet attestation verification options.
  * @returns Decoded and verified wallet attestation data for the configured version.
  * @throws {ValidationError} If JWT header or payload validation fails.
- * @throws {Oauth2JwtParseError} If the attestation JWT cannot be decoded.
+ * @throws {JwtParseError} If the attestation JWT cannot be decoded.
  * @throws {Oauth2JwtVerificationError} If signature verification fails.
  * @throws {ItWalletSpecsVersionError} If the configured version is unsupported.
  */

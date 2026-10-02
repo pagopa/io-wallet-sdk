@@ -136,6 +136,15 @@ export function jwtHeaderFromJwtSigner(signer: JwtSigner) {
   return { alg: signer.alg };
 }
 
+/**
+ * Derives the SDK signer descriptor from a decoded JWT header and payload.
+ *
+ * @param options.allowedSignerMethods - Signer methods accepted by the caller; all are allowed when omitted.
+ * @param options.header - Decoded JWT header.
+ * @param options.payload - Decoded JWT payload.
+ * @returns The first valid, allowed signer found in the JWT.
+ * @throws {JwtParseError} If no allowed signer can be extracted from the JWT.
+ */
 // eslint-disable-next-line complexity
 export function jwtSignerFromJwt(options: {
   allowedSignerMethods?: JwtSigner["method"][];
@@ -255,7 +264,7 @@ export function jwtSignerFromJwt(options: {
   }
 
   if (allowedFoundMethods.length > 0) {
-    throw new Error(
+    throw new JwtParseError(
       `Unable to extract signer method from jwt. Found ${allowedFoundMethods.length} allowed signer method(s) but contained invalid configuration:\n${allowedFoundMethods
         .map((candidate) =>
           candidate.valid
@@ -267,7 +276,7 @@ export function jwtSignerFromJwt(options: {
   }
 
   if (found.length > 0) {
-    throw new Error(
+    throw new JwtParseError(
       `Unable to extract signer method from jwt. Found ${found.length} signer method(s) that are not allowed:\n${found
         .map((candidate) =>
           candidate.valid
@@ -286,7 +295,7 @@ export function jwtSignerFromJwt(options: {
     };
   }
 
-  throw new Error(
+  throw new JwtParseError(
     "Unable to extract signer method from jwt. Found no signer methods and 'custom' signer method is not allowed.",
   );
 }

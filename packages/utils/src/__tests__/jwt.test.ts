@@ -91,6 +91,27 @@ describe("jwt utilities", () => {
   });
 
   it.each([
+    [
+      "an invalid signer configuration",
+      { alg: "ES256", trust_chain: ["trust-chain-jwt"] as [string] },
+      undefined,
+    ],
+    ["a signer method that is not allowed", header, ["x5c" as const]],
+    ["no signer and custom not allowed", { alg: "ES256" }, ["jwk" as const]],
+  ])(
+    "throws JwtParseError when extracting a signer from %s",
+    (_, jwtHeader, allowedSignerMethods) => {
+      expect(() =>
+        jwtSignerFromJwt({
+          allowedSignerMethods,
+          header: jwtHeader,
+          payload: {},
+        }),
+      ).toThrow(JwtParseError);
+    },
+  );
+
+  it.each([
     ["expired", { exp: 1 }, {}],
     ["future nbf", { nbf: 2524608000 }, {}],
     ["wrong aud", { aud: "other" }, { expectedAudience: "audience" }],
