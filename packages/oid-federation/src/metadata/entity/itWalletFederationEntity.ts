@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../jwk/jwk";
+import { zFederationJwkSet } from "../../jwk/z-federation-jwk";
 import { createEntity } from "../../utils/create-entity";
 
 export const federationEntityMetadata = createEntity({
@@ -27,7 +27,7 @@ export type FederationEntityMetadata = z.input<
  */
 export const itWalletFederationEntityMetadata = federationEntityMetadata.schema
   .extend({
-    jwks: jsonWebKeySetSchema.optional(),
+    jwks: zFederationJwkSet.optional(),
     tos_uri: z.url().optional(),
   })
   .loose();

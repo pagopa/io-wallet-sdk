@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../../jwk/jwk";
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 /**
  *
@@ -27,7 +27,7 @@ export const itWalletAuthorizationServerMetadata = z.looseObject({
         "The grant_types_supported array MUST include 'authorization_code'.",
     }),
   issuer: z.url(),
-  jwks: jsonWebKeySetSchema,
+  jwks: zFederationJwkSet,
   pushed_authorization_request_endpoint: z.url(),
   request_object_signing_alg_values_supported: z.array(z.string()),
   require_signed_request_object: z.boolean().optional(),

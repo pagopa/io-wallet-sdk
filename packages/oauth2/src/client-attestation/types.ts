@@ -1,7 +1,4 @@
-import {
-  CallbackContext,
-  ClientAttestationJwtPayload,
-} from "@openid4vc/oauth2";
+import { type CallbackContext, JwtPayload } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 export interface BaseVerifyWalletAttestationJwtOptions {
@@ -15,7 +12,7 @@ export interface BaseVerifyWalletAttestationJwtOptions {
  */
 export interface BaseWalletAttestationOptions {
   callbacks: Pick<CallbackContext, "hash" | "signJwt">;
-  dpopJwkPublic: ClientAttestationJwtPayload["cnf"]["jwk"];
+  dpopJwkPublic: NonNullable<NonNullable<JwtPayload["cnf"]>["jwk"]>;
   expiresAt?: Date;
   issuer: string;
   walletLink?: string;

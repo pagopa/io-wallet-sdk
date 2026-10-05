@@ -1,10 +1,10 @@
 import {
   CallbackContext,
   HashAlgorithm,
+  Jwk,
   calculateJwkThumbprint,
-} from "@openid4vc/oauth2";
+} from "@pagopa/io-wallet-utils";
 
-import { Jwk } from "../common/jwk/z-jwk";
 import { ClientAttestationError } from "../errors";
 
 const SUPPORTED_KTY = ["RSA", "EC"] as const;

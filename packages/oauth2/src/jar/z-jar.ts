@@ -1,6 +1,5 @@
+import { zJwtHeader, zJwtPayload } from "@pagopa/io-wallet-utils";
 import z from "zod";
-
-import { zJwtHeader, zJwtPayload } from "../common/jwt/z-jwt";
 
 export const zJarAuthorizationRequest = z.looseObject({
   client_id: z.optional(z.string()),

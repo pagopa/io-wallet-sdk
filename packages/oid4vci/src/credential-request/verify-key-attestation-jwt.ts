@@ -1,11 +1,11 @@
 import {
-  CallbackContext,
-  Oauth2JwtParseError,
+  type CallbackContext,
+  JwtParseError,
+  ValidationError,
+  decodeJwt,
   jwtSignerFromJwt,
   verifyJwt,
-} from "@openid4vc/oauth2";
-import { decodeJwt } from "@pagopa/io-wallet-oauth2";
-import { ValidationError } from "@pagopa/io-wallet-utils";
+} from "@pagopa/io-wallet-utils";
 
 import { VerifyKeyAttestationJwtError } from "../errors";
 import {
@@ -72,7 +72,7 @@ export interface VerifyKeyAttestationJwtResult {
  *
  * @param options - Verification options and callbacks.
  * @returns Decoded header, payload, and signer.
- * @throws {Oauth2JwtParseError} If JWT decoding fails.
+ * @throws {JwtParseError} If JWT decoding fails.
  * @throws {ValidationError} If schema validation fails.
  */
 export async function verifyKeyAttestationJwt(
@@ -86,7 +86,6 @@ export async function verifyKeyAttestationJwt(
       payloadSchema: zKeyAttestationPayload,
     });
 
-    // Upstream verifyJwt/jwtSignerFromJwt still match IT-Wallet signature checks.
     const { signer } = await verifyJwt({
       compact: options.keyAttestationJwt,
       errorMessage: "Key attestation JWT verification failed.",
@@ -116,7 +115,7 @@ export async function verifyKeyAttestationJwt(
     if (
       error instanceof VerifyKeyAttestationJwtError ||
       error instanceof ValidationError ||
-      error instanceof Oauth2JwtParseError
+      error instanceof JwtParseError
     ) {
       throw error;
     }

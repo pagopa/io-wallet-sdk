@@ -1,9 +1,9 @@
 import {
-  CallbackContext,
+  type CallbackContext,
   Fetch,
   HashAlgorithm,
-  HashCallback,
-  JwtSignerJwk,
+  type HashCallback,
+  type JwtSignerJwk,
   UnexpectedStatusCodeError,
   calculateJwkThumbprint,
   createFetcher,
@@ -15,7 +15,7 @@ import z from "zod";
 import { entityConfigurationHeaderSchema } from "../entityConfiguration/z-entity-configuration-header";
 import { itWalletEntityStatementClaimsSchema } from "../entityStatement/itWalletEntityStatementClaims";
 import { TrustChainEvaluationError } from "../errors";
-import { jsonWebKeySchema } from "../jwk/jwk";
+import { type FederationJwk } from "../jwk/z-federation-jwk";
 
 interface ChainEntry {
   compact: string;
@@ -69,8 +69,8 @@ interface VerifyCallbacks {
 async function verifyJwtWithKeySet(
   jwt: Parameters<VerifyJwtCallback>[1],
   kid: string,
-  keys: z.output<typeof jsonWebKeySchema>[],
-  ecKeys: undefined | z.output<typeof jsonWebKeySchema>[],
+  keys: FederationJwk[],
+  ecKeys: FederationJwk[] | undefined,
   callbacks: VerifyCallbacks,
 ): Promise<Awaited<ReturnType<VerifyJwtWithJwkCallback>>> {
   const key = keys.find((k) => k.kid === kid);

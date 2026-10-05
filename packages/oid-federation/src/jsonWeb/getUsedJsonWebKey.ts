@@ -1,7 +1,7 @@
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { jsonWebKeySetSchema } from "../jwk/jwk";
+import { zFederationJwkSet } from "../jwk/z-federation-jwk";
 
 export const getUsedJsonWebKey = (
   header: Record<string, unknown>,
@@ -17,7 +17,7 @@ export const getUsedJsonWebKey = (
 
   const validatedClaims = parseWithErrorHandling(
     z.looseObject({
-      jwks: jsonWebKeySetSchema,
+      jwks: zFederationJwkSet,
     }),
     claims,
     "Invalid payload claims. Should contain a json web key set",
