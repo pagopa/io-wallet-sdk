@@ -380,17 +380,21 @@ function parseAuthorizationRequestByVersion(
     Pick<AuthorizationRequest, "authorization_details" | "scope">,
 ): AuthorizationRequest {
   return dispatchByVersion(options.config.itWalletSpecsVersion, {
+    [ItWalletSpecsVersion.APTITUDE]: () =>
+      zAuthorizationRequestV1_3.parse(
+        baseAuthorizationRequest,
+      ) satisfies AuthorizationRequestV1_3,
     [ItWalletSpecsVersion.V1_0]: () =>
       zAuthorizationRequestV1_0.parse({
         ...baseAuthorizationRequest,
         response_mode: (options as CreatePushedAuthorizationRequestOptionsV1_0)
           .responseMode,
       }) satisfies AuthorizationRequestV1_0,
+    // V1_4 reuses V1_3 authorization request schema — no breaking changes between versions.
     [ItWalletSpecsVersion.V1_3]: () =>
       zAuthorizationRequestV1_3.parse(
         baseAuthorizationRequest,
       ) satisfies AuthorizationRequestV1_3,
-    // V1_4 reuses V1_3 authorization request schema — no breaking changes between versions.
     // Verified against compare/1.3.3...1.4.1: authorization request parameters identical.
     [ItWalletSpecsVersion.V1_4]: () =>
       zAuthorizationRequestV1_3.parse(

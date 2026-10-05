@@ -36,6 +36,10 @@ const dispatchBuildVersionedResponse = createVersionDispatcher<
   CreateCredentialResponseOptions,
   CredentialResponse
 >({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    V1_3.createCredentialResponseV1_3(
+      (o as CreateCredentialResponseOptionsV1_3).flow,
+    ),
   [ItWalletSpecsVersion.V1_0]: (o) =>
     V1_0.createCredentialResponseV1_0(
       (o as CreateCredentialResponseOptionsV1_0).flow,

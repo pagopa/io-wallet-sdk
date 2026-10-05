@@ -265,6 +265,18 @@ export class WalletProvider {
     options: WalletAttestationOptions,
   ): Promise<string> {
     return dispatchByVersion(this.specVersion, {
+      [ItWalletSpecsVersion.APTITUDE]: () => {
+        assertV1_4Options(options);
+        return createWalletAttestationJwtV1_4({
+          callbacks: options.callbacks,
+          dpopJwkPublic: options.dpopJwkPublic,
+          expiresAt: options.expiresAt,
+          issuer: options.issuer,
+          signer: options.signer,
+          walletLink: options.walletLink,
+          walletName: options.walletName,
+        });
+      },
       [ItWalletSpecsVersion.V1_0]: () => {
         assertV1_0Options(options);
         return createWalletAttestationJwtV1_0({

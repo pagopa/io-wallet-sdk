@@ -336,6 +336,7 @@ async function toResult<
   grantType: GrantType;
   isDeferredFlow: boolean;
   itWalletSpecsVersion:
+    | ItWalletSpecsVersion.APTITUDE
     | ItWalletSpecsVersion.V1_0
     | ItWalletSpecsVersion.V1_3
     | ItWalletSpecsVersion.V1_4;
@@ -482,10 +483,31 @@ function parseCredentialRequestV1_4(
   });
 }
 
+function parseCredentialRequestAPTITUDE(
+  options: ParseCredentialRequestHandlerOptions,
+): Promise<ParsedCredentialRequest> {
+  const credentialRequest = parseWithErrorHandling(
+    zCredentialRequestV1_3,
+    options.credentialRequest,
+    "Invalid credential request format for ItWalletSpecsVersion APTITUDE",
+  );
+  return toResult({
+    accessToken: options.accessToken,
+    callbacks: options.callbacks,
+    credentialRequest,
+    dpopProof: options.dpopProof,
+    expected: options.expected,
+    grantType: options.grantType,
+    isDeferredFlow: options.isDeferredFlow,
+    itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
+  });
+}
+
 const dispatchParseCredentialRequest = createVersionDispatcher<
   ParseCredentialRequestHandlerOptions,
   Promise<ParsedCredentialRequest>
 >({
+  [ItWalletSpecsVersion.APTITUDE]: parseCredentialRequestAPTITUDE,
   [ItWalletSpecsVersion.V1_0]: parseCredentialRequestV1_0,
   [ItWalletSpecsVersion.V1_3]: parseCredentialRequestV1_3,
   [ItWalletSpecsVersion.V1_4]: parseCredentialRequestV1_4,
