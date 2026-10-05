@@ -9,7 +9,10 @@ import type {
   CredentialOfferV1_4,
 } from "./z-credential-offer";
 
-import { CREDENTIAL_OFFER_GRANTS } from "./v1.4/z-credential-offer";
+import {
+  CREDENTIAL_OFFER_GRANTS,
+  CredentialOfferAPTITUDE,
+} from "./APTITUDE/z-credential-offer";
 
 /**
  * Options for parsing a credential offer URI.
@@ -107,6 +110,13 @@ export interface ResolveCredentialOfferOptionsV1_4 extends ResolveCredentialOffe
 }
 
 /**
+ * Options for resolving a credential offer against the APTITUDE schema.
+ */
+export interface ResolveCredentialOfferOptionsAPTITUDE extends ResolveCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+}
+
+/**
  * Base options shared across all validate-credential-offer versions.
  */
 interface BaseValidateCredentialOfferOptions {
@@ -139,7 +149,10 @@ export interface ValidateCredentialOfferOptions extends BaseValidateCredentialOf
   /**
    * The credential offer to validate against the configured IT-Wallet specification.
    */
-  credentialOffer: CredentialOfferV1_3 | CredentialOfferV1_4;
+  credentialOffer:
+    | CredentialOfferAPTITUDE
+    | CredentialOfferV1_3
+    | CredentialOfferV1_4;
 }
 
 /**
@@ -162,9 +175,20 @@ export interface ValidateCredentialOfferOptionsV1_4 extends ValidateCredentialOf
    * The credential offer to validate against IT-Wallet v1.4 specifications.
    */
   credentialOffer: CredentialOfferV1_4;
+}
+
+/**
+ * Options for validating an APTITUDE credential offer.
+ */
+export interface ValidateCredentialOfferOptionsAPTITUDE extends ValidateCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+  /**
+   * The credential offer to validate against APTITUDE specifications.
+   */
+  credentialOffer: CredentialOfferAPTITUDE;
 
   /**
-   * The grant type to validate against IT-Wallet v1.4 specifications.
+   * The grant type to validate against APTITUDE specifications.
    * OPTIONAL, default is "authorization_code".
    */
   grantType?: CREDENTIAL_OFFER_GRANTS;
@@ -178,7 +202,10 @@ export interface ExtractGrantDetailsOptions {
   /**
    * The credential offer to extract grant details from.
    */
-  credentialOffer: CredentialOfferV1_3 | CredentialOfferV1_4;
+  credentialOffer:
+    | CredentialOfferAPTITUDE
+    | CredentialOfferV1_3
+    | CredentialOfferV1_4;
 }
 
 /**
@@ -201,6 +228,18 @@ export interface ExtractGrantDetailsOptionsV1_4 extends ExtractGrantDetailsOptio
    * The credential offer to extract grant details from.
    */
   credentialOffer: CredentialOfferV1_4;
+}
+
+/**
+ * Options for extracting grant details from an  Aptitude credential offer.
+ */
+export interface ExtractGrantDetailsOptionsAPTITUDE extends ExtractGrantDetailsOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+  /**
+   * The credential offer to extract grant details from.
+   */
+  // todo: change to sptitude interface
+  credentialOffer: CredentialOfferAPTITUDE;
 }
 
 /**
@@ -240,15 +279,51 @@ export interface ExtractGrantDetailsResultV1_3 {
 /**
  * Result of extracting grant details from an IT-Wallet v1.4 credential offer.
  *
+ * Difference from v1.3: the credential offer no longer carries a `scope`;
+ * the wallet derives it from the credential configuration metadata instead.
+ */
+export interface ExtractGrantDetailsResultV1_4 {
+  /**
+   * Details of the authorization code grant.
+   */
+  authorizationCodeGrant: {
+    /**
+     * HTTPS URL of the Authorization Server.
+     * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
+     */
+    authorizationServer?: string;
+
+    /**
+     * String value representing the issuer state.
+     * OPTIONAL. Used to correlate the authorization request with the credential offer.
+     */
+    issuerState?: string;
+
+    /**
+     * Version 1.4 has dropped support for the scope field,
+     * But typescript inference might have trouble recognizing this fact
+     * in its union type, so this is needed
+     */
+    scope?: never;
+  };
+
+  /**
+   * The type of grant present in the credential offer.
+   * IT-Wallet only supports "authorization_code".
+   */
+  grantType: "authorization_code";
+}
+
+/**
+ * Result of extracting grant details from an APTITUDE credential offer.
+ *
  * It is an array of discriminated union objects: each element represents a single grant
  * and is discriminated by `grantType` (either `authorization_code` or `urn:ietf:params:oauth:grant-type:pre-authorized_code`).
  *
- * Difference from v1.3:
- * - Returns an array, since v1.4 credential offers may contain multiple grants.
- * - The credential offer no longer carries a `scope`; the wallet derives it from
- *   the credential configuration metadata instead.
+ * Difference from v1.4:
+ * - Returns an array, since APTITUDE credential offers may contain multiple grants.
  */
-export type ExtractGrantDetailsResultV1_4 = (
+export type ExtractGrantDetailsResultAPTITUDE = (
   | {
       /**
        * Details of the authorization code grant.
@@ -334,5 +409,6 @@ export type ExtractGrantDetailsResultV1_4 = (
  * Result of extracting grant details from a credential offer.
  */
 export type ExtractGrantDetailsResult =
+  | ExtractGrantDetailsResultAPTITUDE
   | ExtractGrantDetailsResultV1_3
   | ExtractGrantDetailsResultV1_4;

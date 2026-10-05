@@ -6,13 +6,14 @@ import {
 
 import type {
   ValidateCredentialOfferOptions,
+  ValidateCredentialOfferOptionsAPTITUDE,
   ValidateCredentialOfferOptionsV1_3,
   ValidateCredentialOfferOptionsV1_4,
 } from "./types";
 import type { CredentialOffer } from "./z-credential-offer";
 
 import { CredentialOfferError } from "../errors";
-import { CREDENTIAL_OFFER_GRANTS } from "./v1.4/z-credential-offer";
+import { CREDENTIAL_OFFER_GRANTS } from "./APTITUDE/z-credential-offer";
 
 /**
  * Ensures an authorization server selected from a credential offer is one of the
@@ -123,6 +124,30 @@ async function validateCredentialOfferV1_4(
 ): Promise<void> {
   const versionLabel = "v1.4";
 
+  const { credentialIssuerMetadata, credentialOffer } = options;
+
+  validateBaseCredentialOffer({ credentialOffer, versionLabel });
+
+  const authCodeGrant = credentialOffer.grants.authorization_code;
+
+  // authorization_code grant is REQUIRED
+  if (!authCodeGrant) {
+    throw new CredentialOfferError(
+      `authorization_code grant is REQUIRED for IT-Wallet ${versionLabel}`,
+    );
+  }
+
+  assertAuthorizationServerAllowed(
+    authCodeGrant.authorization_server,
+    credentialIssuerMetadata?.authorization_servers,
+  );
+}
+
+async function validateCredentialOfferAPTITUDE(
+  options: ValidateCredentialOfferOptionsAPTITUDE,
+): Promise<void> {
+  const versionLabel = "APTITUDE";
+
   const {
     credentialIssuerMetadata,
     credentialOffer,
@@ -150,11 +175,19 @@ const dispatchValidateCredentialOffer = createVersionDispatcher<
   ValidateCredentialOfferOptions,
   Promise<void>
 >({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    validateCredentialOfferAPTITUDE(
+      o as ValidateCredentialOfferOptionsAPTITUDE,
+    ),
   [ItWalletSpecsVersion.V1_0]: () => {
     throw new ItWalletSpecsVersionError(
       "validateCredentialOffer",
       ItWalletSpecsVersion.V1_0,
-      [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+      [
+        ItWalletSpecsVersion.V1_3,
+        ItWalletSpecsVersion.V1_4,
+        ItWalletSpecsVersion.APTITUDE,
+      ],
     );
   },
   [ItWalletSpecsVersion.V1_3]: (o) =>

@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 import {
+  CredentialOfferAPTITUDE,
+  PreAuthorizedCodeGrantAPTITUDE,
+} from "./APTITUDE/z-credential-offer";
+import {
   type AuthorizationCodeGrantV1_3,
   type CredentialOfferGrantsV1_3,
   type CredentialOfferV1_3,
@@ -12,7 +16,6 @@ import {
   type AuthorizationCodeGrantV1_4,
   type CredentialOfferGrantsV1_4,
   type CredentialOfferV1_4,
-  PreAuthorizedCodeGrantV1_4,
   zAuthorizationCodeGrantV1_4,
   zCredentialOfferGrantsV1_4,
   zCredentialOfferV1_4,
@@ -42,7 +45,7 @@ export type {
   CredentialOfferV1_4,
 };
 
-export type { PreAuthorizedCodeGrantV1_4 };
+export type { PreAuthorizedCodeGrantAPTITUDE };
 
 /**
  * Credential Offer URI schema
@@ -95,7 +98,7 @@ export type AuthorizationCodeGrant =
  * TypeScript type for Pre Authorized Code Grant.
  * Union across supported IT-Wallet versions.
  */
-export type PreAuthorizedCodeGrant = PreAuthorizedCodeGrantV1_4;
+export type PreAuthorizedCodeGrant = PreAuthorizedCodeGrantAPTITUDE;
 
 /**
  * TypeScript type for Credential Offer Grants.
@@ -109,7 +112,10 @@ export type CredentialOfferGrants =
  * TypeScript type for Credential Offer.
  * Union across supported IT-Wallet versions.
  */
-export type CredentialOffer = CredentialOfferV1_3 | CredentialOfferV1_4;
+export type CredentialOffer =
+  | CredentialOfferAPTITUDE
+  | CredentialOfferV1_3
+  | CredentialOfferV1_4;
 
 /**
  * TypeScript type for Credential Offer URI

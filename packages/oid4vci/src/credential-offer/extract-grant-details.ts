@@ -6,19 +6,22 @@ import {
 
 import type {
   ExtractGrantDetailsOptions,
+  ExtractGrantDetailsOptionsAPTITUDE,
   ExtractGrantDetailsOptionsV1_3,
   ExtractGrantDetailsOptionsV1_4,
   ExtractGrantDetailsResult,
+  ExtractGrantDetailsResultAPTITUDE,
   ExtractGrantDetailsResultV1_3,
   ExtractGrantDetailsResultV1_4,
 } from "./types";
 
 import { CredentialOfferError } from "../errors";
 import {
+  AuthorizationCodeGrantAPTITUDE,
   CREDENTIAL_OFFER_GRANTS,
-  CredentialOfferV1_4,
-  PreAuthorizedCodeGrantV1_4,
-} from "./v1.4/z-credential-offer";
+  CredentialOfferAPTITUDE,
+  PreAuthorizedCodeGrantAPTITUDE,
+} from "./APTITUDE/z-credential-offer";
 import {
   type AuthorizationCodeGrantV1_3,
   type AuthorizationCodeGrantV1_4,
@@ -30,7 +33,7 @@ import {
  * @throws {CredentialOfferError} If grants or the authorization_code grant is missing.
  */
 function requireAuthorizationCodeGrant<
-  TGrant extends AuthorizationCodeGrantV1_3,
+  TGrant extends AuthorizationCodeGrantV1_3 | AuthorizationCodeGrantV1_4,
 >(credentialOffer: { grants?: { authorization_code?: TGrant } }): TGrant {
   if (!credentialOffer.grants) {
     throw new CredentialOfferError("No grants found in credential offer");
@@ -51,8 +54,8 @@ function requireAuthorizationCodeGrant<
  * @throws {CredentialOfferError} If grants or the either authorization_code or pre-authorized_code grants are missing.
  */
 function requireAuthorizationCodeOrPreAuthorizedCodeGrant(
-  credentialOffer: CredentialOfferV1_4,
-): (AuthorizationCodeGrantV1_4 | PreAuthorizedCodeGrantV1_4)[] {
+  credentialOffer: CredentialOfferAPTITUDE,
+): (AuthorizationCodeGrantAPTITUDE | PreAuthorizedCodeGrantAPTITUDE)[] {
   if (!credentialOffer.grants) {
     throw new CredentialOfferError("No grants found in credential offer");
   }
@@ -86,6 +89,20 @@ function extractGrantDetailsV1_3(
 function extractGrantDetailsV1_4(
   options: ExtractGrantDetailsOptionsV1_4,
 ): ExtractGrantDetailsResultV1_4 {
+  const authCodeGrant = requireAuthorizationCodeGrant(options.credentialOffer);
+
+  return {
+    authorizationCodeGrant: {
+      authorizationServer: authCodeGrant.authorization_server,
+      issuerState: authCodeGrant.issuer_state,
+    },
+    grantType: "authorization_code",
+  };
+}
+
+function extractGrantDetailsAPTITUDE(
+  options: ExtractGrantDetailsOptionsAPTITUDE,
+): ExtractGrantDetailsResultAPTITUDE {
   const grants = requireAuthorizationCodeOrPreAuthorizedCodeGrant(
     options.credentialOffer,
   );
@@ -116,11 +133,17 @@ const dispatchExtractGrantDetails = createVersionDispatcher<
   ExtractGrantDetailsOptions,
   ExtractGrantDetailsResult
 >({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    extractGrantDetailsAPTITUDE(o as ExtractGrantDetailsOptionsAPTITUDE),
   [ItWalletSpecsVersion.V1_0]: () => {
     throw new ItWalletSpecsVersionError(
       "extractGrantDetails",
       ItWalletSpecsVersion.V1_0,
-      [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+      [
+        ItWalletSpecsVersion.V1_3,
+        ItWalletSpecsVersion.V1_4,
+        ItWalletSpecsVersion.APTITUDE,
+      ],
     );
   },
   [ItWalletSpecsVersion.V1_3]: (o) =>
@@ -151,6 +174,10 @@ export function extractGrantDetails(
 export function extractGrantDetails(
   options: ExtractGrantDetailsOptionsV1_4,
 ): ExtractGrantDetailsResultV1_4;
+
+export function extractGrantDetails(
+  options: ExtractGrantDetailsOptionsAPTITUDE,
+): ExtractGrantDetailsResultAPTITUDE;
 
 export function extractGrantDetails(
   options: ExtractGrantDetailsOptions,
