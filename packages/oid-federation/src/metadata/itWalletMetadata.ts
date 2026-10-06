@@ -79,7 +79,7 @@ export const itWalletMetadataV1_4 = itWalletMetadataV1_3.extend({
     itWalletSolutionEntityMetadataV1_4.optional(),
 });
 
-// APTITUDEcombined metadata (same as v1.4)
+// APTITUDE combined metadata (same as v1.4)
 export const itWalletMetadataAPTITUDE = itWalletMetadataV1_4;
 
 // Union — used by entity statement / entity configuration claims.

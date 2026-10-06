@@ -160,11 +160,12 @@ const dispatchExtractGrantDetails = createVersionDispatcher<
  * Version Differences:
  * - v1.3: extracts `scope` (REQUIRED), `authorization_server` (OPTIONAL), `issuer_state` (OPTIONAL)
  * - v1.4: extracts `authorization_server` (OPTIONAL) and `issuer_state` (OPTIONAL); the
- *   credential offer no longer carries a `scope`
+ *   credential offer no longer carries a `scope`.
+ * - APTITUDE: extracts `authorization_server` (OPTIONAL), `pre-authorized_code` (REQUIRED), and `tx_code` (OPTIONAL)
  *
  * @param options - Extraction options including the credential offer and version config
- * @returns Version-specific grant details containing the grant type and authorization code grant information
- * @throws {CredentialOfferError} If grants or the authorization_code grant is missing
+ * @returns Version-specific grant details containing the grant type and grant information. For APTITUDE, it'll return a list of grants.
+ * @throws {CredentialOfferError} If grants or the either authorization_code or pre-authorized_code grants are missing
  * @throws {ItWalletSpecsVersionError} If the configured version does not support credential offers
  */
 export function extractGrantDetails(

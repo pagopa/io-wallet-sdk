@@ -451,8 +451,6 @@ describe("resolveCredentialOffer", () => {
 
       expect(result).toEqual(validV1_4Offer);
 
-      if (!result.grants.authorization_code) return;
-
       expect(result.grants.authorization_code.issuer_state).toBe(
         "eyJhbGciOiJSU0Et...zaEJ3w",
       );
@@ -476,8 +474,6 @@ describe("resolveCredentialOffer", () => {
         credentialOffer: jsonString,
         ...v1_4Options,
       });
-
-      if (!result.grants.authorization_code) return;
 
       expect("scope" in result.grants.authorization_code).toBe(false);
     });
@@ -550,7 +546,7 @@ describe("resolveCredentialOffer", () => {
           },
         } as unknown as CredentialOfferAPTITUDE;
 
-      it("should resolve an aptitude offer with authorization_code grant", async () => {
+      it("should resolve an APTITUDE offer with authorization_code grant", async () => {
         const jsonString = JSON.stringify(validAPtitudeOffer);
 
         const result = await resolveCredentialOffer({
@@ -564,6 +560,8 @@ describe("resolveCredentialOffer", () => {
           CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in result.grants,
         ).toBe(true);
 
+        expect("authorization_code" in result.grants).toBe(true);
+
         if (!result.grants.authorization_code) return;
 
         expect(result.grants.authorization_code.issuer_state).toBe(
@@ -571,7 +569,7 @@ describe("resolveCredentialOffer", () => {
         );
       });
 
-      it("should resolve an aptitude offer with pre-authorized_code grant", async () => {
+      it("should resolve an APTITUDE offer with pre-authorized_code grant", async () => {
         const jsonString = JSON.stringify(
           validAPtitudeOfferWithPreAuthorizedCode,
         );

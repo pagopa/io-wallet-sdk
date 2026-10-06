@@ -238,7 +238,6 @@ export interface ExtractGrantDetailsOptionsAPTITUDE extends ExtractGrantDetailsO
   /**
    * The credential offer to extract grant details from.
    */
-  // todo: change to sptitude interface
   credentialOffer: CredentialOfferAPTITUDE;
 }
 

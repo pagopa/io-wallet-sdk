@@ -369,7 +369,7 @@ describe("extractGrantDetails", () => {
   });
 
   describe("APTITUDE", () => {
-    it("should extract grant details without scope for a aptitude offer", () => {
+    it("should extract grant details without scope for an APTITUDE offer", () => {
       const credentialOffer: CredentialOfferAPTITUDE = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
@@ -390,11 +390,13 @@ describe("extractGrantDetails", () => {
 
       const result = grants[0];
 
+      expect(result).toBeDefined();
+
       if (!result) return;
 
       expect(result.grantType).toBe("authorization_code");
 
-      expect("authorizationCodeGrant" in result).toBeDefined();
+      expect("authorizationCodeGrant" in result).toBe(true);
 
       if (!("authorizationCodeGrant" in result)) return;
 
@@ -407,7 +409,7 @@ describe("extractGrantDetails", () => {
       expect("scope" in result.authorizationCodeGrant).toBe(false);
     });
 
-    it("should accept a credential offer with pre-authorized code grant for a v1.4 offer", () => {
+    it("should accept a credential offer with pre-authorized code grant for an APTITUDE offer", () => {
       const credentialOffer: CredentialOfferAPTITUDE = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
@@ -427,11 +429,15 @@ describe("extractGrantDetails", () => {
 
       const result = grants[0];
 
+      expect(result).toBeDefined();
+
       if (!result) return;
 
       expect(result.grantType).toBe(
         "urn:ietf:params:oauth:grant-type:pre-authorized_code",
       );
+
+      expect("preAuthorizedCodeGrant" in result).toBe(true);
 
       if (!("preAuthorizedCodeGrant" in result)) return;
 
@@ -440,7 +446,7 @@ describe("extractGrantDetails", () => {
       );
     });
 
-    it("should accept a credential offer with pre-authorized code grant with transaction code empty object for a aptitude offer", () => {
+    it("should accept a credential offer with pre-authorized code grant with transaction code empty object for an APTITUDE offer", () => {
       const credentialOffer: CredentialOfferAPTITUDE = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
@@ -459,7 +465,11 @@ describe("extractGrantDetails", () => {
 
       const result = grants[0];
 
+      expect(result).toBeDefined();
+
       if (!result) return;
+
+      expect("preAuthorizedCodeGrant" in result).toBe(true);
 
       if (!("preAuthorizedCodeGrant" in result)) return;
 
@@ -468,7 +478,7 @@ describe("extractGrantDetails", () => {
       );
     });
 
-    it("should accept a credential offer with multiple grant types", () => {
+    it("should accept a credential offer with multiple grant types from an APTITUDE offer", () => {
       const credentialOffer: CredentialOfferAPTITUDE = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
@@ -498,7 +508,7 @@ describe("extractGrantDetails", () => {
       expect(preAuthGrant).toBeDefined();
 
       if (preAuthGrant) {
-        expect("preAuthorizedCodeGrant" in preAuthGrant).toBeDefined();
+        expect("preAuthorizedCodeGrant" in preAuthGrant).toBe(true);
 
         expect(preAuthGrant.preAuthorizedCodeGrant.preAuthorizedCode).toBe(
           "pre-authorized-code-value",
@@ -513,7 +523,7 @@ describe("extractGrantDetails", () => {
       expect(authGrant).toBeDefined();
 
       if (authGrant) {
-        expect("authorizationCodeGrant" in authGrant).toBeDefined();
+        expect("authorizationCodeGrant" in authGrant).toBe(true);
 
         expect(authGrant.authorizationCodeGrant?.authorizationServer).toBe(
           "https://auth.issuer.example.com",
@@ -524,7 +534,7 @@ describe("extractGrantDetails", () => {
       }
     });
 
-    it("should throw CredentialOfferError when neither authorization_code nor pre authorized code grant is omitted for a v1.4 offer", () => {
+    it("should throw CredentialOfferError when neither authorization_code nor pre authorized code grant is omitted for an APTITUDE offer", () => {
       const credentialOffer = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",

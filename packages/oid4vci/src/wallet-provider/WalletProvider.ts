@@ -244,7 +244,7 @@ export class WalletProvider {
    *   status: { status_list: { idx: 2, uri: "https://status.example.com" } } // Optional
    * });
    *
-   * @example v1.4 - Wallet attestation with required wallet_link and wallet_name
+   * @example v1.4, APTITUDE - Wallet attestation with required wallet_link and wallet_name
    * const jwt = await provider.createItWalletAttestationJwt({
    *   callbacks: { hash: myHashCallback, signJwt: mySignJwtCallback },
    *   dpopJwkPublic: myJwk,
