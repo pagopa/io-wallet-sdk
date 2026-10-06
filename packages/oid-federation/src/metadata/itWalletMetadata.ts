@@ -79,6 +79,9 @@ export const itWalletMetadataV1_4 = itWalletMetadataV1_3.extend({
     itWalletSolutionEntityMetadataV1_4.optional(),
 });
 
+// APTITUDE combined metadata (same as v1.4)
+export const itWalletMetadataAPTITUDE = itWalletMetadataV1_4;
+
 // Union — used by entity statement / entity configuration claims.
 // Order matters: v1.4 only relaxes v1.3 wallet_solution constraints, so every v1.3
 // document also satisfies v1.4. The narrower schema must stay first, otherwise v1.3
@@ -93,6 +96,7 @@ export const itWalletMetadataSchema = itWalletMetadataV1_3
 type SchemaByVersion<T extends Record<ItWalletSpecsVersion, z.ZodType>> = T;
 
 type ItWalletMetadataSchemaByVersion = SchemaByVersion<{
+  [ItWalletSpecsVersion.APTITUDE]: typeof itWalletMetadataAPTITUDE;
   [ItWalletSpecsVersion.V1_0]: typeof itWalletMetadataV1_0;
   [ItWalletSpecsVersion.V1_3]: typeof itWalletMetadataV1_3;
   [ItWalletSpecsVersion.V1_4]: typeof itWalletMetadataV1_4;
@@ -122,6 +126,8 @@ export function isItWalletMetadataVersion<V extends ItWalletSpecsVersion>(
   version: V,
 ): metadata is ItWalletMetadataByVersion<V> {
   return dispatchByVersion(version, {
+    [ItWalletSpecsVersion.APTITUDE]: () =>
+      itWalletMetadataAPTITUDE.safeParse(metadata).success,
     [ItWalletSpecsVersion.V1_0]: () =>
       itWalletMetadataV1_0.safeParse(metadata).success,
     [ItWalletSpecsVersion.V1_3]: () =>
@@ -145,6 +151,12 @@ export function parseItWalletMetadataForVersion<V extends ItWalletSpecsVersion>(
   version: V,
 ): ItWalletMetadataByVersion<V> {
   return dispatchByVersion<ItWalletMetadata>(version, {
+    [ItWalletSpecsVersion.APTITUDE]: () =>
+      parseWithErrorHandling(
+        itWalletMetadataAPTITUDE,
+        metadata,
+        "invalid APTITUDE metadata provided",
+      ),
     [ItWalletSpecsVersion.V1_0]: () =>
       parseWithErrorHandling(
         itWalletMetadataV1_0,

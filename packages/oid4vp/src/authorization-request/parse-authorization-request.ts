@@ -163,6 +163,8 @@ export async function parseAuthorizeRequest(
       | typeof zOpenid4vpAuthorizationRequestHeaderV1_0
       | typeof zOpenid4vpAuthorizationRequestHeaderV1_3
     >(options.config.itWalletSpecsVersion, {
+      [ItWalletSpecsVersion.APTITUDE]: () =>
+        zOpenid4vpAuthorizationRequestHeaderV1_3,
       [ItWalletSpecsVersion.V1_0]: () =>
         zOpenid4vpAuthorizationRequestHeaderV1_0,
       [ItWalletSpecsVersion.V1_3]: () =>

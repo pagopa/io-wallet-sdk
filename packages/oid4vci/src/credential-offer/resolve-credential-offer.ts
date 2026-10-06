@@ -9,11 +9,16 @@ import {
 
 import type {
   ResolveCredentialOfferOptions,
+  ResolveCredentialOfferOptionsAPTITUDE,
   ResolveCredentialOfferOptionsV1_3,
   ResolveCredentialOfferOptionsV1_4,
 } from "./types";
 
 import { CredentialOfferError } from "../errors";
+import {
+  CredentialOfferAPTITUDE,
+  zCredentialOfferAPTITUDE,
+} from "./APTITUDE/z-credential-offer";
 import { parseCredentialOfferUri } from "./parse-credential-offer-uri";
 import {
   type CredentialOffer,
@@ -37,11 +42,17 @@ function parseCredentialOfferForVersion(
       return zCredentialOfferV1_3.parse(data);
     case ItWalletSpecsVersion.V1_4:
       return zCredentialOfferV1_4.parse(data);
+    case ItWalletSpecsVersion.APTITUDE:
+      return zCredentialOfferAPTITUDE.parse(data);
     default:
       throw new ItWalletSpecsVersionError(
         "resolveCredentialOffer",
         config.itWalletSpecsVersion,
-        [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+        [
+          ItWalletSpecsVersion.V1_3,
+          ItWalletSpecsVersion.V1_4,
+          ItWalletSpecsVersion.APTITUDE,
+        ],
       );
   }
 }
@@ -105,6 +116,10 @@ export function resolveCredentialOffer(
 export function resolveCredentialOffer(
   options: ResolveCredentialOfferOptionsV1_4,
 ): Promise<CredentialOfferV1_4>;
+
+export function resolveCredentialOffer(
+  options: ResolveCredentialOfferOptionsAPTITUDE,
+): Promise<CredentialOfferAPTITUDE>;
 
 export function resolveCredentialOffer(
   options: ResolveCredentialOfferOptions,

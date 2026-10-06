@@ -273,6 +273,8 @@ const dispatchVerifyProof = createVersionDispatcher<
   VerifyCredentialRequestJwtProofOptions,
   Promise<VerifyCredentialRequestJwtProofResult>
 >({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
   [ItWalletSpecsVersion.V1_0]: (o) =>
     verifyProofV1_0(o as VerifyCredentialRequestJwtProofOptionsV1_0),
   [ItWalletSpecsVersion.V1_3]: (o) =>

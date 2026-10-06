@@ -2,6 +2,7 @@
  * Supported versions of the Italian Wallet technical specifications
  */
 export enum ItWalletSpecsVersion {
+  APTITUDE = "APTITUDE",
   V1_0 = "V1_0",
   V1_3 = "V1_3",
   V1_4 = "V1_4",
