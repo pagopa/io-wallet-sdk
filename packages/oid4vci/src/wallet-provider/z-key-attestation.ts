@@ -1,6 +1,10 @@
-import { zCertificateChain, zJwk, zTrustChain } from "@pagopa/io-wallet-oauth2";
 import { zKeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
-import { zItwSupportedSignatureAlg } from "@pagopa/io-wallet-utils";
+import {
+  zCertificateChain,
+  zItwSupportedSignatureAlg,
+  zJwk,
+  zTrustChain,
+} from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 export const zStatusList = z.object({

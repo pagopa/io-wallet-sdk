@@ -1,8 +1,4 @@
-import {
-  Oauth2JwtParseError,
-  decodeJwt,
-  extractDpopJwtFromHeaders,
-} from "@pagopa/io-wallet-oauth2";
+import { extractDpopJwtFromHeaders } from "@pagopa/io-wallet-oauth2";
 import {
   type CallbackContext,
   FetchHeaders,
@@ -11,9 +7,11 @@ import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
   ItWalletSpecsVersionError,
+  JwtParseError,
   ValidationError,
   calculateJwkThumbprint,
   createVersionDispatcher,
+  decodeJwt,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
@@ -543,7 +541,7 @@ const dispatchParseCredentialRequest = createVersionDispatcher<
  * @throws {MissingDpopProofError} If the `DPoP` header is absent.
  * @throws {InvalidDpopProofError} If the `DPoP` header is present but not a valid compact JWT.
  * @throws {ValidationError} If request body schema or semantic checks fail.
- * @throws {Oauth2JwtParseError} If a proof JWT cannot be decoded.
+ * @throws {JwtParseError} If a proof JWT cannot be decoded.
  * @throws {ParseCredentialRequestError} For unexpected parsing failures.
  */
 export async function parseCredentialRequest(
@@ -566,7 +564,7 @@ export async function parseCredentialRequest(
   } catch (error) {
     if (
       error instanceof ItWalletSpecsVersionError ||
-      error instanceof Oauth2JwtParseError ||
+      error instanceof JwtParseError ||
       error instanceof ValidationError ||
       error instanceof CredentialAuthorizationHeaderError ||
       error instanceof MissingDpopProofError ||

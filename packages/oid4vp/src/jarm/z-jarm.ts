@@ -1,4 +1,4 @@
-import { zJwtHeader, zJwtPayload } from "@pagopa/io-wallet-oauth2";
+import { zJwtHeader, zJwtPayload } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 export const zJarmHeader = z.object({

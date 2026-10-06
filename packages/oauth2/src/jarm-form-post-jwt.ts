@@ -1,6 +1,6 @@
+import { DecodeJwtResult, decodeJwt } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { DecodeJwtResult, decodeJwt } from "./common/jwt/decode-jwt";
 import { Oauth2Error } from "./errors";
 
 /**

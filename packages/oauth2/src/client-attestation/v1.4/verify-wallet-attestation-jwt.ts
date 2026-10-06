@@ -24,7 +24,7 @@ export type VerifiedWalletAttestationJwtV1_4 = Awaited<
  * @param options - v1.4 verification options.
  * @returns Decoded and verified wallet attestation JWT data.
  * @throws {ValidationError} If the JWT header or payload does not satisfy the v1.4 schema.
- * @throws {Oauth2JwtParseError} If the JWT cannot be decoded.
+ * @throws {JwtParseError} If the JWT cannot be decoded.
  * @throws {Oauth2JwtVerificationError} If signature verification fails.
  */
 export async function verifyWalletAttestationJwt(

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../../jwk/jwk";
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 const walletMetadataSchema = z.looseObject({
   authorization_endpoint: z.url(),
@@ -15,7 +15,7 @@ const walletMetadataSchema = z.looseObject({
 });
 
 export const itWalletSolutionEntityMetadata = z.looseObject({
-  jwks: jsonWebKeySetSchema.optional(),
+  jwks: zFederationJwkSet.optional(),
   jwks_uri: z.url().optional(),
   // logo_uri MIME type MUST be application/svg per spec; validated at fetch-time
   logo_uri: z.url(),
