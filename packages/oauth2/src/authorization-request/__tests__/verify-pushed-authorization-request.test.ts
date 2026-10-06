@@ -1,16 +1,17 @@
 /* eslint-disable max-lines-per-function */
-import type { ItWalletAuthorizationServerMetadata } from "@pagopa/io-wallet-oid-federation";
-
-import { CallbackContext, JwtSigner } from "@openid4vc/oauth2";
 import {
+  type CallbackContext,
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
+  Jwk,
+  JwtSigner,
   RequestLike,
   encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it, vi } from "vitest";
 
-import { Jwk } from "../../common/jwk/z-jwk";
+import type { BaseAuthorizationServerMetadata } from "../../authorization-server-metadata";
+
 import { Oauth2Error, PushedAuthorizationRequestError } from "../../errors";
 import {
   VerifyPushedAuthorizationRequestOptions,
@@ -49,7 +50,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
   const mockAuthorizationServerMetadata = {
     issuer: "https://auth.example.com",
-  } as ItWalletAuthorizationServerMetadata;
+  } as BaseAuthorizationServerMetadata;
 
   const mockAuthorizationRequest = {
     client_id: "client-123",

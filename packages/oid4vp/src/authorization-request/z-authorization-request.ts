@@ -1,11 +1,11 @@
+import { zSignedAuthorizationRequestJwtHeaderTyp } from "@pagopa/io-wallet-oauth2";
+import { itWalletCredentialVerifierMetadataV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
   zAlgValueNotNone,
   zCertificateChain,
   zJwtPayload,
-  zSignedAuthorizationRequestJwtHeaderTyp,
   zTrustChain,
-} from "@pagopa/io-wallet-oauth2";
-import { itWalletCredentialVerifierMetadataV1_3 } from "@pagopa/io-wallet-oid-federation";
+} from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 /**

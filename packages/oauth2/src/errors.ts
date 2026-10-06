@@ -7,7 +7,15 @@ export class Oauth2Error extends Error {
     message: string,
     options?: { statusCode?: number } & ErrorOptions,
   ) {
-    super(message, options);
+    const errorMessage = message ?? "Unknown error occurred.";
+    const causeMessage =
+      options?.cause instanceof Error
+        ? ` ${options.cause.message}`
+        : options?.cause
+          ? ` ${String(options.cause)}`
+          : "";
+
+    super(`${errorMessage}${causeMessage}`, options);
     this.name = "Oauth2Error";
     this.statusCode = options?.statusCode;
   }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonWebKeySetSchema } from "../../../jwk/jwk";
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
 
 /**
  *
@@ -8,7 +8,7 @@ import { jsonWebKeySetSchema } from "../../../jwk/jwk";
  *
  */
 export const itWalletProviderEntityMetadata = z.looseObject({
-  jwks: jsonWebKeySetSchema.optional(),
+  jwks: zFederationJwkSet.optional(),
   jwks_uri: z.url().optional(),
   // -- 5.2.1 Extensions for JWK Sets in Entity Metadata
   signed_jwks_uri: z.url().optional(),

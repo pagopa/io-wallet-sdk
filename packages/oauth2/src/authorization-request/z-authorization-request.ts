@@ -1,6 +1,5 @@
+import { MAX_JTI_LENGTH } from "@pagopa/io-wallet-utils";
 import z from "zod";
-
-import { MAX_JTI_LENGTH } from "../common/jwt/z-jwt";
 
 const zOpenidCredentialAuthorizationDetails = z.object({
   credential_configuration_id: z.string(),

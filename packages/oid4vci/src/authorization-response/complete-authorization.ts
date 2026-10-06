@@ -1,10 +1,10 @@
-import { CallbackContext } from "@openid4vc/oauth2";
 import { getJwtFromFormPost } from "@pagopa/io-wallet-oauth2";
 import {
   FetchAuthorizationResponseOptions,
   fetchAuthorizationResponse,
 } from "@pagopa/io-wallet-oid4vp";
 import {
+  type CallbackContext,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,
