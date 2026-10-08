@@ -5,15 +5,20 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
+import {
+  zAuthorizationCodeGrantIdentifier,
+  zRefreshTokenGrantIdentifier,
+} from "./z-grant-type";
+
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
   z.object({
     code: z.string().nonempty(),
     code_verifier: z.string().nonempty(),
-    grant_type: z.literal("authorization_code"),
+    grant_type: zAuthorizationCodeGrantIdentifier,
     redirect_uri: z.string().nonempty(),
   }),
   z.object({
-    grant_type: z.literal("refresh_token"),
+    grant_type: zRefreshTokenGrantIdentifier,
     refresh_token: z.string().nonempty(),
     scope: z.string().optional(),
   }),
