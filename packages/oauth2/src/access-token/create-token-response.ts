@@ -2,10 +2,13 @@ import {
   type CallbackContext,
   type GenerateRandomCallback,
   HashAlgorithm,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   Jwk,
   JwtSigner,
   addSecondsToDate,
   calculateJwkThumbprint,
+  createVersionDispatcher,
   dateToSeconds,
   jwtHeaderFromJwtSigner,
   parseWithErrorHandling,
@@ -82,7 +85,6 @@ export interface CreateAccessTokenResponseOptions {
    * response envelope.
    */
   additionalPayload?: Record<string, unknown>;
-
   /**
    * Intended recipient of the access token (`aud` claim).
    */
@@ -103,6 +105,8 @@ export interface CreateAccessTokenResponseOptions {
    * OAuth client identifier (`client_id` claim).
    */
   clientId: string;
+
+  config: IoWalletSdkConfig;
 
   /**
    * DPoP public key used to bind the access token (`cnf.jkt` claim).
@@ -161,26 +165,7 @@ export interface CreateAccessTokenResponseOptions {
   tokenType: "Bearer" | "DPoP";
 }
 
-/**
- * Creates an OAuth 2.0 access token response where `access_token` is a signed
- * JWT access token profile (`typ=at+jwt`) and `token_type` is `DPoP` or `Bearer`.
- *
- * The JWT payload always includes `aud`, `iss`, `sub`, `client_id`, `iat`,
- * `exp`, and a random `jti`. When `dpop` is provided, `cnf.jkt` is added using
- * the SHA-256 JWK thumbprint.
- *
- * When `refreshTokenExpiresInSeconds` is provided, a DPoP-bound Refresh Token
- * JWT (`typ=rt+jwt`) is generated, signed, and returned as `refresh_token`.
- * Refresh Token issuance requires `tokenType` to be `DPoP` with a `dpop`
- * public key, and results in `nbf` equal to the Access Token `exp` and `exp`
- * later than that.
- *
- * @param options - Access token response creation options.
- * @returns OAuth token response with a signed access token JWT, and a signed Refresh Token JWT when requested.
- * @throws {CreateTokenResponseError} If DPoP binding is required but missing, if Refresh Token issuance is requested without a valid DPoP configuration or lifetime, if the signer has no resolvable `kid` for the Refresh Token, or if response creation otherwise fails, including validation failures from the generated JWT headers or payloads.
- * @throws {ValidationError} If the generated JWT header or payload fails validation.
- */
-export async function createAccessTokenResponse(
+async function createAccessTokenResponseV1_4(
   options: CreateAccessTokenResponseOptions,
 ) {
   try {
@@ -311,4 +296,41 @@ export async function createAccessTokenResponse(
       `Error creating access token JWT: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+const dispatchCreateAccessTokenResponse = createVersionDispatcher({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    createAccessTokenResponseV1_4(o as CreateAccessTokenResponseOptions),
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    createAccessTokenResponseV1_4(o as CreateAccessTokenResponseOptions),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    createAccessTokenResponseV1_4(o as CreateAccessTokenResponseOptions),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    createAccessTokenResponseV1_4(o as CreateAccessTokenResponseOptions),
+});
+
+/**
+ * Creates an OAuth 2.0 access token response where `access_token` is a signed
+ * JWT access token profile (`typ=at+jwt`) and `token_type` is `DPoP` or `Bearer`.
+ *
+ * The JWT payload always includes `aud`, `iss`, `sub`, `client_id`, `iat`,
+ * `exp`, and a random `jti`. When `dpop` is provided, `cnf.jkt` is added using
+ * the SHA-256 JWK thumbprint.
+ *
+ * When `refreshTokenExpiresInSeconds` is provided, a DPoP-bound Refresh Token
+ * JWT (`typ=rt+jwt`) is generated, signed, and returned as `refresh_token`.
+ * Refresh Token issuance requires `tokenType` to be `DPoP` with a `dpop`
+ * public key, and results in `nbf` equal to the Access Token `exp` and `exp`
+ * later than that.
+ *
+ * @param options - Access token response creation options and version config.
+ * @returns OAuth token response with a signed access token JWT, and a signed Refresh Token JWT when requested.
+ * @throws {CreateTokenResponseError} If DPoP binding is required but missing, if Refresh Token issuance is requested without a valid DPoP configuration or lifetime, if the signer has no resolvable `kid` for the Refresh Token, or if response creation otherwise fails, including validation failures from the generated JWT headers or payloads.
+ * @throws {ValidationError} If the generated JWT header or payload fails validation.
+ */
+
+export function createAccessTokenResponse(
+  options: CreateAccessTokenResponseOptions,
+) {
+  return dispatchCreateAccessTokenResponse(options);
 }
