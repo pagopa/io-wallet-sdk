@@ -8,7 +8,14 @@ import {
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
 
-import { PushedAuthorizationRequestError } from "../errors";
+import {
+  type ClientAttestationHeadersOptions,
+  getClientAttestationHeaders,
+} from "../client-attestation/client-attestation-headers";
+import {
+  ClientAttestationError,
+  PushedAuthorizationRequestError,
+} from "../errors";
 import {
   PushedAuthorizationRequest,
   PushedAuthorizationResponse,
@@ -19,18 +26,12 @@ import {
 /**
  * Configuration options for fetching pushed authorization response
  */
-export interface fetchPushedAuthorizationResponseOptions {
+export interface fetchPushedAuthorizationResponseOptions extends ClientAttestationHeadersOptions {
   /**
    * Callback functions for making HTTP requests
    * Allows for custom fetch implementations
    */
   callbacks: Pick<CallbackContext, "fetch">;
-
-  /**
-   * The client attestation Demonstration of Proof-of-Possession (DPoP) token
-   * Used for OAuth-Client-Attestation-PoP header to prove possession of the client key
-   */
-  clientAttestationDPoP: string;
 
   /**
    * The pushed authorization request to send. Accepts both signed (JAR) and unsigned variants
@@ -45,12 +46,6 @@ export interface fetchPushedAuthorizationResponseOptions {
    * This should be the authorization server's PAR endpoint
    */
   pushedAuthorizationRequestEndpoint: string;
-
-  /**
-   * The wallet attestation JWT that proves the client's identity and capabilities
-   * Used for OAuth-Client-Attestation header
-   */
-  walletAttestation: string;
 }
 
 /**
@@ -62,6 +57,10 @@ export interface fetchPushedAuthorizationResponseOptions {
  * - **Unsigned**: posts every field from `authorizationRequest` as flat form
  *   parameters, with object/array values (e.g. `authorization_details`)
  *   JSON-serialised.
+ *
+ * The client authenticates with its Wallet Attestation when `walletAttestation` and
+ * `clientAttestationDPoP` are provided, otherwise as a public client identified by the
+ * `client_id` of the request.
  *
  * @param options - Configuration options for the pushed authorization request
  * @returns Promise that resolves to the parsed pushed authorization response containing request_uri and expires_in
@@ -91,8 +90,7 @@ export async function fetchPushedAuthorizationResponse(
         body,
         headers: {
           [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
-          [HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
-          [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]: options.clientAttestationDPoP,
+          ...(await getClientAttestationHeaders(options)),
         },
         method: "POST",
       },
@@ -115,7 +113,8 @@ export async function fetchPushedAuthorizationResponse(
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
-      error instanceof ValidationError
+      error instanceof ValidationError ||
+      error instanceof ClientAttestationError
     ) {
       throw error;
     }

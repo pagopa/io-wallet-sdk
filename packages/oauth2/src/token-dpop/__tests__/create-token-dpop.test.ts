@@ -171,4 +171,21 @@ describe("createDpopJwt", () => {
       "Error: neither a default jti nor a generateRandom callback have been provided",
     );
   });
+
+  it("should include the server nonce in the DPoP JWT", async () => {
+    await createTokenDPoP({
+      callbacks: mockCallbacks,
+      nonce: "server-nonce",
+      signer: mockSigner,
+      tokenRequest: {
+        method: "POST",
+        url: "https://example.com/token",
+      },
+    });
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.any(Object),
+      payload: expect.objectContaining({ nonce: "server-nonce" }),
+    });
+  });
 });

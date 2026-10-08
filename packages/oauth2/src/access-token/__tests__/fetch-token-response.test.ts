@@ -6,7 +6,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FetchTokenResponseError } from "../../errors";
+import { ClientAttestationError, FetchTokenResponseError } from "../../errors";
 import {
   FetchTokenResponseOptions,
   fetchTokenResponse,
@@ -327,5 +327,94 @@ describe("toURLSearchParams", () => {
     expect(result.get("grant_type")).toBe("refresh_token");
     expect(result.get("refresh_token")).toBe("test-refresh-token");
     expect(result.get("scope")).toBeNull();
+  });
+});
+
+describe("fetchTokenResponse - public client and DPoP nonce", () => {
+  const tokenResponse = () => ({
+    json: vi.fn().mockResolvedValue({
+      access_token: "test-access-token",
+      expires_in: 3600,
+      token_type: "DPoP",
+    }),
+    status: 200,
+  });
+
+  const useDpopNonceResponse = {
+    clone: () => ({
+      json: vi.fn().mockResolvedValue({ error: "use_dpop_nonce" }),
+    }),
+    headers: new Headers({ "DPoP-Nonce": "server-nonce" }),
+    status: 400,
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockFetch.mockReset();
+  });
+
+  it("should not send client attestation headers for a public client", async () => {
+    mockFetch.mockResolvedValue(tokenResponse());
+
+    await fetchTokenResponse({
+      ...baseOptions,
+      clientAttestationDPoP: undefined,
+      walletAttestation: undefined,
+    });
+
+    expect(mockFetch.mock.calls[0]?.[1].headers).toEqual({
+      [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+      [HEADERS.DPOP]: "test-dpop-proof-jwt",
+    });
+  });
+
+  it("should retry once with the nonce required by the server", async () => {
+    mockFetch
+      .mockResolvedValueOnce(useDpopNonceResponse)
+      .mockResolvedValueOnce(tokenResponse());
+    const dPoP = vi.fn(async (nonce?: string) =>
+      nonce ? `dpop-with-${nonce}` : "dpop-without-nonce",
+    );
+    const clientAttestationDPoP = vi
+      .fn()
+      .mockResolvedValueOnce("first-pop")
+      .mockResolvedValueOnce("second-pop");
+
+    const result = await fetchTokenResponse({
+      ...baseOptions,
+      clientAttestationDPoP,
+      dPoP,
+    });
+
+    expect(result.access_token).toBe("test-access-token");
+    expect(dPoP).toHaveBeenNthCalledWith(2, "server-nonce");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[1]?.[1].headers).toMatchObject({
+      [HEADERS.DPOP]: "dpop-with-server-nonce",
+      [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]: "second-pop",
+    });
+  });
+
+  it("should not retry when the DPoP proof is a string", async () => {
+    mockFetch.mockResolvedValue({
+      ...useDpopNonceResponse,
+      text: vi.fn().mockResolvedValue("use_dpop_nonce"),
+      url: "https://auth-server.example.com/token",
+    });
+
+    const error = await fetchTokenResponse(baseOptions).catch((e) => e);
+
+    expect(error).toBeInstanceOf(UnexpectedStatusCodeError);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should throw ClientAttestationError when only the wallet attestation is provided", async () => {
+    const error = await fetchTokenResponse({
+      ...baseOptions,
+      clientAttestationDPoP: undefined,
+    }).catch((e) => e);
+
+    expect(error).toBeInstanceOf(ClientAttestationError);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

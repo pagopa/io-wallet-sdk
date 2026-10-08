@@ -14,6 +14,7 @@ export const zDpopJwtPayload = z.looseObject({
   htu: z.url(),
   iat: z.number().int().nonnegative(),
   jti: z.string().max(MAX_JTI_LENGTH),
+  nonce: z.optional(z.string()),
 });
 
 export type DpopJwtPayload = z.infer<typeof zDpopJwtPayload>;
@@ -25,3 +26,12 @@ export const zDpopJwtHeader = z.looseObject({
 });
 
 export type DpopJwtHeader = z.infer<typeof zDpopJwtHeader>;
+
+/**
+ * Error response of a server requiring a DPoP nonce (RFC 9449, Section 8).
+ */
+export const zDpopNonceErrorResponse = z.looseObject({
+  error: z.literal("use_dpop_nonce"),
+});
+
+export type DpopNonceErrorResponse = z.infer<typeof zDpopNonceErrorResponse>;

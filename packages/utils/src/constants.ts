@@ -13,8 +13,10 @@ export const HEADERS = {
   AUTHORIZATION: "Authorization",
   CONTENT_TYPE: "Content-Type",
   DPOP: "DPoP",
+  DPOP_NONCE: "DPoP-Nonce",
   OAUTH_CLIENT_ATTESTATION: "OAuth-Client-Attestation",
   OAUTH_CLIENT_ATTESTATION_POP: "OAuth-Client-Attestation-PoP",
+  WWW_AUTHENTICATE: "WWW-Authenticate",
 } as const;
 
 export const MAX_IAT_AGE_SECONDS = 5 * 60;

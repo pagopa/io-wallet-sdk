@@ -50,6 +50,12 @@ export interface CreateTokenDPoPOptions {
   jti?: string;
 
   /**
+   * Nonce provided by the server in the `DPoP-Nonce` header, to include in the
+   * `nonce` claim of the DPoP JWT (RFC 9449, Section 8).
+   */
+  nonce?: string;
+
+  /**
    * The signer of the dpop jwt. Only jwk signer allowed.
    */
   signer: JwtSignerJwk;
@@ -111,6 +117,7 @@ export async function createTokenDPoP(options: CreateTokenDPoPOptions) {
       htu: htuFromRequestUrl(options.tokenRequest.url),
       iat: dateToSeconds(options.issuedAt),
       jti,
+      nonce: options.nonce,
     } satisfies DpopJwtPayload);
 
     return options.callbacks.signJwt(options.signer, {

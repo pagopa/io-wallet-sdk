@@ -9,14 +9,22 @@ import {
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
-import { FetchTokenResponseError } from "../errors";
+import {
+  type ClientAttestationHeadersOptions,
+  getClientAttestationHeaders,
+} from "../client-attestation/client-attestation-headers";
+import { ClientAttestationError, FetchTokenResponseError } from "../errors";
+import {
+  type DpopProof,
+  fetchWithDpopNonceRetry,
+} from "../token-dpop/dpop-utils";
 import {
   AccessTokenRequest,
   AccessTokenResponse,
   zAccessTokenResponse,
 } from "./z-token";
 
-export interface FetchTokenResponseOptions {
+export interface FetchTokenResponseOptions extends ClientAttestationHeadersOptions {
   /**
    * The endpoint URL where the access token request will be sent
    * This should be the authorization server's token endpoint
@@ -34,25 +42,18 @@ export interface FetchTokenResponseOptions {
   callbacks: Pick<CallbackContext, "fetch">;
 
   /**
-   * The client attestation Demonstration of Proof-of-Possession (DPoP) token
-   * Used for OAuth-Client-Attestation-PoP header to prove possession of the client key
+   * DPoP proof for the token request. When a factory is provided, the request is
+   * retried once with the nonce required by the server (RFC 9449, Section 8).
    */
-  clientAttestationDPoP: string;
-
-  /**
-   * DPoP proof for the token request
-   */
-  dPoP: string;
-
-  /**
-   * The wallet attestation JWT that proves the client's identity and capabilities
-   * Used for OAuth-Client-Attestation header
-   */
-  walletAttestation: string;
+  dPoP: DpopProof;
 }
 
 /**
  * Sends an access token request to the authorization server and returns the response
+ *
+ * The client authenticates with its Wallet Attestation when `walletAttestation` and
+ * `clientAttestationDPoP` are provided, otherwise as a public client identified by the
+ * `client_id` of the request.
  *
  * @param options - Configuration options for the access token request
  * @returns Promise that resolves to the parsed access token response
@@ -66,15 +67,18 @@ export async function fetchTokenResponse(
 ): Promise<AccessTokenResponse> {
   try {
     const fetch = createFetcher(options.callbacks.fetch);
-    const tokenResponse = await fetch(options.accessTokenEndpoint, {
-      body: toURLSearchParams(options.accessTokenRequest),
-      headers: {
-        [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
-        [HEADERS.DPOP]: options.dPoP,
-        [HEADERS.OAUTH_CLIENT_ATTESTATION]: options.walletAttestation,
-        [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]: options.clientAttestationDPoP,
-      },
-      method: "POST",
+    const tokenResponse = await fetchWithDpopNonceRetry({
+      dPoP: options.dPoP,
+      sendRequest: async (dPoP) =>
+        fetch(options.accessTokenEndpoint, {
+          body: toURLSearchParams(options.accessTokenRequest),
+          headers: {
+            [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+            [HEADERS.DPOP]: dPoP,
+            ...(await getClientAttestationHeaders(options)),
+          },
+          method: "POST",
+        }),
     });
 
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(tokenResponse);
@@ -87,7 +91,8 @@ export async function fetchTokenResponse(
   } catch (error) {
     if (
       error instanceof UnexpectedStatusCodeError ||
-      error instanceof ValidationError
+      error instanceof ValidationError ||
+      error instanceof ClientAttestationError
     ) {
       throw error;
     }

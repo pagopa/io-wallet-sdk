@@ -7,6 +7,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ClientAttestationError } from "../../errors";
 import {
   fetchPushedAuthorizationResponse,
   fetchPushedAuthorizationResponseOptions,
@@ -171,6 +172,40 @@ describe("fetchPushedAuthorizationResponse", () => {
         expect(error).toBeInstanceOf(UnexpectedStatusCodeError);
         expect(error.statusCode).toBe(statusCode);
       }
+    });
+  });
+
+  describe("public client", () => {
+    const parResponse = (status: number) => ({
+      json: vi.fn().mockResolvedValue({
+        expires_in: 60,
+        request_uri: "urn:ietf:params:oauth:request_uri:test-uri",
+      }),
+      status,
+    });
+
+    it("should not send client attestation headers for a public client", async () => {
+      mockFetch.mockResolvedValue(parResponse(201));
+
+      await fetchPushedAuthorizationResponse({
+        ...baseOptions,
+        clientAttestationDPoP: undefined,
+        walletAttestation: undefined,
+      });
+
+      expect(mockFetch.mock.calls[0]?.[1].headers).toEqual({
+        [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+      });
+    });
+
+    it("should throw ClientAttestationError when only the wallet attestation is provided", async () => {
+      const error = await fetchPushedAuthorizationResponse({
+        ...baseOptions,
+        clientAttestationDPoP: undefined,
+      }).catch((e) => e);
+
+      expect(error).toBeInstanceOf(ClientAttestationError);
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 
