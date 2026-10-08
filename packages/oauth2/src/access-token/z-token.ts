@@ -7,6 +7,11 @@ import { z } from "zod";
 
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
   z.object({
+    /**
+     * REQUIRED when the client is not authenticating with the authorization server
+     * (RFC 6749, Section 4.1.3), e.g. for public clients.
+     */
+    client_id: z.string().nonempty().optional(),
     code: z.string().nonempty(),
     code_verifier: z.string().nonempty(),
     grant_type: z.literal("authorization_code"),
@@ -44,7 +49,14 @@ export const zAccessTokenResponse = z.looseObject({
     .optional(),
   expires_in: z.optional(z.number().int()),
   refresh_token: z.optional(z.string()),
-  token_type: z.union([z.literal("Bearer"), z.literal("DPoP")]),
+  // The token type is case insensitive (RFC 6749, Section 5.1), normalized to its canonical form
+  token_type: z.preprocess(
+    (value) =>
+      typeof value === "string"
+        ? ({ bearer: "Bearer", dpop: "DPoP" }[value.toLowerCase()] ?? value)
+        : value,
+    z.union([z.literal("Bearer"), z.literal("DPoP")]),
+  ),
 });
 
 export type AccessTokenResponse = z.infer<typeof zAccessTokenResponse>;
