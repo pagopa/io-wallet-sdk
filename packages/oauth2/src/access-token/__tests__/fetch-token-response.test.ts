@@ -137,6 +137,44 @@ describe("fetchTokenResponse - successful requests", () => {
       token_type: "DPoP",
     });
   });
+
+  it("should normalize a case insensitive token_type", async () => {
+    mockFetch.mockResolvedValue({
+      json: vi.fn().mockResolvedValue({
+        access_token: "test-access-token",
+        token_type: "dpop",
+      }),
+      status: 200,
+    });
+
+    const result = await fetchTokenResponse(baseOptions);
+
+    expect(result.token_type).toBe("DPoP");
+  });
+
+  it("should send the client_id of a public client in the request body", async () => {
+    mockFetch.mockResolvedValue({
+      json: vi.fn().mockResolvedValue({
+        access_token: "test-access-token",
+        token_type: "Bearer",
+      }),
+      status: 200,
+    });
+
+    await fetchTokenResponse({
+      ...baseOptions,
+      accessTokenRequest: {
+        client_id: "test-client-id",
+        code: "test-authorization-code",
+        code_verifier: "test-code-verifier",
+        grant_type: "authorization_code",
+        redirect_uri: "https://app.example.com/callback",
+      },
+    });
+
+    const body = mockFetch.mock.calls[0]?.[1]?.body as URLSearchParams;
+    expect(body.get("client_id")).toBe("test-client-id");
+  });
 });
 
 describe("fetchTokenResponse - HTTP error handling", () => {
