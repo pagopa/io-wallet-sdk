@@ -1,4 +1,8 @@
-import { HashAlgorithm } from "@pagopa/io-wallet-utils";
+import {
+  HashAlgorithm,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -26,11 +30,16 @@ const mockSigner = {
 
 const fixedNow = new Date("2024-01-01T00:00:00Z");
 
+const v1_4Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
 const baseOptions: CreateAccessTokenResponseOptions = {
   audience: "https://wallet-provider.example.com",
   authorizationServer: "https://as.example.com",
   callbacks: mockCallbacks,
   clientId: "wallet-client-id",
+  config: v1_4Config,
   expiresInSeconds: 300,
   now: fixedNow,
   signer: mockSigner,
@@ -134,6 +143,37 @@ describe("createAccessTokenResponse", () => {
         sub: "subject-id",
       }),
     });
+  });
+
+  it("preserves the authorized credential datasets in a pre-authorized issuance response", async () => {
+    const authorizationDetails = [
+      {
+        credential_configuration_id: "EuropeanDisabilityCard",
+        credential_identifiers: ["credential-dataset-1"],
+        type: "openid_credential",
+      },
+    ];
+    const result = await createAccessTokenResponse({
+      ...baseOptions,
+      additionalPayload: { authorization_details: authorizationDetails },
+      audience: "https://issuer.example.com",
+      dpop: { jwk: mockSigner.publicJwk },
+      tokenType: "DPoP",
+    });
+
+    expect(result).toEqual({
+      access_token: "signed-access-token-jwt",
+      authorization_details: authorizationDetails,
+      expires_in: 300,
+      token_type: "DPoP",
+    });
+    expect(findSignJwtCallByTyp("at+jwt").payload).toEqual(
+      expect.objectContaining({
+        aud: "https://issuer.example.com",
+        authorization_details: authorizationDetails,
+        cnf: { jkt: expect.any(String) },
+      }),
+    );
   });
 
   it("adds cnf.jkt when dpop is provided", async () => {

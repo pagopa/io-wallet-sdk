@@ -1,8 +1,10 @@
 import {
   type CallbackContext,
   IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   Jwk,
   RequestLike,
+  createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
 
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
@@ -16,7 +18,13 @@ import { VerifiedWalletAttestationJwt } from "../client-attestation/wallet-attes
 import { Oauth2Error } from "../errors";
 import { PkceCodeChallengeMethod, verifyPkce } from "../pkce";
 import { verifyTokenDPoP } from "../token-dpop/verify-token-dpop";
+import {
+  SupportedAccessTokenVerificationOptionsAPTITUDE,
+  VerifyPreAuthorizedCodeAccessTokenRequestOptions,
+} from "./APTITUDE/verify-access-token-request";
+import { preAuthorizedCodeGrantIdentifier } from "./APTITUDE/z-grant-types";
 import { ParsedAccessTokenAuthorizationCodeRequestGrant } from "./parse-token-request";
+import { authorizationCodeGrantIdentifier } from "./z-grant-type";
 import { AccessTokenRequest } from "./z-token";
 
 export interface VerifyAccessTokenRequestPkce {
@@ -50,12 +58,7 @@ export interface VerifyAccessTokenRequestDpop {
   jwt: string;
 }
 
-export interface VerifyAccessTokenRequestOptions {
-  /**
-   * The access token request to verify
-   */
-  accessTokenRequest: AccessTokenRequest;
-
+export interface BaseVerifyAccessTokenRequestOptions {
   /**
    * The authorization server metadata
    */
@@ -70,10 +73,6 @@ export interface VerifyAccessTokenRequestOptions {
    * Options for verifying the client attestation
    */
   clientAttestation: ClientAttestationOptions;
-  /**
-   * The expiration date of the authorization code
-   */
-  codeExpiresAt?: Date;
 
   config: IoWalletSdkConfig;
 
@@ -81,6 +80,37 @@ export interface VerifyAccessTokenRequestOptions {
    * The dpop verification options
    */
   dpop: VerifyAccessTokenRequestDpop;
+
+  /**
+   * The current time to use when verifying the JWTs.
+   * If not provided current time will be used.
+   *
+   * @default new Date()
+   */
+  now?: Date;
+
+  /**
+   * The HTTP request information
+   */
+  request: RequestLike;
+}
+
+export interface VerifyAccessTokenRequestOptions extends BaseVerifyAccessTokenRequestOptions {
+  /**
+   * The access token request to verify
+   */
+  accessTokenRequest: AccessTokenRequest;
+
+  /**
+   * The expiration date of the authorization code
+   */
+  codeExpiresAt?: Date;
+
+  config: IoWalletSdkConfig<
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4
+  >;
 
   /**
    * The expected authorization code
@@ -93,22 +123,9 @@ export interface VerifyAccessTokenRequestOptions {
   grant: ParsedAccessTokenAuthorizationCodeRequestGrant;
 
   /**
-   * The current time to use when verifying the JWTs.
-   * If not provided current time will be used.
-   *
-   * @default new Date()
-   */
-  now?: Date;
-
-  /**
    * The pkce options including code verifier, challenge and method
    */
   pkce: VerifyAccessTokenRequestPkce;
-
-  /**
-   * The HTTP request information
-   */
-  request: RequestLike;
 }
 
 export interface VerifyAccessTokenRequestResult {
@@ -128,44 +145,7 @@ export interface VerifyAccessTokenRequestResult {
   };
 }
 
-/**
- * Verifies an authorization code token request by validating PKCE, DPoP, and client attestation.
- *
- * This function performs comprehensive validation of an OAuth 2.0 authorization code token request
- * according to Italian IT-Wallet specifications, including:
- * - PKCE code verifier validation against the stored code challenge
- * - DPoP proof JWT verification and JWK thumbprint extraction
- * - Client attestation JWT and attestation PoP JWT verification
- * - Authorization code validity and expiration checks
- *
- * @param options - Configuration options for token request verification
- * @returns A promise that resolves with verified client attestation and DPoP information
- * @throws {Oauth2Error} If the authorization code is invalid or expired
- * @throws {Oauth2Error} If PKCE verification fails
- * @throws {Oauth2Error} If DPoP verification fails
- * @throws {Oauth2Error} If client attestation verification fails
- *
- * @example
- * ```typescript
- * const result = await verifyAccessTokenRequest({
- *   accessTokenRequest: parsedRequest,
- *   authorizationServerMetadata: metadata,
- *   callbacks: { hash, verifyJwt },
- *   clientAttestation: { jwt: "...", popJwt: "..." },
- *   codeExpiresAt: new Date(Date.now() + 600000),
- *   dpop: {
- *     allowedSigningAlgs: ["ES256"],
- *     expectedNonce: "server-issued-nonce",
- *     jwt: dpopJwt,
- *   },
- *   expectedCode: "auth_code_123",
- *   grant: parsedGrant,
- *   pkce: { codeChallenge, codeChallengeMethod: "S256", codeVerifier },
- *   request: httpRequest,
- * });
- * ```
- */
-export async function verifyAccessTokenRequest(
+async function verifyAccessTokenRequestV1_4(
   options: VerifyAccessTokenRequestOptions,
 ): Promise<VerifyAccessTokenRequestResult> {
   if (options.dpop.expectedNonce === "") {
@@ -201,13 +181,7 @@ export async function verifyAccessTokenRequest(
     throw new Oauth2Error(`Invalid 'code' provided`);
   }
 
-  if (options.codeExpiresAt) {
-    const now = options.now ?? new Date();
-
-    if (now.getTime() > options.codeExpiresAt.getTime()) {
-      throw new Oauth2Error(`Expired 'code' provided`);
-    }
-  }
+  verifyCodeExpiration(options.codeExpiresAt, options.now, "code");
 
   if (!header.jwk) {
     throw new Oauth2Error("DPoP header does not contain a JWK");
@@ -217,4 +191,213 @@ export async function verifyAccessTokenRequest(
     clientAttestation: clientAttestationResult,
     dpop: { jwk: header.jwk, jwkThumbprint },
   };
+}
+
+async function verifyAccessTokenRequestAPTITUDE(
+  options: SupportedAccessTokenVerificationOptionsAPTITUDE,
+): Promise<VerifyAccessTokenRequestResult> {
+  if (options.dpop.expectedNonce === "") {
+    throw new Oauth2Error(`Invalid 'dpop.expectedNonce' provided`);
+  }
+
+  if (!isPreAuthorizedCodeVerification(options)) {
+    await verifyPkce({
+      callbacks: options.callbacks,
+      codeChallenge: options.pkce.codeChallenge,
+      codeChallengeMethod: options.pkce.codeChallengeMethod,
+      codeVerifier: options.pkce.codeVerifier,
+    });
+  }
+
+  const { header, jwkThumbprint } = await verifyTokenDPoP({
+    allowedSigningAlgs: options.dpop.allowedSigningAlgs,
+    callbacks: options.callbacks,
+    dpopJwt: options.dpop.jwt,
+    expectedNonce: options.dpop.expectedNonce,
+    now: options.now,
+    request: options.request,
+  });
+
+  const clientAttestationResult = await verifyClientAttestation({
+    authorizationServerMetadata: options.authorizationServerMetadata,
+    callbacks: options.callbacks,
+    clientAttestation: options.clientAttestation,
+    config: options.config,
+    dpopJwkThumbprint: jwkThumbprint,
+    now: options.now,
+  });
+
+  verifyGrantParameters(options);
+
+  if (!header.jwk) {
+    throw new Oauth2Error("DPoP header does not contain a JWK");
+  }
+
+  return {
+    clientAttestation: clientAttestationResult,
+    dpop: { jwk: header.jwk, jwkThumbprint },
+  };
+}
+
+function isPreAuthorizedCodeVerification(
+  options: SupportedAccessTokenVerificationOptionsAPTITUDE,
+): options is VerifyPreAuthorizedCodeAccessTokenRequestOptions {
+  return options.grant.grantType === preAuthorizedCodeGrantIdentifier;
+}
+
+function verifyGrantParameters(
+  options: SupportedAccessTokenVerificationOptionsAPTITUDE,
+) {
+  if (options.accessTokenRequest.grant_type !== options.grant.grantType) {
+    throw new Oauth2Error("Grant type does not match the access token request");
+  }
+
+  if (isPreAuthorizedCodeVerification(options)) {
+    if (
+      !options.expectedPreAuthorizedCode ||
+      options.grant.preAuthorizedCode !== options.expectedPreAuthorizedCode ||
+      options.accessTokenRequest["pre-authorized_code"] !==
+        options.grant.preAuthorizedCode
+    ) {
+      throw new Oauth2Error(`Invalid 'pre-authorized_code' provided`);
+    }
+
+    if (options.accessTokenRequest.tx_code !== options.grant.txCode) {
+      throw new Oauth2Error(
+        "Transaction code does not match the access token request",
+      );
+    }
+    verifyTransactionCode(options.grant.txCode, options.expectedTxCode);
+    verifyCodeExpiration(
+      options.preAuthorizedCodeExpiresAt,
+      options.now,
+      "pre-authorized_code",
+    );
+    return;
+  }
+
+  if (
+    options.accessTokenRequest.grant_type !== authorizationCodeGrantIdentifier
+  ) {
+    throw new Oauth2Error(
+      "Only authorization_code and pre-authorized_code grants can be verified",
+    );
+  }
+
+  if (
+    !options.expectedCode ||
+    options.grant.code !== options.expectedCode ||
+    options.accessTokenRequest.code !== options.grant.code
+  ) {
+    throw new Oauth2Error(`Invalid 'code' provided`);
+  }
+  verifyCodeExpiration(options.codeExpiresAt, options.now, "code");
+}
+
+function verifyTransactionCode(
+  txCode: string | undefined,
+  expectedTxCode: string | undefined,
+) {
+  if (txCode === expectedTxCode) return;
+
+  if (expectedTxCode === undefined) {
+    throw new Oauth2Error("Request contains 'tx_code' that was not expected");
+  }
+
+  if (txCode === undefined) {
+    throw new Oauth2Error("Missing required 'tx_code' in request");
+  }
+
+  throw new Oauth2Error("Invalid 'tx_code' provided");
+}
+
+function verifyCodeExpiration(
+  expiresAt: Date | undefined,
+  date: Date | undefined,
+  codeParameter: string,
+) {
+  if (!expiresAt) return;
+
+  if (Number.isNaN(expiresAt.getTime())) {
+    throw new Oauth2Error(`Invalid expiration date for '${codeParameter}'`);
+  }
+
+  const now = date ?? new Date();
+
+  if (now.getTime() > expiresAt.getTime()) {
+    throw new Oauth2Error(`Expired '${codeParameter}' provided`);
+  }
+}
+
+const dispatchVerifyAccessTokenRequest = createVersionDispatcher<
+  SupportedAccessTokenVerificationOptionsAPTITUDE,
+  Promise<VerifyAccessTokenRequestResult>
+>({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    verifyAccessTokenRequestAPTITUDE(
+      o as SupportedAccessTokenVerificationOptionsAPTITUDE,
+    ),
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    verifyAccessTokenRequestV1_4(o as VerifyAccessTokenRequestOptions),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    verifyAccessTokenRequestV1_4(o as VerifyAccessTokenRequestOptions),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    verifyAccessTokenRequestV1_4(o as VerifyAccessTokenRequestOptions),
+});
+
+/**
+ * Verifies an authorization-code or pre-authorized-code token request.
+ *
+ * Both grants retain the SDK's IT-Wallet DPoP and client attestation requirements:
+ * - PKCE verification against the stored code challenge for authorization-code requests only
+ * - DPoP proof JWT verification and JWK thumbprint extraction
+ * - Client attestation JWT and attestation PoP JWT verification
+ * - Authorization code or pre-authorized code validity and expiration checks
+ * - Transaction code verification when required by the credential offer
+ *
+ * The caller must enforce single-use redemption of codes atomically when issuing
+ * the token, and limit transaction-code attempts. This verifier does not store state.
+ * The upstream verifier allows optional DPoP and client attestation; the local
+ * implementation retains the SDK's required security checks and error types.
+ *
+ * * Version Differences:
+ * - APTITUDE: add support for pre-authorized-code grant type.
+ * *
+ * @param options - Configuration options for token request verification and version config
+ * @returns A promise that resolves with verified client attestation and DPoP information
+ * @throws {Oauth2Error} If the grant code is invalid or expired, or the transaction code is missing, unexpected or invalid
+ * @throws {Oauth2Error} If PKCE verification fails
+ * @throws {Oauth2Error} If DPoP verification fails
+ * @throws {Oauth2Error} If client attestation verification fails
+ *
+ * @example
+ * ```typescript
+ * const result = await verifyAccessTokenRequest({
+ *   accessTokenRequest: parsedRequest,
+ *   authorizationServerMetadata: metadata,
+ *   callbacks: { hash, verifyJwt },
+ *   clientAttestation: { jwt: "...", popJwt: "..." },
+ *   codeExpiresAt: new Date(Date.now() + 600000),
+ *   dpop: {
+ *     allowedSigningAlgs: ["ES256"],
+ *     expectedNonce: "server-issued-nonce",
+ *     jwt: dpopJwt,
+ *   },
+ *   expectedCode: "auth_code_123",
+ *   grant: parsedGrant,
+ *   pkce: { codeChallenge, codeChallengeMethod: "S256", codeVerifier },
+ *   request: httpRequest,
+ * });
+ * ```
+ */
+export function verifyAccessTokenRequest(
+  options:
+    | VerifyAccessTokenRequestOptions
+    | VerifyPreAuthorizedCodeAccessTokenRequestOptions,
+): Promise<VerifyAccessTokenRequestResult>;
+
+export function verifyAccessTokenRequest(
+  options: SupportedAccessTokenVerificationOptionsAPTITUDE,
+): Promise<VerifyAccessTokenRequestResult> {
+  return dispatchVerifyAccessTokenRequest(options);
 }

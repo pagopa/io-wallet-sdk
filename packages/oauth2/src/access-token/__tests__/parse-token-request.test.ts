@@ -1,8 +1,13 @@
 /* eslint-disable max-lines-per-function */
-import { RequestLike } from "@pagopa/io-wallet-utils";
+import {
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+  RequestLike,
+} from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
 
 import { Oauth2Error } from "../../errors";
+import { preAuthorizedCodeGrantIdentifier } from "../APTITUDE/z-grant-types";
 import { parseAccessTokenRequest } from "../parse-token-request";
 
 const VALID_DPOP_JWT =
@@ -30,6 +35,14 @@ function createValidHeaders(): Headers {
   return headers;
 }
 
+const v1_4Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
+const aptitudeConfig = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
+});
+
 describe("parseAccessTokenRequest", () => {
   describe("Authorization code grant", () => {
     it("should parse valid authorization code grant request", () => {
@@ -42,6 +55,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -70,12 +84,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow("Access token request validation failed");
@@ -91,12 +107,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow("Access token request validation failed");
@@ -112,12 +130,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow("Access token request validation failed");
@@ -134,6 +154,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -148,6 +169,109 @@ describe("parseAccessTokenRequest", () => {
     });
   });
 
+  describe("Pre-authorized code grant", () => {
+    it.each([undefined, "001234", "A+%&= code"])(
+      "parses a pre-authorized request with transaction code %s without requiring PKCE",
+      (txCode) => {
+        const accessTokenRequest = {
+          grant_type: preAuthorizedCodeGrantIdentifier,
+          "pre-authorized_code": "opaque%2F+&= code",
+          tx_code: txCode,
+        };
+
+        const result = parseAccessTokenRequest({
+          accessTokenRequest,
+          config: aptitudeConfig,
+          request: createMockRequest(createValidHeaders()),
+        });
+
+        expect(result.accessTokenRequest).toEqual(accessTokenRequest);
+        expect(result.grant).toEqual({
+          grantType: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+          preAuthorizedCode: "opaque%2F+&= code",
+          txCode,
+        });
+        expect("pkceCodeVerifier" in result).toBe(false);
+        expect(result.dpop.jwt).toBe(VALID_DPOP_JWT);
+        expect(result.clientAttestation).toEqual({
+          clientAttestationPopJwt: VALID_CLIENT_ATTESTATION_POP_JWT,
+          walletAttestationJwt: VALID_CLIENT_ATTESTATION_JWT,
+        });
+      },
+    );
+
+    it.each([undefined, "", null, 123456])(
+      "rejects a missing, empty or non-string pre-authorized code: %s",
+      (code) => {
+        expect(() =>
+          parseAccessTokenRequest({
+            accessTokenRequest: {
+              grant_type: preAuthorizedCodeGrantIdentifier,
+              "pre-authorized_code": code,
+            },
+            config: aptitudeConfig,
+            request: createMockRequest(createValidHeaders()),
+          }),
+        ).toThrow("Access token request validation failed");
+      },
+    );
+
+    it.each([123456, null, { length: 6 }])(
+      "rejects a non-string transaction code: %s",
+      (txCode) => {
+        expect(() =>
+          parseAccessTokenRequest({
+            accessTokenRequest: {
+              grant_type: preAuthorizedCodeGrantIdentifier,
+              "pre-authorized_code": "issuer-code",
+              tx_code: txCode,
+            },
+            config: aptitudeConfig,
+            request: createMockRequest(createValidHeaders()),
+          }),
+        ).toThrow("Access token request validation failed");
+      },
+    );
+
+    it("does not interpret authorization-code parameters as pre-authorized parameters", () => {
+      expect(() =>
+        parseAccessTokenRequest({
+          accessTokenRequest: {
+            code: "authorization-code",
+            code_verifier: "verifier",
+            grant_type: preAuthorizedCodeGrantIdentifier,
+            redirect_uri: "https://wallet.example.com/callback",
+          },
+          config: aptitudeConfig,
+          request: createMockRequest(createValidHeaders()),
+        }),
+      ).toThrow("Access token request validation failed");
+    });
+
+    it.each([
+      "DPoP",
+      "OAuth-Client-Attestation",
+      "OAuth-Client-Attestation-PoP",
+    ])(
+      "still requires the %s header for pre-authorized requests",
+      (headerName) => {
+        const headers = createValidHeaders();
+        headers.delete(headerName);
+
+        expect(() =>
+          parseAccessTokenRequest({
+            accessTokenRequest: {
+              grant_type: preAuthorizedCodeGrantIdentifier,
+              "pre-authorized_code": "issuer-code",
+            },
+            config: aptitudeConfig,
+            request: createMockRequest(headers),
+          }),
+        ).toThrow(Oauth2Error);
+      },
+    );
+  });
+
   describe("Refresh token grant", () => {
     it("should parse valid refresh token grant request", () => {
       const accessTokenRequest = {
@@ -157,6 +281,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -184,6 +309,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -202,12 +328,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow("Access token request validation failed");
@@ -222,6 +350,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -242,6 +371,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -262,6 +392,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -285,12 +416,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow("Access token request validation failed");
@@ -304,12 +437,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow("Access token request validation failed");
@@ -335,12 +470,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow("Request is missing required 'DPoP' header");
@@ -365,12 +502,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(
@@ -397,6 +536,7 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
@@ -422,12 +562,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(
@@ -450,12 +592,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(
@@ -482,12 +626,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(
@@ -511,12 +657,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(
@@ -538,12 +686,14 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(Oauth2Error);
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(headers),
         }),
       ).toThrow(
@@ -563,6 +713,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -577,6 +728,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -596,6 +748,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(createValidHeaders()),
       });
 
@@ -629,6 +782,7 @@ describe("parseAccessTokenRequest", () => {
 
       const result = parseAccessTokenRequest({
         accessTokenRequest,
+        config: v1_4Config,
         request: createMockRequest(headers),
       });
 
@@ -649,6 +803,7 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
@@ -665,6 +820,7 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);
@@ -681,6 +837,7 @@ describe("parseAccessTokenRequest", () => {
       expect(() =>
         parseAccessTokenRequest({
           accessTokenRequest,
+          config: v1_4Config,
           request: createMockRequest(createValidHeaders()),
         }),
       ).toThrow(Oauth2Error);

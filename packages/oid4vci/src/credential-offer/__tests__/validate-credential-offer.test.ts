@@ -6,6 +6,7 @@ import {
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type {
+  ValidateCredentialOfferOptionsAPTITUDE,
   ValidateCredentialOfferOptionsV1_3,
   ValidateCredentialOfferOptionsV1_4,
 } from "../types";
@@ -15,6 +16,10 @@ import type {
 } from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
+import {
+  CREDENTIAL_OFFER_GRANTS,
+  CredentialOfferAPTITUDE,
+} from "../APTITUDE/z-credential-offer";
 import { validateCredentialOffer } from "../validate-credential-offer";
 
 const v1_3Config = new IoWalletSdkConfig({
@@ -23,6 +28,10 @@ const v1_3Config = new IoWalletSdkConfig({
 
 const v1_4Config = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
+const aptitudeConfig = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
 });
 
 describe("validateCredentialOffer", () => {
@@ -537,6 +546,71 @@ describe("validateCredentialOffer", () => {
 
       await expect(validateCredentialOffer(options)).rejects.toThrow(
         "authorization_server 'https://unknown-auth.example.com' does not match Credential Issuer metadata",
+      );
+    });
+  });
+
+  // pre-authorized_code flow tests
+
+  describe("APTITUDE", () => {
+    const validAPTITUDEOffer: CredentialOfferAPTITUDE = {
+      credential_configuration_ids: ["UniversityDegree"],
+      credential_issuer: "https://issuer.example.com",
+      grants: {
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+          "pre-authorized_code": "pre-authorized-code-value",
+          tx_code: {},
+        },
+      },
+    };
+
+    const multipleGrantsAPTITUDEOffer = {
+      ...validAPTITUDEOffer,
+      grants: {
+        authorization_code: {
+          issuer_state: "eyJhbGciOiJSU0Et...zaEJ3w",
+        },
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+          "pre-authorized_code": "pre-authorized-code-value",
+        },
+      },
+    };
+
+    it("should validate a aptitude offer that carries no authorization_code grant", async () => {
+      const options: ValidateCredentialOfferOptionsAPTITUDE = {
+        config: aptitudeConfig,
+        credentialIssuerMetadata: {},
+        credentialOffer: validAPTITUDEOffer,
+        grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+      };
+
+      await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
+    });
+
+    it("should accept a credential that contains both authorization_code grant and pre-authorized_code grant", async () => {
+      const options: ValidateCredentialOfferOptionsAPTITUDE = {
+        config: aptitudeConfig,
+        credentialIssuerMetadata: {},
+        credentialOffer: multipleGrantsAPTITUDEOffer,
+        grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+      };
+
+      await expect(validateCredentialOffer(options)).resolves.toBeUndefined();
+    });
+
+    it("should reject an offer that carries no grant", async () => {
+      const options: ValidateCredentialOfferOptionsAPTITUDE = {
+        config: aptitudeConfig,
+        credentialIssuerMetadata: {},
+        credentialOffer: {
+          credential_configuration_ids: ["UniversityDegree"],
+          credential_issuer: "https://issuer.example.com",
+        } as unknown as CredentialOfferAPTITUDE,
+        grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+      };
+
+      await expect(validateCredentialOffer(options)).rejects.toThrow(
+        CredentialOfferError,
       );
     });
   });

@@ -2,31 +2,30 @@ import {
   CONTENT_TYPES,
   type CallbackContext,
   HEADERS,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,
+  createVersionDispatcher,
   hasStatusOrThrow,
   parseWithErrorHandling,
 } from "@pagopa/io-wallet-utils";
 
 import { FetchTokenResponseError } from "../errors";
+import { FetchTokenResponseOptionsAPTITUDE } from "./APTITUDE/fetch-token-response";
 import {
   AccessTokenRequest,
   AccessTokenResponse,
   zAccessTokenResponse,
 } from "./z-token";
 
-export interface FetchTokenResponseOptions {
+export interface BaseFetchTokenResponseOptions {
   /**
    * The endpoint URL where the access token request will be sent
    * This should be the authorization server's token endpoint
    */
   accessTokenEndpoint: string;
-
-  /**
-   * The access token request payload
-   */
-  accessTokenRequest: AccessTokenRequest;
 
   /**
    * Callbacks to use for requesting access token
@@ -38,6 +37,8 @@ export interface FetchTokenResponseOptions {
    * Used for OAuth-Client-Attestation-PoP header to prove possession of the client key
    */
   clientAttestationDPoP: string;
+
+  config: IoWalletSdkConfig;
 
   /**
    * DPoP proof for the token request
@@ -51,17 +52,20 @@ export interface FetchTokenResponseOptions {
   walletAttestation: string;
 }
 
-/**
- * Sends an access token request to the authorization server and returns the response
- *
- * @param options - Configuration options for the access token request
- * @returns Promise that resolves to the parsed access token response
- * @throws {UnexpectedStatusCodeError} When the server returns a non-200 status code
- * @throws {ValidationError} When the response cannot be parsed as a valid access token response
- * @throws {FetchTokenResponseError} When an unexpected error occurs during the request
- */
+export interface FetchTokenResponseOptionsV1_4 extends BaseFetchTokenResponseOptions {
+  /**
+   * The authorization-code or refresh-token request payload.
+   */
+  accessTokenRequest: AccessTokenRequest;
 
-export async function fetchTokenResponse(
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+}
+
+export type FetchTokenResponseOptions =
+  | FetchTokenResponseOptionsAPTITUDE
+  | FetchTokenResponseOptionsV1_4;
+
+async function fetchTokenResponseV1_4(
   options: FetchTokenResponseOptions,
 ): Promise<AccessTokenResponse> {
   try {
@@ -103,10 +107,15 @@ export async function fetchTokenResponse(
  * Object values are JSON-stringified so structured extension parameters such as
  * `authorization_details` can be sent in `application/x-www-form-urlencoded` requests.
  *
+ * Version Differences:
+ * - APTITUDE: extracts `authorization_server` (OPTIONAL), `pre-authorized_code` (REQUIRED), and `tx_code` (OPTIONAL)
+ *
  * @param data - Access token request payload.
  * @returns URLSearchParams containing all defined request fields.
  */
-export function toURLSearchParams(data: AccessTokenRequest): URLSearchParams {
+export function toURLSearchParams(
+  data: FetchTokenResponseOptions["accessTokenRequest"],
+): URLSearchParams {
   const params = new URLSearchParams();
 
   Object.entries(data).forEach(([key, value]) => {
@@ -119,4 +128,40 @@ export function toURLSearchParams(data: AccessTokenRequest): URLSearchParams {
   });
 
   return params;
+}
+
+const dispatchFetchTokenResponse = createVersionDispatcher<
+  FetchTokenResponseOptions,
+  Promise<AccessTokenResponse>
+>({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    fetchTokenResponseV1_4(o as FetchTokenResponseOptionsAPTITUDE),
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    fetchTokenResponseV1_4(o as FetchTokenResponseOptionsV1_4),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    fetchTokenResponseV1_4(o as FetchTokenResponseOptionsV1_4),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    fetchTokenResponseV1_4(o as FetchTokenResponseOptionsV1_4),
+});
+
+/**
+ * Sends an access token request to the authorization server and returns the response
+ *
+ * * Version Differences:
+ * - APTITUDE: add support for pre-authorized-code grant type.
+ *
+ * @param options - Configuration options for the access token request and version config.
+ * @returns Promise that resolves to the parsed access token response
+ * @throws {UnexpectedStatusCodeError} When the server returns a non-200 status code
+ * @throws {ValidationError} When the response cannot be parsed as a valid access token response
+ * @throws {FetchTokenResponseError} When an unexpected error occurs during the request
+ */
+export function fetchTokenResponse(
+  options: FetchTokenResponseOptionsAPTITUDE | FetchTokenResponseOptionsV1_4,
+): Promise<AccessTokenResponse>;
+
+export function fetchTokenResponse(
+  options: FetchTokenResponseOptions,
+): Promise<AccessTokenResponse> {
+  return dispatchFetchTokenResponse(options);
 }

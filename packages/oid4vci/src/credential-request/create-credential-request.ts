@@ -18,6 +18,8 @@ const dispatchCreateCredentialRequest = createVersionDispatcher<
   CredentialRequestOptions,
   Promise<CredentialRequest>
 >({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    V1_3.createCredentialRequest(o as V1_3.CredentialRequestOptionsV1_3),
   [ItWalletSpecsVersion.V1_0]: (o) =>
     V1_0.createCredentialRequest(o as V1_0.CredentialRequestOptionsV1_0),
   [ItWalletSpecsVersion.V1_3]: (o) =>

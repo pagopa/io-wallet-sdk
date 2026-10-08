@@ -1,14 +1,18 @@
 import {
   CONTENT_TYPES,
   HEADERS,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FetchTokenResponseError } from "../../errors";
+import { preAuthorizedCodeGrantIdentifier } from "../APTITUDE/z-grant-types";
+import { createTokenRequest } from "../create-token-request";
 import {
-  FetchTokenResponseOptions,
+  FetchTokenResponseOptionsV1_4,
   fetchTokenResponse,
   toURLSearchParams,
 } from "../fetch-token-response";
@@ -25,7 +29,15 @@ vi.mock("@pagopa/io-wallet-utils", async (importOriginal) => {
   };
 });
 
-const baseOptions: FetchTokenResponseOptions = {
+const v1_4Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
+const aptitudeConfig = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
+});
+
+const baseOptions: FetchTokenResponseOptionsV1_4 = {
   accessTokenEndpoint: "https://auth-server.example.com/token",
   accessTokenRequest: {
     code: "test-authorization-code",
@@ -37,8 +49,14 @@ const baseOptions: FetchTokenResponseOptions = {
     fetch: mockFetch,
   },
   clientAttestationDPoP: "test-client-attestation-dpop-jwt",
+  config: v1_4Config,
   dPoP: "test-dpop-proof-jwt",
   walletAttestation: "test-wallet-attestation-jwt",
+};
+
+const baseOptionsAPTITUDE = {
+  ...baseOptions,
+  config: aptitudeConfig,
 };
 
 describe("fetchTokenResponse - successful requests", () => {
@@ -104,7 +122,7 @@ describe("fetchTokenResponse - successful requests", () => {
     };
     mockFetch.mockResolvedValue(mockResponse);
 
-    const result = await fetchTokenResponse(baseOptions);
+    const result = await fetchTokenResponse({ ...baseOptions });
 
     expect(result).toEqual({
       access_token: "test-access-token",
@@ -136,6 +154,100 @@ describe("fetchTokenResponse - successful requests", () => {
       access_token: "test-access-token",
       token_type: "DPoP",
     });
+  });
+});
+
+describe("fetchTokenResponse - pre-authorized code", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it.each([undefined, "001234", "A+%&= code"])(
+    "sends a form request with transaction code %s and the required security headers",
+    async (txCode) => {
+      const authorizationDetails = [
+        {
+          credential_configuration_id: "EuropeanDisabilityCard",
+          locations: ["https://issuer.example.com"],
+          type: "openid_credential",
+        },
+      ];
+      const tokenResponse = {
+        access_token: "pre-authorized-access-token",
+        authorization_details: [
+          {
+            credential_configuration_id: "EuropeanDisabilityCard",
+            credential_identifiers: ["credential-dataset-1"],
+            type: "openid_credential",
+          },
+        ],
+        token_type: "DPoP",
+      };
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(tokenResponse)));
+      const accessTokenRequest = createTokenRequest({
+        additionalRequestPayload: {
+          authorization_details: authorizationDetails,
+        },
+        config: aptitudeConfig,
+        grantType: preAuthorizedCodeGrantIdentifier,
+        preAuthorizedCode: "opaque%2F+&= code",
+        txCode,
+      });
+
+      const result = await fetchTokenResponse({
+        ...baseOptionsAPTITUDE,
+        accessTokenRequest,
+      });
+
+      expect(result).toEqual(tokenResponse);
+      expect(mockFetch).toHaveBeenCalledExactlyOnceWith(
+        baseOptions.accessTokenEndpoint,
+        {
+          body: expect.any(URLSearchParams),
+          headers: {
+            [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.FORM_URLENCODED,
+            [HEADERS.DPOP]: baseOptions.dPoP,
+            [HEADERS.OAUTH_CLIENT_ATTESTATION]: baseOptions.walletAttestation,
+            [HEADERS.OAUTH_CLIENT_ATTESTATION_POP]:
+              baseOptions.clientAttestationDPoP,
+          },
+          method: "POST",
+        },
+      );
+      const body = mockFetch.mock.calls[0]?.[1].body as URLSearchParams;
+      const parameters = new URLSearchParams(body.toString());
+      expect(parameters.get("grant_type")).toBe(
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+      );
+      expect(parameters.get("pre-authorized_code")).toBe("opaque%2F+&= code");
+      expect(parameters.get("tx_code")).toBe(txCode ?? null);
+      expect(parameters.get("authorization_details")).toBe(
+        JSON.stringify(authorizationDetails),
+      );
+      expect(parameters.has("code")).toBe(false);
+      expect(parameters.has("code_verifier")).toBe(false);
+      expect(parameters.has("redirect_uri")).toBe(false);
+    },
+  );
+
+  it("propagates an invalid_grant response without retrying the code", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ error: "invalid_grant" }), {
+        headers: { "Content-Type": "application/json" },
+        status: 400,
+      }),
+    );
+
+    await expect(
+      fetchTokenResponse({
+        ...baseOptionsAPTITUDE,
+        accessTokenRequest: {
+          grant_type: preAuthorizedCodeGrantIdentifier,
+          "pre-authorized_code": "expired-code",
+        },
+      }),
+    ).rejects.toThrow(UnexpectedStatusCodeError);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 
