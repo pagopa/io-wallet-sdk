@@ -1,63 +1,34 @@
-/** Base error for EUDI trust operations. Underlying failures are kept in cause. */
 export class EudiTrustError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
+  code: string;
+  constructor(message: string, options?: { code: string } & ErrorOptions) {
     super(message, options);
+    this.code = options?.code ?? "GENERIC_ERROR";
     this.name = "EudiTrustError";
   }
 }
 
-/** Input cannot be decoded as the requested trust artifact. */
-export class EudiTrustParseError extends EudiTrustError {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "EudiTrustParseError";
-  }
-}
+export type LoTEErrorCode =
+  | "INVALID_BOOTSTRAP"
+  | "INVALID_LoTE"
+  | "INVALID_LoTE_POINTER"
+  | "LoTE_EXPIRED"
+  | "LoTE_FETCH_FAILED"
+  | "LoTE_FILE_CONFLICT"
+  | "LoTE_NOT_YET_VALID"
+  | "LoTE_SIGNATURE_VERIFICATION_FAILED"
+  | "LoTE_TRAVERSAL_LIMIT"
+  | "OJEU_LOCATION_INPUT_NOT_MATCHING_OJEU_LOCATION_IN_LoTE"
+  | "PIVOT_i_SIGNATURE_VERIFICATION_FAILED"
+  | "PIVOT_i-1_SIGNER_CERT_NOT_AUTHENTICATED_BY_PIVOT_i"
+  | "PIVOT_n_SIGNER_CERT_NOT_AUTHENTICATED_BY_OJEU"
+  | "UNEXPECTED_LoTE_TYPE";
 
-/** A list's structure or expected profile does not match its requirements. */
-export class EudiTrustProfileError extends EudiTrustError {
-  constructor(message: string, options?: ErrorOptions) {
+export class LoTEError extends EudiTrustError {
+  constructor(
+    message: string,
+    options: { code: LoTEErrorCode } & ErrorOptions,
+  ) {
     super(message, options);
-    this.name = "EudiTrustProfileError";
-  }
-}
-
-/** A required feature, algorithm or validation constraint is unsupported. */
-export class EudiTrustUnsupportedFeatureError extends EudiTrustError {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "EudiTrustUnsupportedFeatureError";
-  }
-}
-
-/** The supplied signature does not verify with the selected key. */
-export class EudiTrustSignatureError extends EudiTrustError {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "EudiTrustSignatureError";
-  }
-}
-
-/** The signer is not authorized by the configured trust source. */
-export class EudiTrustUntrustedSignerError extends EudiTrustError {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "EudiTrustUntrustedSignerError";
-  }
-}
-
-/** The list is outside its usable update interval. */
-export class EudiTrustFreshnessError extends EudiTrustError {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "EudiTrustFreshnessError";
-  }
-}
-
-/** No supplied certificate path satisfies the selected anchor and constraints. */
-export class EudiTrustCertificatePathError extends EudiTrustError {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "EudiTrustCertificatePathError";
+    this.name = "LoTEError";
   }
 }
