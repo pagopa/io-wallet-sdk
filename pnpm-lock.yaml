@@ -54,6 +54,15 @@ importers:
         specifier: ^3.2.4
         version: 3.2.6(yaml@2.9.0)
 
+  packages/eudi-trust:
+    dependencies:
+      '@pagopa/io-wallet-utils':
+        specifier: workspace:*
+        version: link:../utils
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+
   packages/oauth2:
     dependencies:
       '@pagopa/io-wallet-utils':
