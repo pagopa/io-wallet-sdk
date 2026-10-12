@@ -10,18 +10,22 @@ import {
   zRefreshTokenGrantIdentifier,
 } from "./z-grant-type";
 
+export const zAuthorizationCodeTokenRequest = z.object({
+  code: z.string().nonempty(),
+  code_verifier: z.string().nonempty(),
+  grant_type: zAuthorizationCodeGrantIdentifier,
+  redirect_uri: z.string().nonempty(),
+});
+
+export const zRefreshTokenTokenRequest = z.object({
+  grant_type: zRefreshTokenGrantIdentifier,
+  refresh_token: z.string().nonempty(),
+  scope: z.string().optional(),
+});
+
 export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
-  z.object({
-    code: z.string().nonempty(),
-    code_verifier: z.string().nonempty(),
-    grant_type: zAuthorizationCodeGrantIdentifier,
-    redirect_uri: z.string().nonempty(),
-  }),
-  z.object({
-    grant_type: zRefreshTokenGrantIdentifier,
-    refresh_token: z.string().nonempty(),
-    scope: z.string().optional(),
-  }),
+  zAuthorizationCodeTokenRequest,
+  zRefreshTokenTokenRequest,
 ]);
 
 export type AccessTokenRequest = z.infer<typeof zAccessTokenRequest>;

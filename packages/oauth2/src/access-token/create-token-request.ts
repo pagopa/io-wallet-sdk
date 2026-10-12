@@ -4,10 +4,7 @@ import {
   createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
 
-import {
-  CreateTokenRequestReturnType,
-  RetrieveAccessTokenOptionsAPTITUDE,
-} from "./APTITUDE/create-token-request";
+import { RetrieveAccessTokenOptionsAPTITUDE } from "./APTITUDE/create-token-request";
 import { preAuthorizedCodeGrantIdentifier } from "./APTITUDE/z-grant-types";
 import { PreAuthorizedCodeGrantType } from "./APTITUDE/z-token";
 import {
@@ -27,7 +24,7 @@ export interface BaseRetrieveAccessTokenOptions {
   config: IoWalletSdkConfig;
 }
 
-export interface RetrieveAccessTokenOptionsV1_4 extends BaseRetrieveAccessTokenOptions {
+export interface RetrieveAccessTokenOptionsAuthCode extends BaseRetrieveAccessTokenOptions {
   /**
    * The authorization code
    */
@@ -47,10 +44,15 @@ export interface RetrieveAccessTokenOptionsV1_4 extends BaseRetrieveAccessTokenO
    */
   redirectUri: string;
 }
+export type RetrieveAccessTokenOptionsV1_4 = RetrieveAccessTokenOptionsAuthCode;
 
 export type CreateTokenRequestOptions =
   | RetrieveAccessTokenOptionsAPTITUDE
   | RetrieveAccessTokenOptionsV1_4;
+
+export type CreateTokenRequestReturnType =
+  | AuthorizationCodeGrantType
+  | PreAuthorizedCodeGrantType;
 
 export const createTokenRequestV1_4 = (
   options: RetrieveAccessTokenOptionsV1_4,
@@ -64,7 +66,7 @@ export const createTokenRequestV1_4 = (
   }) satisfies AuthorizationCodeGrantType;
 
 export function createTokenRequestAPTITUDE(
-  options: RetrieveAccessTokenOptionsAPTITUDE | RetrieveAccessTokenOptionsV1_4,
+  options: RetrieveAccessTokenOptionsAPTITUDE,
 ): CreateTokenRequestReturnType {
   if (options.grantType === preAuthorizedCodeGrantIdentifier) {
     return {
@@ -93,14 +95,15 @@ const dispatchCreateTokenRequest = createVersionDispatcher<
 });
 
 /**
- * Creates an authorization-code or pre-authorized-code access token request body.
+ * Creates an authorization-code or pre-authorized_code access token request body.
  *
  * Authorization-code requests retain the existing default grant and require PKCE
  * and a redirect URI.
  *
- * - APTITUDE: this version differs for support of Pre-Authorized Code grant.
- * Pre-authorized requests use preAuthorizedCode and optional
- * txCode, without PKCE or a redirect URI.
+ *  * * Version Differences:
+ * - v1.4: only support authorization_code grant type.
+ * - APTITUDE: add support for pre-authorized_code grant type. Pre Authorized
+ *   requests use preAuthorizedCode and optional txCode, without PKCE or a redirect URI.
  *
  * @param options - Access token request inputs and version config.
  * @param options.additionalRequestPayload - Extra form fields to include in the token request.

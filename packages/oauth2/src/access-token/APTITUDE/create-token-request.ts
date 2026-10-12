@@ -1,9 +1,10 @@
-import { BaseRetrieveAccessTokenOptions } from "../create-token-request";
-import { AuthorizationCodeGrantType } from "../z-token";
+import {
+  BaseRetrieveAccessTokenOptions,
+  RetrieveAccessTokenOptionsAuthCode,
+} from "../create-token-request";
 import { PreAuthorizedCodeGrantIdentifier } from "./z-grant-types";
-import { PreAuthorizedCodeGrantType } from "./z-token";
 
-export interface RetrieveAccessTokenOptionsAPTITUDE extends BaseRetrieveAccessTokenOptions {
+export interface RetrieveAccessTokenOptionsPreAuthorizedCode extends BaseRetrieveAccessTokenOptions {
   /** The pre_authorized_code grant type. */
   grantType: PreAuthorizedCodeGrantIdentifier;
 
@@ -14,6 +15,6 @@ export interface RetrieveAccessTokenOptionsAPTITUDE extends BaseRetrieveAccessTo
   txCode?: string;
 }
 
-export type CreateTokenRequestReturnType =
-  | AuthorizationCodeGrantType
-  | PreAuthorizedCodeGrantType;
+export type RetrieveAccessTokenOptionsAPTITUDE =
+  | RetrieveAccessTokenOptionsAuthCode
+  | RetrieveAccessTokenOptionsPreAuthorizedCode;
