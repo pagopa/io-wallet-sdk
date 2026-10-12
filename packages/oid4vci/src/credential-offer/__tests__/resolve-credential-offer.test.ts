@@ -12,6 +12,10 @@ import type {
 } from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
+import {
+  CREDENTIAL_OFFER_GRANTS,
+  CredentialOfferAPTITUDE,
+} from "../APTITUDE/z-credential-offer";
 import { resolveCredentialOffer } from "../resolve-credential-offer";
 
 const mockFetch = vi.fn();
@@ -446,9 +450,11 @@ describe("resolveCredentialOffer", () => {
       });
 
       expect(result).toEqual(validV1_4Offer);
+
       expect(result.grants.authorization_code.issuer_state).toBe(
         "eyJhbGciOiJSU0Et...zaEJ3w",
       );
+
       expect("scope" in result.grants.authorization_code).toBe(false);
     });
 
@@ -487,6 +493,119 @@ describe("resolveCredentialOffer", () => {
           ...v1_4Options,
         }),
       ).rejects.toThrow(CredentialOfferError);
+    });
+
+    describe("APTITUDE", () => {
+      const aptitudeOptions = {
+        callbacks: {
+          fetch: mockFetch,
+        },
+        config: new IoWalletSdkConfig({
+          itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
+        }),
+      };
+
+      const validAPtitudeOffer: CredentialOfferAPTITUDE = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          authorization_code: {
+            issuer_state: "eyJhbGciOiJSU0Et...zaEJ3w",
+          },
+        },
+      };
+
+      const validAPtitudeOfferWithPreAuthorizedCode: CredentialOfferAPTITUDE = {
+        ...validAPtitudeOffer,
+        grants: {
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "oaKazRN8I0IbtZ0C7JuMn5",
+            tx_code: {
+              description:
+                "Please provide the one-time code that was sent via e-mail",
+              input_mode: "numeric",
+              length: 4,
+            },
+          },
+        },
+      };
+
+      /**
+       * this credential offer isn't valid because the urn:ietf:params:oauth:grant-type:pre-authorized_code
+       * grant is expecting a pre-authorized_code to be provided in grant details
+       */
+      const invalidAPtitudeOfferWithPreAuthorizedCode: CredentialOfferAPTITUDE =
+        {
+          ...validAPtitudeOffer,
+          grants: {
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+              tx_code: {
+                length: 4,
+              },
+            },
+          },
+        } as unknown as CredentialOfferAPTITUDE;
+
+      it("should resolve an APTITUDE offer with authorization_code grant", async () => {
+        const jsonString = JSON.stringify(validAPtitudeOffer);
+
+        const result = await resolveCredentialOffer({
+          credentialOffer: jsonString,
+          ...aptitudeOptions,
+        });
+
+        expect(result).toEqual(validAPtitudeOffer);
+
+        expect(
+          CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE in result.grants,
+        ).toBe(true);
+
+        expect("authorization_code" in result.grants).toBe(true);
+
+        if (!result.grants.authorization_code) return;
+
+        expect(result.grants.authorization_code.issuer_state).toBe(
+          "eyJhbGciOiJSU0Et...zaEJ3w",
+        );
+      });
+
+      it("should resolve an APTITUDE offer with pre-authorized_code grant", async () => {
+        const jsonString = JSON.stringify(
+          validAPtitudeOfferWithPreAuthorizedCode,
+        );
+
+        const result = await resolveCredentialOffer({
+          credentialOffer: jsonString,
+          ...aptitudeOptions,
+        });
+
+        expect(result).toEqual(validAPtitudeOfferWithPreAuthorizedCode);
+
+        expect(
+          CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE in result.grants,
+        ).toBe(true);
+
+        if (!result.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]) return;
+
+        expect(
+          result.grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE][
+            "pre-authorized_code"
+          ],
+        ).toBe("oaKazRN8I0IbtZ0C7JuMn5");
+      });
+
+      it("should reject an aptitude offer with pre-authorized_code grant without pre-authorized_code", async () => {
+        const jsonString = JSON.stringify(
+          invalidAPtitudeOfferWithPreAuthorizedCode,
+        );
+
+        await expect(
+          resolveCredentialOffer({
+            credentialOffer: jsonString,
+            ...aptitudeOptions,
+          }),
+        ).rejects.toThrow(CredentialOfferError);
+      });
     });
   });
 });

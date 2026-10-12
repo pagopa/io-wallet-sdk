@@ -9,6 +9,11 @@ import type {
   CredentialOfferV1_4,
 } from "./z-credential-offer";
 
+import {
+  CREDENTIAL_OFFER_GRANTS,
+  CredentialOfferAPTITUDE,
+} from "./APTITUDE/z-credential-offer";
+
 /**
  * Options for parsing a credential offer URI.
  *
@@ -105,6 +110,13 @@ export interface ResolveCredentialOfferOptionsV1_4 extends ResolveCredentialOffe
 }
 
 /**
+ * Options for resolving a credential offer against the APTITUDE schema.
+ */
+export interface ResolveCredentialOfferOptionsAPTITUDE extends ResolveCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+}
+
+/**
  * Base options shared across all validate-credential-offer versions.
  */
 interface BaseValidateCredentialOfferOptions {
@@ -137,7 +149,10 @@ export interface ValidateCredentialOfferOptions extends BaseValidateCredentialOf
   /**
    * The credential offer to validate against the configured IT-Wallet specification.
    */
-  credentialOffer: CredentialOfferV1_3 | CredentialOfferV1_4;
+  credentialOffer:
+    | CredentialOfferAPTITUDE
+    | CredentialOfferV1_3
+    | CredentialOfferV1_4;
 }
 
 /**
@@ -163,6 +178,23 @@ export interface ValidateCredentialOfferOptionsV1_4 extends ValidateCredentialOf
 }
 
 /**
+ * Options for validating an APTITUDE credential offer.
+ */
+export interface ValidateCredentialOfferOptionsAPTITUDE extends ValidateCredentialOfferOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+  /**
+   * The credential offer to validate against APTITUDE specifications.
+   */
+  credentialOffer: CredentialOfferAPTITUDE;
+
+  /**
+   * The grant type to validate against APTITUDE specifications.
+   * OPTIONAL, default is "authorization_code".
+   */
+  grantType?: CREDENTIAL_OFFER_GRANTS;
+}
+
+/**
  * Options for extracting grant details from a credential offer.
  */
 export interface ExtractGrantDetailsOptions {
@@ -170,7 +202,10 @@ export interface ExtractGrantDetailsOptions {
   /**
    * The credential offer to extract grant details from.
    */
-  credentialOffer: CredentialOfferV1_3 | CredentialOfferV1_4;
+  credentialOffer:
+    | CredentialOfferAPTITUDE
+    | CredentialOfferV1_3
+    | CredentialOfferV1_4;
 }
 
 /**
@@ -193,6 +228,17 @@ export interface ExtractGrantDetailsOptionsV1_4 extends ExtractGrantDetailsOptio
    * The credential offer to extract grant details from.
    */
   credentialOffer: CredentialOfferV1_4;
+}
+
+/**
+ * Options for extracting grant details from an  Aptitude credential offer.
+ */
+export interface ExtractGrantDetailsOptionsAPTITUDE extends ExtractGrantDetailsOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+  /**
+   * The credential offer to extract grant details from.
+   */
+  credentialOffer: CredentialOfferAPTITUDE;
 }
 
 /**
@@ -268,8 +314,100 @@ export interface ExtractGrantDetailsResultV1_4 {
 }
 
 /**
+ * Result of extracting grant details from an APTITUDE credential offer.
+ *
+ * It is an array of discriminated union objects: each element represents a single grant
+ * and is discriminated by `grantType` (either `authorization_code` or `urn:ietf:params:oauth:grant-type:pre-authorized_code`).
+ *
+ * Difference from v1.4:
+ * - Returns an array, since APTITUDE credential offers may contain multiple grants.
+ */
+export type ExtractGrantDetailsResultAPTITUDE = (
+  | {
+      /**
+       * Details of the authorization code grant.
+       */
+      authorizationCodeGrant: {
+        /**
+         * HTTPS URL of the Authorization Server.
+         * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
+         */
+        authorizationServer?: string;
+
+        /**
+         * String value representing the issuer state.
+         * OPTIONAL. Used to correlate the authorization request with the credential offer.
+         */
+        issuerState?: string;
+
+        /**
+         * Version 1.4 has dropped support for the scope field,
+         * But typescript inference might have trouble recognizing this fact
+         * in its union type, so this is needed
+         */
+        scope?: never;
+      };
+
+      /**
+       * The type of grant: authorization code flow.
+       */
+      grantType: CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE;
+    }
+  | {
+      /**
+       * The type of grant: pre-authorized code flow.
+       */
+      grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE;
+
+      /**
+       * Details of the pre-authorized code grant.
+       */
+      preAuthorizedCodeGrant: {
+        /**
+         * HTTPS URL of the Authorization Server.
+         * OPTIONAL, but REQUIRED when the Credential Issuer uses multiple Authorization Servers.
+         */
+        authorizationServer?: string;
+
+        /**
+         * REQUIRED. The code representing the Credential Issuer's authorization for
+         * the Wallet to obtain Credentials of a certain type.
+         */
+        preAuthorizedCode: string;
+
+        /**
+         * OPTIONAL. Object indicating that a Transaction Code is required if present, even if empty.
+         * It describes the requirements for a Transaction Code, which the Authorization Server expects
+         * the End-User to present along with the Token Request in a Pre-Authorized Code Flow.
+         * If the Authorization Server does not expect a Transaction Code, this object is absent.
+         */
+        txCode?: {
+          /**
+           * OPTIONAL. String containing guidance for the Holder
+           * of the Wallet on how to obtain the Transaction Code.
+           */
+          description?: string;
+
+          /**
+           * OPTIONAL. String specifying the input character set.
+           * Possible values are numeric (only digits) and text (any characters).
+           * The default is numeric.
+           */
+          inputMode?: "digit" | "numeric";
+
+          /**
+           * OPTIONAL. Integer specifying the length of the Transaction Code.
+           */
+          length?: number;
+        };
+      };
+    }
+)[];
+
+/**
  * Result of extracting grant details from a credential offer.
  */
 export type ExtractGrantDetailsResult =
+  | ExtractGrantDetailsResultAPTITUDE
   | ExtractGrantDetailsResultV1_3
   | ExtractGrantDetailsResultV1_4;

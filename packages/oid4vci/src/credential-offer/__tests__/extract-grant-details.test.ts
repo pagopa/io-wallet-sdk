@@ -11,6 +11,10 @@ import type {
 } from "../z-credential-offer";
 
 import { CredentialOfferError } from "../../errors";
+import {
+  CREDENTIAL_OFFER_GRANTS,
+  CredentialOfferAPTITUDE,
+} from "../APTITUDE/z-credential-offer";
 import { extractGrantDetails } from "../extract-grant-details";
 
 const v1_3Config = new IoWalletSdkConfig({
@@ -19,6 +23,10 @@ const v1_3Config = new IoWalletSdkConfig({
 
 const v1_4Config = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
+const aptitudeConfig = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
 });
 
 describe("extractGrantDetails", () => {
@@ -357,6 +365,187 @@ describe("extractGrantDetails", () => {
       expect(() =>
         extractGrantDetails({ config: v1_4Config, credentialOffer }),
       ).toThrow("authorization_code grant not found");
+    });
+  });
+
+  describe("APTITUDE", () => {
+    it("should extract grant details without scope for an APTITUDE offer", () => {
+      const credentialOffer: CredentialOfferAPTITUDE = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          authorization_code: {
+            authorization_server: "https://auth.issuer.example.com",
+            issuer_state: "state-value-123",
+          },
+        },
+      };
+
+      const grants = extractGrantDetails({
+        config: aptitudeConfig,
+        credentialOffer,
+      });
+
+      expect(grants).toHaveLength(1);
+
+      const result = grants[0];
+
+      expect(result).toBeDefined();
+
+      if (!result) return;
+
+      expect(result.grantType).toBe("authorization_code");
+
+      expect("authorizationCodeGrant" in result).toBe(true);
+
+      if (!("authorizationCodeGrant" in result)) return;
+
+      expect(result.authorizationCodeGrant?.authorizationServer).toBe(
+        "https://auth.issuer.example.com",
+      );
+      expect(result.authorizationCodeGrant?.issuerState).toBe(
+        "state-value-123",
+      );
+      expect("scope" in result.authorizationCodeGrant).toBe(false);
+    });
+
+    it("should accept a credential offer with pre-authorized code grant for an APTITUDE offer", () => {
+      const credentialOffer: CredentialOfferAPTITUDE = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "pre-authorized-code-value",
+          },
+        },
+      };
+
+      const grants = extractGrantDetails({
+        config: aptitudeConfig,
+        credentialOffer,
+      });
+
+      expect(grants).toHaveLength(1);
+
+      const result = grants[0];
+
+      expect(result).toBeDefined();
+
+      if (!result) return;
+
+      expect(result.grantType).toBe(
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+      );
+
+      expect("preAuthorizedCodeGrant" in result).toBe(true);
+
+      if (!("preAuthorizedCodeGrant" in result)) return;
+
+      expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
+        "pre-authorized-code-value",
+      );
+    });
+
+    it("should accept a credential offer with pre-authorized code grant with transaction code empty object for an APTITUDE offer", () => {
+      const credentialOffer: CredentialOfferAPTITUDE = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "pre-authorized-code-value",
+            tx_code: {},
+          },
+        },
+      };
+
+      const grants = extractGrantDetails({
+        config: aptitudeConfig,
+        credentialOffer,
+      });
+
+      const result = grants[0];
+
+      expect(result).toBeDefined();
+
+      if (!result) return;
+
+      expect("preAuthorizedCodeGrant" in result).toBe(true);
+
+      if (!("preAuthorizedCodeGrant" in result)) return;
+
+      expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
+        "pre-authorized-code-value",
+      );
+    });
+
+    it("should accept a credential offer with multiple grant types from an APTITUDE offer", () => {
+      const credentialOffer: CredentialOfferAPTITUDE = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {
+          authorization_code: {
+            authorization_server: "https://auth.issuer.example.com",
+            issuer_state: "state-value-123",
+          },
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "pre-authorized-code-value",
+          },
+        },
+      };
+
+      const grants = extractGrantDetails({
+        config: aptitudeConfig,
+        credentialOffer,
+      });
+
+      expect(grants).toHaveLength(2);
+
+      const preAuthGrant = grants.find(
+        (grant) =>
+          grant.grantType === CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+      );
+
+      expect(preAuthGrant).toBeDefined();
+
+      if (preAuthGrant) {
+        expect("preAuthorizedCodeGrant" in preAuthGrant).toBe(true);
+
+        expect(preAuthGrant.preAuthorizedCodeGrant.preAuthorizedCode).toBe(
+          "pre-authorized-code-value",
+        );
+      }
+
+      const authGrant = grants.find(
+        (grant) =>
+          grant.grantType === CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
+      );
+
+      expect(authGrant).toBeDefined();
+
+      if (authGrant) {
+        expect("authorizationCodeGrant" in authGrant).toBe(true);
+
+        expect(authGrant.authorizationCodeGrant?.authorizationServer).toBe(
+          "https://auth.issuer.example.com",
+        );
+        expect(authGrant.authorizationCodeGrant?.issuerState).toBe(
+          "state-value-123",
+        );
+      }
+    });
+
+    it("should throw CredentialOfferError when neither authorization_code nor pre authorized code grant is omitted for an APTITUDE offer", () => {
+      const credentialOffer = {
+        credential_configuration_ids: ["UniversityDegree"],
+        credential_issuer: "https://issuer.example.com",
+        grants: {},
+      } as unknown as CredentialOfferAPTITUDE;
+
+      expect(() =>
+        extractGrantDetails({ config: aptitudeConfig, credentialOffer }),
+      ).toThrow(
+        "either one of authorization_code or pre-authorized code grant is required",
+      );
     });
   });
 });

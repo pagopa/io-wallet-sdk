@@ -25,6 +25,10 @@ const dispatchCreateAuthorizationResponse = createVersionDispatcher<
   CreateAuthorizationResponseVersionedOptions,
   Promise<CreateAuthorizationResponseResult>
 >({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    V1_4.createAuthorizationResponse(
+      o as CreateAuthorizationResponseOptionsV1_4,
+    ),
   [ItWalletSpecsVersion.V1_0]: (o) =>
     // V1_0 shares the v1.3 response logic — JWKS / enc resolution is identical.
     V1_3.createAuthorizationResponse(

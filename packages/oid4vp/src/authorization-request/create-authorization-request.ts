@@ -44,7 +44,13 @@ export type JarOptionsV1_3 = BaseJarOptions<JwtSignerFederation | JwtSignerX5c>;
 
 export type JarOptionsV1_4 = JarOptionsV1_3;
 
-type JarOptions = JarOptionsV1_0 | JarOptionsV1_3 | JarOptionsV1_4;
+export type JarOptionsAPTITUDE = JarOptionsV1_4;
+
+type JarOptions =
+  | JarOptionsAPTITUDE
+  | JarOptionsV1_0
+  | JarOptionsV1_3
+  | JarOptionsV1_4;
 
 interface BaseCreateAuthorizationRequestOptions<
   V extends ItWalletSpecsVersion,
@@ -98,7 +104,14 @@ export type CreateAuthorizationRequestOptionsV1_4 =
     JarOptionsV1_4
   >;
 
+export type CreateAuthorizationRequestOptionsAPTITUDE =
+  BaseCreateAuthorizationRequestOptions<
+    ItWalletSpecsVersion.APTITUDE,
+    JarOptionsAPTITUDE
+  >;
+
 export type CreateAuthorizationRequestOptions =
+  | CreateAuthorizationRequestOptionsAPTITUDE
   | CreateAuthorizationRequestOptionsV1_0
   | CreateAuthorizationRequestOptionsV1_3
   | CreateAuthorizationRequestOptionsV1_4;
@@ -119,7 +132,11 @@ export type CreateAuthorizationRequestResultV1_3 =
 export type CreateAuthorizationRequestResultV1_4 =
   BaseCreateAuthorizationRequestResult<JarOptionsV1_4>;
 
+export type CreateAuthorizationRequestResultAPTITUDE =
+  BaseCreateAuthorizationRequestResult<JarOptionsAPTITUDE>;
+
 export type CreateAuthorizationRequestResult =
+  | CreateAuthorizationRequestResultAPTITUDE
   | CreateAuthorizationRequestResultV1_0
   | CreateAuthorizationRequestResultV1_3
   | CreateAuthorizationRequestResultV1_4;
@@ -139,6 +156,11 @@ const dispatchCreateAuthorizationRequest = createVersionDispatcher<
   CreateAuthorizationRequestOptions,
   Promise<CreateAuthorizationRequestResult>
 >({
+  [ItWalletSpecsVersion.APTITUDE]: async (o) =>
+    createAuthorizationRequestWithHeader(
+      o as CreateAuthorizationRequestOptionsAPTITUDE,
+      zOpenid4vpAuthorizationRequestHeaderV1_3,
+    ),
   [ItWalletSpecsVersion.V1_0]: async (o) =>
     createAuthorizationRequestWithHeader(
       o as CreateAuthorizationRequestOptionsV1_0,

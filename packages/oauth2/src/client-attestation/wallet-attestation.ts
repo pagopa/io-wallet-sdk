@@ -29,6 +29,8 @@ const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
   VerifyWalletAttestationJwtOptions,
   Promise<VerifiedWalletAttestationJwt>
 >({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    verifyWalletAttestationJwtV1_4(o as VerifyWalletAttestationJwtOptionsV1_4),
   [ItWalletSpecsVersion.V1_0]: (o) =>
     verifyWalletAttestationJwtV1_0(o as VerifyWalletAttestationJwtOptionsV1_0),
   [ItWalletSpecsVersion.V1_3]: (o) =>

@@ -17,6 +17,7 @@ describe("createVersionDispatcher", () => {
     const v1_3Handler = vi.fn().mockReturnValue("result-v1.3");
 
     const dispatch = createVersionDispatcher({
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -34,6 +35,7 @@ describe("createVersionDispatcher", () => {
     const v1_3Handler = vi.fn().mockReturnValue("result-v1.3");
 
     const dispatch = createVersionDispatcher({
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -50,6 +52,7 @@ describe("createVersionDispatcher", () => {
     const v1_4Handler = vi.fn().mockReturnValue("result-v1.4");
 
     const dispatch = createVersionDispatcher({
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: v1_4Handler,
@@ -61,6 +64,22 @@ describe("createVersionDispatcher", () => {
     expect(v1_4Handler).toHaveBeenCalledOnce();
   });
 
+  it("calls the APTITUDE handler when config version is APTITUDE", () => {
+    const APTITUDEHandler = vi.fn().mockReturnValue("result-aptitude");
+
+    const dispatch = createVersionDispatcher({
+      [ItWalletSpecsVersion.APTITUDE]: APTITUDEHandler,
+      [ItWalletSpecsVersion.V1_0]: vi.fn(),
+      [ItWalletSpecsVersion.V1_3]: vi.fn(),
+      [ItWalletSpecsVersion.V1_4]: vi.fn(),
+    });
+
+    const result = dispatch(makeOptions(ItWalletSpecsVersion.APTITUDE));
+
+    expect(result).toBe("result-aptitude");
+    expect(APTITUDEHandler).toHaveBeenCalledOnce();
+  });
+
   it("works correctly with async handlers returning Promise<T>", async () => {
     const v1_0Handler = vi.fn().mockResolvedValue("async-result-v1.0");
 
@@ -68,6 +87,7 @@ describe("createVersionDispatcher", () => {
       ReturnType<typeof makeOptions>,
       Promise<string>
     >({
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -82,6 +102,7 @@ describe("createVersionDispatcher", () => {
   it("passes the options object to the selected handler", () => {
     const handler = vi.fn().mockReturnValue("ok");
     const dispatch = createVersionDispatcher({
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -95,6 +116,7 @@ describe("createVersionDispatcher", () => {
 
   it("throws ItWalletSpecsVersionError when an unknown version is supplied via unsafe enum cast", () => {
     const dispatch = createVersionDispatcher({
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -115,6 +137,7 @@ describe("dispatchByVersion", () => {
     const v1_3Handler = vi.fn().mockReturnValue("v1.3");
 
     const result = dispatchByVersion(ItWalletSpecsVersion.V1_0, {
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -129,6 +152,7 @@ describe("dispatchByVersion", () => {
     const v1_3Handler = vi.fn().mockReturnValue("v1.3");
 
     const result = dispatchByVersion(ItWalletSpecsVersion.V1_3, {
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -142,6 +166,7 @@ describe("dispatchByVersion", () => {
     const v1_4Handler = vi.fn().mockReturnValue("v1.4");
 
     const result = dispatchByVersion(ItWalletSpecsVersion.V1_4, {
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: v1_4Handler,
@@ -151,10 +176,25 @@ describe("dispatchByVersion", () => {
     expect(v1_4Handler).toHaveBeenCalledOnce();
   });
 
+  it("calls the APTITUDE handler when version is APTITUDE", () => {
+    const APTITUDEHandler = vi.fn().mockReturnValue("aptitude");
+
+    const result = dispatchByVersion(ItWalletSpecsVersion.APTITUDE, {
+      [ItWalletSpecsVersion.APTITUDE]: APTITUDEHandler,
+      [ItWalletSpecsVersion.V1_0]: vi.fn(),
+      [ItWalletSpecsVersion.V1_3]: vi.fn(),
+      [ItWalletSpecsVersion.V1_4]: vi.fn(),
+    });
+
+    expect(result).toBe("aptitude");
+    expect(APTITUDEHandler).toHaveBeenCalledOnce();
+  });
+
   it("works correctly with async handlers", async () => {
     const asyncHandler = vi.fn().mockResolvedValue("async-result");
 
     const result = await dispatchByVersion(ItWalletSpecsVersion.V1_0, {
+      [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
       [ItWalletSpecsVersion.V1_0]: asyncHandler,
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
@@ -169,6 +209,7 @@ describe("dispatchByVersion", () => {
 
     expect(() =>
       dispatchByVersion(unknownVersion, {
+        [ItWalletSpecsVersion.APTITUDE]: vi.fn(),
         [ItWalletSpecsVersion.V1_0]: vi.fn(),
         [ItWalletSpecsVersion.V1_3]: vi.fn(),
         [ItWalletSpecsVersion.V1_4]: vi.fn(),

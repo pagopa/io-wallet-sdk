@@ -244,7 +244,7 @@ export class WalletProvider {
    *   status: { status_list: { idx: 2, uri: "https://status.example.com" } } // Optional
    * });
    *
-   * @example v1.4 - Wallet attestation with required wallet_link and wallet_name
+   * @example v1.4, APTITUDE - Wallet attestation with required wallet_link and wallet_name
    * const jwt = await provider.createItWalletAttestationJwt({
    *   callbacks: { hash: myHashCallback, signJwt: mySignJwtCallback },
    *   dpopJwkPublic: myJwk,
@@ -266,6 +266,18 @@ export class WalletProvider {
     options: WalletAttestationOptions,
   ): Promise<string> {
     return dispatchByVersion(this.specVersion, {
+      [ItWalletSpecsVersion.APTITUDE]: () => {
+        assertV1_4Options(options);
+        return createWalletAttestationJwtV1_4({
+          callbacks: options.callbacks,
+          dpopJwkPublic: options.dpopJwkPublic,
+          expiresAt: options.expiresAt,
+          issuer: options.issuer,
+          signer: options.signer,
+          walletLink: options.walletLink,
+          walletName: options.walletName,
+        });
+      },
       [ItWalletSpecsVersion.V1_0]: () => {
         assertV1_0Options(options);
         return createWalletAttestationJwtV1_0({
