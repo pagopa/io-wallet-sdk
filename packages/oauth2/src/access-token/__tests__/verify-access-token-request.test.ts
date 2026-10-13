@@ -13,12 +13,12 @@ import type { BaseAuthorizationServerMetadata } from "../../authorization-server
 
 import { Oauth2Error } from "../../errors";
 import { PkceCodeChallengeMethod } from "../../pkce";
-import { VerifyPreAuthorizedCodeAccessTokenRequestOptions } from "../APTITUDE/verify-access-token-request";
-import { preAuthorizedCodeGrantIdentifier } from "../APTITUDE/z-grant-types";
+import { VerifyPreAuthorizedCodeAccessTokenRequestOptions } from "../verify-access-token-request";
 import {
   VerifyAccessTokenRequestOptions,
   verifyAccessTokenRequest,
 } from "../verify-access-token-request";
+import { preAuthorizedCodeGrantIdentifier } from "../z-grant-type";
 
 describe("verifyAccessTokenRequest", () => {
   const mockJwk: Jwk = {

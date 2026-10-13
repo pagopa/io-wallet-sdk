@@ -7,8 +7,15 @@ import { z } from "zod";
 
 import {
   zAuthorizationCodeGrantIdentifier,
+  zPreAuthorizedCodeGrantIdentifier,
   zRefreshTokenGrantIdentifier,
 } from "./z-grant-type";
+
+export const zPreAuthorizedCodeTokenRequest = z.object({
+  grant_type: zPreAuthorizedCodeGrantIdentifier,
+  "pre-authorized_code": z.string().nonempty(),
+  tx_code: z.string().optional(),
+});
 
 export const zAuthorizationCodeTokenRequest = z.object({
   code: z.string().nonempty(),
@@ -30,9 +37,24 @@ export const zAccessTokenRequest = z.discriminatedUnion("grant_type", [
 
 export type AccessTokenRequest = z.infer<typeof zAccessTokenRequest>;
 
+export const zAccessTokenRequestAPTITUDE = z.discriminatedUnion("grant_type", [
+  zAuthorizationCodeTokenRequest,
+  zRefreshTokenTokenRequest,
+  zPreAuthorizedCodeTokenRequest,
+]);
+
+export type AccessTokenRequestAPTITUDE = z.infer<
+  typeof zAccessTokenRequestAPTITUDE
+>;
+
 export type AuthorizationCodeGrantType = Extract<
   AccessTokenRequest,
   { grant_type: "authorization_code" }
+>;
+
+export type PreAuthorizedCodeGrantType = Extract<
+  AccessTokenRequestAPTITUDE,
+  { grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code" }
 >;
 
 export type RefreshTokenGrantType = Extract<

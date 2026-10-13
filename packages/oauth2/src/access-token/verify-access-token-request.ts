@@ -19,13 +19,14 @@ import { Oauth2Error } from "../errors";
 import { PkceCodeChallengeMethod, verifyPkce } from "../pkce";
 import { verifyTokenDPoP } from "../token-dpop/verify-token-dpop";
 import {
-  SupportedAccessTokenVerificationOptionsAPTITUDE,
-  VerifyPreAuthorizedCodeAccessTokenRequestOptions,
-} from "./APTITUDE/verify-access-token-request";
-import { preAuthorizedCodeGrantIdentifier } from "./APTITUDE/z-grant-types";
-import { ParsedAccessTokenAuthorizationCodeRequestGrant } from "./parse-token-request";
-import { authorizationCodeGrantIdentifier } from "./z-grant-type";
-import { AccessTokenRequest } from "./z-token";
+  ParsedAccessTokenAuthorizationCodeRequestGrant,
+  ParsedAccessTokenPreAuthorizedCodeRequestGrant,
+} from "./parse-token-request";
+import {
+  authorizationCodeGrantIdentifier,
+  preAuthorizedCodeGrantIdentifier,
+} from "./z-grant-type";
+import { AccessTokenRequest, PreAuthorizedCodeGrantType } from "./z-token";
 
 export interface VerifyAccessTokenRequestPkce {
   codeChallenge: string;
@@ -127,6 +128,31 @@ export interface VerifyAccessTokenRequestOptions extends BaseVerifyAccessTokenRe
    */
   pkce: VerifyAccessTokenRequestPkce;
 }
+
+export interface VerifyPreAuthorizedCodeAccessTokenRequestOptions extends BaseVerifyAccessTokenRequestOptions {
+  /**
+   * The access token request to verify
+   */
+  accessTokenRequest: PreAuthorizedCodeGrantType;
+
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+
+  /** The pre-authorized code stored by the authorization server. */
+  expectedPreAuthorizedCode: string;
+
+  /** The stored transaction code, if one was required by the credential offer. */
+  expectedTxCode?: string;
+
+  /** The parsed pre-authorized code grant */
+  grant: ParsedAccessTokenPreAuthorizedCodeRequestGrant;
+
+  /** The expiration date stored with the pre-authorized code. */
+  preAuthorizedCodeExpiresAt?: Date;
+}
+
+export type SupportedAccessTokenVerificationOptionsAPTITUDE =
+  | VerifyAccessTokenRequestOptions
+  | VerifyPreAuthorizedCodeAccessTokenRequestOptions;
 
 export interface VerifyAccessTokenRequestResult {
   clientAttestation: {

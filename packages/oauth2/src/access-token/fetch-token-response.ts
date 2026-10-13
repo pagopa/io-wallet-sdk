@@ -13,9 +13,9 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { FetchTokenResponseError } from "../errors";
-import { FetchTokenResponseOptionsAPTITUDE } from "./APTITUDE/fetch-token-response";
 import {
   AccessTokenRequest,
+  AccessTokenRequestAPTITUDE,
   AccessTokenResponse,
   zAccessTokenResponse,
 } from "./z-token";
@@ -59,6 +59,15 @@ export interface FetchTokenResponseOptionsV1_4 extends BaseFetchTokenResponseOpt
   accessTokenRequest: AccessTokenRequest;
 
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+}
+
+export interface FetchTokenResponseOptionsAPTITUDE extends BaseFetchTokenResponseOptions {
+  /**
+   * The authorization-code, pre-authorized-code or refresh-token request payload.
+   */
+  accessTokenRequest: AccessTokenRequestAPTITUDE;
+
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
 }
 
 export type FetchTokenResponseOptions =

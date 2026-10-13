@@ -4,14 +4,16 @@ import {
   createVersionDispatcher,
 } from "@pagopa/io-wallet-utils";
 
-import { RetrieveAccessTokenOptionsAPTITUDE } from "./APTITUDE/create-token-request";
-import { preAuthorizedCodeGrantIdentifier } from "./APTITUDE/z-grant-types";
-import { PreAuthorizedCodeGrantType } from "./APTITUDE/z-token";
 import {
   AuthorizationCodeGrantIdentifier,
+  PreAuthorizedCodeGrantIdentifier,
   authorizationCodeGrantIdentifier,
+  preAuthorizedCodeGrantIdentifier,
 } from "./z-grant-type";
-import { AuthorizationCodeGrantType } from "./z-token";
+import {
+  AuthorizationCodeGrantType,
+  PreAuthorizedCodeGrantType,
+} from "./z-token";
 
 export interface BaseRetrieveAccessTokenOptions {
   /**
@@ -46,6 +48,21 @@ export interface RetrieveAccessTokenOptionsAuthCode extends BaseRetrieveAccessTo
 }
 export type RetrieveAccessTokenOptionsV1_4 = RetrieveAccessTokenOptionsAuthCode;
 
+export interface RetrieveAccessTokenOptionsPreAuthorizedCode extends BaseRetrieveAccessTokenOptions {
+  /** The pre_authorized_code grant type. */
+  grantType: PreAuthorizedCodeGrantIdentifier;
+
+  /** The pre-authorized code received in the credential offer. */
+  preAuthorizedCode: string;
+
+  /** Required when the credential offer contains a tx_code object. */
+  txCode?: string;
+}
+
+export type RetrieveAccessTokenOptionsAPTITUDE =
+  | RetrieveAccessTokenOptionsAuthCode
+  | RetrieveAccessTokenOptionsPreAuthorizedCode;
+
 export type CreateTokenRequestOptions =
   | RetrieveAccessTokenOptionsAPTITUDE
   | RetrieveAccessTokenOptionsV1_4;
@@ -56,7 +73,7 @@ export type CreateTokenRequestReturnType =
 
 export const createTokenRequestV1_4 = (
   options: RetrieveAccessTokenOptionsV1_4,
-) =>
+): AuthorizationCodeGrantType =>
   ({
     ...options.additionalRequestPayload,
     code: options.authorizationCode,
@@ -85,7 +102,7 @@ const dispatchCreateTokenRequest = createVersionDispatcher<
   CreateTokenRequestReturnType
 >({
   [ItWalletSpecsVersion.APTITUDE]: (o) =>
-    createTokenRequestAPTITUDE(o as CreateTokenRequestOptions),
+    createTokenRequestAPTITUDE(o as RetrieveAccessTokenOptionsAPTITUDE),
   [ItWalletSpecsVersion.V1_0]: (o) =>
     createTokenRequestV1_4(o as RetrieveAccessTokenOptionsV1_4),
   [ItWalletSpecsVersion.V1_3]: (o) =>

@@ -4,10 +4,10 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { describe, expect, it } from "vitest";
 
-import { preAuthorizedCodeGrantIdentifier } from "../APTITUDE/z-grant-types";
-import { zAccessTokenRequestAPTITUDE } from "../APTITUDE/z-token";
 import { createTokenRequest } from "../create-token-request";
+import { preAuthorizedCodeGrantIdentifier } from "../z-grant-type";
 import { authorizationCodeGrantIdentifier } from "../z-grant-type";
+import { zAccessTokenRequestAPTITUDE } from "../z-token";
 import { zAccessTokenRequest } from "../z-token";
 
 const v1_4Config = new IoWalletSdkConfig({

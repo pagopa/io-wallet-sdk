@@ -11,22 +11,19 @@ import { extractClientAttestationJwtsFromHeaders } from "../client-attestation/w
 import { Oauth2Error } from "../errors";
 import { extractDpopJwtFromHeaders } from "../token-dpop/create-token-dpop";
 import {
-  ParseAccessTokenRequestOptionsAPTITUDE,
-  ParseAccessTokenRequestResultAPTITUDE,
-  ParsedAccessTokenRequestGrantAPTITUDE,
-} from "./APTITUDE/parse-token-request";
-import { preAuthorizedCodeGrantIdentifier } from "./APTITUDE/z-grant-types";
-import {
-  AccessTokenRequestAPTITUDE,
-  zAccessTokenRequestAPTITUDE,
-} from "./APTITUDE/z-token";
-import {
   AuthorizationCodeGrantIdentifier,
+  PreAuthorizedCodeGrantIdentifier,
   RefreshTokenGrantIdentifier,
   authorizationCodeGrantIdentifier,
+  preAuthorizedCodeGrantIdentifier,
   refreshTokenGrantIdentifier,
 } from "./z-grant-type";
-import { AccessTokenRequest, zAccessTokenRequest } from "./z-token";
+import {
+  AccessTokenRequest,
+  AccessTokenRequestAPTITUDE,
+  zAccessTokenRequest,
+  zAccessTokenRequestAPTITUDE,
+} from "./z-token";
 
 export interface ParsedAccessTokenAuthorizationCodeRequestGrant {
   code: string;
@@ -38,8 +35,19 @@ export interface ParsedAccessTokenRefreshTokenRequestGrant {
   refreshToken: string;
 }
 
-export type ParsedAccessTokenRequestGrant =
+export interface ParsedAccessTokenPreAuthorizedCodeRequestGrant {
+  grantType: PreAuthorizedCodeGrantIdentifier;
+  preAuthorizedCode: string;
+  txCode?: string;
+}
+
+export type ParsedAccessTokenRequestGrantV1_4 =
   | ParsedAccessTokenAuthorizationCodeRequestGrant
+  | ParsedAccessTokenRefreshTokenRequestGrant;
+
+export type ParsedAccessTokenRequestGrantAPTITUDE =
+  | ParsedAccessTokenAuthorizationCodeRequestGrant
+  | ParsedAccessTokenPreAuthorizedCodeRequestGrant
   | ParsedAccessTokenRefreshTokenRequestGrant;
 
 export interface BaseParseAccessTokenRequestResult {
@@ -62,12 +70,18 @@ export interface BaseParseAccessTokenRequestResult {
 export interface ParseAccessTokenRequestResultV1_4 extends BaseParseAccessTokenRequestResult {
   accessTokenRequest: AccessTokenRequest;
 
-  grant: ParsedAccessTokenRequestGrant;
+  grant: ParsedAccessTokenRequestGrantV1_4;
 
   /**
    * The pkce code verifier from the access token request
    */
   pkceCodeVerifier?: string;
+}
+
+export interface ParseAccessTokenRequestResultAPTITUDE extends BaseParseAccessTokenRequestResult {
+  accessTokenRequest: AccessTokenRequestAPTITUDE;
+
+  grant: ParsedAccessTokenRequestGrantAPTITUDE;
 }
 
 export interface ParseAccessTokenRequestOptions {
@@ -87,6 +101,13 @@ export interface ParseAccessTokenRequestOptionsV1_4 extends ParseAccessTokenRequ
    * The IT-Wallet specs version to use for parsing the access token request.
    */
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+}
+
+export interface ParseAccessTokenRequestOptionsAPTITUDE extends ParseAccessTokenRequestOptions {
+  /**
+   * The IT-Wallet specs version to use for parsing the access token request.
+   */
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
 }
 
 export type ParseAccessTokenRequestResult =
@@ -158,7 +179,7 @@ function parseAccessTokenRequestAPTITUDE(
  */
 function parseGrantParameters(
   accessTokenRequest: AccessTokenRequest,
-): ParsedAccessTokenRequestGrant {
+): ParsedAccessTokenRequestGrantV1_4 {
   if (accessTokenRequest.grant_type === authorizationCodeGrantIdentifier) {
     return {
       code: accessTokenRequest.code,

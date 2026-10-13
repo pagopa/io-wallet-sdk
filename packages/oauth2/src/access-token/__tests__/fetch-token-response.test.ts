@@ -9,13 +9,13 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FetchTokenResponseError } from "../../errors";
-import { preAuthorizedCodeGrantIdentifier } from "../APTITUDE/z-grant-types";
 import { createTokenRequest } from "../create-token-request";
 import {
   FetchTokenResponseOptionsV1_4,
   fetchTokenResponse,
   toURLSearchParams,
 } from "../fetch-token-response";
+import { preAuthorizedCodeGrantIdentifier } from "../z-grant-type";
 import { AccessTokenRequest } from "../z-token";
 
 const mockFetch = vi.fn();

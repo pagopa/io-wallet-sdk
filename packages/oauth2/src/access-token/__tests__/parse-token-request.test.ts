@@ -7,8 +7,8 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { Oauth2Error } from "../../errors";
-import { preAuthorizedCodeGrantIdentifier } from "../APTITUDE/z-grant-types";
 import { parseAccessTokenRequest } from "../parse-token-request";
+import { preAuthorizedCodeGrantIdentifier } from "../z-grant-type";
 
 const VALID_DPOP_JWT =
   "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0In0.eyJodG0iOiJQT1NUIiwiaHR1IjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZS5jb20iLCJpYXQiOjE2NDQ5OTk5OTksImp0aSI6InRlc3QtanRpIn0.signature";
