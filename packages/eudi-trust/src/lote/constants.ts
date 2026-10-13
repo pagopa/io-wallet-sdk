@@ -27,3 +27,6 @@ export const LOTE_TYPES = {
   [LoTEProfile.mDLProvidersList]:
     "http://trust.ec.europa.eu/lists/mDL/mDLProvidersListType",
 } as const;
+
+/** SDK resource safeguard, not a limit imposed by IT-Wallet or ETSI. */
+export const MAX_LOTE_PIVOTS = 100;

@@ -6,9 +6,14 @@ import {
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { EudiTrustError } from "../errors";
-import { LOTE_TYPES, LoTEProfile } from "./constants";
-import { zLoTEJwtHeader } from "./z-lote";
+import { EudiTrustError, LoTEError } from "../errors";
+import { LoTEProfile, MAX_LOTE_PIVOTS } from "./constants";
+import {
+  LoTE,
+  LoTEDocument,
+  LoTEJwtHeader,
+  zLoTEJwtHeader,
+} from "./z-lote";
 import {
   zEAAProvidersList,
   zMDLProvidersList,
@@ -37,7 +42,7 @@ export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
     !contentType?.includes("application/jwt")
   ) {
     throw new EudiTrustError(
-      `Unsupported LoTE format ${contentType}: only JWT is currently supported.`,
+      `Unsupported content type ${contentType}: expected jose or jwt`,
     );
   }
 
@@ -45,53 +50,64 @@ export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
   return (await response.text()).trim();
 }
 
+const profilesConfig: Record<LoTEProfile, z.ZodType<LoTEDocument>> = {
+  [LoTEProfile.EUEAAProvidersList]: zEAAProvidersList,
+  [LoTEProfile.EUPIDProvidersList]: zPIDProvidersList,
+  [LoTEProfile.EUPubEAAProvidersList]: zPubEAAProvidersList,
+  [LoTEProfile.EUWRPACProvidersList]: zWRPACProvidersList,
+  [LoTEProfile.EUWRPRCProvidersList]: zWRPRCProvidersList,
+  [LoTEProfile.EUWalletProvidersList]: zWalletProvidersList,
+  [LoTEProfile.mDLProvidersList]: zMDLProvidersList,
+};
+
 interface FetchAndValidateLoTEOptions {
   callbacks: Pick<CallbackContext, "fetch">;
+  /**
+   * The URL to the latest Official Journal of the European Union publication.
+   */
+  ojeuUrl: string;
   profile: LoTEProfile;
   url: string;
 }
 
-const profileConfig: Record<
-  LoTEProfile,
-  { loTEType: string; schema: z.ZodType }
-> = {
-  [LoTEProfile.EUEAAProvidersList]: {
-    loTEType: LOTE_TYPES.EUEAAProvidersList,
-    schema: zEAAProvidersList,
-  },
-  [LoTEProfile.EUPIDProvidersList]: {
-    loTEType: LOTE_TYPES.EUPIDProvidersList,
-    schema: zPIDProvidersList,
-  },
-  [LoTEProfile.EUPubEAAProvidersList]: {
-    loTEType: LOTE_TYPES.EUPubEAAProvidersList,
-    schema: zPubEAAProvidersList,
-  },
-  [LoTEProfile.EUWRPACProvidersList]: {
-    loTEType: LOTE_TYPES.EUWRPACProvidersList,
-    schema: zWRPACProvidersList,
-  },
-  [LoTEProfile.EUWRPRCProvidersList]: {
-    loTEType: LOTE_TYPES.EUWRPRCProvidersList,
-    schema: zWRPRCProvidersList,
-  },
-  [LoTEProfile.EUWalletProvidersList]: {
-    loTEType: LOTE_TYPES.EUWalletProvidersList,
-    schema: zWalletProvidersList,
-  },
-  [LoTEProfile.mDLProvidersList]: {
-    loTEType: LOTE_TYPES.mDLProvidersList,
-    schema: zMDLProvidersList,
-  },
-};
+export interface ParsedLoTE {
+  compact: string;
+  document: LoTE;
+  header: LoTEJwtHeader;
+}
+
+/**
+ * Discover historical list locations (pivots), ordered newest to oldest.
+ * Before all pivots, the URL of the Official Journal of the European Union publication is expected.
+ */
+export function getLoTEPivotUrls(lote: LoTE, ojeuUrl: string): string[] {
+  const uris = (lote.ListAndSchemeInformation.SchemeInformationURI ?? []).map(
+    ({ uriValue }) => uriValue,
+  );
+
+  const ojeuUrlIndex = uris.indexOf(ojeuUrl);
+  if (ojeuUrlIndex < 0) {
+    throw new LoTEError("OJEU publication is missing from scheme information", {
+      code: "OJEU_LOCATION_INPUT_NOT_MATCHING_OJEU_LOCATION_IN_LoTE",
+    });
+  }
+
+  const pivotUrls = uris.slice(0, ojeuUrlIndex);
+  if (pivotUrls.length > MAX_LOTE_PIVOTS) {
+    throw new LoTEError("LoTE pivot safety limit exceeded", {
+      code: "LoTE_TRAVERSAL_LIMIT",
+    });
+  }
+
+  return pivotUrls;
+}
 
 export async function fetchAndValidateLoTE(
   options: FetchAndValidateLoTEOptions,
-  // @ts-ignore
-): Promise<any> {
+): Promise<ParsedLoTE> {
   const loteJwt = await fetchLoTE(options);
 
-  const payloadSchema = profileConfig[options.profile].schema;
+  const payloadSchema = profilesConfig[options.profile];
 
   const decodedLote = decodeJwt({
     headerSchema: zLoTEJwtHeader,
@@ -99,5 +115,13 @@ export async function fetchAndValidateLoTE(
     payloadSchema,
   });
 
-  return decodedLote;
+  // Current LoTEs do not include the OJEU URL, so the next line is commented out as it requires that URL.
+  // const pivotUrls = getLoTEPivotUrls(decodedLote.payload.LoTE, options.ojeuUrl)
+  // TODO: add pivot validation.
+
+  return {
+    compact: decodedLote.compact,
+    document: decodedLote.payload.LoTE,
+    header: decodedLote.header,
+  };
 }
