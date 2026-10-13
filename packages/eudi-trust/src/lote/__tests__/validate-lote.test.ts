@@ -2,10 +2,10 @@ import { HashAlgorithm, zJwk } from "@pagopa/io-wallet-utils";
 import { createHash, generateKeyPairSync, sign, verify } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
+import { X509CertificateMetadata } from "../../x509/types";
 import { LOTE_TYPES, LoTEProfile } from "../constants";
 import {
   ValidateLoTEOptions,
-  X509CertificateMetadata,
   fetchAndValidateLoTE,
   validateLoTE,
 } from "../fetch-and-validate-lote";

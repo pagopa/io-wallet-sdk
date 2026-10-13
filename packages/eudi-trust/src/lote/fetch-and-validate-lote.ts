@@ -10,6 +10,7 @@ import {
 import z from "zod";
 
 import { EudiTrustError, LoTEError } from "../errors";
+import { GetX509CertificateMetadataCallback } from "../x509/types";
 import { LoTEProfile } from "./constants";
 import { MAX_LOTE_PIVOTS } from "./constants";
 import { LoTE, LoTEDocument, LoTEJwtHeader, zLoTEJwtHeader } from "./z-lote";
@@ -39,22 +40,6 @@ export interface FetchAndValidateLoTEOptions extends Omit<
   ojeuUrl: string;
   url: string;
 }
-export interface X509CertificateMetadata {
-  /** Country code (C) of the Subject Distinguished Name. */
-  country?: string;
-  /** End of the validity period, checked when provided. */
-  notAfter?: Date;
-  /** Start of the validity period, checked when provided. */
-  notBefore?: Date;
-  /** Organization (O) values of the Subject Distinguished Name. */
-  organizations: string[];
-}
-
-/** Parse a DER certificate encoded in base64, as found in the `x5c` header. */
-export type GetX509CertificateMetadataCallback = (
-  certificate: string,
-) => Promise<X509CertificateMetadata> | X509CertificateMetadata;
-
 export interface ValidateLoTEOptions {
   callbacks: {
     getX509CertificateMetadata: GetX509CertificateMetadataCallback;

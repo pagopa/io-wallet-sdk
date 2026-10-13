@@ -32,3 +32,33 @@ export class LoTEError extends EudiTrustError {
     this.name = "LoTEError";
   }
 }
+
+export type CertificateChainErrorCode =
+  | "CERTIFICATE_CHAIN_INVALID"
+  | "TRUST_ANCHOR_IN_CHAIN"
+  | "TRUST_ANCHOR_NOT_FOUND";
+
+export class CertificateChainError extends EudiTrustError {
+  constructor(
+    message: string,
+    options: { code: CertificateChainErrorCode } & ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "CertificateChainError";
+  }
+}
+
+export type WRPRCErrorCode =
+  | "WRPRC_EXPIRED"
+  | "WRPRC_NOT_YET_VALID"
+  | "WRPRC_SIGNATURE_VERIFICATION_FAILED";
+
+export class WRPRCError extends EudiTrustError {
+  constructor(
+    message: string,
+    options: { code: WRPRCErrorCode } & ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "WRPRCError";
+  }
+}
