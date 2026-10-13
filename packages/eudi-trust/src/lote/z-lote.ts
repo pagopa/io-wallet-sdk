@@ -9,6 +9,29 @@
 import { HashAlgorithm } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
+const JADES_DIGEST_ALGORITHMS = {
+  S256: HashAlgorithm.Sha256,
+  S384: HashAlgorithm.Sha384,
+  S512: HashAlgorithm.Sha512,
+} as const;
+
+/**
+ * ETSI SPEC-DEVIATION
+ *
+ * ETSI TS 119 182-1 (JAdES) section 5.2.2.2 states that `digAlg` must be one
+ * registered at the IANA "Named Information Hash Algorithm Registry".
+ * @see https://www.iana.org/assignments/named-information/namedinformation.xhtml#hash-alg
+ *
+ * EUDIW Launchpad LoTEs use short names S256/S384/S512; here they are normalized
+ * to the IANA hash names used by the hash callback.
+ */
+const zX5tODigestAlgorithm = z.union([
+  z.enum(HashAlgorithm),
+  z
+    .enum(["S256", "S384", "S512"])
+    .transform((alg) => JADES_DIGEST_ALGORITHMS[alg]),
+]);
+
 // ============================================================================
 // Localized Value Schemas
 // ============================================================================
@@ -237,7 +260,7 @@ export const zLoTEJwtHeader = z.object({
   x5c: z.tuple([z.string()], z.string()),
   "x5t#o": z
     .object({
-      digAlg: z.enum(HashAlgorithm),
+      digAlg: zX5tODigestAlgorithm,
       digVal: z.string(),
     })
     .optional(),

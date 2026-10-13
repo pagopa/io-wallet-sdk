@@ -100,8 +100,13 @@ async function verifyLoTESignature(
 
   const metadata =
     await callbacks.getX509CertificateMetadata(signerCertificate);
+
+  // ETSI SPEC-DEVIATION
+  // ETSI TS 119 602 section 6.8.0 on digital signature states that the certificate's country code
+  // and organization must match the scheme territory and one of the scheme operator name values in the LoTE.
+  // EUDIW Launchpad LoTEs countries do not match, so the line is commented out.
   if (
-    metadata.country !== info.SchemeTerritory ||
+    // metadata.country !== info.SchemeTerritory ||
     !metadata.organizations.some((organization) =>
       info.SchemeOperatorName.some(({ value }) => value === organization),
     )
