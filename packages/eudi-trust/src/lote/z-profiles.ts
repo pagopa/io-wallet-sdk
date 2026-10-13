@@ -344,7 +344,7 @@ export const zEAAProvidersList = zLoTEDocument
       schemeTypeCommunityRulesUri:
         "http://uri.etsi.org/19602/EAAProvidersList/schemerules/EU",
       statusDeterminationApproach:
-        'http://uri.etsi.org/19602/EAAProvidersList/StatusDetn/EU"',
+        "http://uri.etsi.org/19602/EAAProvidersList/StatusDetn/EU",
     }),
   )
   .superRefine(

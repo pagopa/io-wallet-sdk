@@ -6,6 +6,7 @@
  * @see https://www.etsi.org/deliver/etsi_ts/119600_119699/119602/01.01.01_60/ts_119602v010101p.pdf
  */
 
+import { HashAlgorithm } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 // ============================================================================
@@ -209,19 +210,34 @@ export const zLoTEDocument = z.object({
 });
 
 /**
- * JAdES header according to ETSI TS 119 182-1
+ * Protected header of a compact JAdES Baseline B signature (ETSI TS 119 182-1),
+ * as mandated for LoTEs by ETSI TS 119 602 clause 6.8.0 and Annexes D-I.
+ *
+ * The LoTE payload is always attached and base64url-encoded, so detached
+ * signatures (`sigD`) and unencoded payloads (`b64`) are rejected; `iat`
+ * replaces the legacy `sigT` signing time.
+ *
  * @see https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.02.01_60/ts_11918201v010201p.pdf
  */
 export type LoTEJwtHeader = z.infer<typeof zLoTEJwtHeader>;
 export const zLoTEJwtHeader = z.object({
-  alg: z.string(),
+  alg: z
+    .string()
+    .refine(
+      (alg) => alg !== "none" && !alg.startsWith("HS"),
+      "alg must be an asymmetric signature algorithm",
+    ),
+  b64: z.never().optional(),
   cty: z.string(),
+  iat: z.number().int(),
   kid: z.string(),
+  sigD: z.never().optional(),
+  sigT: z.never().optional(),
   typ: z.string(),
-  x5c: z.array(z.string()),
+  x5c: z.tuple([z.string()], z.string()),
   "x5t#o": z
     .object({
-      digAlg: z.string(),
+      digAlg: z.enum(HashAlgorithm),
       digVal: z.string(),
     })
     .optional(),

@@ -1,3 +1,3 @@
 export * from "./fetch-and-validate-lote";
-export type * from "./types";
+export * from "./validate-lote";
 export * from "./z-lote";

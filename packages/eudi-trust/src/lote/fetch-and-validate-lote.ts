@@ -1,28 +1,13 @@
 import {
   CallbackContext,
   createFetcher,
-  decodeJwt,
   hasStatusOrThrow,
 } from "@pagopa/io-wallet-utils";
-import z from "zod";
 
 import { EudiTrustError, LoTEError } from "../errors";
-import { LoTEProfile, MAX_LOTE_PIVOTS } from "./constants";
-import {
-  LoTE,
-  LoTEDocument,
-  LoTEJwtHeader,
-  zLoTEJwtHeader,
-} from "./z-lote";
-import {
-  zEAAProvidersList,
-  zMDLProvidersList,
-  zPIDProvidersList,
-  zPubEAAProvidersList,
-  zWRPACProvidersList,
-  zWRPRCProvidersList,
-  zWalletProvidersList,
-} from "./z-profiles";
+import { MAX_LOTE_PIVOTS } from "./constants";
+import { ParsedLoTE, ValidateLoTEOptions, validateLoTE } from "./validate-lote";
+import { LoTE } from "./z-lote";
 
 export interface FetchLoTEOptions {
   callbacks: Pick<CallbackContext, "fetch">;
@@ -50,30 +35,16 @@ export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
   return (await response.text()).trim();
 }
 
-const profilesConfig: Record<LoTEProfile, z.ZodType<LoTEDocument>> = {
-  [LoTEProfile.EUEAAProvidersList]: zEAAProvidersList,
-  [LoTEProfile.EUPIDProvidersList]: zPIDProvidersList,
-  [LoTEProfile.EUPubEAAProvidersList]: zPubEAAProvidersList,
-  [LoTEProfile.EUWRPACProvidersList]: zWRPACProvidersList,
-  [LoTEProfile.EUWRPRCProvidersList]: zWRPRCProvidersList,
-  [LoTEProfile.EUWalletProvidersList]: zWalletProvidersList,
-  [LoTEProfile.mDLProvidersList]: zMDLProvidersList,
-};
-
-interface FetchAndValidateLoTEOptions {
-  callbacks: Pick<CallbackContext, "fetch">;
+export interface FetchAndValidateLoTEOptions extends Omit<
+  ValidateLoTEOptions,
+  "callbacks" | "jwt"
+> {
+  callbacks: Pick<CallbackContext, "fetch"> & ValidateLoTEOptions["callbacks"];
   /**
    * The URL to the latest Official Journal of the European Union publication.
    */
   ojeuUrl: string;
-  profile: LoTEProfile;
   url: string;
-}
-
-export interface ParsedLoTE {
-  compact: string;
-  document: LoTE;
-  header: LoTEJwtHeader;
 }
 
 /**
@@ -102,26 +73,18 @@ export function getLoTEPivotUrls(lote: LoTE, ojeuUrl: string): string[] {
   return pivotUrls;
 }
 
+/**
+ * Download the LoTE from `url` and authenticate it with {@link validateLoTE}.
+ * The LoTE is assumed to have no pivots.
+ */
 export async function fetchAndValidateLoTE(
   options: FetchAndValidateLoTEOptions,
 ): Promise<ParsedLoTE> {
   const loteJwt = await fetchLoTE(options);
 
-  const payloadSchema = profilesConfig[options.profile];
-
-  const decodedLote = decodeJwt({
-    headerSchema: zLoTEJwtHeader,
-    jwt: loteJwt,
-    payloadSchema,
-  });
-
   // Current LoTEs do not include the OJEU URL, so the next line is commented out as it requires that URL.
   // const pivotUrls = getLoTEPivotUrls(decodedLote.payload.LoTE, options.ojeuUrl)
   // TODO: add pivot validation.
 
-  return {
-    compact: decodedLote.compact,
-    document: decodedLote.payload.LoTE,
-    header: decodedLote.header,
-  };
+  return validateLoTE({ ...options, jwt: loteJwt });
 }
