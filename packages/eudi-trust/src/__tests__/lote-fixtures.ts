@@ -4,7 +4,7 @@ import type { LoTE, TrustedEntity } from "../lote/z-lote";
 import { LOTE_TYPES, LoTEProfile } from "../lote/constants";
 
 export function createTrustedEntity(options: {
-  services: { certificates: string[]; type: string }[];
+  services: { certificates: string[]; status?: string; type: string }[];
   tradeName?: string;
 }): TrustedEntity {
   return {
@@ -15,15 +15,18 @@ export function createTrustedEntity(options: {
         TETradeName: [{ lang: "en", value: options.tradeName }],
       }),
     },
-    TrustedEntityServices: options.services.map(({ certificates, type }) => ({
-      ServiceInformation: {
-        ServiceDigitalIdentity: {
-          X509Certificates: certificates.map((val) => ({ val })),
+    TrustedEntityServices: options.services.map(
+      ({ certificates, status, type }) => ({
+        ServiceInformation: {
+          ServiceDigitalIdentity: {
+            X509Certificates: certificates.map((val) => ({ val })),
+          },
+          ServiceName: [{ lang: "en", value: "Service" }],
+          ...(status && { ServiceStatus: status }),
+          ServiceTypeIdentifier: type,
         },
-        ServiceName: [{ lang: "en", value: "Service" }],
-        ServiceTypeIdentifier: type,
-      },
-    })),
+      }),
+    ),
   };
 }
 

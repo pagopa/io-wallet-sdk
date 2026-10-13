@@ -7,7 +7,7 @@
 
 import type z from "zod";
 
-import { LOTE_TYPES } from "./constants";
+import { LOTE_TYPES, PUB_EAA_SERVICE_STATUS } from "./constants";
 import { LoTEDocument, zLoTEDocument } from "./z-lote";
 
 const SIX_MONTHS_IN_MS = 6 * 31 * 24 * 60 * 60 * 1000;
@@ -134,12 +134,15 @@ const listAndSchemeInformationRefiner =
   };
 
 interface trustedEntitiesListRefinerOptions {
+  /** When set, `ServiceStatus` is required and must be one of these values; otherwise it must be absent. */
+  allowedServiceStatuses?: string[];
   allowedServiceTypeIdentifiers: string[];
   informationUriPrefix?: string;
 }
 
 const trustedEntitiesListRefiner =
   ({
+    allowedServiceStatuses,
     allowedServiceTypeIdentifiers,
     informationUriPrefix,
   }: trustedEntitiesListRefinerOptions) =>
@@ -189,7 +192,23 @@ const trustedEntitiesListRefiner =
           serviceIndex.toString(),
         ];
 
-        if (typeof service.ServiceInformation.ServiceStatus !== "undefined") {
+        if (allowedServiceStatuses) {
+          const status = service.ServiceInformation.ServiceStatus;
+          if (!status || !allowedServiceStatuses.includes(status)) {
+            ctx.addIssue({
+              code: "invalid_value",
+              message: `ServiceStatus must be one of the following: ${allowedServiceStatuses.join(", ")}`,
+              path: [
+                ...entityServicePath,
+                "ServiceInformation",
+                "ServiceStatus",
+              ],
+              values: allowedServiceStatuses,
+            });
+          }
+        } else if (
+          typeof service.ServiceInformation.ServiceStatus !== "undefined"
+        ) {
           ctx.addIssue({
             code: "invalid_type",
             expected: "undefined",
@@ -199,6 +218,7 @@ const trustedEntitiesListRefiner =
         }
 
         if (
+          !allowedServiceStatuses &&
           typeof service.ServiceInformation.StatusStartingTime !== "undefined"
         ) {
           ctx.addIssue({
@@ -370,11 +390,12 @@ export const zPubEAAProvidersList = zLoTEDocument
       schemeTypeCommunityRulesUri:
         "http://uri.etsi.org/19602/PubEAAProvidersList/schemerules/EU",
       statusDeterminationApproach:
-        'http://uri.etsi.org/19602/PubEAAProvidersList/StatusDetn/EU"',
+        "http://uri.etsi.org/19602/PubEAAProvidersList/StatusDetn/EU",
     }),
   )
   .superRefine(
     trustedEntitiesListRefiner({
+      allowedServiceStatuses: Object.values(PUB_EAA_SERVICE_STATUS),
       allowedServiceTypeIdentifiers: [
         "http://uri.etsi.org/19602/SvcType/PubEAA/Issuance",
         "http://uri.etsi.org/19602/SvcType/PubEAA/Revocation",

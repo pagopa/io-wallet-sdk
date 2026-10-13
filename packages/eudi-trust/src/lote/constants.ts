@@ -28,5 +28,15 @@ export const LOTE_TYPES = {
     "http://trust.ec.europa.eu/lists/mDL/mDLProvidersListType",
 } as const;
 
+/**
+ * Service status values of the PuB-EAA providers list (ETSI TS 119 602 Annex H),
+ * the only profile using `ServiceStatus`.
+ */
+export const PUB_EAA_SERVICE_STATUS = {
+  notified: "http://uri.etsi.org/19602/PubEAAProvidersList/SvcStatus/notified",
+  withdrawn:
+    "http://uri.etsi.org/19602/PubEAAProvidersList/SvcStatus/withdrawn",
+} as const;
+
 /** SDK resource safeguard, not a limit imposed by IT-Wallet or ETSI. */
 export const MAX_LOTE_PIVOTS = 100;

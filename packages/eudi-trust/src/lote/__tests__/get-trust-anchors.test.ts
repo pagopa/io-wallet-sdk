@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createLoTE, createTrustedEntity } from "../../__tests__/lote-fixtures";
-import { LoTEProfile } from "../constants";
+import { LoTEProfile, PUB_EAA_SERVICE_STATUS } from "../constants";
 import { getTrustAnchors } from "../get-trust-anchors";
 
 const issuance = "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance";
@@ -31,6 +31,34 @@ describe("getTrustAnchors", () => {
     expect(
       getTrustAnchors({ ...options, serviceTypeIdentifier: revocation }),
     ).toEqual(["ta-1-revocation"]);
+  });
+
+  it("skips withdrawn services", () => {
+    const issuance = "http://uri.etsi.org/19602/SvcType/PubEAA/Issuance";
+    const pubEAALote = createLoTE(LoTEProfile.EUPubEAAProvidersList, [
+      createTrustedEntity({
+        services: [
+          {
+            certificates: ["notified"],
+            status: PUB_EAA_SERVICE_STATUS.notified,
+            type: issuance,
+          },
+          {
+            certificates: ["withdrawn"],
+            status: PUB_EAA_SERVICE_STATUS.withdrawn,
+            type: issuance,
+          },
+        ],
+      }),
+    ]);
+
+    expect(
+      getTrustAnchors({
+        lote: pubEAALote,
+        profile: LoTEProfile.EUPubEAAProvidersList,
+        serviceTypeIdentifier: issuance,
+      }),
+    ).toEqual(["notified"]);
   });
 
   it("narrows the candidates by the issuer organization identifier", () => {

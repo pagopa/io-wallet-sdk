@@ -1,5 +1,5 @@
 import { LoTEError } from "../errors";
-import { LOTE_TYPES, LoTEProfile } from "./constants";
+import { LOTE_TYPES, LoTEProfile, PUB_EAA_SERVICE_STATUS } from "./constants";
 import { LoTE } from "./z-lote";
 
 export interface GetTrustAnchorsOptions {
@@ -20,6 +20,10 @@ export interface GetTrustAnchorsOptions {
  * `ServiceDigitalIdentity` of the services of type `serviceTypeIdentifier` (ETSI TS 119 602
  * clause 6.6.3), following the "Retrieve the Trust Anchor" step of the
  * IT-Wallet EUDIW Authentication.
+ *
+ * A service without `ServiceStatus` is approved (ETSI TS 119 602 clause 6.6.0,
+ * NOTE 1); otherwise only `notified` services qualify, as `withdrawn` ones
+ * may not issue anymore (Annex H).
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#eudiw-authentication
  */
@@ -49,7 +53,9 @@ export function getTrustAnchors(options: GetTrustAnchorsOptions): string[] {
     .filter(
       ({ ServiceInformation }) =>
         ServiceInformation.ServiceTypeIdentifier ===
-        options.serviceTypeIdentifier,
+          options.serviceTypeIdentifier &&
+        (ServiceInformation.ServiceStatus === undefined ||
+          ServiceInformation.ServiceStatus === PUB_EAA_SERVICE_STATUS.notified),
     )
     .flatMap(
       ({ ServiceInformation }) =>
