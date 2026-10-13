@@ -83,6 +83,18 @@ describe("getTrustAnchors", () => {
     ).toEqual(["ta-1", "ta-2", "ta-3"]);
   });
 
+  it("returns no Trust Anchors for a LoTE without trusted entities", () => {
+    const empty = { ...lote, TrustedEntitiesList: undefined };
+
+    expect(
+      getTrustAnchors({
+        lote: empty,
+        profile: LoTEProfile.EUWRPACProvidersList,
+        serviceTypeIdentifier: issuance,
+      }),
+    ).toEqual([]);
+  });
+
   it("rejects a LoTE of another profile", () => {
     expect(() =>
       getTrustAnchors({

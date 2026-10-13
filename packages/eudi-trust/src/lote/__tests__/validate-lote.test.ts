@@ -45,9 +45,11 @@ const encode = (value: unknown) =>
 function signLoTE({
   header = {},
   key = signerKeys.privateKey,
+  payload = document,
 }: {
   header?: Record<string, unknown>;
   key?: typeof signerKeys.privateKey;
+  payload?: unknown;
 } = {}) {
   const signingInput = `${encode({
     alg: "ES256",
@@ -57,7 +59,7 @@ function signLoTE({
     typ: "jose",
     x5c: [signerCertificate],
     ...header,
-  })}.${encode(document)}`;
+  })}.${encode(payload)}`;
   const signature = sign("sha256", Buffer.from(signingInput), {
     dsaEncoding: "ieee-p1363",
     key,
@@ -193,6 +195,28 @@ describe("validateLoTE", () => {
       code: "PIVOT_n_SIGNER_CERT_NOT_AUTHENTICATED_BY_OJEU",
       name: "LoTEError",
     });
+  });
+
+  it("authenticates a LoTE without trusted entities", async () => {
+    const info = {
+      ListAndSchemeInformation: document.LoTE.ListAndSchemeInformation,
+    };
+    const lote = await validateLoTE(
+      options({ jwt: signLoTE({ payload: { LoTE: info } }) }),
+    );
+
+    expect(lote.document.TrustedEntitiesList).toBeUndefined();
+  });
+
+  it("matches the OJEU certificates regardless of the base64 encoding", async () => {
+    const reencoded = signerCertificate
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    await expect(
+      validateLoTE(options({ trustedCertificates: [`${reencoded}\n`] })),
+    ).resolves.toBeDefined();
   });
 
   it("rejects an expired LoTE", async () => {

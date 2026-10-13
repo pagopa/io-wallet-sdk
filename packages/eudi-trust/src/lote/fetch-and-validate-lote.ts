@@ -10,6 +10,7 @@ import {
 import z from "zod";
 
 import { EudiTrustError, LoTEError } from "../errors";
+import { includesCertificate } from "../x509/certificate";
 import { GetX509CertificateMetadataCallback } from "../x509/types";
 import { LoTEProfile } from "./constants";
 import { MAX_LOTE_PIVOTS } from "./constants";
@@ -195,7 +196,7 @@ export async function validateLoTE(
   const now = options.now ?? new Date();
   await verifyLoTESignature(lote, payload, options.callbacks, now);
 
-  if (!options.trustedCertificates.includes(header.x5c[0])) {
+  if (!includesCertificate(options.trustedCertificates, header.x5c[0])) {
     throw new LoTEError("LoTE signer certificate is not trusted by the OJEU", {
       code: "PIVOT_n_SIGNER_CERT_NOT_AUTHENTICATED_BY_OJEU",
     });

@@ -30,7 +30,7 @@ function createPubEAADocument(status?: string) {
     StatusDeterminationApproach:
       "http://uri.etsi.org/19602/PubEAAProvidersList/StatusDetn/EU",
   };
-  const [entity] = lote.TrustedEntitiesList;
+  const [entity] = lote.TrustedEntitiesList ?? [];
   if (entity) {
     entity.TrustedEntityInformation.TEInformationURI = [
       {

@@ -2,6 +2,7 @@ import { CertificateChainError } from "../errors";
 import { LoTEProfile } from "../lote/constants";
 import { ParsedLoTE } from "../lote/fetch-and-validate-lote";
 import { getTrustAnchors } from "../lote/get-trust-anchors";
+import { includesCertificate } from "./certificate";
 import {
   GetX509CertificateMetadataCallback,
   VerifyX509CertificateChainCallback,
@@ -39,7 +40,9 @@ export async function validateCertificateChain(
     });
   }
 
-  if (chain.some((certificate) => trustAnchors.includes(certificate))) {
+  if (
+    chain.some((certificate) => includesCertificate(trustAnchors, certificate))
+  ) {
     throw new CertificateChainError(
       "The certificate chain must not include the Trust Anchor",
       { code: "TRUST_ANCHOR_IN_CHAIN" },

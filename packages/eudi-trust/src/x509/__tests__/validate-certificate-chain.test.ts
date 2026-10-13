@@ -53,6 +53,16 @@ describe("validateCertificateChain", () => {
     ).resolves.toBe("ta-2");
   });
 
+  it("detects the Trust Anchor in the chain regardless of the base64 encoding", async () => {
+    await expect(
+      validateCertificateChain({
+        callbacks: { verifyX509CertificateChain: acceptOnly("ta") },
+        chain: ["leaf", "a-_b\n=="],
+        trustAnchors: ["a+/b"],
+      }),
+    ).rejects.toMatchObject({ code: "TRUST_ANCHOR_IN_CHAIN" });
+  });
+
   it.each([
     ["no candidate Trust Anchor", [], ["leaf"], "TRUST_ANCHOR_NOT_FOUND"],
     [

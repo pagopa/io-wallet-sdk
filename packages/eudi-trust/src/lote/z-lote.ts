@@ -52,8 +52,8 @@ export const zLocalizedURI = z.object({
 
 export const zPostalAddress = z.object({
   Country: z.string().length(2),
-  Locality: z.string(),
-  PostalCode: z.string(),
+  Locality: z.string().optional(),
+  PostalCode: z.string().optional(),
   StateOrProvince: z.string().optional(),
   StreetAddress: z.string(),
   lang: z.string().min(1),
@@ -224,7 +224,7 @@ export const zListAndSchemeInformation = z.object({
 export type LoTE = z.infer<typeof zLoTE>;
 export const zLoTE = z.object({
   ListAndSchemeInformation: zListAndSchemeInformation,
-  TrustedEntitiesList: z.array(zTrustedEntity),
+  TrustedEntitiesList: z.array(zTrustedEntity).optional(), // Not present when no Trusted Entity was approved (ETSI TS 119 602 v1.1.1, section 6.4.0)
 });
 
 export type LoTEDocument = z.infer<typeof zLoTEDocument>;

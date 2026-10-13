@@ -147,7 +147,7 @@ const trustedEntitiesListRefiner =
     informationUriPrefix,
   }: trustedEntitiesListRefinerOptions) =>
   ({ LoTE }: LoTEDocument, ctx: z.RefinementCtx<LoTEDocument>) => {
-    LoTE.TrustedEntitiesList.forEach((entity, index) => {
+    LoTE.TrustedEntitiesList?.forEach((entity, index) => {
       const trustedEntityPath = [
         "LoTE",
         "TrustedEntitiesList",

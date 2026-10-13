@@ -26,7 +26,7 @@ This SDK is a monorepo containing the following packages:
 | **`@pagopa/io-wallet-oid-federation`** | Handles entity discovery and trust chain resolution within the Italian Federation, ensuring all actors are trusted and valid.                             |
 | **`@pagopa/io-wallet-oid4vci`**        | Manages **Verifiable Credential Issuance** flows. Use this to build Issuer services for credentials like the `mso_mdoc` (e.g., Digital Driver's License). |
 | **`@pagopa/io-wallet-oid4vp`**         | Manages **Verifiable Presentation** flows. Use this to build Relying Party services that request and verify user credentials from the IT-Wallet.          |
-| **`@pagopa/io-wallet-eudi-trust`**     | EUDI trust foundations (errors and design contracts only); validation APIs are not implemented yet.                                                       |
+| **`@pagopa/io-wallet-eudi-trust`**     | Performs **EUDI Wallet trust evaluation** of signed artifacts against the Lists of Trusted Entities (ETSI TS 119 602).                                    |
 | **`@pagopa/io-wallet-utils`**          | Shared types, configuration (`IoWalletSdkConfig`, `ItWalletSpecsVersion`), and utilities used across all packages.                                        |
 
 ## Documentation
