@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { certificateMetadata } from "../../__tests__/certificate-fixtures";
 import {
   createLoTE,
   createParsedLoTE,
@@ -29,7 +30,7 @@ describe("validateWRPAC", () => {
     await expect(
       validateWRPAC({
         callbacks: {
-          getX509CertificateMetadata: () => ({ organizations: [] }),
+          getX509CertificateMetadata: () => certificateMetadata,
           verifyX509CertificateChain,
         },
         chain: ["wrpac"],

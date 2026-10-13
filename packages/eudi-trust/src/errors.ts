@@ -48,10 +48,7 @@ export class CertificateChainError extends EudiTrustError {
   }
 }
 
-export type WRPRCErrorCode =
-  | "WRPRC_EXPIRED"
-  | "WRPRC_NOT_YET_VALID"
-  | "WRPRC_SIGNATURE_VERIFICATION_FAILED";
+export type WRPRCErrorCode = "WRPRC_EXPIRED" | "WRPRC_NOT_YET_VALID";
 
 export class WRPRCError extends EudiTrustError {
   constructor(

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { certificateMetadata } from "../../__tests__/certificate-fixtures";
 import {
   createLoTE,
   createParsedLoTE,
@@ -17,7 +18,7 @@ const lote = createParsedLoTE(
   ]),
 );
 const callbacks = {
-  getX509CertificateMetadata: () => ({ organizations: [] }),
+  getX509CertificateMetadata: () => certificateMetadata,
   verifyX509CertificateChain: vi.fn(() => true),
 };
 

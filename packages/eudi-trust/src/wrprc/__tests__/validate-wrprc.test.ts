@@ -1,7 +1,8 @@
-import { zJwk } from "@pagopa/io-wallet-utils";
-import { generateKeyPairSync, sign, verify } from "node:crypto";
+import { JwtVerificationError } from "@pagopa/io-wallet-utils";
+import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
+import { signJws, toJwk, verifyJwtWithJwk } from "../../__tests__/jws-fixtures";
 import {
   createLoTE,
   createParsedLoTE,
@@ -15,9 +16,6 @@ const otherKeys = generateKeyPairSync("ec", { namedCurve: "P-256" });
 const now = new Date("2026-10-13T00:00:00Z");
 const nowInSeconds = now.getTime() / 1000;
 
-const encode = (value: unknown) =>
-  Buffer.from(JSON.stringify(value)).toString("base64url");
-
 function signWRPRC({
   header = {},
   key = signerKeys.privateKey,
@@ -27,22 +25,21 @@ function signWRPRC({
   key?: typeof signerKeys.privateKey;
   payload?: Record<string, unknown>;
 } = {}) {
-  const signingInput = `${encode({
-    alg: "ES256",
-    typ: "rc-wrp+jwt",
-    x5c: ["wrprc-signer"],
-    ...header,
-  })}.${encode({
-    exp: nowInSeconds + 3600,
-    iat: nowInSeconds - 3600,
-    sub: "LEIXG-529900T8BM49AURSDO55",
-    ...payload,
-  })}`;
-  const signature = sign("sha256", Buffer.from(signingInput), {
-    dsaEncoding: "ieee-p1363",
+  return signJws(
+    {
+      alg: "ES256",
+      typ: "rc-wrp+jwt",
+      x5c: ["wrprc-signer"],
+      ...header,
+    },
+    {
+      exp: nowInSeconds + 3600,
+      iat: nowInSeconds - 3600,
+      sub: "LEIXG-529900T8BM49AURSDO55",
+      ...payload,
+    },
     key,
-  }).toString("base64url");
-  return `${signingInput}.${signature}`;
+  );
 }
 
 const issuance = "http://uri.etsi.org/19602/SvcType/WRPRC/Issuance";
@@ -53,20 +50,11 @@ function options(
 ): ValidateWRPRCOptions {
   return {
     callbacks: {
-      getX509CertificateMetadata: () => ({ organizations: [] }),
-      verifyJwt: (_, jwt) => {
-        const [header, payload, signature = ""] = jwt.compact.split(".");
-        const verified = verify(
-          "sha256",
-          Buffer.from(`${header}.${payload}`),
-          { dsaEncoding: "ieee-p1363", key: signerKeys.publicKey },
-          Buffer.from(signature, "base64url"),
-        );
-        const signerJwk = zJwk.parse(
-          signerKeys.publicKey.export({ format: "jwk" }),
-        );
-        return verified ? { signerJwk, verified } : { verified };
-      },
+      getX509CertificateMetadata: () => ({
+        organizations: [],
+        publicJwk: toJwk(signerKeys.publicKey),
+      }),
+      verifyJwt: verifyJwtWithJwk,
       verifyX509CertificateChain: vi.fn(
         ({ trustAnchor }) => trustAnchor === "ta",
       ),
@@ -111,10 +99,7 @@ describe("validateWRPRC", () => {
   it("rejects an invalid signature", async () => {
     await expect(
       validateWRPRC(options({ jwt: signWRPRC({ key: otherKeys.privateKey }) })),
-    ).rejects.toMatchObject({
-      code: "WRPRC_SIGNATURE_VERIFICATION_FAILED",
-      name: "WRPRCError",
-    });
+    ).rejects.toBeInstanceOf(JwtVerificationError);
   });
 
   it("rejects a chain not validated by the WRPRC Issuance Trust Anchors", async () => {
@@ -127,13 +112,23 @@ describe("validateWRPRC", () => {
     });
   });
 
+  it("rejects a WRPRC issued in the future", async () => {
+    const jwt = signWRPRC({ payload: { iat: nowInSeconds + 60 } });
+    await expect(validateWRPRC(options({ jwt }))).rejects.toMatchObject({
+      code: "WRPRC_NOT_YET_VALID",
+      name: "WRPRCError",
+    });
+  });
+
   it.each([
-    ["issued in the future", { iat: nowInSeconds + 60 }, "WRPRC_NOT_YET_VALID"],
-    ["expired", { exp: nowInSeconds }, "WRPRC_EXPIRED"],
-  ])("rejects a WRPRC %s", async (_, payload, code) => {
-    await expect(
-      validateWRPRC(options({ jwt: signWRPRC({ payload }) })),
-    ).rejects.toMatchObject({ code, name: "WRPRCError" });
+    ["in the past", nowInSeconds - 1],
+    ["equal to now", nowInSeconds],
+  ])("rejects a WRPRC with exp %s", async (_, exp) => {
+    const jwt = signWRPRC({ payload: { exp } });
+    await expect(validateWRPRC(options({ jwt }))).rejects.toMatchObject({
+      code: "WRPRC_EXPIRED",
+      name: "WRPRCError",
+    });
   });
 
   it("accepts a WRPRC without iat and exp", async () => {

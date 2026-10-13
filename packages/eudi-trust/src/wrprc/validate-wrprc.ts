@@ -1,16 +1,11 @@
-import {
-  CallbackContext,
-  dateToSeconds,
-  decodeJwt,
-  verifyJwt,
-} from "@pagopa/io-wallet-utils";
+import { dateToSeconds, decodeJwt } from "@pagopa/io-wallet-utils";
 
 import { WRPRCError } from "../errors";
 import { LoTEProfile } from "../lote/constants";
 import {
-  ValidateLoTECertificateChainOptions,
-  validateLoTECertificateChain,
-} from "../x509/validate-certificate-chain";
+  EvaluateJwsTrustOptions,
+  evaluateJwsTrust,
+} from "../trust-evaluation/evaluate-jws-trust";
 import {
   WRPRCJwtHeader,
   WRPRCPayload,
@@ -18,14 +13,10 @@ import {
   zWRPRCPayload,
 } from "./z-wrprc";
 
-export interface ValidateWRPRCOptions extends Omit<
-  ValidateLoTECertificateChainOptions,
-  "callbacks" | "chain" | "profile" | "serviceTypeIdentifier"
-> {
-  callbacks: Pick<CallbackContext, "verifyJwt"> &
-    ValidateLoTECertificateChainOptions["callbacks"];
-  jwt: string;
-}
+export type ValidateWRPRCOptions = Omit<
+  EvaluateJwsTrustOptions,
+  "profile" | "serviceTypeIdentifier"
+>;
 
 export interface ValidatedWRPRC {
   compact: string;
@@ -53,44 +44,29 @@ export async function validateWRPRC(
   options: ValidateWRPRCOptions,
 ): Promise<ValidatedWRPRC> {
   const { compact, header, payload } = decodeJwt({
+    errorMessagePrefix: "Error decoding WRPRC:",
     headerSchema: zWRPRCJwtHeader,
     jwt: options.jwt,
     payloadSchema: zWRPRCPayload,
   });
 
-  try {
-    await verifyJwt({
-      compact,
-      header,
-      payload,
-      signer: { alg: header.alg, method: "x5c", x5c: header.x5c },
-      skipTimeBasedValidation: true,
-      verifyJwtCallback: options.callbacks.verifyJwt,
-    });
-  } catch (error) {
-    throw new WRPRCError("Invalid WRPRC signature", {
-      cause: error,
-      code: "WRPRC_SIGNATURE_VERIFICATION_FAILED",
-    });
+  // Checked before the signature, which would otherwise reject an expired WRPRC
+  // with a generic JWT verification error.
+  const nowInSeconds = dateToSeconds(options.now ?? new Date());
+  if (payload.exp !== undefined && payload.exp <= nowInSeconds) {
+    throw new WRPRCError("WRPRC has expired", { code: "WRPRC_EXPIRED" });
   }
 
-  const now = options.now ?? new Date();
-  const trustAnchor = await validateLoTECertificateChain({
+  const { trustAnchor } = await evaluateJwsTrust({
     ...options,
-    chain: header.x5c,
-    now,
     profile: LoTEProfile.EUWRPRCProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPRC/Issuance",
   });
 
-  const nowInSeconds = dateToSeconds(now);
   if (payload.iat !== undefined && payload.iat > nowInSeconds) {
     throw new WRPRCError("WRPRC was issued in the future", {
       code: "WRPRC_NOT_YET_VALID",
     });
-  }
-  if (payload.exp !== undefined && payload.exp <= nowInSeconds) {
-    throw new WRPRCError("WRPRC has expired", { code: "WRPRC_EXPIRED" });
   }
 
   return { compact, header, payload, trustAnchor };

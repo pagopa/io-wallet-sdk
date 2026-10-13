@@ -1,7 +1,7 @@
 {
   "name": "@pagopa/io-wallet-eudi-trust",
   "version": "1.5.8",
-  "description": "EUDI trust validation foundations; list and certificate validation APIs are not implemented yet",
+  "description": "EUDI Wallet trust evaluation: Lists of Trusted Entities (ETSI TS 119 602) validation, Trust Anchor retrieval, X.509 certificate chain validation and JWS signature validation",
   "files": [
     "dist",
     "DESIGN.md",

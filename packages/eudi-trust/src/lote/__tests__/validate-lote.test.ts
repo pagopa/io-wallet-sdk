@@ -68,6 +68,7 @@ function signLoTE({
 const metadata: X509CertificateMetadata = {
   country: "EU",
   organizations: ["European Commission"],
+  publicJwk: zJwk.parse(signerKeys.publicKey.export({ format: "jwk" })),
 };
 
 function options(

@@ -1,3 +1,5 @@
+import type { Jwk } from "@pagopa/io-wallet-utils";
+
 export interface X509CertificateMetadata {
   /** Country code (C) of the Subject Distinguished Name. */
   country?: string;
@@ -9,6 +11,8 @@ export interface X509CertificateMetadata {
   notBefore?: Date;
   /** Organization (O) values of the Subject Distinguished Name. */
   organizations: string[];
+  /** Subject public key, used to verify the signatures made with the certificate. */
+  publicJwk: Jwk;
 }
 
 /** Parse a DER certificate encoded in base64, as found in the `x5c` header. */

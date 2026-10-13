@@ -24,7 +24,7 @@ export interface ValidateSignSealCertificateOptions extends Omit<
  * The Attestation signature, the qualified status of PuB-EAA (Trusted Lists)
  * and the historical keys (`ServiceHistory`) are not checked.
  *
- * @see https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/trust-evaluation.html#eudiw-attestation-signature-validation
+ * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#eudiw-attestation-signature-validation
  */
 export function validateSignSealCertificate(
   options: ValidateSignSealCertificateOptions,

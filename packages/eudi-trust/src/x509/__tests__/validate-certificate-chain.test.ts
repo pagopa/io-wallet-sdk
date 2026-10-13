@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { certificateMetadata } from "../../__tests__/certificate-fixtures";
 import {
   createLoTE,
   createParsedLoTE,
@@ -94,6 +95,7 @@ describe("validateLoTECertificateChain", () => {
 
   it("narrows the candidates by the issuer of the last certificate", async () => {
     const getX509CertificateMetadata = vi.fn(() => ({
+      ...certificateMetadata,
       issuerOrganizationIdentifier: "VATIT-00000000002",
       organizations: [],
     }));
