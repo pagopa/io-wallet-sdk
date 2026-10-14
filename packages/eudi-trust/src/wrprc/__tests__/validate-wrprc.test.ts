@@ -28,14 +28,21 @@ function signWRPRC({
   return signJws(
     {
       alg: "ES256",
+      iat: nowInSeconds - 3600,
       typ: "rc-wrp+jwt",
       x5c: ["wrprc-signer"],
       ...header,
     },
     {
+      country: "IT",
+      entitlements: ["https://uri.etsi.org/19475/Entitlement/Service_Provider"],
       exp: nowInSeconds + 3600,
       iat: nowInSeconds - 3600,
+      name: "Online Shop",
+      registry_uri: "https://wrp-register.example.it/api/v1/relying-parties/1",
+      status: { status_list: { idx: 1, uri: "https://status.example.it/1" } },
       sub: "LEIXG-529900T8BM49AURSDO55",
+      sub_ln: "Online Shop S.p.A.",
       ...payload,
     },
     key,
@@ -90,6 +97,7 @@ describe("validateWRPRC", () => {
   it.each([
     ["an unexpected typ", { typ: "jwt" }],
     ["no x5c", { x5c: undefined }],
+    ["no iat", { iat: undefined }],
   ])("rejects a header with %s", async (_, header) => {
     await expect(
       validateWRPRC(options({ jwt: signWRPRC({ header }) })),
@@ -101,6 +109,25 @@ describe("validateWRPRC", () => {
       validateWRPRC(options({ jwt: signWRPRC({ key: otherKeys.privateKey }) })),
     ).rejects.toBeInstanceOf(JwtVerificationError);
   });
+
+  it.each([
+    [true, "rejects"],
+    [false, "accepts"],
+  ])(
+    "with rejectTrustAnchorInChain %s, %s an x5c ending with the Trust Anchor",
+    async (rejectTrustAnchorInChain, outcome) => {
+      const jwt = signWRPRC({ header: { x5c: ["wrprc-signer", "ta"] } });
+      const result = validateWRPRC(options({ jwt, rejectTrustAnchorInChain }));
+
+      if (outcome === "accepts") {
+        await expect(result).resolves.toMatchObject({ trustAnchor: "ta" });
+      } else {
+        await expect(result).rejects.toMatchObject({
+          code: "TRUST_ANCHOR_IN_CHAIN",
+        });
+      }
+    },
+  );
 
   it("rejects a chain not validated by the WRPRC Issuance Trust Anchors", async () => {
     const validateOptions = options();
@@ -131,8 +158,8 @@ describe("validateWRPRC", () => {
     });
   });
 
-  it("accepts a WRPRC without iat and exp", async () => {
-    const jwt = signWRPRC({ payload: { exp: undefined, iat: undefined } });
+  it("accepts a WRPRC without exp", async () => {
+    const jwt = signWRPRC({ payload: { exp: undefined } });
     await expect(validateWRPRC(options({ jwt }))).resolves.toBeDefined();
   });
 });
