@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import {
+  LEGAL_PERSON_IDENTIFIER,
+  NATURAL_PERSON_IDENTIFIER,
+} from "../x509/semantic-identifier";
 import { isPSPSubEntitlement, isValidEntitlement } from "./entitlements";
 
 /**
@@ -39,16 +43,6 @@ const zCredential = z.object({
   format: z.string().min(1),
   meta: z.record(z.string(), z.unknown()),
 });
-
-/**
- * Semantic identifiers of ETSI EN 319 412-1 clauses 5.1.4 (legal person) and
- * 5.1.3 (natural person): identity type, country, "-" and identifier, or a
- * national scheme ("XX:" followed by the country).
- */
-const LEGAL_PERSON_IDENTIFIER =
-  /^(?:(?:VAT|PSD|LEI|EOR|EXC)[A-Z]{2}|NTR[A-Z]{2}(?:\+[A-Z0-9]{1,3})?|[A-Z]{2}:[A-Z]{2})-.+$/;
-const NATURAL_PERSON_IDENTIFIER =
-  /^(?:(?:PAS|IDC|PNO|TAX|TIN|EID)[A-Z]{2}|[A-Z]{2}:[A-Z]{2})-.+$/;
 
 const MAX_VALIDITY_IN_MONTHS = 12;
 

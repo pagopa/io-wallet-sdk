@@ -1,7 +1,8 @@
-import { JwtVerificationError } from "@pagopa/io-wallet-utils";
+import { JwtVerificationError, ValidationError } from "@pagopa/io-wallet-utils";
 import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
+import { wrpacMetadata } from "../../__tests__/certificate-fixtures";
 import { signJws, toJwk, verifyJwtWithJwk } from "../../__tests__/jws-fixtures";
 import {
   createLoTE,
@@ -9,6 +10,7 @@ import {
   createTrustedEntity,
 } from "../../__tests__/lote-fixtures";
 import { LoTEProfile } from "../../lote/constants";
+import { X509CertificateMetadata } from "../../x509/types";
 import {
   EvaluateJwsTrustOptions,
   evaluateJwsTrust,
@@ -64,7 +66,46 @@ function options(
   };
 }
 
+const wrpacIssuance = "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance";
+
+function wrpacOptions(
+  metadata: X509CertificateMetadata,
+): EvaluateJwsTrustOptions {
+  return options({
+    callbacks: {
+      ...options().callbacks,
+      getX509CertificateMetadata: () => ({
+        ...metadata,
+        organizations: [],
+        publicJwk: toJwk(signerKeys.publicKey),
+      }),
+    },
+    lote: createParsedLoTE(
+      createLoTE(LoTEProfile.EUWRPACProvidersList, [
+        createTrustedEntity({
+          services: [{ certificates: ["ta"], type: wrpacIssuance }],
+        }),
+      ]),
+    ),
+    profile: LoTEProfile.EUWRPACProvidersList,
+    serviceTypeIdentifier: wrpacIssuance,
+  });
+}
+
 describe("evaluateJwsTrust", () => {
+  it("checks the WRPAC content when the LoTE is a Providers of WRPAC LoTE", async () => {
+    await expect(
+      evaluateJwsTrust(wrpacOptions(wrpacMetadata)),
+    ).resolves.toMatchObject({ trustAnchor: "ta" });
+    await expect(
+      evaluateJwsTrust(wrpacOptions({ ...wrpacMetadata, policies: [] })),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it("does not check the WRPAC content for other LoTEs", async () => {
+    await expect(evaluateJwsTrust(options())).resolves.toBeDefined();
+  });
+
   it("verifies the signature with the leaf public key, then the chain", async () => {
     const verifyOptions = options();
     const jws = await evaluateJwsTrust(verifyOptions);

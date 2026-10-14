@@ -2,6 +2,7 @@ import {
   CallbackContext,
   JwtSignerWithJwk,
   decodeJwt,
+  parseWithErrorHandling,
   verifyJwt,
   zJwtHeader,
   zJwtPayload,
@@ -9,6 +10,8 @@ import {
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
+import { LoTEProfile } from "../lote/constants";
+import { zWRPAC } from "../wrpac";
 import {
   ValidateLoTECertificateChainOptions,
   validateLoTECertificateChain,
@@ -51,6 +54,9 @@ export interface JwsTrustEvaluation {
  * This is the order of the IT-Wallet EUDIW Attestation Signature Validation and
  * of the WRPRC validation.
  *
+ * When the LoTE is a Providers of WRPAC LoTE, the content of the signing WRPAC
+ * is also checked (see `zWRPAC`).
+ *
  * The LoTE must be validated beforehand (`validateLoTE`). Revocation is checked
  * only if done by `verifyX509CertificateChain`; artifact-specific checks, such as
  * the WRPRC status and authorization, are left to the caller.
@@ -67,16 +73,25 @@ export async function evaluateJwsTrust(
     jwt: compact,
   });
 
-  const { publicJwk } = await options.callbacks.getX509CertificateMetadata(
+  const signingCertificate = await options.callbacks.getX509CertificateMetadata(
     header.x5c[0],
   );
+
+  if (options.profile === LoTEProfile.EUWRPACProvidersList) {
+    parseWithErrorHandling(zWRPAC, signingCertificate, "Invalid WRPAC");
+  }
+
   const { signer } = await verifyJwt({
     compact,
     errorMessage: "JWS signature verification failed.",
     header,
     now: options.now,
     payload,
-    signer: { alg: header.alg, method: "jwk", publicJwk },
+    signer: {
+      alg: header.alg,
+      method: "jwk",
+      publicJwk: signingCertificate.publicJwk,
+    },
     verifyJwtCallback: options.callbacks.verifyJwt,
   });
 

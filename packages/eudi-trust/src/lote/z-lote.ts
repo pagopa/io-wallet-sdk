@@ -251,7 +251,7 @@ export const zLoTEJwtHeader = z.object({
       "alg must be an asymmetric signature algorithm",
     ),
   b64: z.never().optional(),
-  cty: z.string(),
+  cty: z.string().optional(),
   iat: z.number().int(),
   kid: z.string(),
   sigD: z.never().optional(),
