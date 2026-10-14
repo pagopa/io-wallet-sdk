@@ -24,15 +24,17 @@ export interface ValidateCertificateChainOptions {
  * (RFC 5280 section 6) against the first candidate Trust Anchor that validates it,
  * and return that Trust Anchor. Revocation status is not checked yet.
  *
- * The Trust Anchor must always come from the LoTE and must not be part of the
- * chain (OpenID4VC HAIP section 6.1.1).
+ * Following ETSI TS 119 182-1 (RFC 7515 `x5c`), the chain may include the Trust
+ * Anchor: when last, it is stripped before path validation, and a chain made of
+ * the Trust Anchor alone is directly trusted, as the signing certificate is
+ * listed itself (e.g. ETSI TS 119 475 GEN-5.2.1-03).
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#x509-certificate-chain-validation-algorithm
  */
 export async function validateCertificateChain(
   options: ValidateCertificateChainOptions,
 ): Promise<string> {
-  const { chain, trustAnchors } = options;
+  const { trustAnchors } = options;
 
   if (trustAnchors.length === 0) {
     throw new CertificateChainError("No candidate Trust Anchor found", {
@@ -40,14 +42,19 @@ export async function validateCertificateChain(
     });
   }
 
-  if (
-    chain.some((certificate) => includesCertificate(trustAnchors, certificate))
-  ) {
-    throw new CertificateChainError(
-      "The certificate chain must not include the Trust Anchor",
-      { code: "TRUST_ANCHOR_IN_CHAIN" },
-    );
+  const [first, ...rest] = options.chain;
+  const last = rest.at(-1) ?? first;
+  const listedAnchor = trustAnchors.find((trustAnchor) =>
+    includesCertificate([trustAnchor], last),
+  );
+
+  if (listedAnchor && rest.length === 0) {
+    return listedAnchor;
   }
+
+  const chain: [string, ...string[]] = listedAnchor
+    ? [first, ...rest.slice(0, -1)]
+    : options.chain;
 
   const now = options.now ?? new Date();
   let cause: unknown;

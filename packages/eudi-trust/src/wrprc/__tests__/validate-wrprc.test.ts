@@ -110,24 +110,31 @@ describe("validateWRPRC", () => {
     ).rejects.toBeInstanceOf(JwtVerificationError);
   });
 
-  it.each([
-    [true, "rejects"],
-    [false, "accepts"],
-  ])(
-    "with rejectTrustAnchorInChain %s, %s an x5c ending with the Trust Anchor",
-    async (rejectTrustAnchorInChain, outcome) => {
-      const jwt = signWRPRC({ header: { x5c: ["wrprc-signer", "ta"] } });
-      const result = validateWRPRC(options({ jwt, rejectTrustAnchorInChain }));
+  it("accepts an x5c ending with the Trust Anchor", async () => {
+    const validateOptions = options({
+      jwt: signWRPRC({ header: { x5c: ["wrprc-signer", "ta"] } }),
+    });
 
-      if (outcome === "accepts") {
-        await expect(result).resolves.toMatchObject({ trustAnchor: "ta" });
-      } else {
-        await expect(result).rejects.toMatchObject({
-          code: "TRUST_ANCHOR_IN_CHAIN",
-        });
-      }
-    },
-  );
+    await expect(validateWRPRC(validateOptions)).resolves.toMatchObject({
+      trustAnchor: "ta",
+    });
+    expect(
+      validateOptions.callbacks.verifyX509CertificateChain,
+    ).toHaveBeenCalledWith({ chain: ["wrprc-signer"], now, trustAnchor: "ta" });
+  });
+
+  it("directly trusts a WRPRC signed with the listed certificate", async () => {
+    const validateOptions = options({
+      jwt: signWRPRC({ header: { x5c: ["ta"] } }),
+    });
+
+    await expect(validateWRPRC(validateOptions)).resolves.toMatchObject({
+      trustAnchor: "ta",
+    });
+    expect(
+      validateOptions.callbacks.verifyX509CertificateChain,
+    ).not.toHaveBeenCalled();
+  });
 
   it("rejects a chain not validated by the WRPRC Issuance Trust Anchors", async () => {
     const validateOptions = options();

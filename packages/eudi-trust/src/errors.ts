@@ -35,7 +35,6 @@ export class LoTEError extends EudiTrustError {
 
 export type CertificateChainErrorCode =
   | "CERTIFICATE_CHAIN_INVALID"
-  | "TRUST_ANCHOR_IN_CHAIN"
   | "TRUST_ANCHOR_NOT_FOUND";
 
 export class CertificateChainError extends EudiTrustError {

@@ -53,38 +53,68 @@ describe("validateCertificateChain", () => {
     ).resolves.toBe("ta-2");
   });
 
-  it("detects the Trust Anchor in the chain regardless of the base64 encoding", async () => {
-    await expect(
-      validateCertificateChain({
-        callbacks: { verifyX509CertificateChain: acceptOnly("ta") },
-        chain: ["leaf", "a-_b\n=="],
-        trustAnchors: ["a+/b"],
-      }),
-    ).rejects.toMatchObject({ code: "TRUST_ANCHOR_IN_CHAIN" });
-  });
-
   it.each([
-    ["no candidate Trust Anchor", [], ["leaf"], "TRUST_ANCHOR_NOT_FOUND"],
-    [
-      "a chain including the Trust Anchor",
-      ["ta"],
-      ["leaf", "ta"],
-      "TRUST_ANCHOR_IN_CHAIN",
-    ],
+    ["no candidate Trust Anchor", [], "TRUST_ANCHOR_NOT_FOUND"],
     [
       "no candidate validating the chain",
       ["ta-1"],
-      ["leaf"],
       "CERTIFICATE_CHAIN_INVALID",
     ],
-  ] as const)("rejects %s", async (_, trustAnchors, chain, code) => {
+  ] as const)("rejects %s", async (_, trustAnchors, code) => {
     await expect(
       validateCertificateChain({
         callbacks: { verifyX509CertificateChain: acceptOnly("ta") },
-        chain: [...chain],
+        chain: ["leaf"],
         trustAnchors: [...trustAnchors],
       }),
     ).rejects.toMatchObject({ code, name: "CertificateChainError" });
+  });
+
+  it("strips a trailing Trust Anchor before validating the chain", async () => {
+    const verifyX509CertificateChain = acceptOnly("ta");
+
+    await expect(
+      validateCertificateChain({
+        callbacks: { verifyX509CertificateChain },
+        chain: ["leaf", "intermediate", "ta"],
+        now,
+        trustAnchors: ["ta"],
+      }),
+    ).resolves.toBe("ta");
+    expect(verifyX509CertificateChain).toHaveBeenCalledWith({
+      chain: ["leaf", "intermediate"],
+      now,
+      trustAnchor: "ta",
+    });
+  });
+
+  it("recognizes a trailing Trust Anchor regardless of the base64 encoding", async () => {
+    const verifyX509CertificateChain = acceptOnly("a+/b");
+
+    await validateCertificateChain({
+      callbacks: { verifyX509CertificateChain },
+      chain: ["leaf", "a-_b\n=="],
+      now,
+      trustAnchors: ["a+/b"],
+    });
+    expect(verifyX509CertificateChain).toHaveBeenCalledWith({
+      chain: ["leaf"],
+      now,
+      trustAnchor: "a+/b",
+    });
+  });
+
+  it("directly trusts a chain made of a Trust Anchor alone", async () => {
+    const verifyX509CertificateChain = acceptOnly("ta");
+
+    await expect(
+      validateCertificateChain({
+        callbacks: { verifyX509CertificateChain },
+        chain: ["ta"],
+        trustAnchors: ["other", "ta"],
+      }),
+    ).resolves.toBe("ta");
+    expect(verifyX509CertificateChain).not.toHaveBeenCalled();
   });
 });
 
