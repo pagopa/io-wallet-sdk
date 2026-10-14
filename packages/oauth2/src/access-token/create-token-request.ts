@@ -7,12 +7,15 @@ import {
 import {
   AuthorizationCodeGrantIdentifier,
   PreAuthorizedCodeGrantIdentifier,
+  RefreshTokenGrantIdentifier,
   authorizationCodeGrantIdentifier,
   preAuthorizedCodeGrantIdentifier,
+  refreshTokenGrantIdentifier,
 } from "./z-grant-type";
 import {
   AuthorizationCodeGrantType,
   PreAuthorizedCodeGrantType,
+  RefreshTokenGrantType,
 } from "./z-token";
 
 export interface BaseRetrieveAccessTokenOptions {
@@ -26,11 +29,15 @@ export interface BaseRetrieveAccessTokenOptions {
   config: IoWalletSdkConfig;
 }
 
-export interface RetrieveAccessTokenOptionsAuthCode extends BaseRetrieveAccessTokenOptions {
+export interface RetrieveAccessTokenOptionsAuthCode<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion.V1_4,
+> extends BaseRetrieveAccessTokenOptions {
   /**
    * The authorization code
    */
   authorizationCode: string;
+
+  config: IoWalletSdkConfig<V>;
 
   /** The authorization_code grant type. */
   grantType?: AuthorizationCodeGrantIdentifier;
@@ -46,9 +53,10 @@ export interface RetrieveAccessTokenOptionsAuthCode extends BaseRetrieveAccessTo
    */
   redirectUri: string;
 }
-export type RetrieveAccessTokenOptionsV1_4 = RetrieveAccessTokenOptionsAuthCode;
 
 export interface RetrieveAccessTokenOptionsPreAuthorizedCode extends BaseRetrieveAccessTokenOptions {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+
   /** The pre_authorized_code grant type. */
   grantType: PreAuthorizedCodeGrantIdentifier;
 
@@ -59,9 +67,31 @@ export interface RetrieveAccessTokenOptionsPreAuthorizedCode extends BaseRetriev
   txCode?: string;
 }
 
+export interface RetrieveAccessTokenOptionsRefreshToken<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion.V1_4,
+> extends BaseRetrieveAccessTokenOptions {
+  config: IoWalletSdkConfig<V>;
+
+  /** The refresh_token grant type. */
+  grantType: RefreshTokenGrantIdentifier;
+
+  /** The refresh token received in the credential offer. */
+  refreshToken: string;
+
+  /** The refresh token OPTIONAL scope. */
+  scope?: string;
+}
+
+export type RetrieveAccessTokenOptionsShared<V extends ItWalletSpecsVersion> =
+  | RetrieveAccessTokenOptionsAuthCode<V>
+  | RetrieveAccessTokenOptionsRefreshToken<V>;
+
+export type RetrieveAccessTokenOptionsV1_4 =
+  RetrieveAccessTokenOptionsShared<ItWalletSpecsVersion.V1_4>;
+
 export type RetrieveAccessTokenOptionsAPTITUDE =
-  | RetrieveAccessTokenOptionsAuthCode
-  | RetrieveAccessTokenOptionsPreAuthorizedCode;
+  | RetrieveAccessTokenOptionsPreAuthorizedCode
+  | RetrieveAccessTokenOptionsShared<ItWalletSpecsVersion.APTITUDE>;
 
 export type CreateTokenRequestOptions =
   | RetrieveAccessTokenOptionsAPTITUDE
@@ -69,18 +99,29 @@ export type CreateTokenRequestOptions =
 
 export type CreateTokenRequestReturnType =
   | AuthorizationCodeGrantType
-  | PreAuthorizedCodeGrantType;
+  | PreAuthorizedCodeGrantType
+  | RefreshTokenGrantType;
 
-export const createTokenRequestV1_4 = (
-  options: RetrieveAccessTokenOptionsV1_4,
-): AuthorizationCodeGrantType =>
-  ({
+export const createTokenRequestV1_4 = <V extends ItWalletSpecsVersion>(
+  options: RetrieveAccessTokenOptionsShared<V>,
+) => {
+  if (options.grantType === refreshTokenGrantIdentifier) {
+    return {
+      ...options.additionalRequestPayload,
+      grant_type: refreshTokenGrantIdentifier,
+      refresh_token: options.refreshToken,
+      scope: options.scope,
+    };
+  }
+
+  return {
     ...options.additionalRequestPayload,
     code: options.authorizationCode,
     code_verifier: options.pkceCodeVerifier,
     grant_type: authorizationCodeGrantIdentifier,
     redirect_uri: options.redirectUri,
-  }) satisfies AuthorizationCodeGrantType;
+  };
+};
 
 export function createTokenRequestAPTITUDE(
   options: RetrieveAccessTokenOptionsAPTITUDE,
@@ -123,16 +164,35 @@ const dispatchCreateTokenRequest = createVersionDispatcher<
  *   requests use preAuthorizedCode and optional txCode, without PKCE or a redirect URI.
  *
  * @param options - Access token request inputs and version config.
+ * @param options.config - The IoWalletSdkConfig instance to use.
+ * @param options.grantType - The grant type to use. Defaults to `authorization_code` when omitted.
  * @param options.additionalRequestPayload - Extra form fields to include in the token request.
+ *
+ * **authorization_code grant type parameters:**
+ * @param options.authorizationCode - Authorization code received from the authorization response.
+ * @param options.pkceCodeVerifier - PKCE verifier associated with the authorization request.
+ * @param options.redirectUri - Redirect URI used in the authorization request.
+ *
+ * **refresh_token grant type parameters (APTITUDE only):**
+ * @param options.refreshToken - Refresh token.
+ * @param options.scope - The refresh token OPTIONAL scope.
+ *
+ * **pre-authorized_code grant type parameters (APTITUDE only):**
+ * @param options.preAuthorizedCode - Pre-authorized code received in the credential offer.
+ * @param options.txCode - Transaction code required when the credential offer contains a `tx_code` object.
+ *
  * @returns URL-form-encodable grant request data.
  */
 export function createTokenRequest(
   options: RetrieveAccessTokenOptionsV1_4,
-): AuthorizationCodeGrantType;
+): AuthorizationCodeGrantType | RefreshTokenGrantType;
 
 export function createTokenRequest(
   options: RetrieveAccessTokenOptionsAPTITUDE,
-): AuthorizationCodeGrantType | PreAuthorizedCodeGrantType;
+):
+  | AuthorizationCodeGrantType
+  | PreAuthorizedCodeGrantType
+  | RefreshTokenGrantType;
 
 export function createTokenRequest(
   options: CreateTokenRequestOptions,

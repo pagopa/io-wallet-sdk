@@ -58,13 +58,6 @@ describe("verifyAccessTokenRequest", () => {
     itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
   });
 
-  const mockAccessTokenRequest = {
-    code: "test-auth-code",
-    code_verifier: "test-code-verifier",
-    grant_type: "authorization_code" as const,
-    redirect_uri: "https://client.example.com/callback",
-  };
-
   const createMockWalletAttestationJwt = (payload: Record<string, unknown>) =>
     [
       encodeToBase64Url(
@@ -140,7 +133,6 @@ describe("verifyAccessTokenRequest", () => {
     });
 
     return {
-      accessTokenRequest: mockAccessTokenRequest,
       authorizationServerMetadata: mockAuthorizationServerMetadata,
       callbacks: mockCallbacks,
       clientAttestation: {
@@ -173,10 +165,6 @@ describe("verifyAccessTokenRequest", () => {
     ): VerifyPreAuthorizedCodeAccessTokenRequestOptions => {
       const common = createValidOptions();
       return {
-        accessTokenRequest: {
-          grant_type: preAuthorizedCodeGrantIdentifier,
-          "pre-authorized_code": "issuer-pre-authorized-code",
-        },
         authorizationServerMetadata: common.authorizationServerMetadata,
         callbacks: common.callbacks,
         clientAttestation: common.clientAttestation,
@@ -197,7 +185,7 @@ describe("verifyAccessTokenRequest", () => {
       "verifies transaction code %s without PKCE and retains verified security proofs",
       async (txCode) => {
         const options = createPreAuthorizedOptions({ expectedTxCode: txCode });
-        options.accessTokenRequest.tx_code = txCode;
+
         options.grant.txCode = txCode;
 
         const result = await verifyAccessTokenRequest(options);
@@ -229,20 +217,10 @@ describe("verifyAccessTokenRequest", () => {
 
     it("rejects a body code that differs from the parsed grant", async () => {
       const options = createPreAuthorizedOptions();
-      options.accessTokenRequest["pre-authorized_code"] = "different-body-code";
+      options.grant.preAuthorizedCode = "different-body-code";
 
       await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
         "Invalid 'pre-authorized_code' provided",
-      );
-    });
-
-    it("rejects a mismatched grant type", async () => {
-      const options = createPreAuthorizedOptions();
-      options.accessTokenRequest =
-        mockAccessTokenRequest as unknown as VerifyPreAuthorizedCodeAccessTokenRequestOptions["accessTokenRequest"];
-
-      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
-        "Grant type does not match the access token request",
       );
     });
 
@@ -318,7 +296,6 @@ describe("verifyAccessTokenRequest", () => {
       "rejects a $label transaction code",
       async ({ expectedTxCode, message, txCode }) => {
         const options = createPreAuthorizedOptions({ expectedTxCode });
-        options.accessTokenRequest.tx_code = txCode;
         options.grant.txCode = txCode;
 
         await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
@@ -326,16 +303,6 @@ describe("verifyAccessTokenRequest", () => {
         );
       },
     );
-
-    it("rejects a transaction code that differs between the body and parsed grant", async () => {
-      const options = createPreAuthorizedOptions({ expectedTxCode: "001234" });
-      options.accessTokenRequest.tx_code = "009999";
-      options.grant.txCode = "001234";
-
-      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
-        "Transaction code does not match the access token request",
-      );
-    });
 
     it.each(["", "invalid-jwt"])(
       "rejects an invalid DPoP proof: %s",

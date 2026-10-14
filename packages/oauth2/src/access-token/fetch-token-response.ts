@@ -165,10 +165,15 @@ const dispatchFetchTokenResponse = createVersionDispatcher<
  * @throws {ValidationError} When the response cannot be parsed as a valid access token response
  * @throws {FetchTokenResponseError} When an unexpected error occurs during the request
  */
+
 export function fetchTokenResponse(
-  options: FetchTokenResponseOptionsAPTITUDE | FetchTokenResponseOptionsV1_4,
+  options: FetchTokenResponseOptions,
 ): Promise<AccessTokenResponse>;
 
+/**
+ * Additional overloads have been omitted due to redundancy of the signature. If any signature diverges in
+the future, new overloads should be added to support the new signature.
+ */
 export function fetchTokenResponse(
   options: FetchTokenResponseOptions,
 ): Promise<AccessTokenResponse> {

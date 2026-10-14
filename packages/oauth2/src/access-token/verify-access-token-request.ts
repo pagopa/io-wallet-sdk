@@ -26,7 +26,6 @@ import {
   authorizationCodeGrantIdentifier,
   preAuthorizedCodeGrantIdentifier,
 } from "./z-grant-type";
-import { AccessTokenRequest, PreAuthorizedCodeGrantType } from "./z-token";
 
 export interface VerifyAccessTokenRequestPkce {
   codeChallenge: string;
@@ -96,22 +95,15 @@ export interface BaseVerifyAccessTokenRequestOptions {
   request: RequestLike;
 }
 
-export interface VerifyAccessTokenRequestOptions extends BaseVerifyAccessTokenRequestOptions {
-  /**
-   * The access token request to verify
-   */
-  accessTokenRequest: AccessTokenRequest;
-
+export interface VerifyAccessTokenRequestOptions<
+  V extends ItWalletSpecsVersion = ItWalletSpecsVersion.V1_0,
+> extends BaseVerifyAccessTokenRequestOptions {
   /**
    * The expiration date of the authorization code
    */
   codeExpiresAt?: Date;
 
-  config: IoWalletSdkConfig<
-    | ItWalletSpecsVersion.V1_0
-    | ItWalletSpecsVersion.V1_3
-    | ItWalletSpecsVersion.V1_4
-  >;
+  config: IoWalletSdkConfig<V>;
 
   /**
    * The expected authorization code
@@ -130,11 +122,6 @@ export interface VerifyAccessTokenRequestOptions extends BaseVerifyAccessTokenRe
 }
 
 export interface VerifyPreAuthorizedCodeAccessTokenRequestOptions extends BaseVerifyAccessTokenRequestOptions {
-  /**
-   * The access token request to verify
-   */
-  accessTokenRequest: PreAuthorizedCodeGrantType;
-
   config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
 
   /** The pre-authorized code stored by the authorization server. */
@@ -150,9 +137,20 @@ export interface VerifyPreAuthorizedCodeAccessTokenRequestOptions extends BaseVe
   preAuthorizedCodeExpiresAt?: Date;
 }
 
+export type SupportedAccessTokenVerificationOptionsV1_4 =
+  VerifyAccessTokenRequestOptions<
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4
+  >;
+
 export type SupportedAccessTokenVerificationOptionsAPTITUDE =
-  | VerifyAccessTokenRequestOptions
+  | VerifyAccessTokenRequestOptions<ItWalletSpecsVersion.APTITUDE>
   | VerifyPreAuthorizedCodeAccessTokenRequestOptions;
+
+export type SupportedAccessTokenVerificationOptions =
+  | SupportedAccessTokenVerificationOptionsAPTITUDE
+  | SupportedAccessTokenVerificationOptionsV1_4;
 
 export interface VerifyAccessTokenRequestResult {
   clientAttestation: {
@@ -171,8 +169,8 @@ export interface VerifyAccessTokenRequestResult {
   };
 }
 
-async function verifyAccessTokenRequestV1_4(
-  options: VerifyAccessTokenRequestOptions,
+async function verifyAccessTokenRequestV1_4<V extends ItWalletSpecsVersion>(
+  options: VerifyAccessTokenRequestOptions<V>,
 ): Promise<VerifyAccessTokenRequestResult> {
   if (options.dpop.expectedNonce === "") {
     throw new Oauth2Error(`Invalid 'dpop.expectedNonce' provided`);
@@ -274,47 +272,32 @@ function isPreAuthorizedCodeVerification(
 function verifyGrantParameters(
   options: SupportedAccessTokenVerificationOptionsAPTITUDE,
 ) {
-  if (options.accessTokenRequest.grant_type !== options.grant.grantType) {
-    throw new Oauth2Error("Grant type does not match the access token request");
-  }
-
   if (isPreAuthorizedCodeVerification(options)) {
     if (
       !options.expectedPreAuthorizedCode ||
-      options.grant.preAuthorizedCode !== options.expectedPreAuthorizedCode ||
-      options.accessTokenRequest["pre-authorized_code"] !==
-        options.grant.preAuthorizedCode
+      options.grant.preAuthorizedCode !== options.expectedPreAuthorizedCode
     ) {
       throw new Oauth2Error(`Invalid 'pre-authorized_code' provided`);
     }
 
-    if (options.accessTokenRequest.tx_code !== options.grant.txCode) {
-      throw new Oauth2Error(
-        "Transaction code does not match the access token request",
-      );
-    }
     verifyTransactionCode(options.grant.txCode, options.expectedTxCode);
+
     verifyCodeExpiration(
       options.preAuthorizedCodeExpiresAt,
       options.now,
       "pre-authorized_code",
     );
+
     return;
   }
 
-  if (
-    options.accessTokenRequest.grant_type !== authorizationCodeGrantIdentifier
-  ) {
+  if (options.grant.grantType !== authorizationCodeGrantIdentifier) {
     throw new Oauth2Error(
       "Only authorization_code and pre-authorized_code grants can be verified",
     );
   }
 
-  if (
-    !options.expectedCode ||
-    options.grant.code !== options.expectedCode ||
-    options.accessTokenRequest.code !== options.grant.code
-  ) {
+  if (!options.expectedCode || options.grant.code !== options.expectedCode) {
     throw new Oauth2Error(`Invalid 'code' provided`);
   }
   verifyCodeExpiration(options.codeExpiresAt, options.now, "code");
@@ -356,7 +339,7 @@ function verifyCodeExpiration(
 }
 
 const dispatchVerifyAccessTokenRequest = createVersionDispatcher<
-  SupportedAccessTokenVerificationOptionsAPTITUDE,
+  SupportedAccessTokenVerificationOptions,
   Promise<VerifyAccessTokenRequestResult>
 >({
   [ItWalletSpecsVersion.APTITUDE]: (o) =>
@@ -364,11 +347,17 @@ const dispatchVerifyAccessTokenRequest = createVersionDispatcher<
       o as SupportedAccessTokenVerificationOptionsAPTITUDE,
     ),
   [ItWalletSpecsVersion.V1_0]: (o) =>
-    verifyAccessTokenRequestV1_4(o as VerifyAccessTokenRequestOptions),
+    verifyAccessTokenRequestV1_4(
+      o as VerifyAccessTokenRequestOptions<ItWalletSpecsVersion.V1_0>,
+    ),
   [ItWalletSpecsVersion.V1_3]: (o) =>
-    verifyAccessTokenRequestV1_4(o as VerifyAccessTokenRequestOptions),
+    verifyAccessTokenRequestV1_4(
+      o as VerifyAccessTokenRequestOptions<ItWalletSpecsVersion.V1_3>,
+    ),
   [ItWalletSpecsVersion.V1_4]: (o) =>
-    verifyAccessTokenRequestV1_4(o as VerifyAccessTokenRequestOptions),
+    verifyAccessTokenRequestV1_4(
+      o as VerifyAccessTokenRequestOptions<ItWalletSpecsVersion.V1_4>,
+    ),
 });
 
 /**
@@ -418,12 +407,12 @@ const dispatchVerifyAccessTokenRequest = createVersionDispatcher<
  */
 export function verifyAccessTokenRequest(
   options:
-    | VerifyAccessTokenRequestOptions
-    | VerifyPreAuthorizedCodeAccessTokenRequestOptions,
+    | SupportedAccessTokenVerificationOptionsAPTITUDE
+    | SupportedAccessTokenVerificationOptionsV1_4,
 ): Promise<VerifyAccessTokenRequestResult>;
 
 export function verifyAccessTokenRequest(
-  options: SupportedAccessTokenVerificationOptionsAPTITUDE,
+  options: SupportedAccessTokenVerificationOptions,
 ): Promise<VerifyAccessTokenRequestResult> {
   return dispatchVerifyAccessTokenRequest(options);
 }

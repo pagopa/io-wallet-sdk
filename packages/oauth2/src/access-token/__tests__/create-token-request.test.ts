@@ -5,7 +5,10 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { createTokenRequest } from "../create-token-request";
-import { preAuthorizedCodeGrantIdentifier } from "../z-grant-type";
+import {
+  preAuthorizedCodeGrantIdentifier,
+  refreshTokenGrantIdentifier,
+} from "../z-grant-type";
 import { authorizationCodeGrantIdentifier } from "../z-grant-type";
 import { zAccessTokenRequestAPTITUDE } from "../z-token";
 import { zAccessTokenRequest } from "../z-token";
@@ -125,5 +128,43 @@ describe("createTokenRequest - pre-authorized code", () => {
     expect(additionalRequestPayload.tx_code).toBe(
       "unexpected-transaction-code",
     );
+  });
+});
+
+describe("createTokenRequest - refresh token", () => {
+  it("creates a refresh-token request object with v1.4 config", () => {
+    const request = createTokenRequest({
+      config: v1_4Config,
+      grantType: refreshTokenGrantIdentifier,
+      refreshToken: "issuer-refresh-token",
+    });
+
+    expect(request).toEqual({
+      grant_type: "refresh_token",
+      refresh_token: "issuer-refresh-token",
+    });
+
+    expect(request).not.toHaveProperty("code");
+    expect(request).not.toHaveProperty("code_verifier");
+    expect(request).not.toHaveProperty("redirect_uri");
+    expect(zAccessTokenRequest.parse(request)).toEqual(request);
+  });
+
+  it("creates a refresh-token request object with APTITUDE config", () => {
+    const request = createTokenRequest({
+      config: aptitudeConfig,
+      grantType: refreshTokenGrantIdentifier,
+      refreshToken: "issuer-refresh-token",
+      scope: "openid profile email",
+    });
+
+    expect(request).toEqual({
+      grant_type: "refresh_token",
+      refresh_token: "issuer-refresh-token",
+      scope: "openid profile email",
+    });
+
+    expect(request).toHaveProperty("scope");
+    expect(zAccessTokenRequest.parse(request)).toEqual(request);
   });
 });
