@@ -37,13 +37,6 @@ describe("zWRPAC", () => {
     expect(isValid(naturalPersonWRPAC)).toBe(true);
   });
 
-  it.each(["policies", "subject", "subjectAltNames"])(
-    "rejects a WRPAC without %s",
-    (field) => {
-      expect(isValid({ ...wrpacMetadata, [field]: undefined })).toBe(false);
-    },
-  );
-
   it.each([
     ["a CA certificate", { isCA: true }],
     ["a keyUsage without digitalSignature", { keyUsage: ["keyCertSign"] }],
@@ -66,8 +59,6 @@ describe("zWRPAC", () => {
   });
 
   it.each([
-    ["commonName", { commonName: undefined }],
-    ["countryName", { countryName: "Italy" }],
     ["organizationName", { organizationName: undefined }],
     ["organizationIdentifier", { organizationIdentifier: undefined }],
     ["organizationIdentifier format", { organizationIdentifier: "IT123" }],

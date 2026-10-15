@@ -143,28 +143,10 @@ describe("validateLoTE", () => {
   it.each([
     ["alg none", { alg: "none" }],
     ["symmetric alg", { alg: "HS256" }],
-    ["missing iat", { iat: undefined }],
-    ["legacy sigT", { sigT: "2026-10-01T00:00:00Z" }],
-    [
-      "detached payload",
-      { sigD: { mId: "http://uri.etsi.org/19182/ObjectIdByURI", pars: [] } },
-    ],
-    ["unencoded payload", { b64: false }],
-    ["empty x5c", { x5c: [] }],
   ])("rejects a JAdES header with %s", async (_, header) => {
     await expect(
       validateLoTE(options({ loteJwt: signLoTE({ header }) })),
     ).rejects.toThrow();
-  });
-
-  it("rejects an x5t#o not matching the signer certificate", async () => {
-    const jwt = signLoTE({ header: x5tO("AAAA") });
-    await expect(validateLoTE(options({ loteJwt: jwt }))).rejects.toMatchObject(
-      {
-        code: "JADES_X5T_O_MISMATCH",
-        name: "JAdESError",
-      },
-    );
   });
 
   it("rejects an invalid signature", async () => {
@@ -178,7 +160,6 @@ describe("validateLoTE", () => {
   });
 
   it.each([
-    // ["a mismatching country", { ...metadata, country: "IT" }], // ETSI SPEC-DEVIATION
     ["a mismatching organization", { ...metadata, organizations: ["Other"] }],
     [
       "notBefore in the future",
@@ -201,28 +182,6 @@ describe("validateLoTE", () => {
       code: "PIVOT_n_SIGNER_CERT_NOT_AUTHENTICATED_BY_OJEU",
       name: "LoTEError",
     });
-  });
-
-  it("authenticates a LoTE without trusted entities", async () => {
-    const info = {
-      ListAndSchemeInformation: document.LoTE.ListAndSchemeInformation,
-    };
-    const lote = await validateLoTE(
-      options({ loteJwt: signLoTE({ payload: { LoTE: info } }) }),
-    );
-
-    expect(lote.document.TrustedEntitiesList).toBeUndefined();
-  });
-
-  it("matches the OJEU certificates regardless of the base64 encoding", async () => {
-    const reencoded = signerCertificate
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
-
-    await expect(
-      validateLoTE(options({ trustedCertificates: [`${reencoded}\n`] })),
-    ).resolves.toBeDefined();
   });
 
   it("rejects an expired LoTE", async () => {

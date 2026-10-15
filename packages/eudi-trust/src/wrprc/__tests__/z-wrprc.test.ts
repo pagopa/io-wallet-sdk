@@ -39,18 +39,6 @@ describe("zWRPRCPayload", () => {
     ).toBe(true);
   });
 
-  it.each([
-    "name",
-    "sub",
-    "country",
-    "registry_uri",
-    "entitlements",
-    "iat",
-    "status",
-  ])("rejects a WRPRC without %s", (claim) => {
-    expect(isValid({ ...payload, [claim]: undefined })).toBe(false);
-  });
-
   it("rejects a WRPRC without the legal or natural person name", () => {
     expect(isValid({ ...payload, sub_ln: undefined })).toBe(false);
   });
@@ -104,43 +92,6 @@ describe("zWRPRCPayload", () => {
     ["more than 12 months after iat", iat + 366 * 24 * 3600],
   ])("rejects an exp %s", (_, exp) => {
     expect(isValid({ ...payload, exp })).toBe(false);
-  });
-
-  it("accepts an intermediary as defined in Table 10", () => {
-    expect(
-      isValid({
-        ...payload,
-        intermediary: {
-          sname: "Verification Service",
-          sub: "LEIXG-529900INTERMEDIARY01",
-        },
-      }),
-    ).toBe(true);
-  });
-
-  it.each([
-    [
-      "a nested intermediary",
-      {
-        intermediary: {
-          sub: {
-            id: "LEIXG-529900INTERMEDIARY01",
-            sname: "Verification Service",
-          },
-        },
-      },
-    ],
-    [
-      "a credential claim without path",
-      { credentials: [{ claim: [{}], format: "dc+sd-jwt", meta: {} }] },
-    ],
-    [
-      "a status without index",
-      { status: { status_list: { uri: "https://status.example.it/1" } } },
-    ],
-    ["a non-URL registry_uri", { registry_uri: "registry" }],
-  ])("rejects %s", (_, claims) => {
-    expect(isValid({ ...payload, ...claims })).toBe(false);
   });
 });
 

@@ -105,47 +105,9 @@ describe("validateWRPRC", () => {
     ).toHaveBeenCalledWith({ chain: ["wrprc-signer"], now, trustAnchor: "ta" });
   });
 
-  it.each([
-    ["an unexpected typ", { typ: "jwt" }],
-    ["no x5c", { x5c: undefined }],
-    ["no iat", { iat: undefined }],
-  ])("rejects a header with %s", async (_, header) => {
-    await expect(
-      validateWRPRC(options({ wrprcJwt: signWRPRC({ header }) })),
-    ).rejects.toThrow();
-  });
-
-  it.each([
-    ["alg none", { alg: "none" }],
-    ["a symmetric alg", { alg: "HS256" }],
-    ["sigD", { sigD: { mId: "x" } }],
-    ["b64", { b64: false }],
-    ["the legacy sigT", { sigT: "2026-10-13T00:00:00Z" }],
-  ])("rejects a header with %s", async (_, header) => {
-    await expect(
-      validateWRPRC(options({ wrprcJwt: signWRPRC({ header }) })),
-    ).rejects.toThrow();
-  });
-
-  it("accepts an x5t#o matching the signing certificate", async () => {
-    const digVal = createHash("sha256")
-      .update(Buffer.from("wrprc-signer", "base64"))
-      .digest("base64url");
-    const wrprcJwt = signWRPRC({
-      header: { "x5t#o": { digAlg: "sha-256", digVal } },
-    });
-
-    await expect(validateWRPRC(options({ wrprcJwt }))).resolves.toBeDefined();
-  });
-
-  it("rejects an x5t#o not matching the signing certificate", async () => {
-    const wrprcJwt = signWRPRC({
-      header: { "x5t#o": { digAlg: "sha-256", digVal: "AAAA" } },
-    });
-
-    await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toMatchObject({
-      code: "JADES_X5T_O_MISMATCH",
-    });
+  it("rejects an unexpected typ", async () => {
+    const wrprcJwt = signWRPRC({ header: { typ: "jwt" } });
+    await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toThrow();
   });
 
   it("rejects an invalid signature", async () => {

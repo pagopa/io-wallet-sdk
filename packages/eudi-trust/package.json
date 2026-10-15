@@ -33,5 +33,8 @@
   "dependencies": {
     "@pagopa/io-wallet-utils": "workspace:*",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5"
   }
 }
