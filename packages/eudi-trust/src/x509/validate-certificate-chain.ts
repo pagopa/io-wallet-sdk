@@ -12,22 +12,26 @@ export interface ValidateCertificateChainOptions {
   callbacks: {
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
-  /** `path`: certificates C_1, ..., C_n, end-entity first, DER encoded in base64. */
+  /** Certificates, end-entity first, DER encoded in base64. */
   chain: [string, ...string[]];
+  /** Validation time. Defaults to the current time. */
   now?: Date;
   /** Candidate Trust Anchor certificates, DER encoded in base64. */
   trustAnchors: string[];
 }
 
 /**
- * IT-Wallet "X509 Certificate Chain Validation Algorithm": validate `chain`
- * (RFC 5280 section 6) against the first candidate Trust Anchor that validates it,
- * and return that Trust Anchor. Revocation status is not checked yet.
+ * Validates a certificate chain against a set of candidate Trust Anchors, as
+ * defined by the IT-Wallet X.509 certificate chain validation algorithm.
  *
- * Following ETSI TS 119 182-1 (RFC 7515 `x5c`), the chain may include the Trust
- * Anchor: when last, it is stripped before path validation, and a chain made of
- * the Trust Anchor alone is directly trusted, as the signing certificate is
- * listed itself (e.g. ETSI TS 119 475 GEN-5.2.1-03).
+ * The chain may include the Trust Anchor as its last certificate, or consist of
+ * the Trust Anchor alone.
+ *
+ * The path validation (RFC 5280) and any revocation check are delegated to the
+ * `verifyX509CertificateChain` callback.
+ *
+ * @returns The Trust Anchor that validated the chain.
+ * @throws {CertificateChainError} if no Trust Anchor validates the chain.
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#x509-certificate-chain-validation-algorithm
  */
@@ -89,14 +93,19 @@ export interface ValidateLoTECertificateChainOptions extends Omit<
   } & ValidateCertificateChainOptions["callbacks"];
   /** A LoTE authenticated with `validateLoTE`. */
   lote: ParsedLoTE;
+  /** The profile of `lote`. */
   profile: LoTEProfile;
+  /** The service whose Trust Anchors are candidates, e.g. `http://uri.etsi.org/19602/SvcType/PID/Issuance`. */
   serviceTypeIdentifier: string;
 }
 
 /**
- * Validate `chain` against the Trust Anchors published by a LoTE of the given
- * profile, narrowing the candidates by the issuer of the last certificate.
- * Returns the Trust Anchor that validated the chain.
+ * Validates a certificate chain against the Trust Anchors published by a LoTE
+ * for a given service. Combines `getTrustAnchors` and `validateCertificateChain`.
+ *
+ * @returns The Trust Anchor that validated the chain.
+ * @throws {LoTEError} if the LoTE does not match the expected profile.
+ * @throws {CertificateChainError} if no Trust Anchor validates the chain.
  */
 export async function validateLoTECertificateChain(
   options: ValidateLoTECertificateChainOptions,

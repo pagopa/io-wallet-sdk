@@ -23,6 +23,16 @@ describe("zWRPAC", () => {
     expect(isValid(wrpacMetadata)).toBe(true);
   });
 
+  it("returns the public key of the certificate", () => {
+    expect(zWRPAC.parse(wrpacMetadata).publicJwk).toEqual(
+      wrpacMetadata.publicJwk,
+    );
+  });
+
+  it("rejects a WRPAC without a public key", () => {
+    expect(isValid({ ...wrpacMetadata, publicJwk: undefined })).toBe(false);
+  });
+
   it("accepts a natural person WRPAC", () => {
     expect(isValid(naturalPersonWRPAC)).toBe(true);
   });

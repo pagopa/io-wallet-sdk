@@ -5,9 +5,8 @@ Trust evaluation for the EUDI Wallet ecosystem, following the IT-Wallet [Trust E
 - validation of the Lists of Trusted Entities (LoTE, ETSI TS 119 602);
 - retrieval of the Trust Anchors published in a LoTE;
 - X.509 certificate chain validation against those Trust Anchors;
-- trust evaluation of a JWS (PID, Wallet Instance Attestation, Credential Issuer
-  Metadata, WRPRC, ...): validation of its signature with the public key of its
-  signing certificate, and of that certificate chain against a Trust Anchor.
+- validation of Wallet-Relying Party Access Certificates (WRPAC);
+- validation of Wallet-Relying Party Registration Certificates (WRPRC).
 
 ## Installation
 
@@ -24,7 +23,9 @@ pnpm add @pagopa/io-wallet-eudi-trust @pagopa/io-wallet-utils
 | 3    | Validate the JWS `x5c` chain against those Trust Anchors                                                       | `validateCertificateChain`                                                |
 | 4    | Verify the JWS signature with the public key of the validated signing certificate                              | `verifyJwt` from `@pagopa/io-wallet-utils`                                |
 
-`evaluateJwsTrust` performs steps 2-4 in a single call, given a LoTE validated at step 1. A validated LoTE can be reused until its `NextUpdate`.
+`validateLoTECertificateChain` performs steps 2-3 in a single call, given a LoTE validated at step 1. A validated LoTE can be reused until its `NextUpdate`.
+
+`validateWRPAC` and `validateWRPRC` cover the whole flow for WRPAC and WRPRC.
 
 Which LoTE and which service to use depends on the signed object:
 
@@ -32,7 +33,7 @@ Which LoTE and which service to use depends on the signed object:
 | -------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
 | PID                                                                  | `LoTEProfile.EUPIDProvidersList`    | `http://uri.etsi.org/19602/SvcType/PID/Issuance`                         |
 | Wallet Instance Attestation                                          | `LoTEProfile.EUWalletProvidersList` | `http://uri.etsi.org/19602/SvcType/WalletSolution/Issuance`              |
-| JWS signed with a WRPAC (Credential Issuer Metadata, Request Object) | `LoTEProfile.EUWRPACProvidersList`  | `http://uri.etsi.org/19602/SvcType/WRPAC/Issuance`                       |
+| JWS signed with a WRPAC (Credential Issuer Metadata, Request Object) | `LoTEProfile.EUWRPACProvidersList`  | `http://uri.etsi.org/19602/SvcType/WRPAC/Issuance` (use `validateWRPAC`) |
 | WRPRC                                                                | `LoTEProfile.EUWRPRCProvidersList`  | `http://uri.etsi.org/19602/SvcType/WRPRC/Issuance` (use `validateWRPRC`) |
 | PuB-EAA                                                              | `LoTEProfile.EUPubEAAProvidersList` | `http://uri.etsi.org/19602/SvcType/PubEAA/Issuance`                      |
 
@@ -43,134 +44,108 @@ Like the rest of the SDK, the package performs no cryptography and no network ac
 | Callback                     | Purpose                                                       |
 | ---------------------------- | ------------------------------------------------------------- |
 | `fetch`                      | Download the LoTE                                             |
-| `hash`                       | Check the `x5t#o` header of the LoTE                          |
+| `hash`                       | Check the `x5t#o` header of the LoTE and of the WRPRC         |
 | `verifyJwt`                  | Verify JWS signatures, with a `jwk` or `x5c` signer           |
 | `getX509CertificateMetadata` | Parse a certificate: subject, issuer, validity and public key |
 | `verifyX509CertificateChain` | RFC 5280 path validation of a chain against one Trust Anchor  |
 
-A Node.js implementation:
+These callbacks are external: the package does not implement them, and the caller must provide them (e.g. with `node:crypto`, `@peculiar/x509` or `pkijs`, or the platform APIs). In the examples below, `callbacks` is an object providing all of them.
 
-```typescript
-import type {
-  GetX509CertificateMetadataCallback,
-  VerifyX509CertificateChainCallback,
-} from "@pagopa/io-wallet-eudi-trust";
+Types for `getX509CertificateMetadata` and `verifyX509CertificateChain` are exported as `GetX509CertificateMetadataCallback` and `VerifyX509CertificateChainCallback`. `verifyX509CertificateChain` should also perform the revocation checks, as the package does not.
 
-import { type CallbackContext, zJwk } from "@pagopa/io-wallet-utils";
-import {
-  X509Certificate,
-  constants,
-  createHash,
-  createPublicKey,
-  verify,
-} from "node:crypto";
+## WRPAC
 
-const toCertificate = (der: string) =>
-  new X509Certificate(Buffer.from(der, "base64"));
+`validateWRPAC` checks the content of a Wallet-Relying Party Access Certificate and validates its chain against the Trust Anchors of a Providers of WRPAC LoTE. It returns the parsed WRPAC and the Trust Anchor that validated its chain. It does not verify the signature of the object carrying the WRPAC: do that as in step 4 above.
 
-const parseName = (name: string) =>
-  name.split("\n").map((attribute) => {
-    const separator = attribute.indexOf("=");
-    return [
-      attribute.slice(0, separator),
-      attribute.slice(separator + 1),
-    ] as const;
-  });
-
-const getX509CertificateMetadata: GetX509CertificateMetadataCallback = (
-  der,
-) => {
-  const certificate = toCertificate(der);
-  const subject = parseName(certificate.subject);
-
-  return {
-    country: subject.find(([key]) => key === "C")?.[1],
-    issuerOrganizationIdentifier: parseName(certificate.issuer).find(
-      ([key]) => key === "organizationIdentifier",
-    )?.[1],
-    notAfter: new Date(certificate.validTo),
-    notBefore: new Date(certificate.validFrom),
-    organizations: subject.filter(([key]) => key === "O").map(([, v]) => v),
-    publicJwk: zJwk.parse(certificate.publicKey.export({ format: "jwk" })),
-  };
-};
-
-// Full RFC 5280 path validation, including revocation checking, e.g. with
-// @peculiar/x509 or pkijs. Return true only if `trustAnchor` validates `chain`.
-declare const verifyX509CertificateChain: VerifyX509CertificateChainCallback;
-
-const DIGESTS: Record<string, string> = {
-  ES256: "sha256",
-  ES384: "sha384",
-  ES512: "sha512",
-  PS256: "sha256",
-  PS384: "sha384",
-  PS512: "sha512",
-  RS256: "sha256",
-  RS384: "sha384",
-  RS512: "sha512",
-};
-
-const verifyJwtCallback: CallbackContext["verifyJwt"] = (
-  signer,
-  { compact },
-) => {
-  const publicKey =
-    signer.method === "jwk"
-      ? createPublicKey({ format: "jwk", key: signer.publicJwk })
-      : signer.method === "x5c"
-        ? toCertificate(signer.x5c[0] ?? "").publicKey
-        : undefined;
-  const digest = DIGESTS[signer.alg];
-  if (!publicKey || !digest) return { verified: false };
-
-  const [header, payload, signature = ""] = compact.split(".");
-  const verified = verify(
-    digest,
-    Buffer.from(`${header}.${payload}`),
-    {
-      key: publicKey,
-      ...(signer.alg.startsWith("ES") && { dsaEncoding: "ieee-p1363" }),
-      ...(signer.alg.startsWith("PS") && {
-        padding: constants.RSA_PKCS1_PSS_PADDING,
-      }),
-    },
-    Buffer.from(signature, "base64url"),
-  );
-
-  return verified
-    ? {
-        signerJwk: zJwk.parse(publicKey.export({ format: "jwk" })),
-        verified,
-      }
-    : { verified };
-};
-
-export const callbacks = {
-  fetch: globalThis.fetch,
-  getX509CertificateMetadata,
-  hash: (data: Uint8Array, alg: string) =>
-    createHash(alg.replace("-", "")).update(data).digest(),
-  verifyJwt: verifyJwtCallback,
-  verifyX509CertificateChain,
-};
-```
-
-## Step by step: a PID
+See the following example for the complete authentication flow: the signed Credential Issuer metadata carries the WRPAC in its `x5c` header. It is authenticated by validating the WRPAC, then verifying the signature with the public key of the WRPAC.
 
 ```typescript
 import {
   LoTEProfile,
   fetchAndValidateLoTE,
-  getTrustAnchors,
-  validateCertificateChain,
+  validateWRPAC,
 } from "@pagopa/io-wallet-eudi-trust";
 import { decodeJwt, verifyJwt } from "@pagopa/io-wallet-utils";
 
 /** Certificates of the LoTE signer, from the OJEU publication. */
-declare const ojeuCertificates: string[];
+const ojeuCertificates: ["MIIC9TCCApugAwIBAg..."];
+/** The signed Credential Issuer metadata, fetched with `Accept: application/jwt`. */
+const signedMetadata = "eyJhbGciOiJFUzI1NiIsIn...";
+
+const wrpacProvidersLote = await fetchAndValidateLoTE({
+  callbacks,
+  ojeuUrl: "https://eur-lex.europa.eu/oj/direct-access.html",
+  profile: LoTEProfile.EUWRPACProvidersList,
+  trustedCertificates: ojeuCertificates,
+  loteUrl: "https://example.com/lists/wrpac-providers.json",
+});
+
+const { header, payload } = decodeJwt({ jwt: signedMetadata });
+
+// 1. Validate the WRPAC, which is the first certificate of the x5c header
+const { wrpac } = await validateWRPAC({
+  callbacks,
+  lote: wrpacProvidersLote,
+  wrpacChain: header.x5c,
+});
+
+// 2. Verify the signature with the public key of the validated WRPAC
+await verifyJwt({
+  compact: signedMetadata,
+  header,
+  payload,
+  signer: { alg: header.alg, method: "jwk", publicJwk: wrpac.publicJwk },
+  verifyJwtCallback: callbacks.verifyJwt,
+});
+```
+
+## WRPRC
+
+`validateWRPRC` decodes a Wallet-Relying Party Registration Certificate, verifies its JAdES signature with the first `x5c` certificate, and validates the `x5c` chain against the Trust Anchors of a Providers of WRPRC LoTE. It returns the decoded `header`, the `wrprc` payload and the `trustAnchor`.
+
+```typescript
+import {
+  LoTEProfile,
+  fetchAndValidateLoTE,
+  validateWRPRC,
+} from "@pagopa/io-wallet-eudi-trust";
+
+/** Certificates of the LoTE signer, from the OJEU publication. */
+const ojeuCertificates: ["MIIC9TCCApugAwIBAg..."];
+const wrprcLoteUrl = "example";
+const wrprcJwt = "eyJhbGciOiJFUzI1NiIsIn...";
+
+const wrprcProvidersLote = await fetchAndValidateLoTE({
+  callbacks,
+  ojeuUrl: "https://eur-lex.europa.eu/oj/direct-access.html",
+  profile: LoTEProfile.EUWRPRCProvidersList,
+  trustedCertificates: ojeuCertificates,
+  loteUrl: wrprcLoteUrl,
+});
+
+const { wrprc } = await validateWRPRC({
+  callbacks,
+  lote: wrprcProvidersLote,
+  wrprcJwt,
+});
+```
+
+The status of the WRPRC and its consistency with the interaction in which it is presented are not checked.
+
+## PID
+
+```typescript
+import {
+  LoTEProfile,
+  fetchAndValidateLoTE,
+  validateLoTECertificateChain,
+} from "@pagopa/io-wallet-eudi-trust";
+import { decodeJwt, verifyJwt } from "@pagopa/io-wallet-utils";
+
+/** Certificates of the LoTE signer, from the OJEU publication. */
+const ojeuCertificates: ["MIIC9TCCApugAwIBAg..."];
 /** The PID, an SD-JWT VC. */
-declare const sdJwtVc: string;
+const sdJwtVc = "eyJhbGciOiJFUzI1NiIsIn...";
 
 // 1. Fetch and validate the PID Providers LoTE
 const pidLote = await fetchAndValidateLoTE({
@@ -178,39 +153,28 @@ const pidLote = await fetchAndValidateLoTE({
   ojeuUrl: "https://eur-lex.europa.eu/oj/direct-access.html",
   profile: LoTEProfile.EUPIDProvidersList,
   trustedCertificates: ojeuCertificates,
-  url: "https://development.trust.tech.ec.europa.eu/lists/eudiw/pid-providers.json",
+  loteUrl: "https://example.com/lists/pid-providers.json",
 });
 
 // Only the issuer-signed JWT of the SD-JWT VC is signed with the Sign/Seal certificate
-const [issuerSignedJwt = ""] = sdJwtVc.split("~");
+const [issuerSignedJwt] = sdJwtVc.split("~");
 const { header, payload } = decodeJwt({ jwt: issuerSignedJwt });
-const [signingCertificate, ...intermediates] = header.x5c ?? [];
-if (!signingCertificate) throw new Error("Missing x5c");
-const chain: [string, ...string[]] = [signingCertificate, ...intermediates];
 
-// 2. Retrieve the Trust Anchors of the PID issuance service, narrowed to the
-//    provider identified by the issuer of the last certificate of the chain
-const { issuerOrganizationIdentifier } =
-  await callbacks.getX509CertificateMetadata(
-    chain.at(-1) ?? signingCertificate,
-  );
-const trustAnchors = getTrustAnchors({
-  issuerOrganizationIdentifier,
-  lote: pidLote.document,
+// 2-3. Validate the chain against the Trust Anchors of the PID issuance
+//      service, narrowed to the provider identified by the issuer of the last
+//      certificate of the chain.
+await validateLoTECertificateChain({
+  callbacks,
+  chain: header.x5c,
+  lote: pidLote,
   profile: LoTEProfile.EUPIDProvidersList,
   serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/PID/Issuance",
 });
 
-// 3. Validate the chain: returns the Trust Anchor that validated it
-const trustAnchor = await validateCertificateChain({
-  callbacks,
-  chain,
-  trustAnchors,
-});
-
 // 4. Verify the signature with the public key of the validated signing certificate
 const { publicJwk } =
-  await callbacks.getX509CertificateMetadata(signingCertificate);
+  await callbacks.getX509CertificateMetadata(header.x5c[0]);
+
 await verifyJwt({
   compact: issuerSignedJwt,
   header,
@@ -220,81 +184,17 @@ await verifyJwt({
 });
 ```
 
-## One call: `evaluateJwsTrust`
+The same flow applies to a Wallet Instance Attestation (`LoTEProfile.EUWalletProvidersList`, `.../SvcType/WalletSolution/Issuance`) and a PuB-EAA (`LoTEProfile.EUPubEAAProvidersList`, `.../SvcType/PubEAA/Issuance`).
 
-`evaluateJwsTrust` decodes the JWS (a JWT, or an SD-JWT of which only the issuer-signed JWT is verified), verifies its signature with the public key of the first `x5c` certificate, checks `exp` and `nbf`, and validates the `x5c` chain against the LoTE: the JWS is trusted only if both succeed. It returns the decoded `header` and `payload`, the `signer` and the `trustAnchor`.
-
-### PID
-
-```typescript
-import { evaluateJwsTrust } from "@pagopa/io-wallet-eudi-trust";
-
-const pid = await evaluateJwsTrust({
-  callbacks,
-  jwt: sdJwtVc,
-  lote: pidLote, // validated as in step 1 above
-  profile: LoTEProfile.EUPIDProvidersList,
-  serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/PID/Issuance",
-});
-```
-
-### Wallet Instance Attestation
-
-```typescript
-declare const walletInstanceAttestation: string;
-
-const walletProvidersLote = await fetchAndValidateLoTE({
-  callbacks,
-  ojeuUrl: "https://eur-lex.europa.eu/oj/direct-access.html",
-  profile: LoTEProfile.EUWalletProvidersList,
-  trustedCertificates: ojeuCertificates,
-  url: "https://development.trust.tech.ec.europa.eu/lists/eudiw/wallet-providers.json",
-});
-
-const wia = await evaluateJwsTrust({
-  callbacks,
-  jwt: walletInstanceAttestation,
-  lote: walletProvidersLote,
-  profile: LoTEProfile.EUWalletProvidersList,
-  serviceTypeIdentifier:
-    "http://uri.etsi.org/19602/SvcType/WalletSolution/Issuance",
-});
-```
-
-### Credential Issuer Metadata signed with a WRPAC
-
-```typescript
-const wrpacProvidersLote = await fetchAndValidateLoTE({
-  callbacks,
-  ojeuUrl: "https://eur-lex.europa.eu/oj/direct-access.html",
-  profile: LoTEProfile.EUWRPACProvidersList,
-  trustedCertificates: ojeuCertificates,
-  url: "https://development.trust.tech.ec.europa.eu/lists/eudiw/wrpac-providers.json",
-});
-
-const signedMetadata = await fetch(
-  "https://issuer.eudiw.dev/.well-known/openid-credential-issuer",
-  { headers: { Accept: "application/jwt" } },
-).then((response) => response.text());
-
-const metadata = await evaluateJwsTrust({
-  callbacks,
-  jwt: signedMetadata,
-  lote: wrpacProvidersLote,
-  profile: LoTEProfile.EUWRPACProvidersList,
-  serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance",
-});
-```
-
-To validate only a certificate chain, without a signed object, use `validateSignSealCertificate` (PID, WIA, PuB-EAA) or `validateWRPAC`.
+To split steps 2 and 3, retrieve the candidates with `getTrustAnchors` and pass them to `validateCertificateChain`.
 
 ## Errors
 
-- `LoTEError`: the LoTE is invalid, expired, not signed by an OJEU certificate, or of an unexpected type.
-- `CertificateChainError`: no candidate Trust Anchor, a Trust Anchor included in the chain, or no Trust Anchor validating the chain.
-- `JwtVerificationError` (from `@pagopa/io-wallet-utils`): invalid signature, or expired JWS.
-- `WRPRCError`: WRPRC not yet valid, or expired.
-- `ValidationError` (from `@pagopa/io-wallet-utils`): malformed LoTE or JWS.
+- `LoTEError`: the LoTE is expired, not signed by an OJEU certificate, signed with a certificate not matching the scheme operator or not valid, or of an unexpected type.
+- `JAdESError`: the `x5t#o` header does not match the signer certificate, or the signature (LoTE, WRPRC) or its time-based claims are invalid.
+- `CertificateChainError`: no candidate Trust Anchor, or no Trust Anchor validating the chain.
+- `JwtVerificationError` (from `@pagopa/io-wallet-utils`): invalid signature, or expired JWS, when verifying with `verifyJwt`.
+- `ValidationError` (from `@pagopa/io-wallet-utils`): malformed LoTE, WRPRC or WRPAC.
 
 ## Not supported yet
 

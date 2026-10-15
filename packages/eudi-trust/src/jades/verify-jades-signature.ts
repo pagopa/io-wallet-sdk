@@ -11,18 +11,24 @@ import { JAdESHeader } from "./z-jades";
 
 export interface VerifyJAdESSignatureOptions {
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
+  /** The compact JWS. */
   compact: string;
+  /** The decoded header, validated with `zJAdESHeader`. */
   header: JAdESHeader;
+  /** Validation time of `nbf` and `exp`. Defaults to the current time. */
   now?: Date;
+  /** The decoded payload. */
   payload: JwtPayload;
+  /** Do not check `nbf` and `exp`. */
   skipTimeBasedValidation?: boolean;
 }
 
 /**
- * Verify a compact JAdES B-B signature (ETSI TS 119 182-1): `x5t#o`, when
- * present, must be the digest of the first `x5c` certificate, and the signature
- * must be valid for that certificate. The header shape (see `zJAdESHeader`) is
- * expected to be already validated.
+ * Verifies a compact JAdES Baseline B signature (ETSI TS 119 182-1) made with
+ * the first certificate of the `x5c` header.
+ *
+ * The signing certificate is not validated: use `validateCertificateChain` for
+ * that. The header is expected to be already validated with `zJAdESHeader`.
  *
  * @throws {JAdESError} when the signature is invalid.
  */

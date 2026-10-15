@@ -1,47 +1,55 @@
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
+import { ParsedLoTE } from "../lote";
 import { LoTEProfile } from "../lote/constants";
-import { validateLoTECertificateChain } from "../x509/validate-certificate-chain";
-import { zWRPAC } from "./z-wrpac";
 import {
   GetX509CertificateMetadataCallback,
   VerifyX509CertificateChainCallback,
 } from "../x509";
-import { ParsedLoTE } from "../lote";
+import { validateLoTECertificateChain } from "../x509/validate-certificate-chain";
+import { WRPAC, zWRPAC } from "./z-wrpac";
 
-export type ValidateWRPACOptions = {
-  /**
-   * The WRPAC certificate chain. In the simplest case, this chain only contains the WRPAC.
-   *
-   * The chain is usually the `x5c` of the Credential Issuer metadata or the Request Object.
-   */
-  wrpacChain: [string, ...string[]];
-  /**
-   * The WRPAC LoTE to get the trust anchor from
-   */
-  lote: ParsedLoTE;
+export interface ValidateWRPACOptions {
   callbacks: {
     getX509CertificateMetadata: GetX509CertificateMetadataCallback;
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
+  /** A Providers of WRPAC LoTE, authenticated with `validateLoTE`. */
+  lote: ParsedLoTE;
+  /** Validation time. Defaults to the current time. */
   now?: Date;
-};
+  /**
+   * The certificate chain, starting with the WRPAC, DER encoded in base64.
+   * It is usually the `x5c` of the Credential Issuer metadata or of the Request Object.
+   */
+  wrpacChain: [string, ...string[]];
+}
+
+export interface ValidatedWRPAC {
+  /** The Trust Anchor that validated the WRPAC chain. */
+  trustAnchor: string;
+  /** The validated and parsed WRPAC */
+  wrpac: WRPAC;
+}
 
 /**
- * IT-Wallet "Wallet-Relying Party Access Certificate Validation": validate the
- * chain starting with the WRPAC (e.g. the `x5c` of a signed Request Object)
- * against the Trust Anchors of the `WRPAC/Issuance` service of a Providers of
- * WRPAC LoTE (ETSI TS 119 602 Annex F, Table F.3), then check the WRPAC content
- * (ETSI TS 119 411-8 clause 6.6.1, see `zWRPAC`). Returns the Trust Anchor.
+ * Validates a Wallet-Relying Party Access Certificate, as per the IT-Wallet
+ * WRPAC validation algorithm based on ETSI TS 119 411-8.
  *
- * The revocation status is not checked.
+ * The signature of the object carrying the WRPAC (e.g. the Request Object) is
+ * not verified. Revocation is checked only by `verifyX509CertificateChain`.
+ *
+ * @returns The parsed WRPAC and the Trust Anchor that validated its chain.
+ * @throws {ValidationError} if the WRPAC content is invalid.
+ * @throws {LoTEError} if `lote` is not a Providers of WRPAC LoTE.
+ * @throws {CertificateChainError} if no Trust Anchor validates the chain.
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#wallet-relying-party-access-certificate-validation
  */
 export async function validateWRPAC(
   options: ValidateWRPACOptions,
-): Promise<string> {
-  parseWithErrorHandling(
+): Promise<ValidatedWRPAC> {
+  const wrpac = parseWithErrorHandling(
     zWRPAC,
     await options.callbacks.getX509CertificateMetadata(options.wrpacChain[0]),
     "WRPAC schema validation failed",
@@ -54,5 +62,5 @@ export async function validateWRPAC(
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance",
   });
 
-  return trustAnchor;
+  return { trustAnchor, wrpac };
 }

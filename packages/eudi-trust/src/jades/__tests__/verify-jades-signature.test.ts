@@ -1,8 +1,4 @@
-import {
-  HashAlgorithm,
-  JwtVerificationError,
-  VerifyJwtCallback,
-} from "@pagopa/io-wallet-utils";
+import { HashAlgorithm, VerifyJwtCallback } from "@pagopa/io-wallet-utils";
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
@@ -103,8 +99,9 @@ describe("verifyJAdESSignature", () => {
     const verifyOptions = options();
     verifyOptions.callbacks.verifyJwt.mockReturnValue({ verified: false });
 
-    await expect(verifyJAdESSignature(verifyOptions)).rejects.toThrow(
-      JwtVerificationError,
-    );
+    await expect(verifyJAdESSignature(verifyOptions)).rejects.toMatchObject({
+      code: "JADES_SIGNATURE_VERIFICATION_FAILED",
+      name: "JAdESError",
+    });
   });
 });

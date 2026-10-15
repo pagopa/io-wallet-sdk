@@ -16,14 +16,14 @@ export interface GetTrustAnchorsOptions {
 }
 
 /**
- * Retrieve the candidate Trust Anchor certificates (DER encoded in base64) from the
- * `ServiceDigitalIdentity` of the services of type `serviceTypeIdentifier` (ETSI TS 119 602
- * clause 6.6.3), following the "Retrieve the Trust Anchor" step of the
- * IT-Wallet EUDIW Authentication.
+ * Retrieves the candidate Trust Anchors (DER certificates encoded in base64)
+ * that a LoTE publishes for a given service type, as per the IT-Wallet EUDIW
+ * authentication, based on ETSI TS 119 602.
  *
- * A service without `ServiceStatus` is approved (ETSI TS 119 602 clause 6.6.0,
- * NOTE 1); otherwise only `notified` services qualify, as `withdrawn` ones
- * may not issue anymore (Annex H).
+ * Only active services contribute.
+ *
+ * @returns The candidate Trust Anchors.
+ * @throws {LoTEError} if the LoTE does not match the expected profile.
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#eudiw-authentication
  */
@@ -36,8 +36,8 @@ export function getTrustAnchors(options: GetTrustAnchorsOptions): string[] {
     });
   }
 
-  // ETSI EN 319 412-1 clause 5.1.4 and ETSI TS 119 602 Annex F, Table F.2:
-  // TETradeName carries the registration identifier of the entity.
+  // TETradeName carries the registration identifier of the entity
+  // (ETSI EN 319 412-1 clause 5.1.4, ETSI TS 119 602 Annex F).
   const matchingEntities =
     issuerOrganizationIdentifier && lote.TrustedEntitiesList
       ? lote.TrustedEntitiesList.filter((entity) =>

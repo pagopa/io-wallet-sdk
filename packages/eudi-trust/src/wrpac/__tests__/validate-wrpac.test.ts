@@ -34,9 +34,9 @@ const validate = (metadata: X509CertificateMetadata) => {
         getX509CertificateMetadata: () => metadata,
         verifyX509CertificateChain,
       },
-      wrpacChain: ["wrpac"],
       lote,
       now,
+      wrpacChain: ["wrpac"],
     }),
     verifyX509CertificateChain,
   };
@@ -46,7 +46,10 @@ describe("validateWRPAC", () => {
   it("validates the chain against the Providers of WRPAC LoTE", async () => {
     const { result, verifyX509CertificateChain } = validate(wrpacMetadata);
 
-    await expect(result).resolves.toBe("ta");
+    await expect(result).resolves.toMatchObject({
+      trustAnchor: "ta",
+      wrpac: expect.objectContaining({ policies: wrpacMetadata.policies }),
+    });
     expect(verifyX509CertificateChain).toHaveBeenCalledTimes(1);
   });
 

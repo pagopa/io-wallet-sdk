@@ -6,7 +6,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
-import { EudiTrustError, LoTEError } from "../errors";
+import { LoTEError } from "../errors";
 import { verifyJAdESSignature } from "../jades/verify-jades-signature";
 import { includesCertificate } from "../x509/certificate";
 import { GetX509CertificateMetadataCallback } from "../x509/types";
@@ -24,35 +24,37 @@ import {
 
 export interface FetchLoTEOptions {
   callbacks: Pick<CallbackContext, "fetch">;
-  url: string;
+  /** The URL to download the LoTE from. */
+  loteUrl: string;
 }
 
-export interface FetchAndValidateLoTEOptions extends Omit<
-  ValidateLoTEOptions,
-  "callbacks" | "jwt"
-> {
-  callbacks: Pick<CallbackContext, "fetch"> & ValidateLoTEOptions["callbacks"];
-  /**
-   * The URL to the latest Official Journal of the European Union publication.
-   */
-  ojeuUrl?: string;
-  /**
-   * The URL to download the LoTE from.
-   */
-  url: string;
-}
 export interface ValidateLoTEOptions {
   callbacks: {
     getX509CertificateMetadata: GetX509CertificateMetadataCallback;
   } & Pick<CallbackContext, "hash" | "verifyJwt">;
-  jwt: string;
+  /** The compact JAdES signed LoTE. */
+  loteJwt: string;
+  /** Validation time. Defaults to the current time. */
   now?: Date;
+  /** The expected LoTE profile, which selects the schema the LoTE must follow. */
   profile: LoTEProfile;
   /**
-   * `OJEU-LoTE-Certs-Set`: DER certificates encoded in base64, trusted through
+   * DER certificates encoded in base64, trusted through
    * the Official Journal of the European Union publication.
    */
   trustedCertificates: string[];
+}
+
+export interface FetchAndValidateLoTEOptions
+  extends
+    Omit<FetchLoTEOptions, "callbacks">,
+    Omit<ValidateLoTEOptions, "callbacks" | "loteJwt"> {
+  callbacks: FetchLoTEOptions["callbacks"] & ValidateLoTEOptions["callbacks"];
+  /**
+   * The URL to the latest Official Journal of the European Union publication.
+   * Not used yet: LoTE pivots are not supported.
+   */
+  ojeuUrl?: string;
 }
 
 export interface ParsedLoTE {
@@ -61,10 +63,17 @@ export interface ParsedLoTE {
   header: LoTEJwtHeader;
 }
 
+/**
+ * Downloads a signed LoTE without validating it: use {@link validateLoTE} or
+ * {@link fetchAndValidateLoTE} before trusting its content.
+ *
+ * @returns The compact signed LoTE.
+ * @throws {LoTEError} if the response is not a signed LoTE.
+ */
 export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
   const fetch = createFetcher(options.callbacks.fetch);
 
-  const response = await fetch(options.url, {
+  const response = await fetch(options.loteUrl, {
     headers: { Accept: "application/jose, application/jwt" },
   });
 
@@ -73,7 +82,7 @@ export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
     !contentType?.includes("application/jose") &&
     !contentType?.includes("application/jwt")
   ) {
-    throw new EudiTrustError(
+    throw new LoTEError(
       `Unsupported content type ${contentType}: expected jose or jwt`,
       { code: "LoTE_FETCH_FAILED" },
     );
@@ -84,12 +93,8 @@ export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
 }
 
 /**
- * Digital Signature Validation (step 6 of the IT-Wallet LoTE validation algorithm,
- * PRO-4.1.4-07/08 of ETSI TS 119 615): validate the compact JAdES B-B signature
- * using `LoTE-Signer-Cert` as a directly trusted certificate, and match its
- * subject C and O against the scheme territory and operator name
- * (ETSI TS 119 602 clause 6.8.0). The certificate validity period, when
- * provided, is checked at the validation time.
+ * Verifies the signature of the LoTE. Its signer certificate is not chained to
+ * a Trust Anchor: it is authenticated afterwards against the OJEU certificates.
  */
 async function verifyLoTESignature(
   lote: ParsedLoTE,
@@ -147,13 +152,16 @@ const profilesConfig: Record<LoTEProfile, z.ZodType<LoTEDocument>> = {
 };
 
 /**
- * Authenticate a List of Trusted Entities without pivots, following the
- * IT-Wallet "List of Trusted Entities Validation" algorithm, which applies
- * ETSI TS 119 615 clause 4.1 to ETSI TS 119 602 lists:
- * - step 2: `LoTE-Signer-Cert` is the first `x5c` certificate;
- * - step 6: JAdES signature validation;
- * - step 8: `LoTE-Signer-Cert` must belong to `OJEU-LoTE-Certs-Set`;
- * - step 9: the list must not be past its `NextUpdate`.
+ * Authenticates a List of Trusted Entities (ETSI TS 119 602), as per the
+ * IT-Wallet LoTE validation algorithm based on ETSI TS 119 615. Pivots are not
+ * supported: the signer must be one of `trustedCertificates`.
+ *
+ * A validated LoTE can be reused until its `NextUpdate`.
+ *
+ * @returns The decoded LoTE.
+ * @throws {ValidationError} if the LoTE is malformed.
+ * @throws {JAdESError} if the signature is invalid.
+ * @throws {LoTEError} if the LoTE cannot be trusted, or is expired.
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#eudiw-trust-anchor-validation
  * @see https://www.etsi.org/deliver/etsi_TS/119600_119699/119602/01.01.01_60/ts_119602v010101p.pdf
@@ -163,7 +171,7 @@ export async function validateLoTE(
 ): Promise<ParsedLoTE> {
   const { compact, header, payload } = decodeJwt({
     headerSchema: zLoTEJwtHeader,
-    jwt: options.jwt,
+    jwt: options.loteJwt,
     payloadSchema: profilesConfig[options.profile],
   });
   const lote: ParsedLoTE = { compact, document: payload.LoTE, header };
@@ -185,8 +193,11 @@ export async function validateLoTE(
 }
 
 /**
- * Discover historical list locations (pivots), ordered newest to oldest.
- * Before all pivots, the URL of the Official Journal of the European Union publication is expected.
+ * Returns the locations of the pivot LoTEs, from newest to oldest. Not used yet
+ * by `fetchAndValidateLoTE`.
+ *
+ * @returns The pivot URLs.
+ * @throws {LoTEError} if the pivots cannot be discovered safely.
  */
 export function getLoTEPivotUrls(lote: LoTE, ojeuUrl: string): string[] {
   const uris = (lote.ListAndSchemeInformation.SchemeInformationURI ?? []).map(
@@ -211,8 +222,11 @@ export function getLoTEPivotUrls(lote: LoTE, ojeuUrl: string): string[] {
 }
 
 /**
- * Download the LoTE from `url` and authenticate it with {@link validateLoTE}.
- * The LoTE is assumed to have no pivots.
+ * Downloads a LoTE and authenticates it with {@link validateLoTE}, which
+ * defines the errors thrown. The LoTE is assumed to have no pivots.
+ *
+ * @returns The validated and decoded LoTE.
+ * @throws {LoTEError}
  */
 export async function fetchAndValidateLoTE(
   options: FetchAndValidateLoTEOptions,
@@ -223,5 +237,5 @@ export async function fetchAndValidateLoTE(
   // const pivotUrls = getLoTEPivotUrls(decodedLote.payload.LoTE, options.ojeuUrl)
   // TODO: add pivot validation.
 
-  return validateLoTE({ ...options, jwt: loteJwt });
+  return validateLoTE({ ...options, loteJwt });
 }

@@ -1,3 +1,4 @@
+import { zJwk } from "@pagopa/io-wallet-utils";
 import { z } from "zod";
 
 import {
@@ -18,6 +19,7 @@ const zWRPACFields = z.looseObject({
   policies: z.array(
     z.object({ cpsUris: z.array(z.string()), oid: z.string() }),
   ),
+  publicJwk: zJwk,
   subject: z.object({
     commonName: z.string().min(1),
     countryName: z.string().regex(/^[A-Z]{2}$/),

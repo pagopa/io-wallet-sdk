@@ -47,21 +47,9 @@ export class CertificateChainError extends EudiTrustError {
   }
 }
 
-export type WRPRCErrorCode = "WRPRC_EXPIRED" | "WRPRC_NOT_YET_VALID";
-
-export class WRPRCError extends EudiTrustError {
-  constructor(
-    message: string,
-    options: { code: WRPRCErrorCode } & ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "WRPRCError";
-  }
-}
-
 export type JAdESErrorCode =
-  | "JADES_X5T_O_MISMATCH"
-  | "JADES_SIGNATURE_VERIFICATION_FAILED";
+  | "JADES_SIGNATURE_VERIFICATION_FAILED"
+  | "JADES_X5T_O_MISMATCH";
 
 export class JAdESError extends EudiTrustError {
   constructor(

@@ -95,7 +95,7 @@ function options(
         return verified ? { signerJwk, verified } : { verified };
       }),
     },
-    jwt: signLoTE(),
+    loteJwt: signLoTE(),
     now,
     profile: LoTEProfile.EUPIDProvidersList,
     trustedCertificates: [signerCertificate],
@@ -119,13 +119,15 @@ describe("validateLoTE", () => {
     expect(lote.document).toEqual(document.LoTE);
     expect(validateOptions.callbacks.verifyJwt).toHaveBeenCalledWith(
       { alg: "ES256", method: "x5c", x5c: [signerCertificate] },
-      expect.objectContaining({ compact: validateOptions.jwt }),
+      expect.objectContaining({ compact: validateOptions.loteJwt }),
     );
   });
 
   it("accepts an x5t#o matching the signer certificate", async () => {
     const jwt = signLoTE({ header: x5tO(signerCertificateSha512) });
-    await expect(validateLoTE(options({ jwt }))).resolves.toBeDefined();
+    await expect(
+      validateLoTE(options({ loteJwt: jwt })),
+    ).resolves.toBeDefined();
   });
 
   it("accepts a signer certificate valid at the validation time", async () => {
@@ -151,24 +153,28 @@ describe("validateLoTE", () => {
     ["empty x5c", { x5c: [] }],
   ])("rejects a JAdES header with %s", async (_, header) => {
     await expect(
-      validateLoTE(options({ jwt: signLoTE({ header }) })),
+      validateLoTE(options({ loteJwt: signLoTE({ header }) })),
     ).rejects.toThrow();
   });
 
   it("rejects an x5t#o not matching the signer certificate", async () => {
     const jwt = signLoTE({ header: x5tO("AAAA") });
-    await expect(validateLoTE(options({ jwt }))).rejects.toMatchObject({
-      code: "LoTE_SIGNATURE_VERIFICATION_FAILED",
-      name: "LoTEError",
-    });
+    await expect(validateLoTE(options({ loteJwt: jwt }))).rejects.toMatchObject(
+      {
+        code: "JADES_X5T_O_MISMATCH",
+        name: "JAdESError",
+      },
+    );
   });
 
   it("rejects an invalid signature", async () => {
     const jwt = signLoTE({ key: otherKeys.privateKey });
-    await expect(validateLoTE(options({ jwt }))).rejects.toMatchObject({
-      code: "LoTE_SIGNATURE_VERIFICATION_FAILED",
-      name: "LoTEError",
-    });
+    await expect(validateLoTE(options({ loteJwt: jwt }))).rejects.toMatchObject(
+      {
+        code: "JADES_SIGNATURE_VERIFICATION_FAILED",
+        name: "JAdESError",
+      },
+    );
   });
 
   it.each([
@@ -202,7 +208,7 @@ describe("validateLoTE", () => {
       ListAndSchemeInformation: document.LoTE.ListAndSchemeInformation,
     };
     const lote = await validateLoTE(
-      options({ jwt: signLoTE({ payload: { LoTE: info } }) }),
+      options({ loteJwt: signLoTE({ payload: { LoTE: info } }) }),
     );
 
     expect(lote.document.TrustedEntitiesList).toBeUndefined();
@@ -228,10 +234,10 @@ describe("validateLoTE", () => {
 
 describe("fetchAndValidateLoTE", () => {
   it("fetches and authenticates the LoTE", async () => {
-    const { callbacks, jwt, ...rest } = options();
+    const { callbacks, loteJwt, ...rest } = options();
     const fetch = vi.fn(
       async () =>
-        new Response(jwt, {
+        new Response(loteJwt, {
           headers: { "Content-Type": "application/jose" },
         }),
     );
@@ -239,11 +245,11 @@ describe("fetchAndValidateLoTE", () => {
     const lote = await fetchAndValidateLoTE({
       ...rest,
       callbacks: { ...callbacks, fetch },
+      loteUrl: "https://example.com/lote",
       ojeuUrl: "https://eur-lex.europa.eu/ojeu",
-      url: "https://example.com/lote",
     });
 
-    expect(lote.compact).toBe(jwt);
+    expect(lote.compact).toBe(loteJwt);
     expect(fetch).toHaveBeenCalledWith(
       "https://example.com/lote",
       expect.anything(),

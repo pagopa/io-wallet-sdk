@@ -1,55 +1,56 @@
 import { CallbackContext, decodeJwt } from "@pagopa/io-wallet-utils";
 
+import { verifyJAdESSignature } from "../jades";
+import { ParsedLoTE } from "../lote";
 import { LoTEProfile } from "../lote/constants";
+import {
+  GetX509CertificateMetadataCallback,
+  VerifyX509CertificateChainCallback,
+  validateLoTECertificateChain,
+} from "../x509";
 import {
   WRPRCJwtHeader,
   WRPRCPayload,
   zWRPRCJwtHeader,
   zWRPRCPayload,
 } from "./z-wrprc";
-import { verifyJAdESSignature } from "../jades";
-import {
-  GetX509CertificateMetadataCallback,
-  validateLoTECertificateChain,
-  VerifyX509CertificateChainCallback,
-} from "../x509";
-import { ParsedLoTE } from "../lote";
 
 export interface ValidateWRPRCOptions {
   callbacks: {
+    getX509CertificateMetadata: GetX509CertificateMetadataCallback;
     hash: CallbackContext["hash"];
     verifyJwt: CallbackContext["verifyJwt"];
-    getX509CertificateMetadata: GetX509CertificateMetadataCallback;
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
-  /** The WRPRC JWT to validate */
-  wrprcJwt: string;
-  /** A LoTE authenticated with `validateLoTE`. */
+  /** A Providers of WRPRC LoTE, authenticated with `validateLoTE`. */
   lote: ParsedLoTE;
+  /** Validation time. Defaults to the current time. */
   now?: Date;
+  /** The compact WRPRC JWT to validate. */
+  wrprcJwt: string;
 }
 
 export interface ValidatedWRPRC {
   compact: string;
   header: WRPRCJwtHeader;
-  payload: WRPRCPayload;
   /** The Trust Anchor that validated the WRPRC signing certificate chain. */
   trustAnchor: string;
+  /** The validated and parsed WRPRC payload. */
+  wrprc: WRPRCPayload;
 }
 
 /**
- * IT-Wallet "Wallet-Relying Party Registration Certificate Validation", steps 1
- * and 3-6, for the JWT form (ETSI TS 119 475 clause 5.2.1):
- * 1. `typ` is `rc-wrp+jwt`, and header and payload follow ETSI TS 119 475
- *    clause 5.2 (see `zWRPRCJwtHeader` and `zWRPRCPayload`);
- * 3. the JAdES B-B signature is valid for the first `x5c` certificate (`x5t#o`
- *    included);
- * 4-5. the `x5c` chain is validated against the Trust Anchors of the
- *    `WRPRC/Issuance` service of a Providers of WRPRC LoTE;
- * 6. `iat`, and `exp` when present, are valid at `now`.
+ * Validates a Wallet-Relying Party Registration Certificate in its JWT form, as
+ * per the IT-Wallet authorization artifacts validation based on ETSI TS 119 475.
  *
- * The algorithm (step 2), status (step 7) and consistency with the interaction
- * (step 8) are not checked.
+ * Neither the status of the WRPRC nor its consistency with the interaction in
+ * which it is presented are checked.
+ *
+ * @returns The decoded WRPRC and the Trust Anchor that validated its chain.
+ * @throws {ValidationError} if the WRPRC is malformed.
+ * @throws {JAdESError} if the signature is invalid or the WRPRC is not valid at `now`.
+ * @throws {LoTEError} if `lote` is not a Providers of WRPRC LoTE.
+ * @throws {CertificateChainError} if no Trust Anchor validates the chain.
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#authorization-artifacts-validation
  */
@@ -78,9 +79,10 @@ export async function validateWRPRC(
     callbacks: options.callbacks,
     chain: header.x5c,
     lote: options.lote,
+    now: options.now,
     profile: LoTEProfile.EUWRPRCProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPRC/Issuance",
   });
 
-  return { compact, header, payload, trustAnchor };
+  return { compact, header, trustAnchor, wrprc: payload };
 }

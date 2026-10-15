@@ -1,4 +1,3 @@
-import { JwtVerificationError } from "@pagopa/io-wallet-utils";
 import { createHash, generateKeyPairSync } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
@@ -78,7 +77,6 @@ function options(
         ({ trustAnchor }) => trustAnchor === "ta",
       ),
     },
-    wrprcJwt: signWRPRC(),
     lote: createParsedLoTE(
       createLoTE(LoTEProfile.EUWRPRCProvidersList, [
         createTrustedEntity({
@@ -90,6 +88,7 @@ function options(
       ]),
     ),
     now,
+    wrprcJwt: signWRPRC(),
     ...overrides,
   };
 }
@@ -97,10 +96,10 @@ function options(
 describe("validateWRPRC", () => {
   it("validates a WRPRC against the Providers of WRPRC LoTE", async () => {
     const validateOptions = options();
-    const wrprc = await validateWRPRC(validateOptions);
+    const validated = await validateWRPRC(validateOptions);
 
-    expect(wrprc.trustAnchor).toBe("ta");
-    expect(wrprc.payload.sub).toBe("LEIXG-529900T8BM49AURSDO55");
+    expect(validated.trustAnchor).toBe("ta");
+    expect(validated.wrprc.sub).toBe("LEIXG-529900T8BM49AURSDO55");
     expect(
       validateOptions.callbacks.verifyX509CertificateChain,
     ).toHaveBeenCalledWith({ chain: ["wrprc-signer"], now, trustAnchor: "ta" });
@@ -154,7 +153,10 @@ describe("validateWRPRC", () => {
       validateWRPRC(
         options({ wrprcJwt: signWRPRC({ key: otherKeys.privateKey }) }),
       ),
-    ).rejects.toBeInstanceOf(JwtVerificationError);
+    ).rejects.toMatchObject({
+      code: "JADES_SIGNATURE_VERIFICATION_FAILED",
+      name: "JAdESError",
+    });
   });
 
   it("accepts an x5c ending with the Trust Anchor", async () => {
@@ -193,22 +195,11 @@ describe("validateWRPRC", () => {
     });
   });
 
-  it("rejects a WRPRC issued in the future", async () => {
-    const wrprcJwt = signWRPRC({ payload: { iat: nowInSeconds + 60 } });
+  it("rejects an expired WRPRC", async () => {
+    const wrprcJwt = signWRPRC({ payload: { exp: nowInSeconds - 1 } });
     await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toMatchObject({
-      code: "WRPRC_NOT_YET_VALID",
-      name: "WRPRCError",
-    });
-  });
-
-  it.each([
-    ["in the past", nowInSeconds - 1],
-    ["equal to now", nowInSeconds],
-  ])("rejects a WRPRC with exp %s", async (_, exp) => {
-    const wrprcJwt = signWRPRC({ payload: { exp } });
-    await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toMatchObject({
-      code: "WRPRC_EXPIRED",
-      name: "WRPRCError",
+      code: "JADES_SIGNATURE_VERIFICATION_FAILED",
+      name: "JAdESError",
     });
   });
 
