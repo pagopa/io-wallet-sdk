@@ -96,11 +96,16 @@ export interface ParseAccessTokenRequestOptions {
   request: RequestLike;
 }
 
-export interface ParseAccessTokenRequestOptionsV1_4 extends ParseAccessTokenRequestOptions {
+export interface ParseAccessTokenRequestOptionsShared<
+  V extends ItWalletSpecsVersion =
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4,
+> extends ParseAccessTokenRequestOptions {
   /**
    * The IT-Wallet specs version to use for parsing the access token request.
    */
-  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+  config: IoWalletSdkConfig<V>;
 }
 
 export interface ParseAccessTokenRequestOptionsAPTITUDE extends ParseAccessTokenRequestOptions {
@@ -114,8 +119,8 @@ export type ParseAccessTokenRequestResult =
   | ParseAccessTokenRequestResultAPTITUDE
   | ParseAccessTokenRequestResultV1_4;
 
-function parseAccessTokenRequestV1_4(
-  options: ParseAccessTokenRequestOptionsV1_4,
+function parseAccessTokenRequestV1_4<V extends ItWalletSpecsVersion>(
+  options: ParseAccessTokenRequestOptionsShared<V>,
 ): ParseAccessTokenRequestResultV1_4 {
   const validationResult = zAccessTokenRequest.safeParse(
     options.accessTokenRequest,
@@ -302,11 +307,17 @@ const dispatchParseTokenRequest = createVersionDispatcher<
       o as ParseAccessTokenRequestOptionsAPTITUDE,
     ),
   [ItWalletSpecsVersion.V1_0]: (o) =>
-    parseAccessTokenRequestV1_4(o as ParseAccessTokenRequestOptionsV1_4),
+    parseAccessTokenRequestV1_4(
+      o as ParseAccessTokenRequestOptionsShared<ItWalletSpecsVersion.V1_0>,
+    ),
   [ItWalletSpecsVersion.V1_3]: (o) =>
-    parseAccessTokenRequestV1_4(o as ParseAccessTokenRequestOptionsV1_4),
+    parseAccessTokenRequestV1_4(
+      o as ParseAccessTokenRequestOptionsShared<ItWalletSpecsVersion.V1_3>,
+    ),
   [ItWalletSpecsVersion.V1_4]: (o) =>
-    parseAccessTokenRequestV1_4(o as ParseAccessTokenRequestOptionsV1_4),
+    parseAccessTokenRequestV1_4(
+      o as ParseAccessTokenRequestOptionsShared<ItWalletSpecsVersion.V1_4>,
+    ),
 });
 
 /**
@@ -341,8 +352,13 @@ const dispatchParseTokenRequest = createVersionDispatcher<
  * });
  * ```
  */
-export function parseAccessTokenRequest(
-  options: ParseAccessTokenRequestOptionsV1_4,
+export function parseAccessTokenRequest<
+  V extends ItWalletSpecsVersion =
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4,
+>(
+  options: ParseAccessTokenRequestOptionsShared<V>,
 ): ParseAccessTokenRequestResultV1_4;
 
 export function parseAccessTokenRequest(

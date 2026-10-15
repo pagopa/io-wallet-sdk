@@ -35,6 +35,14 @@ function createValidHeaders(): Headers {
   return headers;
 }
 
+const v1_0Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+});
+
+const v1_3Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
 const v1_4Config = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
 });
@@ -788,6 +796,75 @@ describe("parseAccessTokenRequest", () => {
 
       expect(result.dpop).toBeDefined();
       expect(result.clientAttestation).toBeDefined();
+    });
+  });
+
+  describe("Every config version", () => {
+    it.each([v1_0Config, v1_3Config, v1_4Config, aptitudeConfig])(
+      "parses an authorization-code grant without errors with config version %s",
+      (config) => {
+        const accessTokenRequest = {
+          code: "test-auth-code",
+          code_verifier: "test-code-verifier",
+          grant_type: "authorization_code",
+          redirect_uri: "https://client.example.com/callback",
+        };
+
+        const result = parseAccessTokenRequest({
+          accessTokenRequest,
+          config,
+          request: createMockRequest(createValidHeaders()),
+        });
+
+        expect(result.accessTokenRequest).toEqual(accessTokenRequest);
+        expect(result.grant).toEqual({
+          code: "test-auth-code",
+          grantType: "authorization_code",
+        });
+      },
+    );
+
+    it.each([v1_0Config, v1_3Config, v1_4Config, aptitudeConfig])(
+      "parses a refresh-token grant without errors with config version %s",
+      (config) => {
+        const accessTokenRequest = {
+          grant_type: "refresh_token",
+          refresh_token: "test-refresh-token",
+        };
+
+        const result = parseAccessTokenRequest({
+          accessTokenRequest,
+          config,
+          request: createMockRequest(createValidHeaders()),
+        });
+
+        expect(result.accessTokenRequest).toEqual(accessTokenRequest);
+        expect(result.grant).toEqual({
+          grantType: "refresh_token",
+          refreshToken: "test-refresh-token",
+        });
+      },
+    );
+
+    it("parses a pre-authorized-code grant without errors with APTITUDE config", () => {
+      const accessTokenRequest = {
+        grant_type: preAuthorizedCodeGrantIdentifier,
+        "pre-authorized_code": "issuer-pre-authorized-code",
+        tx_code: "001234",
+      };
+
+      const result = parseAccessTokenRequest({
+        accessTokenRequest,
+        config: aptitudeConfig,
+        request: createMockRequest(createValidHeaders()),
+      });
+
+      expect(result.accessTokenRequest).toEqual(accessTokenRequest);
+      expect(result.grant).toEqual({
+        grantType: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+        preAuthorizedCode: "issuer-pre-authorized-code",
+        txCode: "001234",
+      });
     });
   });
 

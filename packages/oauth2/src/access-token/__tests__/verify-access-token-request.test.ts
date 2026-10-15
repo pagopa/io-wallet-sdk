@@ -54,6 +54,14 @@ describe("verifyAccessTokenRequest", () => {
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
   });
 
+  const v1_3Config = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+  });
+
+  const v1_4Config = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+  });
+
   const aptitudeConfig = new IoWalletSdkConfig({
     itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
   });
@@ -159,28 +167,28 @@ describe("verifyAccessTokenRequest", () => {
     };
   };
 
-  describe("Pre-authorized code grant", () => {
-    const createPreAuthorizedOptions = (
-      overrides: Partial<VerifyPreAuthorizedCodeAccessTokenRequestOptions> = {},
-    ): VerifyPreAuthorizedCodeAccessTokenRequestOptions => {
-      const common = createValidOptions();
-      return {
-        authorizationServerMetadata: common.authorizationServerMetadata,
-        callbacks: common.callbacks,
-        clientAttestation: common.clientAttestation,
-        config: aptitudeConfig,
-        dpop: common.dpop,
-        expectedPreAuthorizedCode: "issuer-pre-authorized-code",
-        grant: {
-          grantType: preAuthorizedCodeGrantIdentifier,
-          preAuthorizedCode: "issuer-pre-authorized-code",
-        },
-        now: common.now,
-        request: common.request,
-        ...overrides,
-      };
+  const createPreAuthorizedOptions = (
+    overrides: Partial<VerifyPreAuthorizedCodeAccessTokenRequestOptions> = {},
+  ): VerifyPreAuthorizedCodeAccessTokenRequestOptions => {
+    const common = createValidOptions();
+    return {
+      authorizationServerMetadata: common.authorizationServerMetadata,
+      callbacks: common.callbacks,
+      clientAttestation: common.clientAttestation,
+      config: aptitudeConfig,
+      dpop: common.dpop,
+      expectedPreAuthorizedCode: "issuer-pre-authorized-code",
+      grant: {
+        grantType: preAuthorizedCodeGrantIdentifier,
+        preAuthorizedCode: "issuer-pre-authorized-code",
+      },
+      now: common.now,
+      request: common.request,
+      ...overrides,
     };
+  };
 
+  describe("Pre-authorized code grant", () => {
     it.each([undefined, "001234", "A+%&= code"])(
       "verifies transaction code %s without PKCE and retains verified security proofs",
       async (txCode) => {
@@ -813,6 +821,34 @@ describe("verifyAccessTokenRequest", () => {
       await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
         "Expired 'code' provided",
       );
+    });
+  });
+
+  describe("Every config version", () => {
+    it.each([v1_0Config, v1_3Config, v1_4Config, aptitudeConfig])(
+      "verifies an authorization-code request without errors with config version %s",
+      async (config) => {
+        const options = {
+          ...createValidOptions(),
+          config,
+        } as Parameters<typeof verifyAccessTokenRequest>[0];
+
+        const result = await verifyAccessTokenRequest(options);
+
+        expect(result).toBeDefined();
+        expect(result.dpop).toBeDefined();
+        expect(result.clientAttestation).toBeDefined();
+      },
+    );
+
+    it("verifies a pre-authorized-code request without errors with APTITUDE config", async () => {
+      const options = createPreAuthorizedOptions();
+
+      const result = await verifyAccessTokenRequest(options);
+
+      expect(result).toBeDefined();
+      expect(result.dpop).toBeDefined();
+      expect(result.clientAttestation).toBeDefined();
     });
   });
 });

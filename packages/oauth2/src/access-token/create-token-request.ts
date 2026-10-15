@@ -30,7 +30,7 @@ export interface BaseRetrieveAccessTokenOptions {
 }
 
 export interface RetrieveAccessTokenOptionsAuthCode<
-  V extends ItWalletSpecsVersion = ItWalletSpecsVersion.V1_4,
+  V extends ItWalletSpecsVersion,
 > extends BaseRetrieveAccessTokenOptions {
   /**
    * The authorization code
@@ -40,7 +40,7 @@ export interface RetrieveAccessTokenOptionsAuthCode<
   config: IoWalletSdkConfig<V>;
 
   /** The authorization_code grant type. */
-  grantType?: AuthorizationCodeGrantIdentifier;
+  grantType: AuthorizationCodeGrantIdentifier;
 
   /**
    * PKCE Code verifier that was used in the authorization request.
@@ -68,7 +68,7 @@ export interface RetrieveAccessTokenOptionsPreAuthorizedCode extends BaseRetriev
 }
 
 export interface RetrieveAccessTokenOptionsRefreshToken<
-  V extends ItWalletSpecsVersion = ItWalletSpecsVersion.V1_4,
+  V extends ItWalletSpecsVersion,
 > extends BaseRetrieveAccessTokenOptions {
   config: IoWalletSdkConfig<V>;
 
@@ -86,16 +86,19 @@ export type RetrieveAccessTokenOptionsShared<V extends ItWalletSpecsVersion> =
   | RetrieveAccessTokenOptionsAuthCode<V>
   | RetrieveAccessTokenOptionsRefreshToken<V>;
 
-export type RetrieveAccessTokenOptionsV1_4 =
-  RetrieveAccessTokenOptionsShared<ItWalletSpecsVersion.V1_4>;
+export type RetrieveAccessTokenOptions = RetrieveAccessTokenOptionsShared<
+  | ItWalletSpecsVersion.V1_0
+  | ItWalletSpecsVersion.V1_3
+  | ItWalletSpecsVersion.V1_4
+>;
 
 export type RetrieveAccessTokenOptionsAPTITUDE =
   | RetrieveAccessTokenOptionsPreAuthorizedCode
   | RetrieveAccessTokenOptionsShared<ItWalletSpecsVersion.APTITUDE>;
 
 export type CreateTokenRequestOptions =
-  | RetrieveAccessTokenOptionsAPTITUDE
-  | RetrieveAccessTokenOptionsV1_4;
+  | RetrieveAccessTokenOptions
+  | RetrieveAccessTokenOptionsAPTITUDE;
 
 export type CreateTokenRequestReturnType =
   | AuthorizationCodeGrantType
@@ -145,11 +148,11 @@ const dispatchCreateTokenRequest = createVersionDispatcher<
   [ItWalletSpecsVersion.APTITUDE]: (o) =>
     createTokenRequestAPTITUDE(o as RetrieveAccessTokenOptionsAPTITUDE),
   [ItWalletSpecsVersion.V1_0]: (o) =>
-    createTokenRequestV1_4(o as RetrieveAccessTokenOptionsV1_4),
+    createTokenRequestV1_4(o as RetrieveAccessTokenOptions),
   [ItWalletSpecsVersion.V1_3]: (o) =>
-    createTokenRequestV1_4(o as RetrieveAccessTokenOptionsV1_4),
+    createTokenRequestV1_4(o as RetrieveAccessTokenOptions),
   [ItWalletSpecsVersion.V1_4]: (o) =>
-    createTokenRequestV1_4(o as RetrieveAccessTokenOptionsV1_4),
+    createTokenRequestV1_4(o as RetrieveAccessTokenOptions),
 });
 
 /**
@@ -184,7 +187,7 @@ const dispatchCreateTokenRequest = createVersionDispatcher<
  * @returns URL-form-encodable grant request data.
  */
 export function createTokenRequest(
-  options: RetrieveAccessTokenOptionsV1_4,
+  options: RetrieveAccessTokenOptions,
 ): AuthorizationCodeGrantType | RefreshTokenGrantType;
 
 export function createTokenRequest(

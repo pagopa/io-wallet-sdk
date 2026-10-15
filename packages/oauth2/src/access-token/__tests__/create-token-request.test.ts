@@ -13,6 +13,14 @@ import { authorizationCodeGrantIdentifier } from "../z-grant-type";
 import { zAccessTokenRequestAPTITUDE } from "../z-token";
 import { zAccessTokenRequest } from "../z-token";
 
+const v1_0Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+});
+
+const v1_3Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
 const v1_4Config = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
 });
@@ -22,7 +30,7 @@ const aptitudeConfig = new IoWalletSdkConfig({
 });
 
 describe("createTokenRequest - authorization code", () => {
-  it.each([undefined, authorizationCodeGrantIdentifier])(
+  it.each([authorizationCodeGrantIdentifier])(
     "creates an authorization-code request with grantType %s",
     (grantType) => {
       const request = createTokenRequest({
@@ -56,6 +64,7 @@ describe("createTokenRequest - authorization code", () => {
       additionalRequestPayload,
       authorizationCode: "issuer-code",
       config: v1_4Config,
+      grantType: authorizationCodeGrantIdentifier,
       pkceCodeVerifier: "pkce-verifier",
       redirectUri: "https://wallet.example.com/callback",
     });
@@ -167,4 +176,103 @@ describe("createTokenRequest - refresh token", () => {
     expect(request).toHaveProperty("scope");
     expect(zAccessTokenRequest.parse(request)).toEqual(request);
   });
+});
+
+describe("creates createTokenRequest with every config version", () => {
+  it.each([v1_0Config, v1_3Config, v1_4Config])(
+    "creates a refresh-token request without errors with config version %s",
+    (config) => {
+      const request = createTokenRequest({
+        config,
+        grantType: refreshTokenGrantIdentifier,
+        refreshToken: "issuer-refresh-token",
+        scope: "openid profile email",
+      });
+
+      expect(request).toEqual({
+        grant_type: "refresh_token",
+        refresh_token: "issuer-refresh-token",
+        scope: "openid profile email",
+      });
+      expect(zAccessTokenRequest.parse(request)).toEqual(request);
+    },
+  );
+
+  it.each([aptitudeConfig])(
+    "creates a refresh-token request without errors with config version %s",
+    (config) => {
+      const request = createTokenRequest({
+        config,
+        grantType: refreshTokenGrantIdentifier,
+        refreshToken: "issuer-refresh-token",
+        scope: "openid profile email",
+      });
+
+      expect(request).toEqual({
+        grant_type: "refresh_token",
+        refresh_token: "issuer-refresh-token",
+        scope: "openid profile email",
+      });
+      expect(zAccessTokenRequest.parse(request)).toEqual(request);
+    },
+  );
+
+  it.each([v1_0Config, v1_3Config, v1_4Config])(
+    "creates an authorization-code request without errors with config version %s",
+    (config) => {
+      const request = createTokenRequest({
+        authorizationCode: "issuer-authorization-code",
+        config,
+        grantType: authorizationCodeGrantIdentifier,
+        pkceCodeVerifier: "pkce-verifier",
+        redirectUri: "https://wallet.example.com/callback",
+      });
+
+      expect(request).toEqual({
+        code: "issuer-authorization-code",
+        code_verifier: "pkce-verifier",
+        grant_type: "authorization_code",
+        redirect_uri: "https://wallet.example.com/callback",
+      });
+      expect(zAccessTokenRequest.parse(request)).toEqual(request);
+    },
+  );
+
+  it.each([aptitudeConfig])(
+    "creates an authorization-code request without errors with config version %s",
+    (config) => {
+      const request = createTokenRequest({
+        authorizationCode: "issuer-authorization-code",
+        config,
+        grantType: authorizationCodeGrantIdentifier,
+        pkceCodeVerifier: "pkce-verifier",
+        redirectUri: "https://wallet.example.com/callback",
+      });
+
+      expect(request).toEqual({
+        code: "issuer-authorization-code",
+        code_verifier: "pkce-verifier",
+        grant_type: "authorization_code",
+        redirect_uri: "https://wallet.example.com/callback",
+      });
+      expect(zAccessTokenRequest.parse(request)).toEqual(request);
+    },
+  );
+
+  it.each([aptitudeConfig])(
+    "creates a pre-authorized-code request without errors with config version %s",
+    (config) => {
+      const request = createTokenRequest({
+        config,
+        grantType: preAuthorizedCodeGrantIdentifier,
+        preAuthorizedCode: "issuer-pre-authorized-code",
+      });
+
+      expect(request).toEqual({
+        grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+        "pre-authorized_code": "issuer-pre-authorized-code",
+      });
+      expect(zAccessTokenRequestAPTITUDE.parse(request)).toEqual(request);
+    },
+  );
 });

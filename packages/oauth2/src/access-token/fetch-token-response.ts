@@ -52,13 +52,18 @@ export interface BaseFetchTokenResponseOptions {
   walletAttestation: string;
 }
 
-export interface FetchTokenResponseOptionsV1_4 extends BaseFetchTokenResponseOptions {
+export interface FetchTokenResponseOptionsShared<
+  V extends ItWalletSpecsVersion =
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4,
+> extends BaseFetchTokenResponseOptions {
   /**
    * The authorization-code or refresh-token request payload.
    */
   accessTokenRequest: AccessTokenRequest;
 
-  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
+  config: IoWalletSdkConfig<V>;
 }
 
 export interface FetchTokenResponseOptionsAPTITUDE extends BaseFetchTokenResponseOptions {
@@ -72,7 +77,7 @@ export interface FetchTokenResponseOptionsAPTITUDE extends BaseFetchTokenRespons
 
 export type FetchTokenResponseOptions =
   | FetchTokenResponseOptionsAPTITUDE
-  | FetchTokenResponseOptionsV1_4;
+  | FetchTokenResponseOptionsShared;
 
 async function fetchTokenResponseV1_4(
   options: FetchTokenResponseOptions,
@@ -146,11 +151,17 @@ const dispatchFetchTokenResponse = createVersionDispatcher<
   [ItWalletSpecsVersion.APTITUDE]: (o) =>
     fetchTokenResponseV1_4(o as FetchTokenResponseOptionsAPTITUDE),
   [ItWalletSpecsVersion.V1_0]: (o) =>
-    fetchTokenResponseV1_4(o as FetchTokenResponseOptionsV1_4),
+    fetchTokenResponseV1_4(
+      o as FetchTokenResponseOptionsShared<ItWalletSpecsVersion.V1_0>,
+    ),
   [ItWalletSpecsVersion.V1_3]: (o) =>
-    fetchTokenResponseV1_4(o as FetchTokenResponseOptionsV1_4),
+    fetchTokenResponseV1_4(
+      o as FetchTokenResponseOptionsShared<ItWalletSpecsVersion.V1_3>,
+    ),
   [ItWalletSpecsVersion.V1_4]: (o) =>
-    fetchTokenResponseV1_4(o as FetchTokenResponseOptionsV1_4),
+    fetchTokenResponseV1_4(
+      o as FetchTokenResponseOptionsShared<ItWalletSpecsVersion.V1_4>,
+    ),
 });
 
 /**

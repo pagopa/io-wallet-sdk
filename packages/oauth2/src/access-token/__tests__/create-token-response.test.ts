@@ -34,6 +34,18 @@ const v1_4Config = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
 });
 
+const v1_0Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_0,
+});
+
+const v1_3Config = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
+});
+
+const aptitudeConfig = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
+});
+
 const baseOptions: CreateAccessTokenResponseOptions = {
   audience: "https://wallet-provider.example.com",
   authorizationServer: "https://as.example.com",
@@ -445,4 +457,50 @@ describe("createAccessTokenResponse - Refresh Token issuance", () => {
       "Unable to resolve a kid for the Refresh Token JOSE header.",
     );
   });
+});
+
+describe("invokes createTokenResponse with every config version", () => {
+  beforeEach(() => {
+    setupMockCallbacks();
+  });
+
+  it.each([v1_0Config, v1_3Config, v1_4Config, aptitudeConfig])(
+    "creates a Bearer access token response without errors with config version %s",
+    async (config) => {
+      const result = await createAccessTokenResponse({
+        ...baseOptions,
+        config,
+      });
+
+      expect(result).toEqual({
+        access_token: "signed-access-token-jwt",
+        expires_in: 300,
+        token_type: "Bearer",
+      });
+    },
+  );
+
+  it.each([v1_0Config, v1_3Config, v1_4Config, aptitudeConfig])(
+    "creates a DPoP-bound access token response with refresh token without errors with config version %s",
+    async (config) => {
+      const result = await createAccessTokenResponse({
+        ...baseOptions,
+        config,
+        dpop: {
+          jwk: mockSigner.publicJwk,
+        },
+        refreshTokenExpiresInSeconds: 3600,
+        tokenType: "DPoP",
+      });
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          access_token: "signed-access-token-jwt",
+          expires_in: 300,
+          refresh_token: "signed-refresh-token-jwt",
+          token_type: "DPoP",
+        }),
+      );
+    },
+  );
 });
