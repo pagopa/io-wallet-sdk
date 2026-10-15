@@ -3,11 +3,15 @@
  * alphabet and padding, so that equal certificates compare equal.
  */
 export function normalizeCertificate(certificate: string): string {
-  return certificate
+  const unpadded = certificate
     .replace(/\s/g, "")
     .replace(/-/g, "+")
-    .replace(/_/g, "/")
-    .replace(/=+$/, "");
+    .replace(/_/g, "/");
+
+  let end = unpadded.length;
+  while (end > 0 && unpadded[end - 1] === "=") end--;
+
+  return unpadded.slice(0, end);
 }
 
 export function includesCertificate(
