@@ -14,8 +14,8 @@ export interface ValidateWRPACOptions {
     getX509CertificateMetadata: GetX509CertificateMetadataCallback;
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
-  /** A Providers of WRPAC LoTE, authenticated with `validateLoTE`. */
-  lote: ParsedLoTE;
+  /** A Provider of WRPAC LoTE, authenticated with `validateLoTE`. */
+  wrpacLote: ParsedLoTE;
   /** Validation time. Defaults to the current time. */
   now?: Date;
   /**
@@ -41,7 +41,7 @@ export interface ValidatedWRPAC {
  *
  * @returns The parsed WRPAC and the Trust Anchor that validated its chain.
  * @throws {ValidationError} if the WRPAC content is invalid.
- * @throws {LoTEError} if `lote` is not a Providers of WRPAC LoTE.
+ * @throws {LoTEError} if `wrpacLote` is not a Provider of WRPAC LoTE.
  * @throws {CertificateChainError} if no Trust Anchor validates the chain.
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#wallet-relying-party-access-certificate-validation
@@ -56,8 +56,10 @@ export async function validateWRPAC(
   );
 
   const trustAnchor = await validateLoTECertificateChain({
-    ...options,
+    callbacks: options.callbacks,
     chain: options.wrpacChain,
+    lote: options.wrpacLote,
+    now: options.now,
     profile: LoTEProfile.EUWRPACProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance",
   });

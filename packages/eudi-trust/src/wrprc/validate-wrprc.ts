@@ -22,8 +22,8 @@ export interface ValidateWRPRCOptions {
     verifyJwt: CallbackContext["verifyJwt"];
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
-  /** A Providers of WRPRC LoTE, authenticated with `validateLoTE`. */
-  lote: ParsedLoTE;
+  /** A Provider of WRPRC LoTE, authenticated with `validateLoTE`. */
+  wrprcLote: ParsedLoTE;
   /** Validation time. Defaults to the current time. */
   now?: Date;
   /** The compact WRPRC JWT to validate. */
@@ -49,7 +49,7 @@ export interface ValidatedWRPRC {
  * @returns The decoded WRPRC and the Trust Anchor that validated its chain.
  * @throws {ValidationError} if the WRPRC is malformed.
  * @throws {JAdESError} if the signature is invalid or the WRPRC is not valid at `now`.
- * @throws {LoTEError} if `lote` is not a Providers of WRPRC LoTE.
+ * @throws {LoTEError} if `wrprcLote` is not a Provider of WRPRC LoTE.
  * @throws {CertificateChainError} if no Trust Anchor validates the chain.
  *
  * @see https://italia.github.io/eid-wallet-it-docs/1.5.0/en/trust-evaluation.html#authorization-artifacts-validation
@@ -78,7 +78,7 @@ export async function validateWRPRC(
   const trustAnchor = await validateLoTECertificateChain({
     callbacks: options.callbacks,
     chain: header.x5c,
-    lote: options.lote,
+    lote: options.wrprcLote,
     now: options.now,
     profile: LoTEProfile.EUWRPRCProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPRC/Issuance",

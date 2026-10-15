@@ -77,7 +77,7 @@ function options(
         ({ trustAnchor }) => trustAnchor === "ta",
       ),
     },
-    lote: createParsedLoTE(
+    wrprcLote: createParsedLoTE(
       createLoTE(LoTEProfile.EUWRPRCProvidersList, [
         createTrustedEntity({
           services: [

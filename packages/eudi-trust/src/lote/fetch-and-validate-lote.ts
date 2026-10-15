@@ -63,6 +63,12 @@ export interface ParsedLoTE {
   header: LoTEJwtHeader;
 }
 
+const ALLOWED_LOTE_CONTENT_TYPES = [
+  "application/jose",
+  "application/jwt",
+  "application/json",
+];
+
 /**
  * Downloads a signed LoTE without validating it: use {@link validateLoTE} or
  * {@link fetchAndValidateLoTE} before trusting its content.
@@ -79,11 +85,12 @@ export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
 
   const contentType = response.headers.get("Content-Type");
   if (
-    !contentType?.includes("application/jose") &&
-    !contentType?.includes("application/jwt")
+    !ALLOWED_LOTE_CONTENT_TYPES.some((allowedContentType) =>
+      contentType?.includes(allowedContentType),
+    )
   ) {
     throw new LoTEError(
-      `Unsupported content type ${contentType}: expected jose or jwt`,
+      `Unsupported content type ${contentType}: expected one of ${ALLOWED_LOTE_CONTENT_TYPES.join(", ")}`,
       { code: "LoTE_FETCH_FAILED" },
     );
   }

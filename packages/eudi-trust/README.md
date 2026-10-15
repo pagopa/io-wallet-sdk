@@ -85,7 +85,7 @@ const { header, payload } = decodeJwt({ jwt: signedMetadata });
 // 1. Validate the WRPAC, which is the first certificate of the x5c header
 const { wrpac } = await validateWRPAC({
   callbacks,
-  lote: wrpacProvidersLote,
+  wrpacLote: wrpacProvidersLote,
   wrpacChain: header.x5c,
 });
 
@@ -125,7 +125,7 @@ const wrprcProvidersLote = await fetchAndValidateLoTE({
 
 const { wrprc } = await validateWRPRC({
   callbacks,
-  lote: wrprcProvidersLote,
+  wrprcLote: wrprcProvidersLote,
   wrprcJwt,
 });
 ```
