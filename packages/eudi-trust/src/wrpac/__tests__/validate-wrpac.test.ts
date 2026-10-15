@@ -34,9 +34,9 @@ const validate = (metadata: X509CertificateMetadata) => {
         getX509CertificateMetadata: () => metadata,
         verifyX509CertificateChain,
       },
-      wrpacLote: lote,
       now,
       wrpacChain: ["wrpac"],
+      wrpacLote: lote,
     }),
     verifyX509CertificateChain,
   };

@@ -14,8 +14,6 @@ export interface ValidateWRPACOptions {
     getX509CertificateMetadata: GetX509CertificateMetadataCallback;
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
-  /** A Provider of WRPAC LoTE, authenticated with `validateLoTE`. */
-  wrpacLote: ParsedLoTE;
   /** Validation time. Defaults to the current time. */
   now?: Date;
   /**
@@ -23,6 +21,8 @@ export interface ValidateWRPACOptions {
    * It is usually the `x5c` of the Credential Issuer metadata or of the Request Object.
    */
   wrpacChain: [string, ...string[]];
+  /** A Provider of WRPAC LoTE, authenticated with `validateLoTE`. */
+  wrpacLote: ParsedLoTE;
 }
 
 export interface ValidatedWRPAC {

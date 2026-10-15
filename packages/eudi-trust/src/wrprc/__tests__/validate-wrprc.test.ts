@@ -77,6 +77,8 @@ function options(
         ({ trustAnchor }) => trustAnchor === "ta",
       ),
     },
+    now,
+    wrprcJwt: signWRPRC(),
     wrprcLote: createParsedLoTE(
       createLoTE(LoTEProfile.EUWRPRCProvidersList, [
         createTrustedEntity({
@@ -87,8 +89,6 @@ function options(
         }),
       ]),
     ),
-    now,
-    wrprcJwt: signWRPRC(),
     ...overrides,
   };
 }

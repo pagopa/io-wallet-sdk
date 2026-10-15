@@ -22,12 +22,12 @@ export interface ValidateWRPRCOptions {
     verifyJwt: CallbackContext["verifyJwt"];
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
-  /** A Provider of WRPRC LoTE, authenticated with `validateLoTE`. */
-  wrprcLote: ParsedLoTE;
   /** Validation time. Defaults to the current time. */
   now?: Date;
   /** The compact WRPRC JWT to validate. */
   wrprcJwt: string;
+  /** A Provider of WRPRC LoTE, authenticated with `validateLoTE`. */
+  wrprcLote: ParsedLoTE;
 }
 
 export interface ValidatedWRPRC {
