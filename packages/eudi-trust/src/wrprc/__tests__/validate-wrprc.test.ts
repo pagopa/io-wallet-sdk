@@ -1,5 +1,5 @@
 import { JwtVerificationError } from "@pagopa/io-wallet-utils";
-import { generateKeyPairSync } from "node:crypto";
+import { createHash, generateKeyPairSync } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
 import { signJws, toJwk, verifyJwtWithJwk } from "../../__tests__/jws-fixtures";
@@ -61,12 +61,24 @@ function options(
         organizations: [],
         publicJwk: toJwk(signerKeys.publicKey),
       }),
-      verifyJwt: verifyJwtWithJwk,
+      hash: (data, alg) =>
+        createHash(alg.replace("-", "")).update(data).digest(),
+      verifyJwt: (signer, jwt) =>
+        verifyJwtWithJwk(
+          signer.method === "x5c"
+            ? {
+                alg: signer.alg,
+                method: "jwk",
+                publicJwk: toJwk(signerKeys.publicKey),
+              }
+            : signer,
+          jwt,
+        ),
       verifyX509CertificateChain: vi.fn(
         ({ trustAnchor }) => trustAnchor === "ta",
       ),
     },
-    jwt: signWRPRC(),
+    wrprcJwt: signWRPRC(),
     lote: createParsedLoTE(
       createLoTE(LoTEProfile.EUWRPRCProvidersList, [
         createTrustedEntity({
@@ -100,19 +112,54 @@ describe("validateWRPRC", () => {
     ["no iat", { iat: undefined }],
   ])("rejects a header with %s", async (_, header) => {
     await expect(
-      validateWRPRC(options({ jwt: signWRPRC({ header }) })),
+      validateWRPRC(options({ wrprcJwt: signWRPRC({ header }) })),
     ).rejects.toThrow();
+  });
+
+  it.each([
+    ["alg none", { alg: "none" }],
+    ["a symmetric alg", { alg: "HS256" }],
+    ["sigD", { sigD: { mId: "x" } }],
+    ["b64", { b64: false }],
+    ["the legacy sigT", { sigT: "2026-10-13T00:00:00Z" }],
+  ])("rejects a header with %s", async (_, header) => {
+    await expect(
+      validateWRPRC(options({ wrprcJwt: signWRPRC({ header }) })),
+    ).rejects.toThrow();
+  });
+
+  it("accepts an x5t#o matching the signing certificate", async () => {
+    const digVal = createHash("sha256")
+      .update(Buffer.from("wrprc-signer", "base64"))
+      .digest("base64url");
+    const wrprcJwt = signWRPRC({
+      header: { "x5t#o": { digAlg: "sha-256", digVal } },
+    });
+
+    await expect(validateWRPRC(options({ wrprcJwt }))).resolves.toBeDefined();
+  });
+
+  it("rejects an x5t#o not matching the signing certificate", async () => {
+    const wrprcJwt = signWRPRC({
+      header: { "x5t#o": { digAlg: "sha-256", digVal: "AAAA" } },
+    });
+
+    await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toMatchObject({
+      code: "JADES_X5T_O_MISMATCH",
+    });
   });
 
   it("rejects an invalid signature", async () => {
     await expect(
-      validateWRPRC(options({ jwt: signWRPRC({ key: otherKeys.privateKey }) })),
+      validateWRPRC(
+        options({ wrprcJwt: signWRPRC({ key: otherKeys.privateKey }) }),
+      ),
     ).rejects.toBeInstanceOf(JwtVerificationError);
   });
 
   it("accepts an x5c ending with the Trust Anchor", async () => {
     const validateOptions = options({
-      jwt: signWRPRC({ header: { x5c: ["wrprc-signer", "ta"] } }),
+      wrprcJwt: signWRPRC({ header: { x5c: ["wrprc-signer", "ta"] } }),
     });
 
     await expect(validateWRPRC(validateOptions)).resolves.toMatchObject({
@@ -125,7 +172,7 @@ describe("validateWRPRC", () => {
 
   it("directly trusts a WRPRC signed with the listed certificate", async () => {
     const validateOptions = options({
-      jwt: signWRPRC({ header: { x5c: ["ta"] } }),
+      wrprcJwt: signWRPRC({ header: { x5c: ["ta"] } }),
     });
 
     await expect(validateWRPRC(validateOptions)).resolves.toMatchObject({
@@ -147,8 +194,8 @@ describe("validateWRPRC", () => {
   });
 
   it("rejects a WRPRC issued in the future", async () => {
-    const jwt = signWRPRC({ payload: { iat: nowInSeconds + 60 } });
-    await expect(validateWRPRC(options({ jwt }))).rejects.toMatchObject({
+    const wrprcJwt = signWRPRC({ payload: { iat: nowInSeconds + 60 } });
+    await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toMatchObject({
       code: "WRPRC_NOT_YET_VALID",
       name: "WRPRCError",
     });
@@ -158,15 +205,15 @@ describe("validateWRPRC", () => {
     ["in the past", nowInSeconds - 1],
     ["equal to now", nowInSeconds],
   ])("rejects a WRPRC with exp %s", async (_, exp) => {
-    const jwt = signWRPRC({ payload: { exp } });
-    await expect(validateWRPRC(options({ jwt }))).rejects.toMatchObject({
+    const wrprcJwt = signWRPRC({ payload: { exp } });
+    await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toMatchObject({
       code: "WRPRC_EXPIRED",
       name: "WRPRCError",
     });
   });
 
   it("accepts a WRPRC without exp", async () => {
-    const jwt = signWRPRC({ payload: { exp: undefined } });
-    await expect(validateWRPRC(options({ jwt }))).resolves.toBeDefined();
+    const wrprcJwt = signWRPRC({ payload: { exp: undefined } });
+    await expect(validateWRPRC(options({ wrprcJwt }))).resolves.toBeDefined();
   });
 });

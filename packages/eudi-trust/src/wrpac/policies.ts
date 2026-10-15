@@ -1,4 +1,6 @@
-/** WRPAC certificate policies of ETSI TS 119 411-8 clause 5.3. */
+/**
+ * WRPAC certificate policies of ETSI TS 119 411-8 clause 5.3.
+ */
 export const WRPAC_POLICIES = {
   /** NCP-l-eudiwrp: normalized, legal person. */
   NCP_LEGAL: "0.4.0.194118.1.2",

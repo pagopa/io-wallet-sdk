@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { zJAdESHeader } from "../jades/z-jades";
 import {
   LEGAL_PERSON_IDENTIFIER,
   NATURAL_PERSON_IDENTIFIER,
@@ -7,16 +8,12 @@ import {
 import { isPSPSubEntitlement, isValidEntitlement } from "./entitlements";
 
 /**
- * WRPRC JWT header (ETSI TS 119 475 clause 5.2.2, Table 5). `iat` is the
- * claimed signing time of the JAdES B-B signature required by GEN-5.2.1-04.
+ * WRPRC JWT header (ETSI TS 119 475 clause 5.2.2, Table 5): a JAdES B-B header
+ * as required by GEN-5.2.1-04, where `iat` is the claimed signing time.
  */
 export type WRPRCJwtHeader = z.infer<typeof zWRPRCJwtHeader>;
-export const zWRPRCJwtHeader = z.looseObject({
-  alg: z.string(),
-  iat: z.number().int(),
-  kid: z.string().optional(),
+export const zWRPRCJwtHeader = zJAdESHeader.extend({
   typ: z.literal("rc-wrp+jwt"),
-  x5c: z.tuple([z.string()], z.string()),
 });
 
 /** ETSI TS 119 475 Annex B.2.6 MultiLangString. */

@@ -58,3 +58,17 @@ export class WRPRCError extends EudiTrustError {
     this.name = "WRPRCError";
   }
 }
+
+export type JAdESErrorCode =
+  | "JADES_X5T_O_MISMATCH"
+  | "JADES_SIGNATURE_VERIFICATION_FAILED";
+
+export class JAdESError extends EudiTrustError {
+  constructor(
+    message: string,
+    options: { code: JAdESErrorCode } & ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "JAdESError";
+  }
+}

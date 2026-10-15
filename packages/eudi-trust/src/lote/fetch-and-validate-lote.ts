@@ -1,19 +1,16 @@
 import {
   CallbackContext,
   createFetcher,
-  decodeBase64,
   decodeJwt,
-  encodeToBase64Url,
   hasStatusOrThrow,
-  verifyJwt,
 } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
 import { EudiTrustError, LoTEError } from "../errors";
+import { verifyJAdESSignature } from "../jades/verify-jades-signature";
 import { includesCertificate } from "../x509/certificate";
 import { GetX509CertificateMetadataCallback } from "../x509/types";
-import { LoTEProfile } from "./constants";
-import { MAX_LOTE_PIVOTS } from "./constants";
+import { LoTEProfile, MAX_LOTE_PIVOTS } from "./constants";
 import { LoTE, LoTEDocument, LoTEJwtHeader, zLoTEJwtHeader } from "./z-lote";
 import {
   zEAAProvidersList,
@@ -38,7 +35,10 @@ export interface FetchAndValidateLoTEOptions extends Omit<
   /**
    * The URL to the latest Official Journal of the European Union publication.
    */
-  ojeuUrl: string;
+  ojeuUrl?: string;
+  /**
+   * The URL to download the LoTE from.
+   */
   url: string;
 }
 export interface ValidateLoTEOptions {
@@ -75,6 +75,7 @@ export async function fetchLoTE(options: FetchLoTEOptions): Promise<string> {
   ) {
     throw new EudiTrustError(
       `Unsupported content type ${contentType}: expected jose or jwt`,
+      { code: "LoTE_FETCH_FAILED" },
     );
   }
 
@@ -97,30 +98,15 @@ async function verifyLoTESignature(
   now: Date,
 ): Promise<void> {
   const { header } = lote;
-  const [signerCertificate] = header.x5c;
   const info = lote.document.ListAndSchemeInformation;
 
-  // ETSI TS 119 182-1: x5t#o is the digest of the signing certificate.
-  const x5tO = header["x5t#o"];
-  if (x5tO) {
-    const digest = await callbacks.hash(
-      decodeBase64(signerCertificate),
-      x5tO.digAlg,
-    );
-    if (encodeToBase64Url(digest) !== x5tO.digVal) {
-      throw new LoTEError("x5t#o does not match the LoTE signer certificate", {
-        code: "LoTE_SIGNATURE_VERIFICATION_FAILED",
-      });
-    }
-  }
-
-  const metadata =
-    await callbacks.getX509CertificateMetadata(signerCertificate);
+  const metadata = await callbacks.getX509CertificateMetadata(header.x5c[0]);
 
   // ETSI SPEC-DEVIATION
   // ETSI TS 119 602 section 6.8.0 on digital signature states that the certificate's country code
   // and organization must match the scheme territory and one of the scheme operator name values in the LoTE.
   // EUDIW Launchpad LoTEs countries do not match, so the line is commented out.
+  // TODO: decide whether to remove or keep this check
   if (
     // metadata.country !== info.SchemeTerritory ||
     !metadata.organizations.some((organization) =>
@@ -129,9 +115,7 @@ async function verifyLoTESignature(
   ) {
     throw new LoTEError(
       "LoTE signer certificate subject does not match the scheme territory and operator name",
-      {
-        code: "LoTE_SIGNATURE_VERIFICATION_FAILED",
-      },
+      { code: "LoTE_SIGNATURE_VERIFICATION_FAILED" },
     );
   }
 
@@ -144,21 +128,12 @@ async function verifyLoTESignature(
     });
   }
 
-  try {
-    await verifyJwt({
-      compact: lote.compact,
-      header,
-      payload,
-      signer: { alg: header.alg, method: "x5c", x5c: [signerCertificate] },
-      skipTimeBasedValidation: true,
-      verifyJwtCallback: callbacks.verifyJwt,
-    });
-  } catch (error) {
-    throw new LoTEError("Invalid LoTE signature", {
-      cause: error,
-      code: "LoTE_SIGNATURE_VERIFICATION_FAILED",
-    });
-  }
+  await verifyJAdESSignature({
+    callbacks,
+    compact: lote.compact,
+    header,
+    payload,
+  });
 }
 
 const profilesConfig: Record<LoTEProfile, z.ZodType<LoTEDocument>> = {
@@ -196,7 +171,7 @@ export async function validateLoTE(
   const now = options.now ?? new Date();
   await verifyLoTESignature(lote, payload, options.callbacks, now);
 
-  if (!includesCertificate(options.trustedCertificates, header.x5c[0])) {
+  if (!includesCertificate(options.trustedCertificates, lote.header.x5c[0])) {
     throw new LoTEError("LoTE signer certificate is not trusted by the OJEU", {
       code: "PIVOT_n_SIGNER_CERT_NOT_AUTHENTICATED_BY_OJEU",
     });

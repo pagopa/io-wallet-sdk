@@ -1,22 +1,33 @@
-import { dateToSeconds, decodeJwt } from "@pagopa/io-wallet-utils";
+import { CallbackContext, decodeJwt } from "@pagopa/io-wallet-utils";
 
-import { WRPRCError } from "../errors";
 import { LoTEProfile } from "../lote/constants";
-import {
-  EvaluateJwsTrustOptions,
-  evaluateJwsTrust,
-} from "../trust-evaluation/evaluate-jws-trust";
 import {
   WRPRCJwtHeader,
   WRPRCPayload,
   zWRPRCJwtHeader,
   zWRPRCPayload,
 } from "./z-wrprc";
+import { verifyJAdESSignature } from "../jades";
+import {
+  GetX509CertificateMetadataCallback,
+  validateLoTECertificateChain,
+  VerifyX509CertificateChainCallback,
+} from "../x509";
+import { ParsedLoTE } from "../lote";
 
-export type ValidateWRPRCOptions = Omit<
-  EvaluateJwsTrustOptions,
-  "profile" | "serviceTypeIdentifier"
->;
+export interface ValidateWRPRCOptions {
+  callbacks: {
+    hash: CallbackContext["hash"];
+    verifyJwt: CallbackContext["verifyJwt"];
+    getX509CertificateMetadata: GetX509CertificateMetadataCallback;
+    verifyX509CertificateChain: VerifyX509CertificateChainCallback;
+  };
+  /** The WRPRC JWT to validate */
+  wrprcJwt: string;
+  /** A LoTE authenticated with `validateLoTE`. */
+  lote: ParsedLoTE;
+  now?: Date;
+}
 
 export interface ValidatedWRPRC {
   compact: string;
@@ -31,7 +42,8 @@ export interface ValidatedWRPRC {
  * and 3-6, for the JWT form (ETSI TS 119 475 clause 5.2.1):
  * 1. `typ` is `rc-wrp+jwt`, and header and payload follow ETSI TS 119 475
  *    clause 5.2 (see `zWRPRCJwtHeader` and `zWRPRCPayload`);
- * 3. the signature is valid for the first `x5c` certificate;
+ * 3. the JAdES B-B signature is valid for the first `x5c` certificate (`x5t#o`
+ *    included);
  * 4-5. the `x5c` chain is validated against the Trust Anchors of the
  *    `WRPRC/Issuance` service of a Providers of WRPRC LoTE;
  * 6. `iat`, and `exp` when present, are valid at `now`.
@@ -47,28 +59,28 @@ export async function validateWRPRC(
   const { compact, header, payload } = decodeJwt({
     errorMessagePrefix: "Error decoding WRPRC:",
     headerSchema: zWRPRCJwtHeader,
-    jwt: options.jwt,
+    jwt: options.wrprcJwt,
     payloadSchema: zWRPRCPayload,
   });
 
-  // Checked before the signature, which would otherwise reject an expired WRPRC
-  // with a generic JWT verification error.
-  const nowInSeconds = dateToSeconds(options.now ?? new Date());
-  if (payload.exp !== undefined && payload.exp <= nowInSeconds) {
-    throw new WRPRCError("WRPRC has expired", { code: "WRPRC_EXPIRED" });
-  }
+  await verifyJAdESSignature({
+    callbacks: {
+      hash: options.callbacks.hash,
+      verifyJwt: options.callbacks.verifyJwt,
+    },
+    compact,
+    header: header,
+    now: options.now,
+    payload,
+  });
 
-  const { trustAnchor } = await evaluateJwsTrust({
-    ...options,
+  const trustAnchor = await validateLoTECertificateChain({
+    callbacks: options.callbacks,
+    chain: header.x5c,
+    lote: options.lote,
     profile: LoTEProfile.EUWRPRCProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPRC/Issuance",
   });
-
-  if (payload.iat > nowInSeconds) {
-    throw new WRPRCError("WRPRC was issued in the future", {
-      code: "WRPRC_NOT_YET_VALID",
-    });
-  }
 
   return { compact, header, payload, trustAnchor };
 }

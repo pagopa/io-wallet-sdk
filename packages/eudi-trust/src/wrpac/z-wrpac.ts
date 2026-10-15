@@ -35,7 +35,7 @@ const zWRPACFields = z.looseObject({
 });
 
 /** Constraints across WRPAC fields (ETSI TS 119 411-8 clause 6.6.1, ETSI TS 119 475 clause 5.1). */
-function refineWRPAC(
+function wrpacRefiner(
   wrpac: z.infer<typeof zWRPACFields>,
   ctx: z.RefinementCtx,
 ): void {
@@ -112,4 +112,4 @@ function refineWRPAC(
  * metadata returned by `getX509CertificateMetadata`.
  */
 export type WRPAC = z.infer<typeof zWRPAC>;
-export const zWRPAC = zWRPACFields.superRefine(refineWRPAC);
+export const zWRPAC = zWRPACFields.superRefine(wrpacRefiner);

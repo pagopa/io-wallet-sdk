@@ -3,9 +3,7 @@
   "version": "1.5.8",
   "description": "EUDI Wallet trust evaluation: Lists of Trusted Entities (ETSI TS 119 602) validation, Trust Anchor retrieval, X.509 certificate chain validation and JWS signature validation",
   "files": [
-    "dist",
-    "DESIGN.md",
-    "sources.json"
+    "dist"
   ],
   "license": "Apache-2.0",
   "main": "./dist/index.js",

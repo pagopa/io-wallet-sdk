@@ -1,16 +1,31 @@
 import { parseWithErrorHandling } from "@pagopa/io-wallet-utils";
 
 import { LoTEProfile } from "../lote/constants";
-import {
-  ValidateLoTECertificateChainOptions,
-  validateLoTECertificateChain,
-} from "../x509/validate-certificate-chain";
+import { validateLoTECertificateChain } from "../x509/validate-certificate-chain";
 import { zWRPAC } from "./z-wrpac";
+import {
+  GetX509CertificateMetadataCallback,
+  VerifyX509CertificateChainCallback,
+} from "../x509";
+import { ParsedLoTE } from "../lote";
 
-export type ValidateWRPACOptions = Omit<
-  ValidateLoTECertificateChainOptions,
-  "profile" | "serviceTypeIdentifier"
->;
+export type ValidateWRPACOptions = {
+  /**
+   * The WRPAC certificate chain. In the simplest case, this chain only contains the WRPAC.
+   *
+   * The chain is usually the `x5c` of the Credential Issuer metadata or the Request Object.
+   */
+  wrpacChain: [string, ...string[]];
+  /**
+   * The WRPAC LoTE to get the trust anchor from
+   */
+  lote: ParsedLoTE;
+  callbacks: {
+    getX509CertificateMetadata: GetX509CertificateMetadataCallback;
+    verifyX509CertificateChain: VerifyX509CertificateChainCallback;
+  };
+  now?: Date;
+};
 
 /**
  * IT-Wallet "Wallet-Relying Party Access Certificate Validation": validate the
@@ -28,12 +43,13 @@ export async function validateWRPAC(
 ): Promise<string> {
   parseWithErrorHandling(
     zWRPAC,
-    await options.callbacks.getX509CertificateMetadata(options.chain[0]),
-    "Invalid WRPAC",
+    await options.callbacks.getX509CertificateMetadata(options.wrpacChain[0]),
+    "WRPAC schema validation failed",
   );
 
   const trustAnchor = await validateLoTECertificateChain({
     ...options,
+    chain: options.wrpacChain,
     profile: LoTEProfile.EUWRPACProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance",
   });
