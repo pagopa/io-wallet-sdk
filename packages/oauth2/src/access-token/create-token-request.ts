@@ -168,7 +168,7 @@ const dispatchCreateTokenRequest = createVersionDispatcher<
  *
  * @param options - Access token request inputs and version config.
  * @param options.config - The IoWalletSdkConfig instance to use.
- * @param options.grantType - The grant type to use. Defaults to `authorization_code` when omitted.
+ * @param options.grantType - The grant type to use.
  * @param options.additionalRequestPayload - Extra form fields to include in the token request.
  *
  * **authorization_code grant type parameters:**
