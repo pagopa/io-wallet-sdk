@@ -72,7 +72,7 @@ describe("getTrustAnchors", () => {
     ).toEqual(["ta-2", "ta-3"]);
   });
 
-  it("considers all entities when no trade name matches", () => {
+  it("returns no candidates when no trade name matches", () => {
     expect(
       getTrustAnchors({
         issuerOrganizationIdentifier: "VATIT-99999999999",
@@ -80,7 +80,7 @@ describe("getTrustAnchors", () => {
         profile: LoTEProfile.EUWRPACProvidersList,
         serviceTypeIdentifier: issuance,
       }),
-    ).toEqual(["ta-1", "ta-2", "ta-3"]);
+    ).toEqual([]);
   });
 
   it("returns no Trust Anchors for a LoTE without trusted entities", () => {
