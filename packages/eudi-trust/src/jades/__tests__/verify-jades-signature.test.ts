@@ -58,10 +58,23 @@ describe("zJAdESHeader", () => {
     ["sigT", { sigT: "2026-10-13T00:00:00Z" }],
     ["no iat", { iat: undefined }],
     ["an empty x5c", { x5c: [] }],
+    ["an empty crit", { crit: [] }],
+    ["an unsupported critical parameter", { crit: ["foo"] }],
   ])("rejects a header with %s", (_, claims) => {
     expect(zJAdESHeader.safeParse({ ...header, ...claims }).success).toBe(
       false,
     );
+  });
+
+  it("does not accept a correctly signed token declaring an unsupported critical extension", async () => {
+    const signatureOnly = options();
+    const parsed = zJAdESHeader.safeParse({
+      ...header,
+      crit: ["foo"],
+      foo: "bar",
+    });
+    expect(parsed.success).toBe(false);
+    expect(signatureOnly.callbacks.verifyJwt).not.toHaveBeenCalled();
   });
 });
 

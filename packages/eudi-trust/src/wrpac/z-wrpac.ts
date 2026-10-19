@@ -7,6 +7,8 @@ import {
 } from "../x509/semantic-identifier";
 import { isLegalPersonPolicy, isNaturalPersonPolicy } from "./policies";
 
+// TODO: this is the first implementation of a WRPAC shape. Add additional fields or
+// validation depending on the different types of entities (e.g. natural/legal person)
 const zWRPACFields = z.looseObject({
   isCA: z.literal(false, "A WRPAC must not be a CA certificate").optional(),
   keyUsage: z

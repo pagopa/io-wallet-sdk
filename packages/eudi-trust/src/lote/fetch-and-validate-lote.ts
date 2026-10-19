@@ -184,16 +184,24 @@ export async function validateLoTE(
   const lote: ParsedLoTE = { compact, document: payload.LoTE, header };
 
   const now = options.now ?? new Date();
+
+  if (
+    now < new Date(lote.document.ListAndSchemeInformation.ListIssueDateTime)
+  ) {
+    throw new LoTEError("LoTE is not yet valid", {
+      code: "LoTE_NOT_YET_VALID",
+    });
+  }
+  if (now >= new Date(lote.document.ListAndSchemeInformation.NextUpdate)) {
+    throw new LoTEError("LoTE has expired", { code: "LoTE_EXPIRED" });
+  }
+
   await verifyLoTESignature(lote, payload, options.callbacks, now);
 
   if (!includesCertificate(options.trustedCertificates, lote.header.x5c[0])) {
     throw new LoTEError("LoTE signer certificate is not trusted by the OJEU", {
       code: "PIVOT_n_SIGNER_CERT_NOT_AUTHENTICATED_BY_OJEU",
     });
-  }
-
-  if (now >= new Date(lote.document.ListAndSchemeInformation.NextUpdate)) {
-    throw new LoTEError("LoTE has expired", { code: "LoTE_EXPIRED" });
   }
 
   return lote;

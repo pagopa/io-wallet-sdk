@@ -48,6 +48,7 @@ export class CertificateChainError extends EudiTrustError {
 }
 
 export type JAdESErrorCode =
+  | "JADES_IAT_IN_FUTURE"
   | "JADES_SIGNATURE_VERIFICATION_FAILED"
   | "JADES_X5T_O_MISMATCH";
 

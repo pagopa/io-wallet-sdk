@@ -169,4 +169,20 @@ describe("validateWRPRC", () => {
     const wrprcJwt = signWRPRC({ payload: { exp: undefined } });
     await expect(validateWRPRC(options({ wrprcJwt }))).resolves.toBeDefined();
   });
+
+  it.each([
+    ["with exp", { exp: nowInSeconds + 3600, iat: nowInSeconds + 60 }],
+    ["without exp", { exp: undefined, iat: nowInSeconds + 60 }],
+  ])("rejects a WRPRC issued in the future %s", async (_, payload) => {
+    const wrprcJwt = signWRPRC({ payload });
+    await expect(validateWRPRC(options({ wrprcJwt }))).rejects.toMatchObject({
+      code: "JADES_IAT_IN_FUTURE",
+      name: "JAdESError",
+    });
+  });
+
+  it("accepts a WRPRC issued exactly at the validation time", async () => {
+    const wrprcJwt = signWRPRC({ payload: { iat: nowInSeconds } });
+    await expect(validateWRPRC(options({ wrprcJwt }))).resolves.toBeDefined();
+  });
 });

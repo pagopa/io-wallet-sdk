@@ -1,5 +1,6 @@
 import { CallbackContext, decodeJwt } from "@pagopa/io-wallet-utils";
 
+import { JAdESError } from "../errors";
 import { verifyJAdESSignature } from "../jades";
 import { ParsedLoTE } from "../lote";
 import { LoTEProfile } from "../lote/constants";
@@ -64,6 +65,14 @@ export async function validateWRPRC(
     payloadSchema: zWRPRCPayload,
   });
 
+  const now = options.now ?? new Date();
+
+  if (payload.iat * 1000 > now.getTime()) {
+    throw new JAdESError("WRPRC iat is later than the validation time", {
+      code: "JADES_IAT_IN_FUTURE",
+    });
+  }
+
   await verifyJAdESSignature({
     callbacks: {
       hash: options.callbacks.hash,
@@ -71,7 +80,7 @@ export async function validateWRPRC(
     },
     compact,
     header: header,
-    now: options.now,
+    now,
     payload,
   });
 
@@ -79,7 +88,7 @@ export async function validateWRPRC(
     callbacks: options.callbacks,
     chain: header.x5c,
     lote: options.wrprcLote,
-    now: options.now,
+    now,
     profile: LoTEProfile.EUWRPRCProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPRC/Issuance",
   });

@@ -25,6 +25,28 @@ const zX5tODigestAlgorithm = z.union([
 ]);
 
 /**
+ * Critical header parameters this SDK processes (ETSI TS 119 182-1 section 5.1.9).
+ * Currently only `x5t#o` is supported; see `verifyJAdESSignature`.
+ *
+ * TODO: full JAdES header processing will be implemented later.
+ */
+const SUPPORTED_CRITICAL_PARAMETERS: readonly string[] = ["x5t#o"];
+
+const zCrit = z
+  .array(z.string())
+  .min(1, "crit must not be empty")
+  .superRefine((crit, ctx) => {
+    for (const name of crit) {
+      if (!SUPPORTED_CRITICAL_PARAMETERS.includes(name)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Unsupported critical header parameter: ${name}`,
+        });
+      }
+    }
+  });
+
+/**
  * Protected header of a compact JAdES Baseline B signature (ETSI TS 119 182-1),
  * with the signing certificate chain in `x5c`.
  *
@@ -43,6 +65,7 @@ export const zJAdESHeader = z.object({
       "alg must be an asymmetric signature algorithm",
     ),
   b64: z.never().optional(),
+  crit: zCrit.optional(),
   cty: z.string().optional(),
   iat: z.number().int(),
   kid: z.string().optional(),

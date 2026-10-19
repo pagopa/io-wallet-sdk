@@ -10,6 +10,7 @@ import type z from "zod";
 import { LOTE_TYPES, PUB_EAA_SERVICE_STATUS } from "./constants";
 import { LoTEDocument, zLoTEDocument } from "./z-lote";
 
+// TODO: this can be more than 6 months depending on the real calendar-months. To be fixed.
 const SIX_MONTHS_IN_MS = 6 * 31 * 24 * 60 * 60 * 1000;
 
 interface listAndSchemeInformationRefinerOptions {

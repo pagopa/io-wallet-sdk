@@ -52,10 +52,13 @@ export async function validateCertificateChain(
     includesCertificate([trustAnchor], last),
   );
 
+  // When the last certificate in the chain is the Trust Anchor
+  // return it immediately if it's the only certificate...
   if (listedAnchor && rest.length === 0) {
     return listedAnchor;
   }
 
+  // ...or remove it from the chain before verifying the chain.
   const chain: [string, ...string[]] = listedAnchor
     ? [first, ...rest.slice(0, -1)]
     : options.chain;
@@ -111,17 +114,28 @@ export interface ValidateCertificateChainAgainstLoTEOptions extends Omit<
 export async function validateCertificateChainAgainstLoTE(
   options: ValidateCertificateChainAgainstLoTEOptions,
 ): Promise<string> {
-  const [first, ...rest] = options.chain;
-  const { issuerOrganizationIdentifier } =
-    await options.callbacks.getX509CertificateMetadata(rest.at(-1) ?? first);
+  const last = options.chain.at(-1) as string;
 
-  return validateCertificateChain({
-    ...options,
-    trustAnchors: getTrustAnchors({
+  // When the last certificate in the chain is a Trust Anchor, the following edge case
+  // may occur: A's TA certificate is issued by B, and both A and B appear in the LoTE.
+  // Narrowing by A's issuer would retrieve B's TA certificate, excluding A's from the candidates.
+  let trustAnchors = getTrustAnchors({
+    lote: options.lote.document,
+    profile: options.profile,
+    serviceTypeIdentifier: options.serviceTypeIdentifier,
+  });
+
+  if (!includesCertificate(trustAnchors, last)) {
+    const { issuerOrganizationIdentifier } =
+      await options.callbacks.getX509CertificateMetadata(last);
+
+    trustAnchors = getTrustAnchors({
       issuerOrganizationIdentifier,
       lote: options.lote.document,
       profile: options.profile,
       serviceTypeIdentifier: options.serviceTypeIdentifier,
-    }),
-  });
+    });
+  }
+
+  return validateCertificateChain({ ...options, trustAnchors });
 }

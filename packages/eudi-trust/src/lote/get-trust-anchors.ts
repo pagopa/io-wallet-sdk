@@ -39,19 +39,15 @@ export function getTrustAnchors(options: GetTrustAnchorsOptions): string[] {
   // TETradeName carries the registration identifier of the entity
   // (ETSI EN 319 412-1 clause 5.1.4, ETSI TS 119 602 Annex F).
   const matchingEntities =
-    issuerOrganizationIdentifier && lote.TrustedEntitiesList
-      ? lote.TrustedEntitiesList.filter((entity) =>
+    (issuerOrganizationIdentifier
+      ? lote.TrustedEntitiesList?.filter((entity) =>
           entity.TrustedEntityInformation.TETradeName?.some(
             ({ value }) => value === issuerOrganizationIdentifier,
           ),
         )
-      : [];
-  const entities =
-    matchingEntities.length > 0
-      ? matchingEntities
-      : (lote.TrustedEntitiesList ?? []);
+      : lote.TrustedEntitiesList) ?? [];
 
-  return entities
+  return matchingEntities
     .flatMap((entity) => entity.TrustedEntityServices)
     .filter(
       ({ ServiceInformation }) =>

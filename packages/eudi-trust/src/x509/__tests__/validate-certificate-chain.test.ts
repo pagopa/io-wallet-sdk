@@ -153,4 +153,60 @@ describe("validateCertificateChainAgainstLoTE", () => {
     expect(getX509CertificateMetadata).toHaveBeenCalledWith("intermediate");
     expect(verifyX509CertificateChain).toHaveBeenCalledTimes(1);
   });
+
+  describe("with a non-self-signed listed Trust Anchor", () => {
+    const loteWithIntermediateAnchor = createParsedLoTE(
+      createLoTE(LoTEProfile.EUPIDProvidersList, [
+        createTrustedEntity({
+          services: [{ certificates: ["ta-a"], type: issuance }],
+          tradeName: "VATIT-00000000001",
+        }),
+        createTrustedEntity({
+          services: [{ certificates: ["ta-b"], type: issuance }],
+          tradeName: "VATIT-00000000002",
+        }),
+      ]),
+    );
+    const getX509CertificateMetadata = vi.fn((certificate: string) => ({
+      ...certificateMetadata,
+      issuerOrganizationIdentifier:
+        certificate === "ta-a" ? "VATIT-00000000002" : "VATIT-00000000001",
+      organizations: [],
+    }));
+
+    it("returns an anchor-only chain without narrowing by its issuer", async () => {
+      const verifyX509CertificateChain = vi.fn(() => false);
+
+      await expect(
+        validateCertificateChainAgainstLoTE({
+          callbacks: { getX509CertificateMetadata, verifyX509CertificateChain },
+          chain: ["ta-a"],
+          lote: loteWithIntermediateAnchor,
+          profile: LoTEProfile.EUPIDProvidersList,
+          serviceTypeIdentifier: issuance,
+        }),
+      ).resolves.toBe("ta-a");
+      expect(verifyX509CertificateChain).not.toHaveBeenCalled();
+    });
+
+    it("validates a chain ending with the anchor like the same chain without it", async () => {
+      const verifyX509CertificateChain = acceptOnly("ta-a");
+      const validate = (chain: [string, ...string[]]) =>
+        validateCertificateChainAgainstLoTE({
+          callbacks: { getX509CertificateMetadata, verifyX509CertificateChain },
+          chain,
+          lote: loteWithIntermediateAnchor,
+          profile: LoTEProfile.EUPIDProvidersList,
+          serviceTypeIdentifier: issuance,
+        });
+
+      await expect(validate(["leaf", "intermediate"])).resolves.toBe("ta-a");
+      await expect(validate(["leaf", "intermediate", "ta-a"])).resolves.toBe(
+        "ta-a",
+      );
+      expect(verifyX509CertificateChain).toHaveBeenLastCalledWith(
+        expect.objectContaining({ chain: ["leaf", "intermediate"] }),
+      );
+    });
+  });
 });
