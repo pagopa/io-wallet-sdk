@@ -14,6 +14,7 @@ on:
         options:
           - stable
           - alpha
+          - launchpad
       branch:
         description: 'Branch to publish from (for alpha releases)'
         required: false
@@ -189,3 +190,75 @@ jobs:
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "npm install @pagopa/io-wallet-oauth2@alpha" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  publish-launchpad:
+    runs-on: ubuntu-latest
+    environment: prod
+    if: github.event_name == 'workflow_dispatch' && inputs.release_type == 'launchpad'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda #v4.1.0
+        with:
+          version: 10.14.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org/"
+          node-version-file: ".node-version"
+
+      # We force to publish with npm 11 because we are using npm trusted publishing
+      - name: Install npm 11
+        run: npm install -g npm@11.7.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Create alpha version
+        id: alpha_version
+        run: pnpm changeset version --snapshot alpha
+
+      - name: Publish launchpad to npm
+        run: pnpm changeset publish --no-git-tag --tag launchpad
+        env:
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Get published version
+        id: get_version
+        run: |
+          # Use the oid4vci package as the canonical source of the release version
+          VERSION=$(node -p "require('./packages/oid4vci/package.json').version")
+          echo "Published version: $VERSION"
+          echo "PUBLISHED_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create and push git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ env.PUBLISHED_VERSION }}" -m "Launchpad release v${{ env.PUBLISHED_VERSION }}"
+          git push origin "v${{ env.PUBLISHED_VERSION }}"
+
+      - name: Summary
+        run: |
+          echo "## Launchpad Release Published 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ env.PUBLISHED_VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Git Tag:** \`v${{ env.PUBLISHED_VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**NPM Tag:** \`launchpad\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Install command:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @pagopa/io-wallet-oauth2@launchpad" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
