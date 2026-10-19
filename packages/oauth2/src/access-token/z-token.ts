@@ -53,7 +53,11 @@ export const zAccessTokenResponse = z.looseObject({
   token_type: z.preprocess(
     (value) =>
       typeof value === "string"
-        ? ({ bearer: "Bearer", dpop: "DPoP" }[value.toLowerCase()] ?? value)
+        ? value.toLowerCase() === "bearer"
+          ? "Bearer"
+          : value.toLowerCase() === "dpop"
+            ? "DPoP"
+            : value
         : value,
     z.union([z.literal("Bearer"), z.literal("DPoP")]),
   ),
