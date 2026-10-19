@@ -6,7 +6,7 @@ import {
   GetX509CertificateMetadataCallback,
   VerifyX509CertificateChainCallback,
 } from "../x509";
-import { validateLoTECertificateChain } from "../x509/validate-certificate-chain";
+import { validateCertificateChainAgainstLoTE } from "../x509/validate-certificate-chain";
 import { WRPAC, zWRPAC } from "./z-wrpac";
 
 export interface ValidateWRPACOptions {
@@ -55,7 +55,7 @@ export async function validateWRPAC(
     "WRPAC schema validation failed",
   );
 
-  const trustAnchor = await validateLoTECertificateChain({
+  const trustAnchor = await validateCertificateChainAgainstLoTE({
     callbacks: options.callbacks,
     chain: options.wrpacChain,
     lote: options.wrpacLote,

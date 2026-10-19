@@ -6,7 +6,7 @@ import { LoTEProfile } from "../lote/constants";
 import {
   GetX509CertificateMetadataCallback,
   VerifyX509CertificateChainCallback,
-  validateLoTECertificateChain,
+  validateCertificateChainAgainstLoTE,
 } from "../x509";
 import {
   WRPRCJwtHeader,
@@ -75,7 +75,7 @@ export async function validateWRPRC(
     payload,
   });
 
-  const trustAnchor = await validateLoTECertificateChain({
+  const trustAnchor = await validateCertificateChainAgainstLoTE({
     callbacks: options.callbacks,
     chain: header.x5c,
     lote: options.wrprcLote,

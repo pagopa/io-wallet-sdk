@@ -9,7 +9,7 @@ import {
 import { LoTEProfile } from "../../lote/constants";
 import {
   validateCertificateChain,
-  validateLoTECertificateChain,
+  validateCertificateChainAgainstLoTE,
 } from "../validate-certificate-chain";
 
 const now = new Date("2026-10-13T00:00:00Z");
@@ -118,7 +118,7 @@ describe("validateCertificateChain", () => {
   });
 });
 
-describe("validateLoTECertificateChain", () => {
+describe("validateCertificateChainAgainstLoTE", () => {
   const issuance = "http://uri.etsi.org/19602/SvcType/PID/Issuance";
   const lote = createParsedLoTE(
     createLoTE(LoTEProfile.EUPIDProvidersList, [
@@ -142,7 +142,7 @@ describe("validateLoTECertificateChain", () => {
     const verifyX509CertificateChain = vi.fn(() => true);
 
     await expect(
-      validateLoTECertificateChain({
+      validateCertificateChainAgainstLoTE({
         callbacks: { getX509CertificateMetadata, verifyX509CertificateChain },
         chain: ["leaf", "intermediate"],
         lote,

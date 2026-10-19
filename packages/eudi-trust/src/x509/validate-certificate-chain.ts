@@ -84,13 +84,14 @@ export async function validateCertificateChain(
   );
 }
 
-export interface ValidateLoTECertificateChainOptions extends Omit<
+export interface ValidateCertificateChainAgainstLoTEOptions extends Omit<
   ValidateCertificateChainOptions,
   "callbacks" | "trustAnchors"
 > {
   callbacks: {
     getX509CertificateMetadata: GetX509CertificateMetadataCallback;
-  } & ValidateCertificateChainOptions["callbacks"];
+    verifyX509CertificateChain: VerifyX509CertificateChainCallback;
+  };
   /** A LoTE authenticated with `validateLoTE`. */
   lote: ParsedLoTE;
   /** The profile of `lote`. */
@@ -107,8 +108,8 @@ export interface ValidateLoTECertificateChainOptions extends Omit<
  * @throws {LoTEError} if the LoTE does not match the expected profile.
  * @throws {CertificateChainError} if no Trust Anchor validates the chain.
  */
-export async function validateLoTECertificateChain(
-  options: ValidateLoTECertificateChainOptions,
+export async function validateCertificateChainAgainstLoTE(
+  options: ValidateCertificateChainAgainstLoTEOptions,
 ): Promise<string> {
   const [first, ...rest] = options.chain;
   const { issuerOrganizationIdentifier } =

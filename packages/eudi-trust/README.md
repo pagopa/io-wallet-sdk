@@ -23,7 +23,7 @@ pnpm add @pagopa/io-wallet-eudi-trust @pagopa/io-wallet-utils
 | 3    | Validate the JWS `x5c` chain against those Trust Anchors                                                       | `validateCertificateChain`                                                |
 | 4    | Verify the JWS signature with the public key of the validated signing certificate                              | `verifyJwt` from `@pagopa/io-wallet-utils`                                |
 
-`validateLoTECertificateChain` performs steps 2-3 in a single call, given a LoTE validated at step 1. A validated LoTE can be reused until its `NextUpdate`.
+`validateCertificateChainAgainstLoTE` performs steps 2-3 in a single call, given a LoTE validated at step 1. A validated LoTE can be reused until its `NextUpdate`.
 
 `validateWRPAC` and `validateWRPRC` cover the whole flow for WRPAC and WRPRC.
 
@@ -112,7 +112,6 @@ import {
 
 /** Certificates of the LoTE signer, from the OJEU publication. */
 const ojeuCertificates: ["MIIC9TCCApugAwIBAg..."];
-const wrprcLoteUrl = "example";
 const wrprcJwt = "eyJhbGciOiJFUzI1NiIsIn...";
 
 const wrprcProvidersLote = await fetchAndValidateLoTE({
@@ -120,7 +119,7 @@ const wrprcProvidersLote = await fetchAndValidateLoTE({
   ojeuUrl: "https://eur-lex.europa.eu/oj/direct-access.html",
   profile: LoTEProfile.EUWRPRCProvidersList,
   trustedCertificates: ojeuCertificates,
-  loteUrl: wrprcLoteUrl,
+  loteUrl: "https://example.com/lists/wrprc-providers.json",
 });
 
 const { wrprc } = await validateWRPRC({
@@ -138,7 +137,7 @@ The status of the WRPRC and its consistency with the interaction in which it is 
 import {
   LoTEProfile,
   fetchAndValidateLoTE,
-  validateLoTECertificateChain,
+  validateCertificateChainAgainstLoTE,
 } from "@pagopa/io-wallet-eudi-trust";
 import { decodeJwt, verifyJwt } from "@pagopa/io-wallet-utils";
 
@@ -163,7 +162,7 @@ const { header, payload } = decodeJwt({ jwt: issuerSignedJwt });
 // 2-3. Validate the chain against the Trust Anchors of the PID issuance
 //      service, narrowed to the provider identified by the issuer of the last
 //      certificate of the chain.
-await validateLoTECertificateChain({
+await validateCertificateChainAgainstLoTE({
   callbacks,
   chain: header.x5c,
   lote: pidLote,
@@ -172,8 +171,7 @@ await validateLoTECertificateChain({
 });
 
 // 4. Verify the signature with the public key of the validated signing certificate
-const { publicJwk } =
-  await callbacks.getX509CertificateMetadata(header.x5c[0]);
+const { publicJwk } = await callbacks.getX509CertificateMetadata(header.x5c[0]);
 
 await verifyJwt({
   compact: issuerSignedJwt,
