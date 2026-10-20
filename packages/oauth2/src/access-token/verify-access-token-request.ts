@@ -273,10 +273,7 @@ function verifyGrantParameters(
   options: SupportedAccessTokenVerificationOptionsAPTITUDE,
 ) {
   if (isPreAuthorizedCodeVerification(options)) {
-    if (
-      !options.expectedPreAuthorizedCode ||
-      options.grant.preAuthorizedCode !== options.expectedPreAuthorizedCode
-    ) {
+    if (options.grant.preAuthorizedCode !== options.expectedPreAuthorizedCode) {
       throw new Oauth2Error(`Invalid 'pre-authorized_code' provided`);
     }
 
@@ -297,7 +294,7 @@ function verifyGrantParameters(
     );
   }
 
-  if (!options.expectedCode || options.grant.code !== options.expectedCode) {
+  if (options.grant.code !== options.expectedCode) {
     throw new Oauth2Error(`Invalid 'code' provided`);
   }
   verifyCodeExpiration(options.codeExpiresAt, options.now, "code");
