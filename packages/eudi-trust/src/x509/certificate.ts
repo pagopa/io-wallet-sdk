@@ -54,12 +54,14 @@ export function base64ToKeyIdentifier(base64: string): string | undefined {
 export function normalizeDistinguishedName(name: string): string {
   return name
     .split(/(?<!\\),/)
-    .map((rdn) =>
-      rdn
-        .trim()
-        .replace(/\s*=\s*/, "=")
-        .toLowerCase(),
-    )
+    .map((rdn) => {
+      const separator = rdn.indexOf("=");
+      return (
+        separator === -1
+          ? rdn.trim()
+          : `${rdn.slice(0, separator).trim()}=${rdn.slice(separator + 1).trim()}`
+      ).toLowerCase();
+    })
     .filter((rdn) => rdn.length > 0)
     .sort()
     .join(",");

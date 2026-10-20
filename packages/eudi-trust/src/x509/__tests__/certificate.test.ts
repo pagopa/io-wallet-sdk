@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { includesCertificate, normalizeCertificate } from "../certificate";
+import {
+  includesCertificate,
+  normalizeCertificate,
+  normalizeDistinguishedName,
+} from "../certificate";
 
 describe("includesCertificate", () => {
   const certificate = "a+/b==";
@@ -25,5 +29,24 @@ describe("normalizeCertificate", () => {
     expect(normalizeCertificate(`${"=".repeat(100_000)}x`)).toBe(
       `${"=".repeat(100_000)}x`,
     );
+  });
+});
+
+describe("normalizeDistinguishedName", () => {
+  it("ignores the case, the spacing and the order of the RDNs", () => {
+    expect(normalizeDistinguishedName("CN = Issuer CA , O=Provider,C=IT")).toBe(
+      normalizeDistinguishedName("c=it,o=provider,cn=issuer ca"),
+    );
+  });
+
+  it("does not split on an escaped comma", () => {
+    expect(normalizeDistinguishedName("O=Foo\\, Inc.,C=IT")).toBe(
+      "c=it,o=foo\\, inc.",
+    );
+  });
+
+  it("handles long runs of whitespace", () => {
+    expect(normalizeDistinguishedName(`${" ".repeat(100_000)}x`)).toBe("x");
+    expect(normalizeDistinguishedName(`CN${" ".repeat(100_000)}`)).toBe("cn");
   });
 });
