@@ -424,6 +424,8 @@ export const zMDLProvidersList = zLoTEDocument
       allowedServiceTypeIdentifiers: [
         "http://trust.ec.europa.eu/lists/mDL/SvcType/Issuance",
         "http://trust.ec.europa.eu/lists/mDL/SvcType/Revocation",
+        "http://uri.etsi.org/19602/SvcType/mDL/Issuance",
+        "http://uri.etsi.org/19602/SvcType/mDL/Revocation",
       ],
     }),
   );
