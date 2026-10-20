@@ -51,10 +51,9 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.grantType).toBe("authorization_code");
-      expect(result.authorizationCodeGrant.scope).toBe("openid");
-      expect(result.authorizationCodeGrant.authorizationServer).toBeUndefined();
-      expect(result.authorizationCodeGrant.issuerState).toBeUndefined();
+      expect(result.authorization_code.scope).toBe("openid");
+      expect(result.authorization_code.authorizationServer).toBeUndefined();
+      expect(result.authorization_code.issuerState).toBeUndefined();
     });
 
     it("should extract authorization_code grant with all fields", () => {
@@ -75,12 +74,11 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.grantType).toBe("authorization_code");
-      expect(result.authorizationCodeGrant.scope).toBe("openid profile");
-      expect(result.authorizationCodeGrant.authorizationServer).toBe(
+      expect(result.authorization_code.scope).toBe("openid profile");
+      expect(result.authorization_code.authorizationServer).toBe(
         "https://auth.issuer.example.com",
       );
-      expect(result.authorizationCodeGrant.issuerState).toBe(
+      expect(result.authorization_code.issuerState).toBe(
         "eyJhbGciOiJSU0Et...zaEJ3w",
       );
     });
@@ -102,12 +100,11 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.grantType).toBe("authorization_code");
-      expect(result.authorizationCodeGrant.scope).toBe("openid");
-      expect(result.authorizationCodeGrant.authorizationServer).toBe(
+      expect(result.authorization_code.scope).toBe("openid");
+      expect(result.authorization_code.authorizationServer).toBe(
         "https://auth.issuer.example.com",
       );
-      expect(result.authorizationCodeGrant.issuerState).toBeUndefined();
+      expect(result.authorization_code.issuerState).toBeUndefined();
     });
 
     it("should extract authorization_code grant with issuer_state only", () => {
@@ -127,10 +124,9 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.grantType).toBe("authorization_code");
-      expect(result.authorizationCodeGrant.scope).toBe("openid");
-      expect(result.authorizationCodeGrant.authorizationServer).toBeUndefined();
-      expect(result.authorizationCodeGrant.issuerState).toBe("state-value-123");
+      expect(result.authorization_code.scope).toBe("openid");
+      expect(result.authorization_code.authorizationServer).toBeUndefined();
+      expect(result.authorization_code.issuerState).toBe("state-value-123");
     });
   });
 
@@ -201,7 +197,7 @@ describe("extractGrantDetails", () => {
   });
 
   describe("edge cases", () => {
-    it("should always return authorization_code as grantType for IT-Wallet", () => {
+    it("should return authorization_code details under its grant type key", () => {
       const credentialOffer: CredentialOfferV1_3 = {
         credential_configuration_ids: ["UniversityDegree"],
         credential_issuer: "https://issuer.example.com",
@@ -217,8 +213,9 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      // IT-Wallet only supports authorization_code grant
-      expect(result.grantType).toBe("authorization_code");
+      expect(Object.keys(result)).toEqual([
+        CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
+      ]);
     });
 
     it("should handle complex scope values", () => {
@@ -237,7 +234,7 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.authorizationCodeGrant.scope).toBe(
+      expect(result.authorization_code.scope).toBe(
         "openid profile email address phone offline_access",
       );
     });
@@ -260,8 +257,8 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.authorizationCodeGrant.issuerState).toBe(longIssuerState);
-      expect(result.authorizationCodeGrant.issuerState).toHaveLength(500);
+      expect(result.authorization_code.issuerState).toBe(longIssuerState);
+      expect(result.authorization_code.issuerState).toHaveLength(500);
     });
 
     it("should handle multiple credential_configuration_ids without affecting grant extraction", () => {
@@ -284,8 +281,7 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.grantType).toBe("authorization_code");
-      expect(result.authorizationCodeGrant.scope).toBe("openid");
+      expect(result.authorization_code.scope).toBe("openid");
     });
   });
 
@@ -308,24 +304,20 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      // Check result structure
-      expect(result).toHaveProperty("grantType");
-      expect(result).toHaveProperty("authorizationCodeGrant");
+      // Grant details are keyed by the OAuth grant type.
+      expect(result).toHaveProperty(CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE);
 
-      // Check authorizationCodeGrant structure
-      expect(result.authorizationCodeGrant).toHaveProperty("scope");
-      expect(result.authorizationCodeGrant).toHaveProperty(
-        "authorizationServer",
-      );
-      expect(result.authorizationCodeGrant).toHaveProperty("issuerState");
+      // Check authorization_code grant structure
+      expect(result.authorization_code).toHaveProperty("scope");
+      expect(result.authorization_code).toHaveProperty("authorizationServer");
+      expect(result.authorization_code).toHaveProperty("issuerState");
 
       // Check types
-      expect(typeof result.grantType).toBe("string");
-      expect(typeof result.authorizationCodeGrant.scope).toBe("string");
-      expect(typeof result.authorizationCodeGrant.authorizationServer).toBe(
+      expect(typeof result.authorization_code.scope).toBe("string");
+      expect(typeof result.authorization_code.authorizationServer).toBe(
         "string",
       );
-      expect(typeof result.authorizationCodeGrant.issuerState).toBe("string");
+      expect(typeof result.authorization_code.issuerState).toBe("string");
     });
   });
 
@@ -347,12 +339,11 @@ describe("extractGrantDetails", () => {
         credentialOffer,
       });
 
-      expect(result.grantType).toBe("authorization_code");
-      expect(result.authorizationCodeGrant.authorizationServer).toBe(
+      expect(result.authorization_code.authorizationServer).toBe(
         "https://auth.issuer.example.com",
       );
-      expect(result.authorizationCodeGrant.issuerState).toBe("state-value-123");
-      expect("scope" in result.authorizationCodeGrant).toBe(false);
+      expect(result.authorization_code.issuerState).toBe("state-value-123");
+      expect("scope" in result.authorization_code).toBe(false);
     });
 
     it("should throw CredentialOfferError when authorization_code grant is missing for a v1.4 offer", () => {
@@ -381,32 +372,20 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const grants = extractGrantDetails({
+      const grantDetails = extractGrantDetails({
         config: aptitudeConfig,
         credentialOffer,
       });
 
-      expect(grants).toHaveLength(1);
-
-      const result = grants[0];
-
-      expect(result).toBeDefined();
-
-      if (!result) return;
-
-      expect(result.grantType).toBe("authorization_code");
-
-      expect("authorizationCodeGrant" in result).toBe(true);
-
-      if (!("authorizationCodeGrant" in result)) return;
-
-      expect(result.authorizationCodeGrant?.authorizationServer).toBe(
+      expect(Object.keys(grantDetails)).toEqual([
+        CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
+      ]);
+      expect(grantDetails.authorization_code?.authorizationServer).toBe(
         "https://auth.issuer.example.com",
       );
-      expect(result.authorizationCodeGrant?.issuerState).toBe(
+      expect(grantDetails.authorization_code?.issuerState).toBe(
         "state-value-123",
       );
-      expect("scope" in result.authorizationCodeGrant).toBe(false);
     });
 
     it("should accept a credential offer with pre-authorized code grant for an APTITUDE offer", () => {
@@ -420,30 +399,18 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const grants = extractGrantDetails({
+      const grantDetails = extractGrantDetails({
         config: aptitudeConfig,
         credentialOffer,
       });
 
-      expect(grants).toHaveLength(1);
-
-      const result = grants[0];
-
-      expect(result).toBeDefined();
-
-      if (!result) return;
-
-      expect(result.grantType).toBe(
-        "urn:ietf:params:oauth:grant-type:pre-authorized_code",
-      );
-
-      expect("preAuthorizedCodeGrant" in result).toBe(true);
-
-      if (!("preAuthorizedCodeGrant" in result)) return;
-
-      expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
-        "pre-authorized-code-value",
-      );
+      expect(Object.keys(grantDetails)).toEqual([
+        CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+      ]);
+      expect(
+        grantDetails[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]
+          ?.preAuthorizedCode,
+      ).toBe("pre-authorized-code-value");
     });
 
     it("should accept a credential offer with pre-authorized code grant with transaction code empty object for an APTITUDE offer", () => {
@@ -458,24 +425,22 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const grants = extractGrantDetails({
+      const grantDetails = extractGrantDetails({
         config: aptitudeConfig,
         credentialOffer,
       });
 
-      const result = grants[0];
-
-      expect(result).toBeDefined();
-
-      if (!result) return;
-
-      expect("preAuthorizedCodeGrant" in result).toBe(true);
-
-      if (!("preAuthorizedCodeGrant" in result)) return;
-
-      expect(result.preAuthorizedCodeGrant?.preAuthorizedCode).toBe(
-        "pre-authorized-code-value",
-      );
+      expect(
+        grantDetails[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]
+          ?.preAuthorizedCode,
+      ).toBe("pre-authorized-code-value");
+      expect(
+        grantDetails[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]?.txCode,
+      ).toEqual({
+        description: undefined,
+        inputMode: undefined,
+        length: undefined,
+      });
     });
 
     it("should accept a credential offer with multiple grant types from an APTITUDE offer", () => {
@@ -493,45 +458,22 @@ describe("extractGrantDetails", () => {
         },
       };
 
-      const grants = extractGrantDetails({
+      const grantDetails = extractGrantDetails({
         config: aptitudeConfig,
         credentialOffer,
       });
 
-      expect(grants).toHaveLength(2);
-
-      const preAuthGrant = grants.find(
-        (grant) =>
-          grant.grantType === CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
+      expect(Object.keys(grantDetails)).toHaveLength(2);
+      expect(
+        grantDetails[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]
+          ?.preAuthorizedCode,
+      ).toBe("pre-authorized-code-value");
+      expect(grantDetails.authorization_code?.authorizationServer).toBe(
+        "https://auth.issuer.example.com",
       );
-
-      expect(preAuthGrant).toBeDefined();
-
-      if (preAuthGrant) {
-        expect("preAuthorizedCodeGrant" in preAuthGrant).toBe(true);
-
-        expect(preAuthGrant.preAuthorizedCodeGrant.preAuthorizedCode).toBe(
-          "pre-authorized-code-value",
-        );
-      }
-
-      const authGrant = grants.find(
-        (grant) =>
-          grant.grantType === CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
+      expect(grantDetails.authorization_code?.issuerState).toBe(
+        "state-value-123",
       );
-
-      expect(authGrant).toBeDefined();
-
-      if (authGrant) {
-        expect("authorizationCodeGrant" in authGrant).toBe(true);
-
-        expect(authGrant.authorizationCodeGrant?.authorizationServer).toBe(
-          "https://auth.issuer.example.com",
-        );
-        expect(authGrant.authorizationCodeGrant?.issuerState).toBe(
-          "state-value-123",
-        );
-      }
     });
 
     it("should throw CredentialOfferError when neither authorization_code nor pre authorized code grant is omitted for an APTITUDE offer", () => {
