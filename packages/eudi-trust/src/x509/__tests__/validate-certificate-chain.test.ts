@@ -7,11 +7,11 @@ import {
   createTrustedEntity,
 } from "../../__tests__/lote-fixtures";
 import { LoTEProfile } from "../../lote/constants";
+import { type X509Chain } from "../types";
 import {
   validateCertificateChain,
   validateCertificateChainAgainstLoTE,
 } from "../validate-certificate-chain";
-import { type X509Chain } from "../types";
 
 const now = new Date("2026-10-13T00:00:00Z");
 
