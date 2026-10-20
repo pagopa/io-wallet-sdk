@@ -1,6 +1,9 @@
 import {
   FetchHeaders,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   RequestLike,
+  createVersionDispatcher,
   formatZodError,
 } from "@pagopa/io-wallet-utils";
 
@@ -9,11 +12,18 @@ import { Oauth2Error } from "../errors";
 import { extractDpopJwtFromHeaders } from "../token-dpop/create-token-dpop";
 import {
   AuthorizationCodeGrantIdentifier,
+  PreAuthorizedCodeGrantIdentifier,
   RefreshTokenGrantIdentifier,
   authorizationCodeGrantIdentifier,
+  preAuthorizedCodeGrantIdentifier,
   refreshTokenGrantIdentifier,
 } from "./z-grant-type";
-import { AccessTokenRequest, zAccessTokenRequest } from "./z-token";
+import {
+  AccessTokenRequest,
+  AccessTokenRequestAPTITUDE,
+  zAccessTokenRequest,
+  zAccessTokenRequestAPTITUDE,
+} from "./z-token";
 
 export interface ParsedAccessTokenAuthorizationCodeRequestGrant {
   code: string;
@@ -25,12 +35,22 @@ export interface ParsedAccessTokenRefreshTokenRequestGrant {
   refreshToken: string;
 }
 
-type ParsedAccessTokenRequestGrant =
+export interface ParsedAccessTokenPreAuthorizedCodeRequestGrant {
+  grantType: PreAuthorizedCodeGrantIdentifier;
+  preAuthorizedCode: string;
+  txCode?: string;
+}
+
+export type ParsedAccessTokenRequestGrantV1_4 =
   | ParsedAccessTokenAuthorizationCodeRequestGrant
   | ParsedAccessTokenRefreshTokenRequestGrant;
 
-export interface ParseAccessTokenRequestResult {
-  accessTokenRequest: AccessTokenRequest;
+export type ParsedAccessTokenRequestGrantAPTITUDE =
+  | ParsedAccessTokenAuthorizationCodeRequestGrant
+  | ParsedAccessTokenPreAuthorizedCodeRequestGrant
+  | ParsedAccessTokenRefreshTokenRequestGrant;
+
+export interface BaseParseAccessTokenRequestResult {
   /**
    * The client attestation jwts from the access token request headers
    */
@@ -45,13 +65,23 @@ export interface ParseAccessTokenRequestResult {
   dpop: {
     jwt: string;
   };
+}
 
-  grant: ParsedAccessTokenRequestGrant;
+export interface ParseAccessTokenRequestResultV1_4 extends BaseParseAccessTokenRequestResult {
+  accessTokenRequest: AccessTokenRequest;
+
+  grant: ParsedAccessTokenRequestGrantV1_4;
 
   /**
    * The pkce code verifier from the access token request
    */
   pkceCodeVerifier?: string;
+}
+
+export interface ParseAccessTokenRequestResultAPTITUDE extends BaseParseAccessTokenRequestResult {
+  accessTokenRequest: AccessTokenRequestAPTITUDE;
+
+  grant: ParsedAccessTokenRequestGrantAPTITUDE;
 }
 
 export interface ParseAccessTokenRequestOptions {
@@ -61,41 +91,37 @@ export interface ParseAccessTokenRequestOptions {
    */
   accessTokenRequest: Record<string, unknown>;
 
+  config: IoWalletSdkConfig;
+
   request: RequestLike;
 }
 
-/**
- * Parses and validates an OAuth 2.0 access token request.
- *
- * This function performs the following steps:
- * 1. Validates the request body against the access token request schema
- * 2. Extracts and validates grant-specific parameters (authorization code or refresh token)
- * 3. Parses security headers (DPoP and Client Attestation JWTs)
- * 4. Extracts PKCE code verifier if present
- *
- * Note: This function only parses and validates the structure of the request.
- * Cryptographic verification of JWTs and tokens should be performed separately.
- *
- * @param options - Configuration object containing the access token request body and HTTP request
- * @returns Parsed access token request with typed grant parameters and extracted security headers
- * @throws {Oauth2Error} If validation fails or required parameters are missing
- *
- * @example
- * ```typescript
- * const result = parseAccessTokenRequest({
- *   accessTokenRequest: {
- *     grant_type: 'authorization_code',
- *     code: 'auth_code_123',
- *     client_id: 'client_123',
- *     code_verifier: 'verifier_xyz'
- *   },
- *   request: httpRequest
- * });
- * ```
- */
-export function parseAccessTokenRequest(
-  options: ParseAccessTokenRequestOptions,
-): ParseAccessTokenRequestResult {
+export interface ParseAccessTokenRequestOptionsShared<
+  V extends ItWalletSpecsVersion =
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4,
+> extends ParseAccessTokenRequestOptions {
+  /**
+   * The IT-Wallet specs version to use for parsing the access token request.
+   */
+  config: IoWalletSdkConfig<V>;
+}
+
+export interface ParseAccessTokenRequestOptionsAPTITUDE extends ParseAccessTokenRequestOptions {
+  /**
+   * The IT-Wallet specs version to use for parsing the access token request.
+   */
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.APTITUDE>;
+}
+
+export type ParseAccessTokenRequestResult =
+  | ParseAccessTokenRequestResultAPTITUDE
+  | ParseAccessTokenRequestResultV1_4;
+
+function parseAccessTokenRequestV1_4<V extends ItWalletSpecsVersion>(
+  options: ParseAccessTokenRequestOptionsShared<V>,
+): ParseAccessTokenRequestResultV1_4 {
   const validationResult = zAccessTokenRequest.safeParse(
     options.accessTokenRequest,
   );
@@ -122,6 +148,30 @@ export function parseAccessTokenRequest(
   };
 }
 
+function parseAccessTokenRequestAPTITUDE(
+  options: ParseAccessTokenRequestOptionsAPTITUDE,
+): ParseAccessTokenRequestResultAPTITUDE {
+  const validationResult = zAccessTokenRequestAPTITUDE.safeParse(
+    options.accessTokenRequest,
+  );
+
+  if (!validationResult.success) {
+    throw new Oauth2Error(
+      `Access token request validation failed:\n${formatZodError(validationResult.error)}`,
+    );
+  }
+
+  const accessTokenRequest = validationResult.data;
+  const grant = parseGrantParametersAPTITUDE(accessTokenRequest);
+  const securityHeaders = parseSecurityHeaders(options.request.headers);
+
+  return {
+    accessTokenRequest,
+    grant,
+    ...securityHeaders,
+  };
+}
+
 /**
  * Parses the grant-specific parameters from an access token request.
  *
@@ -134,7 +184,7 @@ export function parseAccessTokenRequest(
  */
 function parseGrantParameters(
   accessTokenRequest: AccessTokenRequest,
-): ParsedAccessTokenRequestGrant {
+): ParsedAccessTokenRequestGrantV1_4 {
   if (accessTokenRequest.grant_type === authorizationCodeGrantIdentifier) {
     return {
       code: accessTokenRequest.code,
@@ -151,6 +201,46 @@ function parseGrantParameters(
 
   throw new Oauth2Error(
     `Unsupported grant type. Supported types are: '${authorizationCodeGrantIdentifier}', '${refreshTokenGrantIdentifier}'`,
+  );
+}
+
+/**
+ * Parses the grant-specific parameters from an access token request.
+ *
+ * Validates that the required parameters for the grant type are present
+ * and returns a typed grant object.
+ *
+ * @param accessTokenRequest - The validated access token request
+ * @returns Typed grant object containing grant-specific parameters
+ * @throws {Oauth2Error} If required grant parameters are missing or grant type is unsupported
+ */
+function parseGrantParametersAPTITUDE(
+  accessTokenRequest: AccessTokenRequestAPTITUDE,
+): ParsedAccessTokenRequestGrantAPTITUDE {
+  if (accessTokenRequest.grant_type === authorizationCodeGrantIdentifier) {
+    return {
+      code: accessTokenRequest.code,
+      grantType: authorizationCodeGrantIdentifier,
+    };
+  }
+
+  if (accessTokenRequest.grant_type === refreshTokenGrantIdentifier) {
+    return {
+      grantType: refreshTokenGrantIdentifier,
+      refreshToken: accessTokenRequest.refresh_token,
+    };
+  }
+
+  if (accessTokenRequest.grant_type === preAuthorizedCodeGrantIdentifier) {
+    return {
+      grantType: preAuthorizedCodeGrantIdentifier,
+      preAuthorizedCode: accessTokenRequest["pre-authorized_code"],
+      txCode: accessTokenRequest.tx_code,
+    };
+  }
+
+  throw new Oauth2Error(
+    `Unsupported grant type. Supported types are: '${authorizationCodeGrantIdentifier}', '${refreshTokenGrantIdentifier}', '${preAuthorizedCodeGrantIdentifier}'`,
   );
 }
 
@@ -206,4 +296,81 @@ function parseSecurityHeaders(headers: FetchHeaders) {
     },
     dpop: { jwt: extractedDpopJwt.dpopJwt },
   };
+}
+
+const dispatchParseTokenRequest = createVersionDispatcher<
+  ParseAccessTokenRequestOptions,
+  ParseAccessTokenRequestResult
+>({
+  [ItWalletSpecsVersion.APTITUDE]: (o) =>
+    parseAccessTokenRequestAPTITUDE(
+      o as ParseAccessTokenRequestOptionsAPTITUDE,
+    ),
+  [ItWalletSpecsVersion.V1_0]: (o) =>
+    parseAccessTokenRequestV1_4(
+      o as ParseAccessTokenRequestOptionsShared<ItWalletSpecsVersion.V1_0>,
+    ),
+  [ItWalletSpecsVersion.V1_3]: (o) =>
+    parseAccessTokenRequestV1_4(
+      o as ParseAccessTokenRequestOptionsShared<ItWalletSpecsVersion.V1_3>,
+    ),
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    parseAccessTokenRequestV1_4(
+      o as ParseAccessTokenRequestOptionsShared<ItWalletSpecsVersion.V1_4>,
+    ),
+});
+
+/**
+ * Parses and validates an OAuth 2.0 access token request.
+ *
+ * This function performs the following steps:
+ * 1. Validates the request body against the access token request schema
+ * 2. Extracts grant parameters for authorization code, pre-authorized code or refresh token
+ * 3. Parses security headers (DPoP and Client Attestation JWTs)
+ * 4. Extracts PKCE code verifier if present (V1_4 only)
+ *
+ * Note: This function only parses and validates the structure of the request.
+ * Cryptographic verification of JWTs and tokens should be performed separately.
+ *
+ * * * Version Differences:
+ * - APTITUDE: add support for pre-authorized-code grant type.
+ *
+ * @param options - Configuration object containing the access token request body and HTTP request, and version config
+ * @returns Parsed access token request with typed grant parameters and extracted security headers
+ * @throws {Oauth2Error} If validation fails or required parameters are missing
+ *
+ * @example
+ * ```typescript
+ * const result = parseAccessTokenRequest({
+ *   accessTokenRequest: {
+ *     grant_type: 'authorization_code',
+ *     code: 'auth_code_123',
+ *     client_id: 'client_123',
+ *     code_verifier: 'verifier_xyz'
+ *   },
+ *   request: httpRequest
+ * });
+ * ```
+ */
+export function parseAccessTokenRequest<
+  V extends ItWalletSpecsVersion =
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4,
+>(
+  options: ParseAccessTokenRequestOptionsShared<V>,
+): ParseAccessTokenRequestResultV1_4;
+
+export function parseAccessTokenRequest(
+  options: ParseAccessTokenRequestOptionsAPTITUDE,
+): ParseAccessTokenRequestResultAPTITUDE;
+
+export function parseAccessTokenRequest(
+  options: ParseAccessTokenRequestOptions,
+): ParseAccessTokenRequestResult;
+
+export function parseAccessTokenRequest(
+  options: ParseAccessTokenRequestOptions,
+): ParseAccessTokenRequestResult {
+  return dispatchParseTokenRequest(options);
 }
