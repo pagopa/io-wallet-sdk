@@ -17,10 +17,8 @@ import type {
 
 import { CredentialOfferError } from "../errors";
 import {
-  AuthorizationCodeGrantAPTITUDE,
   CREDENTIAL_OFFER_GRANTS,
   CredentialOfferAPTITUDE,
-  PreAuthorizedCodeGrantAPTITUDE,
 } from "./APTITUDE/z-credential-offer";
 import {
   type AuthorizationCodeGrantV1_3,
@@ -49,20 +47,23 @@ function requireAuthorizationCodeGrant<
 }
 
 /**
- * Resolves the list of authorization_code or pre-authorized_code grants from a credential offer, enforcing their presence.
+ * Resolves the authorization_code and pre-authorized_code grant object from a credential offer, enforcing that at least one is present.
  *
  * @throws {CredentialOfferError} If grants or the either authorization_code or pre-authorized_code grants are missing.
  */
 function requireAuthorizationCodeOrPreAuthorizedCodeGrant(
   credentialOffer: CredentialOfferAPTITUDE,
-): (AuthorizationCodeGrantAPTITUDE | PreAuthorizedCodeGrantAPTITUDE)[] {
+): CredentialOfferAPTITUDE["grants"] {
   if (!credentialOffer.grants) {
     throw new CredentialOfferError("No grants found in credential offer");
   }
 
-  const grants = Object.values(credentialOffer.grants);
+  const grants = credentialOffer.grants;
 
-  if (!grants.length) {
+  if (
+    !grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE] &&
+    !grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]
+  ) {
     throw new CredentialOfferError(
       "either one of authorization_code or pre-authorized code grant is required",
     );
@@ -77,12 +78,11 @@ function extractGrantDetailsV1_3(
   const authCodeGrant = requireAuthorizationCodeGrant(options.credentialOffer);
 
   return {
-    authorizationCodeGrant: {
+    [CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE]: {
       authorizationServer: authCodeGrant.authorization_server,
       issuerState: authCodeGrant.issuer_state,
       scope: authCodeGrant.scope,
     },
-    grantType: "authorization_code",
   };
 }
 
@@ -92,11 +92,10 @@ function extractGrantDetailsV1_4(
   const authCodeGrant = requireAuthorizationCodeGrant(options.credentialOffer);
 
   return {
-    authorizationCodeGrant: {
+    [CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE]: {
       authorizationServer: authCodeGrant.authorization_server,
       issuerState: authCodeGrant.issuer_state,
     },
-    grantType: "authorization_code",
   };
 }
 
@@ -107,26 +106,26 @@ function extractGrantDetailsAPTITUDE(
     options.credentialOffer,
   );
 
-  return grants.map((grant) => {
-    if ("pre-authorized_code" in grant) {
-      return {
-        grantType: CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE,
-        preAuthorizedCodeGrant: {
-          authorizationServer: grant.authorization_server,
-          preAuthorizedCode: grant["pre-authorized_code"],
-          txCode: grant.tx_code,
-        },
-      };
-    }
+  const authorizationCodeGrant =
+    grants[CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE];
+  const preAuthorizedCodeGrant =
+    grants[CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE];
 
-    return {
-      authorizationCodeGrant: {
-        authorizationServer: grant.authorization_server,
-        issuerState: grant.issuer_state,
+  return {
+    ...(authorizationCodeGrant && {
+      [CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE]: {
+        authorizationServer: authorizationCodeGrant.authorization_server,
+        issuerState: authorizationCodeGrant.issuer_state,
       },
-      grantType: CREDENTIAL_OFFER_GRANTS.AUTHORIZATION_CODE,
-    };
-  });
+    }),
+    ...(preAuthorizedCodeGrant && {
+      [CREDENTIAL_OFFER_GRANTS.PREAUTHORIZED_CODE]: {
+        authorizationServer: preAuthorizedCodeGrant.authorization_server,
+        preAuthorizedCode: preAuthorizedCodeGrant["pre-authorized_code"],
+        txCode: preAuthorizedCodeGrant.tx_code,
+      },
+    }),
+  };
 }
 
 const dispatchExtractGrantDetails = createVersionDispatcher<
@@ -154,17 +153,19 @@ const dispatchExtractGrantDetails = createVersionDispatcher<
 
 /**
  * Extracts grant details from a credential offer according to the configured
- * Italian Wallet specification version.
+ * Italian Wallet specification version. Returns version-specific grant details keyed by grant type.
  *
  *
  * Version Differences:
  * - v1.3: extracts `scope` (REQUIRED), `authorization_server` (OPTIONAL), `issuer_state` (OPTIONAL)
  * - v1.4: extracts `authorization_server` (OPTIONAL) and `issuer_state` (OPTIONAL); the
  *   credential offer no longer carries a `scope`.
- * - APTITUDE: extracts `authorization_server` (OPTIONAL), `pre-authorized_code` (REQUIRED), and `tx_code` (OPTIONAL)
+ * - APTITUDE: extracts `authorization_server` (OPTIONAL), `pre-authorized_code` (REQUIRED), and `tx_code` (OPTIONAL).
+ *   authorization_code properties are not mandatory anymore.
+ *
  *
  * @param options - Extraction options including the credential offer and version config
- * @returns Version-specific grant details containing the grant type and grant information. For APTITUDE, it'll return a list of grants.
+ * @returns Version-specific grant details keyed by grant type.
  * @throws {CredentialOfferError} If grants or the either authorization_code or pre-authorized_code grants are missing
  * @throws {ItWalletSpecsVersionError} If the configured version does not support credential offers
  */

@@ -1,6 +1,7 @@
 export * from "./authorization-response/complete-authorization";
 export * from "./authorization-response/verify-authorization-response";
 export * from "./authorization-response/z-authorization-response";
+export { CREDENTIAL_OFFER_GRANTS } from "./credential-offer/APTITUDE/z-credential-offer";
 export { extractGrantDetails } from "./credential-offer/extract-grant-details";
 export { parseCredentialOfferUri } from "./credential-offer/parse-credential-offer-uri";
 export { resolveCredentialOffer } from "./credential-offer/resolve-credential-offer";
