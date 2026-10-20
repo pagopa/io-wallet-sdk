@@ -71,7 +71,7 @@ describe("validateCertificateChain", () => {
     ).rejects.toMatchObject({ code, name: "CertificateChainError" });
   });
 
-  it("strips a trailing Trust Anchor before validating the chain", async () => {
+  it("strips a trailing Trust Anchor and tries only that one", async () => {
     const verifyX509CertificateChain = acceptOnly("ta");
 
     await expect(
@@ -79,9 +79,10 @@ describe("validateCertificateChain", () => {
         callbacks: { verifyX509CertificateChain },
         chain: ["leaf", "intermediate", "ta"],
         now,
-        trustAnchors: ["ta"],
+        trustAnchors: ["other", "ta"],
       }),
     ).resolves.toBe("ta");
+    expect(verifyX509CertificateChain).toHaveBeenCalledTimes(1);
     expect(verifyX509CertificateChain).toHaveBeenCalledWith({
       chain: ["leaf", "intermediate"],
       now,
@@ -117,23 +118,6 @@ describe("validateCertificateChain", () => {
     ).resolves.toBe("ta");
     expect(verifyX509CertificateChain).not.toHaveBeenCalled();
   });
-
-  it("validates a chain using only the listed trust anchor when it is part of the candidates", async () => {
-    const verifyX509CertificateChain = acceptOnly("ta-2");
-    await expect(
-      validateCertificateChain({
-        callbacks: { verifyX509CertificateChain },
-        chain: ["leaf", "ta-2"],
-        trustAnchors: ["ta-1", "ta-2"],
-      }),
-    ).resolves.toBe("ta-2");
-    expect(verifyX509CertificateChain).toHaveBeenCalledWith(
-      expect.objectContaining({ trustAnchor: "ta-2" }),
-    );
-    expect(verifyX509CertificateChain).not.toHaveBeenCalledWith(
-      expect.objectContaining({ trustAnchor: "ta-1" }),
-    );
-  });
 });
 
 describe("validateCertificateChainAgainstLoTE", () => {
@@ -141,35 +125,48 @@ describe("validateCertificateChainAgainstLoTE", () => {
   const lote = createParsedLoTE(
     createLoTE(LoTEProfile.EUPIDProvidersList, [
       createTrustedEntity({
-        services: [{ certificates: ["ta-1"], type: issuance }],
+        services: [
+          { certificates: ["ta-1"], skis: ["c2tpLTE="], type: issuance },
+        ],
         tradeName: "VATIT-00000000001",
       }),
       createTrustedEntity({
-        services: [{ certificates: ["ta-2"], type: issuance }],
+        services: [
+          { certificates: ["ta-2"], skis: ["c2tpLTI="], type: issuance },
+        ],
         tradeName: "VATIT-00000000002",
       }),
     ]),
   );
 
-  it("narrows the candidates by the issuer of the last certificate", async () => {
-    const getX509CertificateMetadata = vi.fn(() => ({
-      ...certificateMetadata,
-      issuerOrganizationIdentifier: "VATIT-00000000002",
-    }));
-    const verifyX509CertificateChain = vi.fn(() => true);
+  it.each([
+    [
+      "issuer organization identifier",
+      { issuerOrganizationIdentifier: "VATIT-00000000002" },
+    ],
+    ["Authority Key Identifier", { authorityKeyIdentifier: "736b692d32" }],
+  ])(
+    "narrows the candidates by the %s of the last certificate",
+    async (_, narrowing) => {
+      const getX509CertificateMetadata = vi.fn(() => ({
+        ...certificateMetadata,
+        ...narrowing,
+      }));
+      const verifyX509CertificateChain = vi.fn(() => true);
 
-    await expect(
-      validateCertificateChainAgainstLoTE({
-        callbacks: { getX509CertificateMetadata, verifyX509CertificateChain },
-        chain: ["leaf", "intermediate"],
-        lote,
-        profile: LoTEProfile.EUPIDProvidersList,
-        serviceTypeIdentifier: issuance,
-      }),
-    ).resolves.toBe("ta-2");
-    expect(getX509CertificateMetadata).toHaveBeenCalledWith("intermediate");
-    expect(verifyX509CertificateChain).toHaveBeenCalledTimes(1);
-  });
+      await expect(
+        validateCertificateChainAgainstLoTE({
+          callbacks: { getX509CertificateMetadata, verifyX509CertificateChain },
+          chain: ["leaf", "intermediate"],
+          lote,
+          profile: LoTEProfile.EUPIDProvidersList,
+          serviceTypeIdentifier: issuance,
+        }),
+      ).resolves.toBe("ta-2");
+      expect(getX509CertificateMetadata).toHaveBeenCalledWith("intermediate");
+      expect(verifyX509CertificateChain).toHaveBeenCalledTimes(1);
+    },
+  );
 
   describe("with a non-self-signed listed Trust Anchor", () => {
     const loteWithIntermediateAnchor = createParsedLoTE(

@@ -4,10 +4,17 @@ import type { Jwk } from "@pagopa/io-wallet-utils";
 export type X509Chain = [string, ...string[]];
 
 export interface X509CertificateMetadata {
+  /**
+   * `keyIdentifier` of the Authority Key Identifier extension (RFC 5280 clause 4.2.1.1),
+   * as a hexadecimal string. The case and `:` separators are ignored.
+   */
+  authorityKeyIdentifier?: string;
   /** Country code (C) of the Subject Distinguished Name. */
   country?: string;
   /** Whether the Basic Constraints extension marks the certificate as a CA. */
   isCA?: boolean;
+  /** Issuer Distinguished Name, as a RFC 4514 string. */
+  issuerName?: string;
   /** `organizationIdentifier` of the Issuer Distinguished Name (ETSI EN 319 412-1 clause 5.1.4). */
   issuerOrganizationIdentifier?: string;
   /** Key Usage extension values, e.g. `digitalSignature`. */

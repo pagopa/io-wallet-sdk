@@ -132,12 +132,14 @@ export async function validateCertificateChainAgainstLoTE(
     return validateCertificateChain({ ...options, trustAnchors });
   }
 
-  const { issuerOrganizationIdentifier } =
+  const { authorityKeyIdentifier, issuerName, issuerOrganizationIdentifier } =
     await options.callbacks.getX509CertificateMetadata(last);
 
   return validateCertificateChain({
     ...options,
     trustAnchors: getTrustAnchors({
+      authorityKeyIdentifier,
+      issuerName,
       issuerOrganizationIdentifier,
       lote: options.lote.document,
       profile: options.profile,

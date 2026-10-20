@@ -4,7 +4,13 @@ import type { LoTE, TrustedEntity } from "../lote/z-lote";
 import { LOTE_TYPES, LoTEProfile } from "../lote/constants";
 
 export function createTrustedEntity(options: {
-  services: { certificates: string[]; status?: string; type: string }[];
+  services: {
+    certificates: string[];
+    skis?: string[];
+    status?: string;
+    subjectNames?: string[];
+    type: string;
+  }[];
   tradeName?: string;
 }): TrustedEntity {
   return {
@@ -16,10 +22,12 @@ export function createTrustedEntity(options: {
       }),
     },
     TrustedEntityServices: options.services.map(
-      ({ certificates, status, type }) => ({
+      ({ certificates, skis, status, subjectNames, type }) => ({
         ServiceInformation: {
           ServiceDigitalIdentity: {
             X509Certificates: certificates.map((val) => ({ val })),
+            ...(skis && { X509SKIs: skis }),
+            ...(subjectNames && { X509SubjectNames: subjectNames }),
           },
           ServiceName: [{ lang: "en", value: "Service" }],
           ...(status && { ServiceStatus: status }),

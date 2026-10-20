@@ -95,6 +95,81 @@ describe("getTrustAnchors", () => {
     ).toEqual([]);
   });
 
+  describe("with identity information", () => {
+    const identityLote = createLoTE(LoTEProfile.EUWRPACProvidersList, [
+      createTrustedEntity({
+        services: [
+          {
+            certificates: ["ta-1"],
+            skis: ["YseURyi9D6IWIKeawkmURPEB08c="],
+            subjectNames: ["CN=Issuer CA 1,O=Provider,C=IT"],
+            type: issuance,
+          },
+        ],
+        tradeName: "VATIT-00000000001",
+      }),
+      createTrustedEntity({
+        services: [{ certificates: ["ta-2"], type: issuance }],
+        tradeName: "VATIT-00000000002",
+      }),
+      createTrustedEntity({
+        services: [
+          {
+            certificates: ["ta-3"],
+            subjectNames: ["CN=Issuer CA 3,C=IT"],
+            type: issuance,
+          },
+        ],
+        tradeName: "VATIT-00000000003",
+      }),
+    ]);
+    const options = {
+      lote: identityLote,
+      profile: LoTEProfile.EUWRPACProvidersList,
+      serviceTypeIdentifier: issuance,
+    };
+
+    it("narrows the candidates by the Authority Key Identifier", () => {
+      expect(
+        getTrustAnchors({
+          ...options,
+          authorityKeyIdentifier:
+            "62:C7:94:47:28:BD:0F:A2:16:20:A7:9A:C2:49:94:44:F1:01:D3:C7",
+        }),
+      ).toEqual(["ta-1"]);
+    });
+
+    it("narrows the candidates by the issuer name against X509SubjectNames", () => {
+      expect(
+        getTrustAnchors({
+          ...options,
+          issuerName: "c=IT, o=Provider, cn=Issuer CA 1",
+        }),
+      ).toEqual(["ta-1"]);
+    });
+
+    it("prefers the Authority Key Identifier to the issuer name", () => {
+      expect(
+        getTrustAnchors({
+          ...options,
+          authorityKeyIdentifier: "62c7944728bd0fa21620a79ac2499444f101d3c7",
+          issuerName: "CN=Issuer CA 3,C=IT",
+        }),
+      ).toEqual(["ta-1"]);
+    });
+
+    it("does not fall back to a less specific criterion when the provided one matches nothing", () => {
+      expect(
+        getTrustAnchors({
+          ...options,
+          authorityKeyIdentifier: "00",
+          issuerName: "CN=Issuer CA 3,C=IT",
+          issuerOrganizationIdentifier: "VATIT-00000000002",
+        }),
+      ).toEqual([]);
+    });
+  });
+
   it("rejects a LoTE of another profile", () => {
     expect(() =>
       getTrustAnchors({
