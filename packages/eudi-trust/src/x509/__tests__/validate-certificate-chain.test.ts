@@ -11,6 +11,7 @@ import {
   validateCertificateChain,
   validateCertificateChainAgainstLoTE,
 } from "../validate-certificate-chain";
+import { type X509Chain } from "../types";
 
 const now = new Date("2026-10-13T00:00:00Z");
 
@@ -116,6 +117,23 @@ describe("validateCertificateChain", () => {
     ).resolves.toBe("ta");
     expect(verifyX509CertificateChain).not.toHaveBeenCalled();
   });
+
+  it("validates a chain using only the listed trust anchor when it is part of the candidates", async () => {
+    const verifyX509CertificateChain = acceptOnly("ta-2");
+    await expect(
+      validateCertificateChain({
+        callbacks: { verifyX509CertificateChain },
+        chain: ["leaf", "ta-2"],
+        trustAnchors: ["ta-1", "ta-2"],
+      }),
+    ).resolves.toBe("ta-2");
+    expect(verifyX509CertificateChain).toHaveBeenCalledWith(
+      expect.objectContaining({ trustAnchor: "ta-2" }),
+    );
+    expect(verifyX509CertificateChain).not.toHaveBeenCalledWith(
+      expect.objectContaining({ trustAnchor: "ta-1" }),
+    );
+  });
 });
 
 describe("validateCertificateChainAgainstLoTE", () => {
@@ -137,7 +155,6 @@ describe("validateCertificateChainAgainstLoTE", () => {
     const getX509CertificateMetadata = vi.fn(() => ({
       ...certificateMetadata,
       issuerOrganizationIdentifier: "VATIT-00000000002",
-      organizations: [],
     }));
     const verifyX509CertificateChain = vi.fn(() => true);
 
@@ -171,7 +188,6 @@ describe("validateCertificateChainAgainstLoTE", () => {
       ...certificateMetadata,
       issuerOrganizationIdentifier:
         certificate === "ta-a" ? "VATIT-00000000002" : "VATIT-00000000001",
-      organizations: [],
     }));
 
     it("returns an anchor-only chain without narrowing by its issuer", async () => {
@@ -191,7 +207,7 @@ describe("validateCertificateChainAgainstLoTE", () => {
 
     it("validates a chain ending with the anchor like the same chain without it", async () => {
       const verifyX509CertificateChain = acceptOnly("ta-a");
-      const validate = (chain: [string, ...string[]]) =>
+      const validate = (chain: X509Chain) =>
         validateCertificateChainAgainstLoTE({
           callbacks: { getX509CertificateMetadata, verifyX509CertificateChain },
           chain,

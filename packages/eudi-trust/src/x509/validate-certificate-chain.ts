@@ -6,6 +6,7 @@ import { includesCertificate } from "./certificate";
 import {
   GetX509CertificateMetadataCallback,
   VerifyX509CertificateChainCallback,
+  X509Chain,
 } from "./types";
 
 export interface ValidateCertificateChainOptions {
@@ -13,7 +14,7 @@ export interface ValidateCertificateChainOptions {
     verifyX509CertificateChain: VerifyX509CertificateChainCallback;
   };
   /** Certificates, end-entity first, DER encoded in base64. */
-  chain: [string, ...string[]];
+  chain: X509Chain;
   /** Validation time. Defaults to the current time. */
   now?: Date;
   /** Candidate Trust Anchor certificates, DER encoded in base64. */
@@ -21,11 +22,11 @@ export interface ValidateCertificateChainOptions {
 }
 
 /**
- * Validates a certificate chain against a set of candidate Trust Anchors, as
- * defined by the IT-Wallet X.509 certificate chain validation algorithm.
+ * Validates a certificate chain against a set of candidate Trust Anchors.
  *
  * The chain may include the Trust Anchor as its last certificate, or consist of
- * the Trust Anchor alone.
+ * the Trust Anchor alone. When the anchor is included in the chain and is found
+ * among the candidates, it is selected directly without trying the others.
  *
  * The path validation (RFC 5280) and any revocation check are delegated to the
  * `verifyX509CertificateChain` callback.
@@ -58,14 +59,16 @@ export async function validateCertificateChain(
     return listedAnchor;
   }
 
-  // ...or remove it from the chain before verifying the chain.
-  const chain: [string, ...string[]] = listedAnchor
+  // ...or use it directly without trying the other candidate anchors.
+  const candidateTrustAnchors = listedAnchor ? [listedAnchor] : trustAnchors;
+
+  const chain: X509Chain = listedAnchor
     ? [first, ...rest.slice(0, -1)]
     : options.chain;
 
   const now = options.now ?? new Date();
   let cause: unknown;
-  for (const trustAnchor of trustAnchors) {
+  for (const trustAnchor of candidateTrustAnchors) {
     try {
       if (
         await options.callbacks.verifyX509CertificateChain({
@@ -116,26 +119,29 @@ export async function validateCertificateChainAgainstLoTE(
 ): Promise<string> {
   const last = options.chain.at(-1) as string;
 
-  // When the last certificate in the chain is a Trust Anchor, the following edge case
-  // may occur: A's TA certificate is issued by B, and both A and B appear in the LoTE.
-  // Narrowing by A's issuer would retrieve B's TA certificate, excluding A's from the candidates.
-  let trustAnchors = getTrustAnchors({
+  const trustAnchors = getTrustAnchors({
     lote: options.lote.document,
     profile: options.profile,
     serviceTypeIdentifier: options.serviceTypeIdentifier,
   });
 
-  if (!includesCertificate(trustAnchors, last)) {
-    const { issuerOrganizationIdentifier } =
-      await options.callbacks.getX509CertificateMetadata(last);
+  // When the last certificate in the chain is a Trust Anchor, the following edge case
+  // may occur: A's TA certificate is issued by B, and both A and B appear in the LoTE.
+  // Narrowing by A's issuer would retrieve B's TA certificate, excluding A's from the candidates.
+  if (includesCertificate(trustAnchors, last)) {
+    return validateCertificateChain({ ...options, trustAnchors });
+  }
 
-    trustAnchors = getTrustAnchors({
+  const { issuerOrganizationIdentifier } =
+    await options.callbacks.getX509CertificateMetadata(last);
+
+  return validateCertificateChain({
+    ...options,
+    trustAnchors: getTrustAnchors({
       issuerOrganizationIdentifier,
       lote: options.lote.document,
       profile: options.profile,
       serviceTypeIdentifier: options.serviceTypeIdentifier,
-    });
-  }
-
-  return validateCertificateChain({ ...options, trustAnchors });
+    }),
+  });
 }

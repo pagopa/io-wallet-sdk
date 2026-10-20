@@ -5,6 +5,7 @@ import { LoTEProfile } from "../lote/constants";
 import {
   GetX509CertificateMetadataCallback,
   VerifyX509CertificateChainCallback,
+  X509Chain,
 } from "../x509";
 import { validateCertificateChainAgainstLoTE } from "../x509/validate-certificate-chain";
 import { WRPAC, zWRPAC } from "./z-wrpac";
@@ -20,7 +21,7 @@ export interface ValidateWRPACOptions {
    * The certificate chain, starting with the WRPAC, DER encoded in base64.
    * It is usually the `x5c` of the Credential Issuer metadata or of the Request Object.
    */
-  wrpacChain: [string, ...string[]];
+  wrpacChain: X509Chain;
   /** A Provider of WRPAC LoTE, authenticated with `validateLoTE`. */
   wrpacLote: ParsedLoTE;
 }

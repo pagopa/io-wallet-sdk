@@ -1,5 +1,8 @@
 import type { Jwk } from "@pagopa/io-wallet-utils";
 
+/** A chain of at least one X.509 certificate. */
+export type X509Chain = [string, ...string[]];
+
 export interface X509CertificateMetadata {
   /** Country code (C) of the Subject Distinguished Name. */
   country?: string;
@@ -49,7 +52,7 @@ export type GetX509CertificateMetadataCallback = (
  * All certificates are DER encoded in base64.
  */
 export type VerifyX509CertificateChainCallback = (options: {
-  chain: [string, ...string[]];
+  chain: X509Chain;
   now: Date;
   trustAnchor: string;
 }) => Promise<boolean> | boolean;
