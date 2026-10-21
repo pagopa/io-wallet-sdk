@@ -54,7 +54,7 @@ Like the rest of the SDK, the package performs no cryptography and no network ac
 
 These callbacks are external: the package does not implement them, and the caller must provide them (e.g. with `node:crypto`, `@peculiar/x509` or `pkijs`, or the platform APIs). In the examples below, `callbacks` is an object providing all of them.
 
-Types for `getX509CertificateMetadata` and `verifyX509CertificateChain` are exported as `GetX509CertificateMetadataCallback` and `VerifyX509CertificateChainCallback`. `verifyX509CertificateChain` should also perform the revocation checks, as the package does not. `getX509CertificateMetadata` returns the `authorityKeyIdentifier` as a hexadecimal string and the `issuerName` as a RFC 4514 string.
+Types for `getX509CertificateMetadata` and `verifyX509CertificateChain` are exported as `GetX509CertificateMetadataCallback` and `VerifyX509CertificateChainCallback`. `verifyX509CertificateChain` should also perform the revocation checks, as the package does not.
 
 ## WRPAC
 
