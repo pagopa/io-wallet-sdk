@@ -31,7 +31,10 @@ describe("verifyWRPAuthorization", () => {
   it("authorizes a Wallet-Relying Party with an expected entitlement", () => {
     expect(() =>
       verifyWRPAuthorization({
-        entitlements: ["QEAA_PROVIDER", "PUB_EAA_PROVIDER"],
+        entitlements: [
+          WRP_ENTITLEMENTS.QEAA_PROVIDER,
+          WRP_ENTITLEMENTS.PUB_EAA_PROVIDER,
+        ],
         wrpac,
         wrprc,
       }),
@@ -41,7 +44,7 @@ describe("verifyWRPAuthorization", () => {
   it("rejects a WRPRC of another entity than the WRPAC", () => {
     expect(() =>
       verifyWRPAuthorization({
-        entitlements: ["SERVICE_PROVIDER"],
+        entitlements: [WRP_ENTITLEMENTS.SERVICE_PROVIDER],
         wrpac,
         wrprc: { ...wrprc, sub: "NTREU-987654321" },
       }),
@@ -51,7 +54,7 @@ describe("verifyWRPAuthorization", () => {
   it("rejects a WRPRC without the expected entitlements", () => {
     expect(() =>
       verifyWRPAuthorization({
-        entitlements: ["SERVICE_PROVIDER"],
+        entitlements: [WRP_ENTITLEMENTS.SERVICE_PROVIDER],
         wrpac,
         wrprc: { ...wrprc, entitlements: [WRP_ENTITLEMENTS.PID_PROVIDER] },
       }),
@@ -61,7 +64,7 @@ describe("verifyWRPAuthorization", () => {
   it("accepts an entitlement in OID form", () => {
     expect(() =>
       verifyWRPAuthorization({
-        entitlements: ["SERVICE_PROVIDER"],
+        entitlements: [WRP_ENTITLEMENTS.SERVICE_PROVIDER],
         wrpac,
         wrprc: {
           ...wrprc,
@@ -74,7 +77,7 @@ describe("verifyWRPAuthorization", () => {
   it("authorizes registered SD-JWT VC and mdoc attestation types", () => {
     expect(() =>
       verifyWRPAuthorization({
-        entitlements: ["PID_PROVIDER"],
+        entitlements: [WRP_ENTITLEMENTS.PID_PROVIDER],
         providedAttestations: [pid, mdl],
         wrpac,
         wrprc,
@@ -98,7 +101,7 @@ describe("verifyWRPAuthorization", () => {
   ])("rejects %s", (_, attestation) => {
     expect(() =>
       verifyWRPAuthorization({
-        entitlements: ["PID_PROVIDER"],
+        entitlements: [WRP_ENTITLEMENTS.PID_PROVIDER],
         providedAttestations: [pid, attestation],
         wrpac,
         wrprc,
@@ -111,7 +114,7 @@ describe("verifyWRPAuthorization", () => {
   it("rejects provided attestations when the WRPRC registers none", () => {
     expect(() =>
       verifyWRPAuthorization({
-        entitlements: ["PID_PROVIDER"],
+        entitlements: [WRP_ENTITLEMENTS.PID_PROVIDER],
         providedAttestations: [mdl],
         wrpac,
         wrprc: { ...wrprc, provides_attestations: undefined },

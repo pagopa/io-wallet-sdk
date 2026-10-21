@@ -139,13 +139,14 @@ The status of the WRPRC is not checked. Its consistency with the interaction is 
 `verifyWRPAuthorization` checks that a Wallet-Relying Party is authorized for an interaction, given its validated WRPAC and WRPRC:
 
 - the WRPRC `sub` matches the `organizationIdentifier` of the WRPAC subject;
-- the WRPRC `entitlements` include at least one of the expected `entitlements`, e.g. `SERVICE_PROVIDER` for a Relying Party, or `PID_PROVIDER` for a PID Provider;
+- the WRPRC `entitlements` include at least one of the expected `entitlements`, e.g. `WRP_ENTITLEMENTS.SERVICE_PROVIDER` for a Relying Party, or `WRP_ENTITLEMENTS.PID_PROVIDER` for a PID Provider, in URI or OID form;
 - the WRPRC `provides_attestations` register every attestation type in `providedAttestations`, with an exact match on `vct` for SD-JWT VC and on `doctype` for mdoc.
 
 For example, during Credential Issuance, where the registration certificate is the `registration_cert` entry of the `issuer_info` of the metadata:
 
 ```typescript
 import {
+  WRP_ENTITLEMENTS,
   validateWRPAC,
   validateWRPRC,
   verifyWRPAuthorization,
@@ -163,7 +164,11 @@ const { wrprc } = await validateWRPRC({
 });
 
 verifyWRPAuthorization({
-  entitlements: ["QEAA_PROVIDER", "PUB_EAA_PROVIDER", "NON_Q_EAA_PROVIDER"],
+  entitlements: [
+    WRP_ENTITLEMENTS.QEAA_PROVIDER,
+    WRP_ENTITLEMENTS.PUB_EAA_PROVIDER,
+    WRP_ENTITLEMENTS.NON_Q_EAA_PROVIDER,
+  ],
   providedAttestations: [
     { doctype: "org.iso.18013.5.1.mDL", format: "mso_mdoc" },
   ],

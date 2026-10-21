@@ -1,10 +1,20 @@
 import { AuthorizationError } from "../errors";
 import { WRPAC } from "../wrpac/z-wrpac";
-import { WRP_ENTITLEMENT_OIDS, WRP_ENTITLEMENTS } from "./entitlements";
+import {
+  WRP_ENTITLEMENT_OIDS,
+  WRP_ENTITLEMENTS,
+  WRPEntitlement,
+  WRPEntitlementKey,
+} from "./entitlements";
 import { WRPRCPayload } from "./z-wrprc";
 
-/** A WRP entitlement of ETSI TS 119 475 Annex A.2. */
-export type WRPEntitlement = keyof typeof WRP_ENTITLEMENTS;
+const OID_BY_ENTITLEMENT = Object.entries(WRP_ENTITLEMENTS).reduce(
+  (acc, [key, entitlement]) => ({
+    ...acc,
+    [entitlement]: WRP_ENTITLEMENT_OIDS[key as WRPEntitlementKey],
+  }),
+  {} as Record<WRPEntitlement, string>,
+);
 
 /** An attestation type, identified by its format and type. */
 export type AttestationType =
@@ -14,7 +24,8 @@ export type AttestationType =
 export interface VerifyWRPAuthorizationOptions {
   /**
    * The entitlements expected for the interaction: the WRPRC must include at least one,
-   * e.g. `SERVICE_PROVIDER` for a Relying Party or `PID_PROVIDER` for a PID Provider.
+   * e.g. `WRP_ENTITLEMENTS.SERVICE_PROVIDER` for a Relying Party or `WRP_ENTITLEMENTS.PID_PROVIDER` for a PID Provider.
+   * The WRPRC may express them in URI or OID form.
    */
   entitlements: [WRPEntitlement, ...WRPEntitlement[]];
   /** The attestation types the WRPRC must all register in `provides_attestations`. */
@@ -53,8 +64,8 @@ export function verifyWRPAuthorization(
 
   const isEntitled = entitlements.some(
     (entitlement) =>
-      wrprc.entitlements.includes(WRP_ENTITLEMENTS[entitlement]) ||
-      wrprc.entitlements.includes(WRP_ENTITLEMENT_OIDS[entitlement]),
+      wrprc.entitlements.includes(entitlement) ||
+      wrprc.entitlements.includes(OID_BY_ENTITLEMENT[entitlement]),
   );
   if (!isEntitled) {
     throw new AuthorizationError(
