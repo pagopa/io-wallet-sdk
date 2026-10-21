@@ -6,7 +6,8 @@ Trust evaluation for the EUDI Wallet ecosystem, following the IT-Wallet [Trust E
 - retrieval of the Trust Anchors published in a LoTE;
 - X.509 certificate chain validation against those Trust Anchors;
 - validation of Wallet-Relying Party Access Certificates (WRPAC);
-- validation of Wallet-Relying Party Registration Certificates (WRPRC).
+- validation of Wallet-Relying Party Registration Certificates (WRPRC);
+- verification of the authorization of a Wallet-Relying Party.
 
 ## Installation
 
@@ -29,29 +30,31 @@ pnpm add @pagopa/io-wallet-eudi-trust @pagopa/io-wallet-utils
 
 Which LoTE and which service to use depends on the signed object:
 
-| Signed object                                                        | LoTE profile                        | Service type identifier                                                  |
-| -------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
-| PID                                                                  | `LoTEProfile.EUPIDProvidersList`    | `http://uri.etsi.org/19602/SvcType/PID/Issuance`                         |
-| Wallet Instance Attestation                                          | `LoTEProfile.EUWalletProvidersList` | `http://uri.etsi.org/19602/SvcType/WalletSolution/Issuance`              |
-| JWS signed with a WRPAC (Credential Issuer Metadata, Request Object) | `LoTEProfile.EUWRPACProvidersList`  | `http://uri.etsi.org/19602/SvcType/WRPAC/Issuance` (use `validateWRPAC`) |
-| WRPRC                                                                | `LoTEProfile.EUWRPRCProvidersList`  | `http://uri.etsi.org/19602/SvcType/WRPRC/Issuance` (use `validateWRPRC`) |
-| PuB-EAA                                                              | `LoTEProfile.EUPubEAAProvidersList` | `http://uri.etsi.org/19602/SvcType/PubEAA/Issuance`                      |
+| Signed object                                                        | LoTE profile                        | Service type identifier                                                                                    |
+| -------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| PID                                                                  | `LoTEProfile.EUPIDProvidersList`    | `http://uri.etsi.org/19602/SvcType/PID/Issuance`                                                           |
+| Wallet Instance Attestation                                          | `LoTEProfile.EUWalletProvidersList` | `http://uri.etsi.org/19602/SvcType/WalletSolution/Issuance`                                                |
+| JWS signed with a WRPAC (Credential Issuer Metadata, Request Object) | `LoTEProfile.EUWRPACProvidersList`  | `http://uri.etsi.org/19602/SvcType/WRPAC/Issuance` (use `validateWRPAC`)                                   |
+| WRPRC                                                                | `LoTEProfile.EUWRPRCProvidersList`  | `http://uri.etsi.org/19602/SvcType/WRPRC/Issuance` (use `validateWRPRC`)                                   |
+| PuB-EAA                                                              | `LoTEProfile.EUPubEAAProvidersList` | `http://uri.etsi.org/19602/SvcType/PubEAA/Issuance`                                                        |
+| EAA                                                                  | `LoTEProfile.EUEAAProvidersList`    | `http://uri.etsi.org/19602/SvcType/EAA/Issuance`                                                           |
+| mDL                                                                  | `LoTEProfile.mDLProvidersList`      | `http://trust.ec.europa.eu/lists/mDL/SvcType/Issuance` or `http://uri.etsi.org/19602/SvcType/mDL/Issuance` |
 
 ## Callbacks
 
 Like the rest of the SDK, the package performs no cryptography and no network access by itself: they are provided by the consumer through callbacks.
 
-| Callback                     | Purpose                                                       |
-| ---------------------------- | ------------------------------------------------------------- |
-| `fetch`                      | Download the LoTE                                             |
-| `hash`                       | Check the `x5t#o` header of the LoTE and of the WRPRC         |
-| `verifyJwt`                  | Verify JWS signatures, with a `jwk` or `x5c` signer           |
-| `getX509CertificateMetadata` | Parse a certificate: subject, issuer, validity and public key |
-| `verifyX509CertificateChain` | RFC 5280 path validation of a chain against one Trust Anchor  |
+| Callback                     | Purpose                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| `fetch`                      | Download the LoTE                                                         |
+| `hash`                       | Check the `x5t#o` header of the LoTE and of the WRPRC                     |
+| `verifyJwt`                  | Verify JWS signatures, with a `jwk` or `x5c` signer                       |
+| `getX509CertificateMetadata` | Parse a certificate: subject, issuer, validity, extensions and public key |
+| `verifyX509CertificateChain` | RFC 5280 path validation of a chain against one Trust Anchor              |
 
 These callbacks are external: the package does not implement them, and the caller must provide them (e.g. with `node:crypto`, `@peculiar/x509` or `pkijs`, or the platform APIs). In the examples below, `callbacks` is an object providing all of them.
 
-Types for `getX509CertificateMetadata` and `verifyX509CertificateChain` are exported as `GetX509CertificateMetadataCallback` and `VerifyX509CertificateChainCallback`. `verifyX509CertificateChain` should also perform the revocation checks, as the package does not.
+Types for `getX509CertificateMetadata` and `verifyX509CertificateChain` are exported as `GetX509CertificateMetadataCallback` and `VerifyX509CertificateChainCallback`. `verifyX509CertificateChain` should also perform the revocation checks, as the package does not. `getX509CertificateMetadata` returns the `authorityKeyIdentifier` as a hexadecimal string and the `issuerName` as a RFC 4514 string.
 
 ## WRPAC
 
@@ -68,7 +71,7 @@ import {
 import { decodeJwt, verifyJwt } from "@pagopa/io-wallet-utils";
 
 /** Certificates of the LoTE signer, from the OJEU publication. */
-const ojeuCertificates: ["MIIC9TCCApugAwIBAg..."];
+const ojeuCertificates = ["MIIC9TCCApugAwIBAg..."];
 /** The signed Credential Issuer metadata, fetched with `Accept: application/jwt`. */
 const signedMetadata = "eyJhbGciOiJFUzI1NiIsIn...";
 
@@ -111,7 +114,7 @@ import {
 } from "@pagopa/io-wallet-eudi-trust";
 
 /** Certificates of the LoTE signer, from the OJEU publication. */
-const ojeuCertificates: ["MIIC9TCCApugAwIBAg..."];
+const ojeuCertificates = ["MIIC9TCCApugAwIBAg..."];
 const wrprcJwt = "eyJhbGciOiJFUzI1NiIsIn...";
 
 const wrprcProvidersLote = await fetchAndValidateLoTE({
@@ -129,7 +132,45 @@ const { wrprc } = await validateWRPRC({
 });
 ```
 
-The status of the WRPRC and its consistency with the interaction in which it is presented are not checked.
+The status of the WRPRC is not checked. Its consistency with the interaction is checked by `verifyWRPAuthorization`.
+
+### Authorization
+
+`verifyWRPAuthorization` checks that a Wallet-Relying Party is authorized for an interaction, given its validated WRPAC and WRPRC:
+
+- the WRPRC `sub` matches the `organizationIdentifier` of the WRPAC subject;
+- the WRPRC `entitlements` include at least one of the expected `entitlements`, e.g. `SERVICE_PROVIDER` for a Relying Party, or `PID_PROVIDER` for a PID Provider;
+- the WRPRC `provides_attestations` register every attestation type in `providedAttestations`, with an exact match on `vct` for SD-JWT VC and on `doctype` for mdoc.
+
+For example, during Credential Issuance, where the registration certificate is the `registration_cert` entry of the `issuer_info` of the metadata:
+
+```typescript
+import {
+  validateWRPAC,
+  validateWRPRC,
+  verifyWRPAuthorization,
+} from "@pagopa/io-wallet-eudi-trust";
+
+const { wrpac } = await validateWRPAC({
+  callbacks,
+  wrpacChain: header.x5c,
+  wrpacLote: wrpacProvidersLote,
+});
+const { wrprc } = await validateWRPRC({
+  callbacks,
+  wrprcLote: wrprcProvidersLote,
+  wrprcJwt,
+});
+
+verifyWRPAuthorization({
+  entitlements: ["QEAA_PROVIDER", "PUB_EAA_PROVIDER", "NON_Q_EAA_PROVIDER"],
+  providedAttestations: [
+    { doctype: "org.iso.18013.5.1.mDL", format: "mso_mdoc" },
+  ],
+  wrpac,
+  wrprc,
+});
+```
 
 ## PID
 
@@ -142,7 +183,7 @@ import {
 import { decodeJwt, verifyJwt } from "@pagopa/io-wallet-utils";
 
 /** Certificates of the LoTE signer, from the OJEU publication. */
-const ojeuCertificates: ["MIIC9TCCApugAwIBAg..."];
+const ojeuCertificates = ["MIIC9TCCApugAwIBAg..."];
 /** The PID, an SD-JWT VC. */
 const sdJwtVc = "eyJhbGciOiJFUzI1NiIsIn...";
 
@@ -160,8 +201,8 @@ const [issuerSignedJwt] = sdJwtVc.split("~");
 const { header, payload } = decodeJwt({ jwt: issuerSignedJwt });
 
 // 2-3. Validate the chain against the Trust Anchors of the PID issuance
-//      service, narrowed to the provider identified by the issuer of the last
-//      certificate of the chain.
+//      service, narrowed by the Authority Key Identifier, the issuer name or the
+//      issuer organizationIdentifier of the last certificate of the chain.
 await validateCertificateChainAgainstLoTE({
   callbacks,
   chain: header.x5c,
@@ -192,6 +233,7 @@ To split steps 2 and 3, retrieve the candidates with `getTrustAnchors` and pass 
 - `JAdESError`: the `x5t#o` header does not match the signer certificate, or the signature (LoTE, WRPRC) or its time-based claims are invalid.
 - `CertificateChainError`: no candidate Trust Anchor, or no Trust Anchor validating the chain.
 - `JwtVerificationError` (from `@pagopa/io-wallet-utils`): invalid signature, or expired JWS, when verifying with `verifyJwt`.
+- `AuthorizationError`: the WRPRC does not belong to the WRPAC subject (`BINDING_FAILED`), does not include the expected entitlements (`WRONG_ENTITLEMENT`) or does not register a provided attestation type (`ATTESTATION_TYPE_NOT_REGISTERED`).
 - `ValidationError` (from `@pagopa/io-wallet-utils`): malformed LoTE, WRPRC or WRPAC.
 
 ## Not supported yet
