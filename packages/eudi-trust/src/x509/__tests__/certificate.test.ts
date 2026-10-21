@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   includesCertificate,
+  keyIdentifierToBase64,
   normalizeCertificate,
   normalizeDistinguishedName,
 } from "../certificate";
@@ -29,6 +30,16 @@ describe("normalizeCertificate", () => {
     expect(normalizeCertificate(`${"=".repeat(100_000)}x`)).toBe(
       `${"=".repeat(100_000)}x`,
     );
+  });
+});
+
+describe("keyIdentifierToBase64", () => {
+  it("encodes a hexadecimal key identifier", () => {
+    expect(keyIdentifierToBase64("0123abcd")).toBe("ASOrzQ==");
+  });
+
+  it("ignores the case and any `:` or whitespace separator", () => {
+    expect(keyIdentifierToBase64("01:23 AB\nCD")).toBe("ASOrzQ==");
   });
 });
 

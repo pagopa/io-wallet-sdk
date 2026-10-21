@@ -1,5 +1,3 @@
-import { decodeBase64 } from "@pagopa/io-wallet-utils";
-
 /**
  * Canonical form of a base64 or base64url DER certificate, ignoring whitespace,
  * alphabet and padding, so that equal certificates compare equal.
@@ -25,25 +23,13 @@ export function includesCertificate(
 }
 
 /**
- * Canonical form of a hexadecimal key identifier, ignoring the case
+ * Base64 form of a hexadecimal key identifier, ignoring the case
  * and any `:` or whitespace separator.
  */
-export function normalizeKeyIdentifier(keyIdentifier: string): string {
-  return keyIdentifier.replace(/[\s:]/g, "").toLowerCase();
-}
-
-/**
- * Hexadecimal form of a key identifier encoded in base64 (or base64url),
- * or undefined if it is not valid base64.
- */
-export function base64ToKeyIdentifier(base64: string): string | undefined {
-  try {
-    return Array.from(decodeBase64(base64), (byte) =>
-      byte.toString(16).padStart(2, "0"),
-    ).join("");
-  } catch {
-    return undefined;
-  }
+export function keyIdentifierToBase64(keyIdentifier: string): string {
+  const hex = keyIdentifier.replace(/[\s:]/g, "");
+  const bytes = (hex.match(/../g) ?? []).map((pair) => parseInt(pair, 16));
+  return btoa(String.fromCharCode(...bytes));
 }
 
 /**

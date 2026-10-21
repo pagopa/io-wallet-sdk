@@ -1,8 +1,7 @@
 import { LoTEError } from "../errors";
 import {
-  base64ToKeyIdentifier,
+  keyIdentifierToBase64,
   normalizeDistinguishedName,
-  normalizeKeyIdentifier,
 } from "../x509/certificate";
 import { LOTE_TYPES, LoTEProfile, PUB_EAA_SERVICE_STATUS } from "./constants";
 import { LoTE, TrustedEntityService } from "./z-lote";
@@ -78,11 +77,11 @@ export function getTrustAnchors({
 
   // 1. Find certificates that match `X509SKIs` (Authority Key Identifier)
   if (authorityKeyIdentifier) {
-    const expected = normalizeKeyIdentifier(authorityKeyIdentifier);
+    const expected = keyIdentifierToBase64(authorityKeyIdentifier);
     return getServiceCertificates(
       services.filter(({ ServiceInformation }) =>
         ServiceInformation.ServiceDigitalIdentity.X509SKIs?.some(
-          (ski) => base64ToKeyIdentifier(ski) === expected,
+          (ski) => ski === expected,
         ),
       ),
     );
