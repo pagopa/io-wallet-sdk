@@ -6,7 +6,8 @@
     "packages/oid-federation",
     "packages/oid4vci",
     "packages/oid4vp",
-    "packages/utils"
+    "packages/utils",
+    "packages/eudi-trust"
   ],
   "entryPointStrategy": "packages",
   "packageOptions": {
