@@ -1,5 +1,12 @@
 # @pagopa/io-wallet-utils
 
+## 2.0.0
+
+### Major Changes
+
+- 2f41ad1: Removal of the oid4vc-ts external dependency from the monorepo, replacing it with internal implementations across all packages.
+- e4c522d: This release includes features development for APTITUDE specs (pre-auth grant support).
+
 ## 1.5.8
 
 ## 1.5.7

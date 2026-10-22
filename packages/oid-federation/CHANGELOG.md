@@ -1,5 +1,18 @@
 # @pagopa/io-wallet-oid-federation
 
+## 2.0.0
+
+### Major Changes
+
+- 2f41ad1: Removal of the oid4vc-ts external dependency from the monorepo, replacing it with internal implementations across all packages.
+- e4c522d: This release includes features development for APTITUDE specs (pre-auth grant support).
+
+### Patch Changes
+
+- Updated dependencies [2f41ad1]
+- Updated dependencies [e4c522d]
+  - @pagopa/io-wallet-utils@2.0.0
+
 ## 1.5.8
 
 ### Patch Changes
