@@ -138,6 +138,7 @@ jobs:
         with:
           tag_name: v${{ env.CURRENT_PACKAGE_VERSION }}
           prerelease: ${{ env.PRERELEASE_TAG != '' }}
+          target_commitish: ${{ github.sha }}
 
   publish-alpha:
     runs-on: ubuntu-latest
