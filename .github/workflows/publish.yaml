@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release type (stable on aptitude-main publishes apt prereleases)'
+        description: 'Release type (stable on a prerelease branch, e.g. aptitude-main, publishes a prerelease)'
         required: false
         default: 'stable'
         type: choice
@@ -27,15 +27,26 @@ permissions:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+env:
+  # Release branches other than main, mapped to the version suffix and npm tag they publish with.
+  # Each branch listed here must also be added to the push trigger above.
+  PRERELEASE_TAG: ${{ fromJSON('{"aptitude-main":"apt"}')[github.ref_name] }}
+
 jobs:
 
   changesets:
     runs-on: ubuntu-latest
-    if: (github.ref_name == 'main' || github.ref_name == 'aptitude-main') && inputs.release_type != 'alpha'
+    if: inputs.release_type != 'alpha'
     outputs:
       hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
       published: ${{ steps.changesets.outputs.published }}
     steps:
+      - name: Check release branch
+        if: github.ref_name != 'main' && !env.PRERELEASE_TAG
+        run: |
+          echo "::error::'$GITHUB_REF_NAME' is not a release branch, run the workflow from main or a branch in PRERELEASE_TAG"
+          exit 1
+
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
         with:
@@ -100,13 +111,13 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      # aptitude-main is versioned like main; the -apt suffix is added only to the published
+      # Prerelease branches are versioned like main; the suffix is added only to the published
       # packages (never committed), so changesets keeps bumping from plain x.y.z versions.
       # All packages share one version through the "fixed" group in .changeset/config.json.
-      - name: Add apt suffix to package versions
-        if: github.ref_name == 'aptitude-main'
+      - name: Add prerelease suffix to package versions
+        if: env.PRERELEASE_TAG
         run: |
-          VERSION="$(node -p "require('./packages/oid4vci/package.json').version")-apt"
+          VERSION="$(node -p "require('./packages/oid4vci/package.json').version")-$PRERELEASE_TAG"
           pnpm -r exec npm pkg set version="$VERSION"
 
       # Publish each package individually instead of using npm workspaces
@@ -114,7 +125,7 @@ jobs:
       # It will fix that when pnpm will support trusted publishing
       - name: Publish to npm
         id: publish
-        run: pnpm changeset publish --no-git-tag ${{ github.ref_name == 'aptitude-main' && '--tag apt' || '' }}
+        run: pnpm changeset publish --no-git-tag ${{ env.PRERELEASE_TAG && format('--tag {0}', env.PRERELEASE_TAG) || '' }}
         env:
           NPM_CONFIG_PROVENANCE: true
 
@@ -126,7 +137,7 @@ jobs:
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 #v2.4.1
         with:
           tag_name: v${{ env.CURRENT_PACKAGE_VERSION }}
-          prerelease: ${{ github.ref_name == 'aptitude-main' }}
+          prerelease: ${{ env.PRERELEASE_TAG != '' }}
 
   publish-alpha:
     runs-on: ubuntu-latest
