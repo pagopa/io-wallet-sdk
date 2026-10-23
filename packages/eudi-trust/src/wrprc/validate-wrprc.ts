@@ -79,20 +79,20 @@ export async function validateWRPRC(
       verifyJwt: options.callbacks.verifyJwt,
     },
     compact,
+    errorMessagePrefix: "WRPRC signature verification failed:",
     header: header,
     now,
     payload,
-    errorMessagePrefix: "WRPRC signature verification failed:",
   });
 
   const trustAnchor = await validateCertificateChainAgainstLoTE({
     callbacks: options.callbacks,
     chain: header.x5c,
+    errorMessagePrefix: "WRPRC certificate chain validation failed:",
     lote: options.wrprcLote,
     now,
     profile: LoTEProfile.EUWRPRCProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPRC/Issuance",
-    errorMessagePrefix: "WRPRC certificate chain validation failed:",
   });
 
   return { compact, header, trustAnchor, wrprc: payload };

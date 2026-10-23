@@ -1,4 +1,5 @@
 import { formatError } from "@pagopa/io-wallet-utils";
+
 import { CertificateChainError } from "../errors";
 import { LoTEProfile } from "../lote/constants";
 import { ParsedLoTE } from "../lote/fetch-and-validate-lote";
@@ -16,12 +17,12 @@ export interface ValidateCertificateChainOptions {
   };
   /** Certificates, end-entity first, DER encoded in base64. */
   chain: X509Chain;
+  /** An optional prefix to include in the error messages thrown by this function. */
+  errorMessagePrefix?: string;
   /** Validation time. Defaults to the current time. */
   now?: Date;
   /** Candidate Trust Anchor certificates, DER encoded in base64. */
   trustAnchors: string[];
-  /** An optional prefix to include in the error messages thrown by this function. */
-  errorMessagePrefix?: string;
 }
 
 /**
@@ -42,7 +43,7 @@ export interface ValidateCertificateChainOptions {
 export async function validateCertificateChain(
   options: ValidateCertificateChainOptions,
 ): Promise<string> {
-  const { trustAnchors, errorMessagePrefix } = options;
+  const { errorMessagePrefix, trustAnchors } = options;
 
   if (trustAnchors.length === 0) {
     throw new CertificateChainError(

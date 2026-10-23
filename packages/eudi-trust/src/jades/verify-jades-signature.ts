@@ -14,6 +14,8 @@ export interface VerifyJAdESSignatureOptions {
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
   /** The compact JWS. */
   compact: string;
+  /** An optional prefix to include in the error messages thrown by this function. */
+  errorMessagePrefix?: string;
   /** The decoded header, validated with `zJAdESHeader`. */
   header: JAdESHeader;
   /** Validation time of `nbf` and `exp`. Defaults to the current time. */
@@ -22,8 +24,6 @@ export interface VerifyJAdESSignatureOptions {
   payload: JwtPayload;
   /** Do not check `nbf` and `exp`. */
   skipTimeBasedValidation?: boolean;
-  /** An optional prefix to include in the error messages thrown by this function. */
-  errorMessagePrefix?: string;
 }
 
 /**
@@ -38,7 +38,7 @@ export interface VerifyJAdESSignatureOptions {
 export async function verifyJAdESSignature(
   options: VerifyJAdESSignatureOptions,
 ): Promise<void> {
-  const { header, errorMessagePrefix } = options;
+  const { errorMessagePrefix, header } = options;
   const [signerCertificate] = header.x5c;
 
   const x5tO = header["x5t#o"];

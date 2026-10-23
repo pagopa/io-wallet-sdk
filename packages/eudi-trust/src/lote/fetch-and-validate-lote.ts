@@ -147,9 +147,9 @@ async function verifyLoTESignature(
   await verifyJAdESSignature({
     callbacks,
     compact: lote.compact,
+    errorMessagePrefix: "LoTE signature verification failed:",
     header,
     payload,
-    errorMessagePrefix: "LoTE signature verification failed:",
   });
 }
 
