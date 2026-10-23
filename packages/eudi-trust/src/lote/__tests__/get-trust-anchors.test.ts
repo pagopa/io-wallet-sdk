@@ -129,44 +129,44 @@ describe("getTrustAnchors", () => {
       serviceTypeIdentifier: issuance,
     };
 
-    it("narrows the candidates by the Authority Key Identifier", () => {
+    it("matches the Authority Key Identifier only against the services publishing X509SKIs", () => {
       expect(
         getTrustAnchors({
           ...options,
           authorityKeyIdentifier:
             "62:C7:94:47:28:BD:0F:A2:16:20:A7:9A:C2:49:94:44:F1:01:D3:C7",
         }),
-      ).toEqual(["ta-1"]);
-    });
-
-    it("narrows the candidates by the issuer name against X509SubjectNames", () => {
+      ).toEqual(["ta-1", "ta-2", "ta-3"]);
       expect(
-        getTrustAnchors({
-          ...options,
-          issuerName: "c=IT, o=Provider, cn=Issuer CA 1",
-        }),
-      ).toEqual(["ta-1"]);
+        getTrustAnchors({ ...options, authorityKeyIdentifier: "00" }),
+      ).toEqual(["ta-2", "ta-3"]);
     });
 
-    it("prefers the Authority Key Identifier to the issuer name", () => {
+    it("matches the issuer name only against the services publishing X509SubjectNames", () => {
+      expect(
+        getTrustAnchors({ ...options, issuerName: "c=IT, cn=Issuer CA 3" }),
+      ).toEqual(["ta-2", "ta-3"]);
+    });
+
+    it("prefers the Authority Key Identifier to the issuer name for a service publishing both", () => {
       expect(
         getTrustAnchors({
           ...options,
           authorityKeyIdentifier: "62c7944728bd0fa21620a79ac2499444f101d3c7",
           issuerName: "CN=Issuer CA 3,C=IT",
         }),
-      ).toEqual(["ta-1"]);
+      ).toEqual(["ta-1", "ta-2", "ta-3"]);
     });
 
-    it("does not fall back to a less specific criterion when the provided one matches nothing", () => {
+    it("matches the issuer organization identifier against the services without identity", () => {
       expect(
         getTrustAnchors({
           ...options,
           authorityKeyIdentifier: "00",
-          issuerName: "CN=Issuer CA 3,C=IT",
+          issuerName: "CN=Unknown",
           issuerOrganizationIdentifier: "VATIT-00000000002",
         }),
-      ).toEqual([]);
+      ).toEqual(["ta-2"]);
     });
   });
 

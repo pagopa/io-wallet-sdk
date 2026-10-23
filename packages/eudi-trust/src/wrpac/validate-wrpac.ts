@@ -59,6 +59,7 @@ export async function validateWRPAC(
   const trustAnchor = await validateCertificateChainAgainstLoTE({
     callbacks: options.callbacks,
     chain: options.wrpacChain,
+    errorMessagePrefix: "WRPAC certificate chain validation failed:",
     lote: options.wrpacLote,
     now: options.now,
     profile: LoTEProfile.EUWRPACProvidersList,

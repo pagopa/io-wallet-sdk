@@ -4,7 +4,7 @@ import {
   normalizeDistinguishedName,
 } from "../x509/certificate";
 import { LOTE_TYPES, LoTEProfile, PUB_EAA_SERVICE_STATUS } from "./constants";
-import { LoTE, TrustedEntityService } from "./z-lote";
+import { LoTE, TrustedEntity, TrustedEntityService } from "./z-lote";
 
 export interface GetTrustAnchorsOptions {
   /**
@@ -36,10 +36,11 @@ export interface GetTrustAnchorsOptions {
  * that a LoTE publishes for a given service type, as per the IT-Wallet EUDIW
  * authentication, based on ETSI TS 119 602.
  *
- * Only active services contribute. The candidates are narrowed by the first of these
- * criteria matching some of them: the Authority Key Identifier against `X509SKIs`,
- * the issuer name against `X509SubjectNames`,
- * and finally the issuer organization identifier against the entity trade name.
+ * Only active services contribute. Each service is matched against the issuer of the last
+ * certificate of the chain using the most specific identity it publishes: the Authority Key
+ * Identifier against its `X509SKIs`, otherwise the issuer name against its `X509SubjectNames`,
+ * otherwise the issuer organization identifier against the `TETradeName` of its entity.
+ * A service is a candidate when it matches, or when none of these can be compared.
  *
  * @returns The candidate Trust Anchors.
  * @throws {LoTEError} if the LoTE does not match the expected profile.
@@ -71,53 +72,47 @@ export function getTrustAnchors({
     (ServiceInformation.ServiceStatus === undefined ||
       ServiceInformation.ServiceStatus === PUB_EAA_SERVICE_STATUS.notified);
 
-  const services = lote.TrustedEntitiesList.flatMap(
-    (entity) => entity.TrustedEntityServices,
-  ).filter(isRequestedServiceType);
+  const expectedSki =
+    authorityKeyIdentifier && keyIdentifierToBase64(authorityKeyIdentifier);
+  const expectedName = issuerName && normalizeDistinguishedName(issuerName);
 
-  // 1. Find certificates that match `X509SKIs` (Authority Key Identifier)
-  if (authorityKeyIdentifier) {
-    const expected = keyIdentifierToBase64(authorityKeyIdentifier);
-    return getServiceCertificates(
-      services.filter(({ ServiceInformation }) =>
-        ServiceInformation.ServiceDigitalIdentity.X509SKIs?.some(
-          (ski) => ski === expected,
-        ),
-      ),
-    );
-  }
+  const matchesIssuer = (
+    entity: TrustedEntity,
+    { ServiceInformation }: TrustedEntityService,
+  ) => {
+    const { X509SKIs, X509SubjectNames } =
+      ServiceInformation.ServiceDigitalIdentity;
 
-  // 2. Find certificates that match the Issuer's Distinguished Name
-  if (issuerName) {
-    const expected = normalizeDistinguishedName(issuerName);
-    return getServiceCertificates(
-      services.filter(({ ServiceInformation }) =>
-        ServiceInformation.ServiceDigitalIdentity.X509SubjectNames?.some(
-          (name) => normalizeDistinguishedName(name) === expected,
-        ),
-      ),
-    );
-  }
+    if (expectedSki && X509SKIs?.length) {
+      return X509SKIs.includes(expectedSki);
+    }
 
-  // 3. Find certificates that match the registration identifier of the entity
-  // found in `TETradeName` (ETSI EN 319 412-1 clause 5.1.4, ETSI TS 119 602 Annex F)
-  if (issuerOrganizationIdentifier) {
-    return getServiceCertificates(
-      lote.TrustedEntitiesList.filter((entity) =>
+    if (expectedName && X509SubjectNames?.length) {
+      return X509SubjectNames.some(
+        (name) => normalizeDistinguishedName(name) === expectedName,
+      );
+    }
+
+    // `TETradeName` carries the registration identifier of the entity
+    // (ETSI EN 319 412-1 clause 5.1.4, ETSI TS 119 602 Annex F)
+    if (issuerOrganizationIdentifier) {
+      return (
         entity.TrustedEntityInformation.TETradeName?.some(
           ({ value }) => value === issuerOrganizationIdentifier,
-        ),
-      )
-        .flatMap((entity) => entity.TrustedEntityServices)
-        .filter(isRequestedServiceType),
-    );
-  }
+        ) ?? false
+      );
+    }
 
-  // 4. Get all certificates if no filtering parameters are provided
+    return true;
+  };
+
   return getServiceCertificates(
-    lote.TrustedEntitiesList.flatMap(
-      (entity) => entity.TrustedEntityServices,
-    ).filter(isRequestedServiceType),
+    lote.TrustedEntitiesList.flatMap((entity) =>
+      entity.TrustedEntityServices.filter(
+        (service) =>
+          isRequestedServiceType(service) && matchesIssuer(entity, service),
+      ),
+    ),
   );
 }
 
