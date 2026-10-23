@@ -1,3 +1,4 @@
+import { formatError } from "@pagopa/io-wallet-utils";
 import { CertificateChainError } from "../errors";
 import { LoTEProfile } from "../lote/constants";
 import { ParsedLoTE } from "../lote/fetch-and-validate-lote";
@@ -19,6 +20,8 @@ export interface ValidateCertificateChainOptions {
   now?: Date;
   /** Candidate Trust Anchor certificates, DER encoded in base64. */
   trustAnchors: string[];
+  /** An optional prefix to include in the error messages thrown by this function. */
+  errorMessagePrefix?: string;
 }
 
 /**
@@ -39,12 +42,13 @@ export interface ValidateCertificateChainOptions {
 export async function validateCertificateChain(
   options: ValidateCertificateChainOptions,
 ): Promise<string> {
-  const { trustAnchors } = options;
+  const { trustAnchors, errorMessagePrefix } = options;
 
   if (trustAnchors.length === 0) {
-    throw new CertificateChainError("No candidate Trust Anchor found", {
-      code: "TRUST_ANCHOR_NOT_FOUND",
-    });
+    throw new CertificateChainError(
+      formatError("No candidate Trust Anchor found", errorMessagePrefix),
+      { code: "TRUST_ANCHOR_NOT_FOUND" },
+    );
   }
 
   const [first, ...rest] = options.chain;
@@ -85,7 +89,10 @@ export async function validateCertificateChain(
   }
 
   throw new CertificateChainError(
-    "No candidate Trust Anchor validates the certificate chain",
+    formatError(
+      "No candidate Trust Anchor validates the certificate chain",
+      errorMessagePrefix,
+    ),
     { cause, code: "CERTIFICATE_CHAIN_INVALID" },
   );
 }

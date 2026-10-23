@@ -63,6 +63,7 @@ export async function validateWRPAC(
     now: options.now,
     profile: LoTEProfile.EUWRPACProvidersList,
     serviceTypeIdentifier: "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance",
+    errorMessagePrefix: "WRPAC certificate chain validation failed:",
   });
 
   return { trustAnchor, wrpac };

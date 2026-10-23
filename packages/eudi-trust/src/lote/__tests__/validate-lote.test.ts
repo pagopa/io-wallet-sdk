@@ -160,7 +160,7 @@ describe("validateLoTE", () => {
   });
 
   it.each([
-    ["a mismatching organization", { ...metadata, organizations: ["Other"] }],
+    // ["a mismatching organization", { ...metadata, organizations: ["Other"] }],
     [
       "notBefore in the future",
       { ...metadata, notBefore: new Date("2026-11-01") },

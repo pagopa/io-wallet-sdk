@@ -110,21 +110,20 @@ async function verifyLoTESignature(
   now: Date,
 ): Promise<void> {
   const { header } = lote;
-  const info = lote.document.ListAndSchemeInformation;
+  // const info = lote.document.ListAndSchemeInformation;
 
   const metadata = await callbacks.getX509CertificateMetadata(header.x5c[0]);
 
   // ETSI SPEC-DEVIATION
   // ETSI TS 119 602 section 6.8.0 on digital signature states that the certificate's country code
   // and organization must match the scheme territory and one of the scheme operator name values in the LoTE.
-  // EUDIW Launchpad LoTEs countries do not match, so the following check is commented out.
-  // TODO: decide whether to remove or keep it
+  // EUDIW Launchpad LoTEs countries and scheme operatore name do not match, so the following checks are commented out.
   /* if (metadata.country !== info.SchemeTerritory) {
     throw new LoTEError(
       `LoTE signer certificate subject's country does not match the scheme territory. Expected ${info.SchemeTerritory}, found ${metadata.country}`,
       { code: "LoTE_SIGNATURE_VERIFICATION_FAILED" },
     );
-  } */
+  }
   if (
     !metadata.organizations.some((organization) =>
       info.SchemeOperatorName.some(({ value }) => value === organization),
@@ -134,7 +133,7 @@ async function verifyLoTESignature(
       `LoTE signer certificate subject's organization does not match any scheme operator name. Found ${metadata.organizations.join(", ")}`,
       { code: "LoTE_SIGNATURE_VERIFICATION_FAILED" },
     );
-  }
+  } */
 
   if (
     (metadata.notBefore && now < metadata.notBefore) ||
@@ -150,6 +149,7 @@ async function verifyLoTESignature(
     compact: lote.compact,
     header,
     payload,
+    errorMessagePrefix: "LoTE signature verification failed:",
   });
 }
 
