@@ -61,3 +61,18 @@ export class JAdESError extends EudiTrustError {
     this.name = "JAdESError";
   }
 }
+
+export type AuthorizationErrorCode =
+  | "ATTESTATION_TYPE_NOT_REGISTERED"
+  | "BINDING_FAILED"
+  | "WRONG_ENTITLEMENT";
+
+export class AuthorizationError extends EudiTrustError {
+  constructor(
+    message: string,
+    options: { code: AuthorizationErrorCode } & ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "AuthorizationError";
+  }
+}
