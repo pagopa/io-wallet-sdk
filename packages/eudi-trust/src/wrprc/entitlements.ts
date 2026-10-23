@@ -40,6 +40,9 @@ export const WRP_ENTITLEMENT_OIDS = {
   SERVICE_PROVIDER: `${ETSI_WRPA_ENTITLEMENT_ARC}.1`,
 } as const satisfies Record<keyof typeof WRP_ENTITLEMENTS, string>;
 
+export type WRPEntitlementKey = keyof typeof WRP_ENTITLEMENTS;
+export type WRPEntitlement = (typeof WRP_ENTITLEMENTS)[WRPEntitlementKey];
+
 /** All WRP entitlements, in URI and OID form. */
 export const ALL_ENTITLEMENTS: string[] = [
   ...Object.values(WRP_ENTITLEMENTS),

@@ -117,16 +117,21 @@ async function verifyLoTESignature(
   // ETSI SPEC-DEVIATION
   // ETSI TS 119 602 section 6.8.0 on digital signature states that the certificate's country code
   // and organization must match the scheme territory and one of the scheme operator name values in the LoTE.
-  // EUDIW Launchpad LoTEs countries do not match, so the line is commented out.
-  // TODO: decide whether to remove or keep this check
+  // EUDIW Launchpad LoTEs countries do not match, so the following check is commented out.
+  // TODO: decide whether to remove or keep it
+  /* if (metadata.country !== info.SchemeTerritory) {
+    throw new LoTEError(
+      `LoTE signer certificate subject's country does not match the scheme territory. Expected ${info.SchemeTerritory}, found ${metadata.country}`,
+      { code: "LoTE_SIGNATURE_VERIFICATION_FAILED" },
+    );
+  } */
   if (
-    // metadata.country !== info.SchemeTerritory ||
     !metadata.organizations.some((organization) =>
       info.SchemeOperatorName.some(({ value }) => value === organization),
     )
   ) {
     throw new LoTEError(
-      "LoTE signer certificate subject does not match the scheme territory and operator name",
+      `LoTE signer certificate subject's organization does not match any scheme operator name. Found ${metadata.organizations.join(", ")}`,
       { code: "LoTE_SIGNATURE_VERIFICATION_FAILED" },
     );
   }
