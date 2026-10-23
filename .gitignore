@@ -4,3 +4,6 @@ dist-docs
 .tgz
 **/.DS_Store
 .DS_Store
+
+# IDE
+.idea/
