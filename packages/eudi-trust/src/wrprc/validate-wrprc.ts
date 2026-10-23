@@ -59,7 +59,7 @@ export async function validateWRPRC(
   options: ValidateWRPRCOptions,
 ): Promise<ValidatedWRPRC> {
   const { compact, header, payload } = decodeJwt({
-    errorMessagePrefix: "Error decoding WRPRC:",
+    errorMessagePrefix: "WRPRC decoding failed:",
     headerSchema: zWRPRCJwtHeader,
     jwt: options.wrprcJwt,
     payloadSchema: zWRPRCPayload,
@@ -79,6 +79,7 @@ export async function validateWRPRC(
       verifyJwt: options.callbacks.verifyJwt,
     },
     compact,
+    errorMessagePrefix: "WRPRC signature verification failed:",
     header: header,
     now,
     payload,
@@ -87,6 +88,7 @@ export async function validateWRPRC(
   const trustAnchor = await validateCertificateChainAgainstLoTE({
     callbacks: options.callbacks,
     chain: header.x5c,
+    errorMessagePrefix: "WRPRC certificate chain validation failed:",
     lote: options.wrprcLote,
     now,
     profile: LoTEProfile.EUWRPRCProvidersList,

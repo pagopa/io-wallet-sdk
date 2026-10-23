@@ -152,7 +152,11 @@ export const zTrustedEntity = z.object({
 // ============================================================================
 
 export const zPolicyOrLegalNotice = z.object({
-  LoTELegalNotice: zLocalizedString.optional(),
+  // ETSI SPEC-DEVIATION
+  // ETSI TS 119 602 section 6.3.11 states that `LoTELegalNotice` shall be multilingual
+  // character strings, composed by a tag with the language and the actual text (section 6.1.4).
+  // Launchpad resources use a simple string instead.
+  LoTELegalNotice: z.union([zLocalizedString, z.string()]).optional(),
   LoTEPolicy: zLocalizedURI.optional(),
 });
 

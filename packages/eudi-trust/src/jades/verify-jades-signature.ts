@@ -3,6 +3,7 @@ import {
   JwtPayload,
   decodeBase64,
   encodeToBase64Url,
+  formatError,
   verifyJwt,
 } from "@pagopa/io-wallet-utils";
 
@@ -13,6 +14,8 @@ export interface VerifyJAdESSignatureOptions {
   callbacks: Pick<CallbackContext, "hash" | "verifyJwt">;
   /** The compact JWS. */
   compact: string;
+  /** An optional prefix to include in the error messages thrown by this function. */
+  errorMessagePrefix?: string;
   /** The decoded header, validated with `zJAdESHeader`. */
   header: JAdESHeader;
   /** Validation time of `nbf` and `exp`. Defaults to the current time. */
@@ -35,7 +38,7 @@ export interface VerifyJAdESSignatureOptions {
 export async function verifyJAdESSignature(
   options: VerifyJAdESSignatureOptions,
 ): Promise<void> {
-  const { header } = options;
+  const { errorMessagePrefix, header } = options;
   const [signerCertificate] = header.x5c;
 
   const x5tO = header["x5t#o"];
@@ -45,9 +48,13 @@ export async function verifyJAdESSignature(
       x5tO.digAlg,
     );
     if (encodeToBase64Url(digest) !== x5tO.digVal) {
-      throw new JAdESError("x5t#o does not match the signer certificate", {
-        code: "JADES_X5T_O_MISMATCH",
-      });
+      throw new JAdESError(
+        formatError(
+          "x5t#o does not match the signer certificate",
+          errorMessagePrefix,
+        ),
+        { code: "JADES_X5T_O_MISMATCH" },
+      );
     }
   }
 
@@ -66,13 +73,13 @@ export async function verifyJAdESSignature(
       verifyJwtCallback: options.callbacks.verifyJwt,
     });
   } catch (error) {
-    throw new JAdESError(
+    const errorMessage =
       error instanceof Error
         ? error.message
-        : "Failed to verify the JWT signature",
-      {
-        code: "JADES_SIGNATURE_VERIFICATION_FAILED",
-      },
-    );
+        : "Failed to verify the JWT signature";
+
+    throw new JAdESError(formatError(errorMessage, errorMessagePrefix), {
+      code: "JADES_SIGNATURE_VERIFICATION_FAILED",
+    });
   }
 }
