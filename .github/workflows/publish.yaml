@@ -30,7 +30,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 env:
   # Release branches other than main, mapped to the version suffix and npm tag they publish with.
   # Each branch listed here must also be added to the push trigger above.
-  PRERELEASE_TAG: ${{ fromJSON('{"launchpad-main":"apt"}')[github.ref_name] }}
+  PRERELEASE_TAG: ${{ fromJSON('{"launchpad-main":"launchpad"}')[github.ref_name] }}
 
 jobs:
 
