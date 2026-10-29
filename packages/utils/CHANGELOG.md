@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-utils
 
+## 2.0.1
+
+### Patch Changes
+
+- c930e01: fixed oid4vci type export for APTITUDE
+
 ## 2.0.0
 
 ### Major Changes
