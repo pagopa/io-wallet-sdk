@@ -1,5 +1,16 @@
 # @pagopa/io-wallet-oid4vci
 
+## 2.0.2
+
+### Patch Changes
+
+- 939581c: fixed validateCredentialOffer signature types
+- Updated dependencies [939581c]
+  - @pagopa/io-wallet-oid-federation@2.0.2
+  - @pagopa/io-wallet-oauth2@2.0.2
+  - @pagopa/io-wallet-oid4vp@2.0.2
+  - @pagopa/io-wallet-utils@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes
