@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-utils
 
+## 2.0.2
+
+### Patch Changes
+
+- 939581c: fixed validateCredentialOffer signature types
+
 ## 2.0.1
 
 ### Patch Changes
