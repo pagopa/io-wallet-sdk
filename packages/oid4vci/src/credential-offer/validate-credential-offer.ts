@@ -218,6 +218,26 @@ const dispatchValidateCredentialOffer = createVersionDispatcher<
  * @throws {CredentialOfferError} If any validation rule fails
  * @throws {ItWalletSpecsVersionError} If the configured version does not support credential offers
  */
+
+export async function validateCredentialOffer(
+  options: ValidateCredentialOfferOptionsV1_3,
+): Promise<void>;
+
+export async function validateCredentialOffer(
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  options: ValidateCredentialOfferOptionsV1_4,
+): Promise<void>;
+
+export async function validateCredentialOffer(
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  options: ValidateCredentialOfferOptionsAPTITUDE,
+): Promise<void>;
+
+export async function validateCredentialOffer(
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  options: ValidateCredentialOfferOptions,
+): Promise<void>;
+
 export async function validateCredentialOffer(
   options: ValidateCredentialOfferOptions,
 ): Promise<void> {
