@@ -7,16 +7,20 @@ export { parseCredentialOfferUri } from "./credential-offer/parse-credential-off
 export { resolveCredentialOffer } from "./credential-offer/resolve-credential-offer";
 export type {
   ExtractGrantDetailsOptions,
+  ExtractGrantDetailsOptionsAPTITUDE,
   ExtractGrantDetailsOptionsV1_3,
   ExtractGrantDetailsOptionsV1_4,
   ExtractGrantDetailsResult,
+  ExtractGrantDetailsResultAPTITUDE,
   ExtractGrantDetailsResultV1_3,
   ExtractGrantDetailsResultV1_4,
   ParseCredentialOfferUriOptions,
   ResolveCredentialOfferOptions,
+  ResolveCredentialOfferOptionsAPTITUDE,
   ResolveCredentialOfferOptionsV1_3,
   ResolveCredentialOfferOptionsV1_4,
   ValidateCredentialOfferOptions,
+  ValidateCredentialOfferOptionsAPTITUDE,
   ValidateCredentialOfferOptionsV1_3,
   ValidateCredentialOfferOptionsV1_4,
 } from "./credential-offer/types";
