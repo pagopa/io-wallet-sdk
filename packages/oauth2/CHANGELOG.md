@@ -1,5 +1,13 @@
 # @pagopa/io-wallet-oauth2
 
+## 2.0.1
+
+### Patch Changes
+
+- c930e01: fixed oid4vci type export for APTITUDE
+- Updated dependencies [c930e01]
+  - @pagopa/io-wallet-utils@2.0.1
+
 ## 2.0.0
 
 ### Major Changes
