@@ -387,6 +387,24 @@ describe("parseAuthorizationRequest tests", () => {
     ).rejects.toThrow(ValidationError);
   });
 
+  it("should reject a request object with an HTTP response_uri", async () => {
+    const requestObjectJwt = createJwt({
+      header: validFederationHeader,
+      payload: {
+        ...correctRequestObject,
+        response_uri: "http://response.example.com",
+      },
+      signature: "valid_signature",
+    });
+
+    await expect(
+      parseAuthorizeRequest({
+        config: configV1_0,
+        requestObjectJwt,
+      }),
+    ).rejects.toThrow(ValidationError);
+  });
+
   it("should parse and verify the request object correctly since expiration is not checked", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
       callbacks,

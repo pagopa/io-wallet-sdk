@@ -75,6 +75,7 @@ describe("createCredentialRequest v1.3", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
     mockCallbacks.signJwt.mockImplementation((signer) => ({
       jwt: `eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.${signer.publicJwk.kid}_test-signature`,
     }));
