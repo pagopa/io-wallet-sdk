@@ -37,7 +37,7 @@ export const zOpenid4vpAuthorizationRequestPayload = z
     request_uri_method: z.optional(z.string()),
     response_mode: z.literal("direct_post.jwt"),
     response_type: z.literal("vp_token"),
-    response_uri: z.url(),
+    response_uri: z.url({ protocol: /^https$/ }),
     scope: z.string().optional(),
     state: z.string().optional(),
     transaction_data: z.array(z.string()).nonempty().optional(),
