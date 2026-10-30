@@ -102,7 +102,7 @@ function getPublicKeyForVerification(options: {
 export interface ParseAuthorizeRequestOptions {
   /**
    * Optional callback context for JWT signature verification and hashing x509 client_id for digest comparison.
-   * If not provided, signature verification is skipped or hash skips the x509_hash digest comparison.
+   * The hash callback is required when the client_id uses the x509_hash prefix.
    */
   callbacks?: Partial<Pick<CallbackContext, "hash" | "verifyJwt">> &
     Partial<X509CertificateBinding>;
@@ -144,8 +144,8 @@ export interface ParsedAuthorizeRequestResult {
  * 2. If client_id uses openid_federation or a legacy HTTPS identifier, pass a federation signer;
  *    trust_chain is forwarded when present, otherwise the callback must reconstruct the chain from client_id.
  *
- * For x509_hash client identifiers, x5c is always required. When `callbacks.hash` is provided,
- * this method also checks the SHA-256 base64url certificate digest embedded in client_id.
+ * For x509_hash client identifiers, x5c and `callbacks.hash` are required to check
+ * the SHA-256 base64url certificate digest embedded in client_id.
  *
  * Security: If `verifyJwt` callback is not provided in options, JWT signature verification is skipped.
  *
@@ -153,7 +153,7 @@ export interface ParsedAuthorizeRequestResult {
  * @returns A {@link ParsedAuthorizeRequestResult} containing the RP required credentials payload and the {@link Openid4vpAuthorizationRequestHeader} JWT header
  * @throws {ValidationError} in case there are errors validating the Request Object structure
  * @throws {JwtParseError} in case the request object jwt is malformed (e.g missing header, bad encoding)
- * @throws {@link ParseAuthorizeRequestError} in case the JWT signature is invalid (when verifyJwt is provided) or there are unexpected errors
+ * @throws {@link ParseAuthorizeRequestError} when the x509_hash binding cannot be checked, the JWT signature is invalid (when verifyJwt is provided), or there are unexpected errors
  */
 export async function parseAuthorizeRequest(
   options: ParseAuthorizeRequestOptions,

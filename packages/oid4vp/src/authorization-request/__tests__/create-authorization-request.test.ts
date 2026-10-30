@@ -61,8 +61,8 @@ const legacyHttpsAuthorizationRequestPayload = {
 
 const x509HashAuthorizationRequestPayload = {
   ...authorizationRequestPayload,
-  client_id: "x509_hash:certificate-hash",
-  iss: "x509_hash:certificate-hash",
+  client_id: "x509_hash:AQID",
+  iss: "x509_hash:AQID",
 };
 
 const jar = {
@@ -89,6 +89,11 @@ const jarV1_3 = {
 
 const callbacks = {
   signJwt: vi.fn(),
+};
+
+const hashCallbacks = {
+  ...callbacks,
+  hash: vi.fn(async () => new Uint8Array([1, 2, 3])),
 };
 
 beforeEach(() => {
@@ -223,7 +228,7 @@ describe("createAuthorizationRequest", () => {
     vi.mocked(createJarRequest).mockResolvedValue({
       authorizationRequestJwt: "signed.jwt.value",
       jarAuthorizationRequest: {
-        client_id: "x509_hash:certificate-hash",
+        client_id: "x509_hash:AQID",
         request_uri: "https://rp.example.org/request.jwt",
       },
       signerJwk: {
@@ -236,7 +241,7 @@ describe("createAuthorizationRequest", () => {
 
     const result = await createAuthorizationRequest({
       authorizationRequestPayload: x509HashAuthorizationRequestPayload,
-      callbacks,
+      callbacks: hashCallbacks,
       config: configV1_3,
       jar: jarV1_3,
       scheme: "https://wallet.example.org/authorize?existing=1",
@@ -253,8 +258,9 @@ describe("createAuthorizationRequest", () => {
       }),
     );
     expect(result.authorizationRequest).toBe(
-      "https://wallet.example.org/authorize?existing=1&client_id=x509_hash%3Acertificate-hash&request_uri=https%3A%2F%2Frp.example.org%2Frequest.jwt",
+      "https://wallet.example.org/authorize?existing=1&client_id=x509_hash%3AAQID&request_uri=https%3A%2F%2Frp.example.org%2Frequest.jwt",
     );
+    expect(hashCallbacks.hash).toHaveBeenCalledTimes(1);
   });
 
   it("creates a v1.3 openid_federation authorization request with a federation signer", async () => {
@@ -361,6 +367,19 @@ describe("createAuthorizationRequest", () => {
         jar,
       }),
     ).rejects.toThrow(Oid4vpError);
+
+    expect(createJarRequest).not.toHaveBeenCalled();
+  });
+
+  it("rejects x509_hash authorization requests without a hash callback before JAR creation", async () => {
+    await expect(
+      createAuthorizationRequest({
+        authorizationRequestPayload: x509HashAuthorizationRequestPayload,
+        callbacks,
+        config: configV1_3,
+        jar: jarV1_3,
+      }),
+    ).rejects.toThrow("hash callback is required for x509_hash client_id");
 
     expect(createJarRequest).not.toHaveBeenCalled();
   });
