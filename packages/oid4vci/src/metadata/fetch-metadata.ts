@@ -19,6 +19,7 @@ import { assertAuthorizationServerAllowed } from "../credential-offer/validate-c
 import { CredentialOfferError, FetchMetadataError } from "../errors";
 import {
   MetadataResponse,
+  zMetadataResponseAPTITUDE,
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
   zMetadataResponseV1_4,
@@ -248,10 +249,41 @@ async function applyFederationAuthorizationServerSelection(
 }
 
 /**
+ * Attempts to fetch the Authorization Server metadata of a Credential Issuer
+ * that declares no `authorization_servers`, where the issuer identifier is the
+ * Authorization Server identifier.
+ * Returns undefined when the request fails or does not return a 200 JSON body,
+ * so that the caller can fall back to the Credential Issuer metadata.
+ */
+async function tryFetchAuthorizationServerMetadata(
+  fetch: ReturnType<typeof createFetcher>,
+  baseUrl: string,
+): Promise<Record<string, unknown> | undefined> {
+  try {
+    const authServerUrl = new URL(
+      ".well-known/oauth-authorization-server",
+      ensureTrailingSlash(baseUrl),
+    ).toString();
+    const response = await fetch(authServerUrl);
+
+    if (response.status !== 200) {
+      return undefined;
+    }
+
+    return (await response.json()) as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Executes the fallback OID4VCI discovery path:
  *   1. GET {baseUrl}/.well-known/openid-credential-issuer
  *   2a. If authorization_servers[] is present → GET {authServerUrl}/.well-known/oauth-authorization-server
- *   2b. If absent → the issuer JSON already contains the auth-server claims inline
+ *   2b. If absent → the issuer JSON already contains the auth-server claims inline.
+ *       When `fetchColocatedAuthorizationServer` is set, the issuer is first asked for
+ *       GET {baseUrl}/.well-known/oauth-authorization-server and the issuer JSON is
+ *       used only if that request fails.
  *
  * Well-known paths are appended relative to the full base URL, preserving any
  * path segment (e.g. "https://issuer.example.it/v1" → "https://issuer.example.it/v1/.well-known/...").
@@ -260,6 +292,7 @@ async function fallbackDiscovery(
   fetch: ReturnType<typeof createFetcher>,
   baseUrl: string,
   authorizationServer?: string,
+  fetchColocatedAuthorizationServer = false,
 ): Promise<RawOid4vciResult> {
   const issuerUrl = new URL(
     ".well-known/openid-credential-issuer",
@@ -303,7 +336,10 @@ async function fallbackDiscovery(
       unknown
     >;
   } else {
-    oauthAuthorizationServer = issuerJson;
+    oauthAuthorizationServer =
+      (fetchColocatedAuthorizationServer
+        ? await tryFetchAuthorizationServerMetadata(fetch, baseUrl)
+        : undefined) ?? issuerJson;
   }
 
   return {
@@ -321,6 +357,7 @@ async function fallbackDiscovery(
  */
 const fetchMetadataWithFallbackDiscovery = async (
   options: FetchMetadataOptions,
+  fetchColocatedAuthorizationServer = false,
 ): Promise<RawFederationResult | RawOid4vciResult> => {
   const fetch = createFetcher(options.callbacks.fetch);
   const federationResult = await tryFederationDiscovery(
@@ -339,6 +376,7 @@ const fetchMetadataWithFallbackDiscovery = async (
         fetch,
         options.credentialIssuerUrl,
         options.authorizationServer,
+        fetchColocatedAuthorizationServer,
       );
   return raw;
 };
@@ -386,11 +424,22 @@ async function fetchMetadataV1_4(
   );
 }
 
+async function fetchMetadataAptitude(
+  options: FetchMetadataOptions,
+): Promise<MetadataResponse> {
+  const raw = await fetchMetadataWithFallbackDiscovery(options, true);
+  return parseWithErrorHandling(
+    zMetadataResponseAPTITUDE,
+    raw,
+    "Failed to parse APTITUDE metadata response",
+  );
+}
+
 const dispatchFetchMetadata = createVersionDispatcher<
   FetchMetadataOptions,
   Promise<MetadataResponse>
 >({
-  [ItWalletSpecsVersion.APTITUDE]: (o) => fetchMetadataV1_4(o),
+  [ItWalletSpecsVersion.APTITUDE]: (o) => fetchMetadataAptitude(o),
   [ItWalletSpecsVersion.V1_0]: (o) => fetchMetadataV1_0(o),
   [ItWalletSpecsVersion.V1_3]: (o) => fetchMetadataV1_3(o),
   [ItWalletSpecsVersion.V1_4]: (o) => fetchMetadataV1_4(o),
@@ -411,6 +460,12 @@ const dispatchFetchMetadata = createVersionDispatcher<
  *
  * **v1.4**: Same discovery strategy as v1.3, validated against the v1.4 metadata schema.
  * Returns `MetadataResponseV1_4`.
+ *
+ * **APTITUDE**: Same strategy as v1.4, validated against the APTITUDE metadata schema
+ * (RFC001 Authorization Server metadata), except that when the Credential
+ * Issuer declares no `authorization_servers`, `.well-known/oauth-authorization-server`
+ * is first requested from the issuer itself; if that request fails, the Credential
+ * Issuer metadata is used as the authorization server metadata.
  *
  * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving
  * any path segment (e.g. `"https://issuer.example.it/v1"` →

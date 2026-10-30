@@ -65,10 +65,12 @@ export {
 } from "./metadata/fetch-metadata";
 export {
   type MetadataResponse,
+  type MetadataResponseAPTITUDE,
   type MetadataResponseV1_0,
   type MetadataResponseV1_3,
   type MetadataResponseV1_4,
   zMetadataResponse,
+  zMetadataResponseAPTITUDE,
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
   zMetadataResponseV1_4,

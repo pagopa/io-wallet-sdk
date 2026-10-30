@@ -6,6 +6,14 @@ import {
 import { z } from "zod";
 
 import {
+  aptitudeAuthorizationServerIdentifier,
+  aptitudeAuthorizationServerMetadata,
+} from "./entity/APTITUDE/aptitudeAuthorizationServer";
+import {
+  aptitudeCredentialIssuerIdentifier,
+  aptitudeCredentialIssuerMetadata,
+} from "./entity/APTITUDE/aptitudeCredentialIssuer";
+import {
   itWalletFederationEntityIdentifier,
   itWalletFederationEntityMetadata,
 } from "./entity/itWalletFederationEntity";
@@ -79,8 +87,13 @@ export const itWalletMetadataV1_4 = itWalletMetadataV1_3.extend({
     itWalletSolutionEntityMetadataV1_4.optional(),
 });
 
-// APTITUDE combined metadata (same as v1.4)
-export const itWalletMetadataAPTITUDE = itWalletMetadataV1_4;
+// APTITUDE combined metadata (v1.4 with the RFC001 authorization server and credential issuer metadata)
+export const itWalletMetadataAPTITUDE = itWalletMetadataV1_4.extend({
+  [aptitudeAuthorizationServerIdentifier]:
+    aptitudeAuthorizationServerMetadata.optional(),
+  [aptitudeCredentialIssuerIdentifier]:
+    aptitudeCredentialIssuerMetadata.optional(),
+});
 
 // Union — used by entity statement / entity configuration claims.
 // Order matters: v1.4 only relaxes v1.3 wallet_solution constraints, so every v1.3
