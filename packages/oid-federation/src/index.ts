@@ -7,6 +7,16 @@ export * from "./entityStatement/z-trustmark";
 export * from "./errors";
 export * from "./jwk/z-federation-jwk";
 export * from "./metadata/common";
+export {
+  aptitudeAuthorizationServerIdentifier,
+  aptitudeAuthorizationServerMetadata,
+} from "./metadata/entity/APTITUDE/aptitudeAuthorizationServer";
+export type { AptitudeAuthorizationServerMetadata } from "./metadata/entity/APTITUDE/aptitudeAuthorizationServer";
+export {
+  aptitudeCredentialIssuerIdentifier,
+  aptitudeCredentialIssuerMetadata,
+} from "./metadata/entity/APTITUDE/aptitudeCredentialIssuer";
+export type { AptitudeCredentialIssuerMetadata } from "./metadata/entity/APTITUDE/aptitudeCredentialIssuer";
 export * from "./metadata/entity/itWalletFederationEntity";
 export {
   itWalletProviderEntityIdentifier,
