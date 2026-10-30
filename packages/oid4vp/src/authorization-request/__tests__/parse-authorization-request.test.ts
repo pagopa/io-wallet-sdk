@@ -134,8 +134,8 @@ const nonConformingRequestObject = {
 
 const x509RequestObject: Openid4vpAuthorizationRequestPayload = {
   ...correctRequestObject,
-  client_id: "x509_hash:test-client-id",
-  iss: "x509_hash:test-client-id",
+  client_id: "x509_hash:AQID",
+  iss: "x509_hash:AQID",
 };
 
 const x509RequestObjectWithMatchingHash: Openid4vpAuthorizationRequestPayload =
@@ -498,7 +498,7 @@ describe("parseAuthorizationRequest tests", () => {
 
   it("should parse and verify the request object with x509_hash client_id correctly", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
-      callbacks,
+      callbacks: hashCallbacks,
       config: configV1_3,
       requestObjectJwt: x509RequestObjectJwt,
     });
@@ -508,7 +508,7 @@ describe("parseAuthorizationRequest tests", () => {
 
   it("should parse and verify an x509_hash request object with no kid in header", async () => {
     const actualRequestObject = await parseAuthorizeRequest({
-      callbacks,
+      callbacks: hashCallbacks,
       config: configV1_3,
       requestObjectJwt: x509RequestObjectNoKidJwt,
     });
@@ -675,14 +675,14 @@ describe("parseAuthorizeRequest - optional verification", () => {
     expect(result.header.trust_chain).toBeDefined();
   });
 
-  it("should parse x509_hash request without verification when callbacks is not provided", async () => {
-    const result = await parseAuthorizeRequest({
-      config: configV1_3,
-      requestObjectJwt: x509RequestObjectJwt,
-    });
-
-    expect(result.payload).toEqual(x509RequestObject);
-    expect(result.header.x5c).toBeDefined();
+  it("should reject x509_hash when the hash callback is not provided", async () => {
+    await expect(
+      parseAuthorizeRequest({
+        callbacks,
+        config: configV1_3,
+        requestObjectJwt: x509RequestObjectJwt,
+      }),
+    ).rejects.toThrow("hash callback is required for x509_hash client_id");
   });
 
   it("should reject x509_hash without x5c even when verification is disabled", async () => {
