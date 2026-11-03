@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { zFederationJwkSet } from "../../../jwk/z-federation-jwk";
+
 /**
  *
  * {@link https://aptitude-consortium.github.io/aptitude-eudi-wallet-specs/latest/RFCs/RFC001/#89-metadata-endpoints}
@@ -16,6 +18,10 @@ export const aptitudeAuthorizationServerMetadata = z.looseObject({
   client_attestation_signing_alg_values_supported: z.array(z.string()).min(1),
   dpop_signing_alg_values_supported: z.array(z.string()).min(1),
   issuer: z.url(),
+  // TODO [WLS-185] : This option has been added only for temporary compatibility with ITW
+  // When the APTITUDE trust model will be effectively implemented and signing keys will
+  // be retrieved and verified via the LoTE + x5c mechanism this can be removed
+  jwks: zFederationJwkSet.optional(),
   pushed_authorization_request_endpoint: z.url(),
   token_endpoint: z.url(),
   token_endpoint_auth_methods_supported: z
