@@ -38,6 +38,19 @@ const withConfiguration = (configuration: unknown) => ({
   credential_configurations_supported: { cred: configuration },
 });
 
+const validJwk = {
+  crv: "P-256",
+  kid: "signing-key-1",
+  kty: "EC",
+  x: "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU",
+  y: "x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0",
+};
+
+const validJwks = { keys: [validJwk] };
+
+const omit = (object: Record<string, unknown>, field: string) =>
+  Object.fromEntries(Object.entries(object).filter(([key]) => key !== field));
+
 describe("aptitudeCredentialIssuerMetadata", () => {
   it("should expose the openid_credential_issuer identifier", () => {
     expect(aptitudeCredentialIssuerIdentifier).toBe("openid_credential_issuer");
@@ -138,6 +151,82 @@ describe("aptitudeCredentialIssuerMetadata", () => {
       aptitudeCredentialIssuerMetadata.safeParse(
         withConfiguration({ format: "jwt_vc_json" }),
       ).success,
+    ).toBe(false);
+  });
+});
+
+describe("aptitudeCredentialIssuerMetadata jwks", () => {
+  it("should accept metadata without jwks", () => {
+    const result = aptitudeCredentialIssuerMetadata.parse(validMetadata);
+
+    expect(result.jwks).toBeUndefined();
+  });
+
+  it("should accept and preserve a valid jwks", () => {
+    const result = aptitudeCredentialIssuerMetadata.parse({
+      ...validMetadata,
+      jwks: validJwks,
+    });
+
+    expect(result.jwks).toEqual(validJwks);
+  });
+
+  it("should accept an empty key set", () => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse({
+        ...validMetadata,
+        jwks: { keys: [] },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("should reject a jwks whose keys lack kid", () => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse({
+        ...validMetadata,
+        jwks: { keys: [omit(validJwk, "kid")] },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should reject a jwks whose keys lack kty", () => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse({
+        ...validMetadata,
+        jwks: { keys: [omit(validJwk, "kty")] },
+      }).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    ["a jwks without keys", {}],
+    ["a jwks with non-array keys", { keys: validJwk }],
+    ["a jwks given as a URL", "https://example.com/jwks"],
+  ])("should reject %s", (_label, jwks) => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse({
+        ...validMetadata,
+        jwks,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should validate jwks through itWalletMetadataAPTITUDE", () => {
+    expect(
+      itWalletMetadataAPTITUDE.safeParse({
+        [aptitudeCredentialIssuerIdentifier]: {
+          ...validMetadata,
+          jwks: validJwks,
+        },
+      }).success,
+    ).toBe(true);
+    expect(
+      itWalletMetadataAPTITUDE.safeParse({
+        [aptitudeCredentialIssuerIdentifier]: {
+          ...validMetadata,
+          jwks: { keys: [{ kty: "EC" }] },
+        },
+      }).success,
     ).toBe(false);
   });
 });
