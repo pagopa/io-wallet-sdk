@@ -119,7 +119,8 @@ export const aptitudeCredentialIssuerMetadata = z.looseObject({
       }),
     )
     .optional(),
-  issuer_info: z.array(zIssuerInfo).min(1),
+  // TODO [WLS-188] : This field should become mandatory when the various WRP will consistently use Register Metadata and WRPRC.
+  issuer_info: z.array(zIssuerInfo).min(1).optional(),
   // TODO [WLS-185] : This option has been added only for temporary compatibility with ITW
   // When the APTITUDE trust model will be effectively implemented and signing keys will
   // be retrieved and verified via the LoTE + x5c mechanism this can be removed

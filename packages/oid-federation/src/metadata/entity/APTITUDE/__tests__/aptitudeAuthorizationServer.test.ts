@@ -84,6 +84,92 @@ describe("aptitudeAuthorizationServerMetadata", () => {
   });
 });
 
+const preAuthorizedCodeGrant =
+  "urn:ietf:params:oauth:grant-type:pre-authorized_code";
+
+const authorizationCodeFlowEndpoints = [
+  "authorization_endpoint",
+  "pushed_authorization_request_endpoint",
+];
+
+describe("aptitudeAuthorizationServerMetadata authorization code flow endpoints", () => {
+  it.each(authorizationCodeFlowEndpoints)(
+    "should require %s when grant_types_supported includes authorization_code",
+    (field) => {
+      const result = aptitudeAuthorizationServerMetadata.safeParse({
+        ...omit(validMetadata, field),
+        grant_types_supported: ["authorization_code", preAuthorizedCodeGrant],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.path).toEqual([field]);
+    },
+  );
+
+  it.each(authorizationCodeFlowEndpoints)(
+    "should require %s when grant_types_supported is omitted (RFC 8414 default)",
+    (field) => {
+      const result = aptitudeAuthorizationServerMetadata.safeParse(
+        omit(validMetadata, field),
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.path).toEqual([field]);
+    },
+  );
+
+  it("should not require the endpoints when only the pre-authorized code grant is supported", () => {
+    const metadata = authorizationCodeFlowEndpoints.reduce(omit, {
+      ...validMetadata,
+      grant_types_supported: [preAuthorizedCodeGrant],
+    });
+
+    expect(
+      aptitudeAuthorizationServerMetadata.safeParse(metadata).success,
+    ).toBe(true);
+  });
+
+  it("should accept the endpoints when only the pre-authorized code grant is supported", () => {
+    expect(
+      aptitudeAuthorizationServerMetadata.safeParse({
+        ...validMetadata,
+        grant_types_supported: [preAuthorizedCodeGrant],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("should still validate the endpoints as URLs when present", () => {
+    expect(
+      aptitudeAuthorizationServerMetadata.safeParse({
+        ...validMetadata,
+        grant_types_supported: [preAuthorizedCodeGrant],
+        pushed_authorization_request_endpoint: "not-a-url",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should validate the conditional endpoints through itWalletMetadataAPTITUDE", () => {
+    const preAuthorizedOnly = authorizationCodeFlowEndpoints.reduce(omit, {
+      ...validMetadata,
+      grant_types_supported: [preAuthorizedCodeGrant],
+    });
+
+    expect(
+      itWalletMetadataAPTITUDE.safeParse({
+        [aptitudeAuthorizationServerIdentifier]: preAuthorizedOnly,
+      }).success,
+    ).toBe(true);
+    expect(
+      itWalletMetadataAPTITUDE.safeParse({
+        [aptitudeAuthorizationServerIdentifier]: {
+          ...preAuthorizedOnly,
+          grant_types_supported: ["authorization_code"],
+        },
+      }).success,
+    ).toBe(false);
+  });
+});
+
 describe("aptitudeAuthorizationServerMetadata jwks", () => {
   it("should accept metadata without jwks", () => {
     const result = aptitudeAuthorizationServerMetadata.parse(validMetadata);

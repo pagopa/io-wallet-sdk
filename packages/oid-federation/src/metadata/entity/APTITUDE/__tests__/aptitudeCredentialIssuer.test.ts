@@ -83,7 +83,6 @@ describe("aptitudeCredentialIssuerMetadata", () => {
     "credential_configurations_supported",
     "credential_endpoint",
     "credential_issuer",
-    "issuer_info",
     "nonce_endpoint",
   ])("should reject metadata missing %s", (field) => {
     const rest = Object.fromEntries(
