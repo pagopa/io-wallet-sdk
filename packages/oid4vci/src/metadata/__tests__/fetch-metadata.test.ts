@@ -172,6 +172,7 @@ const baseOptionsV1_0: FetchMetadataOptions = {
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  vi.clearAllMocks();
 });
 
 describe("fetchMetadata", () => {

@@ -112,6 +112,7 @@ function createKeyAttestationJwt(): string {
 describe("verifyCredentialRequestJwtProof", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
     mockVerifyJwt.mockResolvedValue({
       signer: mockSigner,
       verified: true,
