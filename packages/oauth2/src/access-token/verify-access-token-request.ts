@@ -71,7 +71,8 @@ export interface VerifyAccessTokenRequestOptions {
    */
   clientAttestation: ClientAttestationOptions;
   /**
-   * The expiration date of the authorization code
+   * The expiration date of the authorization code.
+   * The code is invalid at or after this instant.
    */
   codeExpiresAt?: Date;
 
@@ -204,7 +205,7 @@ export async function verifyAccessTokenRequest(
   if (options.codeExpiresAt) {
     const now = options.now ?? new Date();
 
-    if (now.getTime() > options.codeExpiresAt.getTime()) {
+    if (now.getTime() >= options.codeExpiresAt.getTime()) {
       throw new Oauth2Error(`Expired 'code' provided`);
     }
   }

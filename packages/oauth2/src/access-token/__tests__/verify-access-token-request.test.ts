@@ -262,7 +262,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
       expect(result).toBeDefined();
     });
 
-    it("should pass when code expires exactly at now", async () => {
+    it("should pass one millisecond before code expiration", async () => {
       const now = new Date();
       const codeExpiresAt = new Date(now.getTime() + 1); // 1ms after now
 
@@ -578,7 +578,7 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
   });
 
   describe("Edge cases", () => {
-    it("should handle exact expiration boundary", async () => {
+    it("should reject code at the exact expiration boundary", async () => {
       const now = new Date("2024-06-01T12:00:00.000Z");
       const codeExpiresAt = new Date("2024-06-01T12:00:00.000Z"); // Same time
 
@@ -597,10 +597,9 @@ describe("verifyAuthorizationCodeTokenRequest", () => {
         now,
       });
 
-      // When now.getTime() equals codeExpiresAt.getTime(), it should NOT be expired
-      // (now > codeExpiresAt is false when equal)
-      const result = await verifyAccessTokenRequest(options);
-      expect(result).toBeDefined();
+      await expect(verifyAccessTokenRequest(options)).rejects.toThrow(
+        new Oauth2Error("Expired 'code' provided"),
+      );
     });
 
     it("should handle millisecond precision in expiration check", async () => {
