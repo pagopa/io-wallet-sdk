@@ -1,5 +1,18 @@
 # @pagopa/io-wallet-oauth2
 
+## 2.0.0
+
+### Major Changes
+
+- 0653d64: Removal of the oid4vc-ts external dependency from the monorepo, replacing it with internal implementations across all packages.
+
+### Patch Changes
+
+- c34caf7: fix: Enforce HTTPS response URIs and fix dependency vulnerabilities
+- 2b94338: fix(oauth2): reject authorization codes at expiration
+- Updated dependencies [0653d64]
+  - @pagopa/io-wallet-utils@2.0.0
+
 ## 1.5.8
 
 ### Patch Changes
