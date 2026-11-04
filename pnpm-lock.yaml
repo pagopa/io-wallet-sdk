@@ -15,9 +15,6 @@ catalogs:
     js-base64:
       specifier: ^3.7.8
       version: 3.7.8
-    zod:
-      specifier: ^4.3.6
-      version: 4.3.6
 
 importers:
 
@@ -64,7 +61,7 @@ importers:
         version: 3.7.8
       zod:
         specifier: 'catalog:'
-        version: 4.3.6
+        version: 4.6.6
 
   packages/oid-federation:
     dependencies:
@@ -76,7 +73,7 @@ importers:
         version: 6.0.3
       zod:
         specifier: 'catalog:'
-        version: 4.3.6
+        version: 4.6.6
     devDependencies:
       js-base64:
         specifier: 'catalog:'
@@ -98,7 +95,7 @@ importers:
         version: link:../utils
       zod:
         specifier: 'catalog:'
-        version: 4.3.6
+        version: 4.6.6
     devDependencies:
       js-base64:
         specifier: 'catalog:'
@@ -117,7 +114,7 @@ importers:
         version: link:../utils
       zod:
         specifier: 'catalog:'
-        version: 4.3.6
+        version: 4.6.6
     devDependencies:
       jose:
         specifier: 'catalog:'
@@ -130,7 +127,7 @@ importers:
     dependencies:
       zod:
         specifier: 'catalog:'
-        version: 4.3.6
+        version: 4.6.6
 
 packages:
 
@@ -1111,6 +1108,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -1896,8 +1894,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod@4.3.6:
-    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
@@ -3605,4 +3603,4 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod@4.3.6: {}
+  zod@4.6.6: {}
