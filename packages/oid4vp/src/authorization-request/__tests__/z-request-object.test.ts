@@ -25,6 +25,15 @@ describe("zOpenid4vpAuthorizationRequestPayload", () => {
     expect(result.success).toBe(true);
   });
 
+  it("should reject an HTTP response_uri", () => {
+    const result = zOpenid4vpAuthorizationRequestPayload.safeParse({
+      ...basePayload,
+      response_uri: "http://verifier.example.com/response",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("should fail when iss is not a string", () => {
     const result = zOpenid4vpAuthorizationRequestPayload.safeParse({
       ...basePayload,

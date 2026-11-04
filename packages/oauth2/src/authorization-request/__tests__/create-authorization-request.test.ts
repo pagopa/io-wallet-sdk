@@ -72,6 +72,7 @@ const baseOptions: CreatePushedAuthorizationRequestOptions = {
 
 const setupMocks = () => {
   vi.restoreAllMocks();
+  vi.clearAllMocks();
   mockCallbacks.generateRandom.mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
   mockCallbacks.signJwt.mockResolvedValue({ jwt: "test-jwt-token" });
   mockCreatePkce.mockResolvedValue({
