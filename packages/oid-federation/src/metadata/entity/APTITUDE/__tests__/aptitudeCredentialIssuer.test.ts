@@ -155,6 +155,107 @@ describe("aptitudeCredentialIssuerMetadata", () => {
   });
 });
 
+describe("aptitudeCredentialIssuerMetadata OpenID4VCI constraints", () => {
+  it.each([1, 0, -1, 2.5])("should reject a batch_size of %s", (batchSize) => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse({
+        ...validMetadata,
+        batch_credential_issuance: { batch_size: batchSize },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should accept a batch_size of 2", () => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse({
+        ...validMetadata,
+        batch_credential_issuance: { batch_size: 2 },
+      }).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    [
+      "SD-JWT VC credential_signing_alg_values_supported",
+      {
+        credential_signing_alg_values_supported: [],
+        format: "dc+sd-jwt",
+        vct: "urn:eudi:pid:1",
+      },
+    ],
+    [
+      "mdoc credential_signing_alg_values_supported",
+      {
+        credential_signing_alg_values_supported: [],
+        doctype: "org.iso.18013.5.1.mDL",
+        format: "mso_mdoc",
+      },
+    ],
+    [
+      "cryptographic_binding_methods_supported",
+      {
+        cryptographic_binding_methods_supported: [],
+        format: "dc+sd-jwt",
+        vct: "urn:eudi:pid:1",
+      },
+    ],
+    [
+      "key_storage",
+      {
+        format: "dc+sd-jwt",
+        proof_types_supported: {
+          jwt: {
+            key_attestations_required: { key_storage: [] },
+            proof_signing_alg_values_supported: ["ES256"],
+          },
+        },
+        vct: "urn:eudi:pid:1",
+      },
+    ],
+    [
+      "user_authentication",
+      {
+        format: "dc+sd-jwt",
+        proof_types_supported: {
+          jwt: {
+            key_attestations_required: { user_authentication: [] },
+            proof_signing_alg_values_supported: ["ES256"],
+          },
+        },
+        vct: "urn:eudi:pid:1",
+      },
+    ],
+  ])("should reject an empty %s", (_label, configuration) => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse(
+        withConfiguration(configuration),
+      ).success,
+    ).toBe(false);
+  });
+
+  it("should accept non-empty optional arrays in a credential configuration", () => {
+    expect(
+      aptitudeCredentialIssuerMetadata.safeParse(
+        withConfiguration({
+          credential_signing_alg_values_supported: ["ES256"],
+          cryptographic_binding_methods_supported: ["jwk"],
+          format: "dc+sd-jwt",
+          proof_types_supported: {
+            jwt: {
+              key_attestations_required: {
+                key_storage: ["iso_18045_high"],
+                user_authentication: ["iso_18045_high"],
+              },
+              proof_signing_alg_values_supported: ["ES256"],
+            },
+          },
+          vct: "urn:eudi:pid:1",
+        }),
+      ).success,
+    ).toBe(true);
+  });
+});
+
 describe("aptitudeCredentialIssuerMetadata jwks", () => {
   it("should accept metadata without jwks", () => {
     const result = aptitudeCredentialIssuerMetadata.parse(validMetadata);

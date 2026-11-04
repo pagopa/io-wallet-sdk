@@ -36,8 +36,8 @@ const zCredentialMetadata = z.looseObject({
 });
 
 const zKeyAttestationsRequired = z.looseObject({
-  key_storage: z.array(z.string()).optional(),
-  user_authentication: z.array(z.string()).optional(),
+  key_storage: z.array(z.string()).min(1).optional(),
+  user_authentication: z.array(z.string()).min(1).optional(),
 });
 
 const zProofType = z.looseObject({
@@ -57,19 +57,28 @@ const zProofTypesSupported = z
 
 const zCredentialConfigurationBase = z.looseObject({
   credential_metadata: zCredentialMetadata.optional(),
-  cryptographic_binding_methods_supported: z.array(z.string()).optional(),
+  cryptographic_binding_methods_supported: z
+    .array(z.string())
+    .min(1)
+    .optional(),
   proof_types_supported: zProofTypesSupported.optional(),
   scope: z.string().optional(),
 });
 
 const zSdJwtVcCredentialConfiguration = zCredentialConfigurationBase.extend({
-  credential_signing_alg_values_supported: z.array(z.string()).optional(),
+  credential_signing_alg_values_supported: z
+    .array(z.string())
+    .min(1)
+    .optional(),
   format: z.literal("dc+sd-jwt"),
   vct: z.string(),
 });
 
 const zMdocCredentialConfiguration = zCredentialConfigurationBase.extend({
-  credential_signing_alg_values_supported: z.array(z.number().int()).optional(),
+  credential_signing_alg_values_supported: z
+    .array(z.number().int())
+    .min(1)
+    .optional(),
   doctype: z.string(),
   format: z.literal("mso_mdoc"),
 });
@@ -92,7 +101,7 @@ const zIssuerInfo = z.looseObject({
 export const aptitudeCredentialIssuerMetadata = z.looseObject({
   authorization_servers: z.tuple([z.url()], z.url()).optional(),
   batch_credential_issuance: z
-    .looseObject({ batch_size: z.number().int().positive() })
+    .looseObject({ batch_size: z.number().int().min(2) })
     .optional(),
   credential_configurations_supported: z.record(
     z.string(),

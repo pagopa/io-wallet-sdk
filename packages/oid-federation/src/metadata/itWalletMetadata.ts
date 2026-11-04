@@ -99,9 +99,12 @@ export const itWalletMetadataAPTITUDE = itWalletMetadataV1_4.extend({
 // Order matters: v1.4 only relaxes v1.3 wallet_solution constraints, so every v1.3
 // document also satisfies v1.4. The narrower schema must stay first, otherwise v1.3
 // documents would match the v1.4 branch. New versions go after the ones they relax.
+// APTITUDE replaces (rather than relaxes) the authorization server and credential
+// issuer schemas, so it goes last to keep IT-Wallet documents on their own branches.
 export const itWalletMetadataSchema = itWalletMetadataV1_3
   .or(itWalletMetadataV1_4)
-  .or(itWalletMetadataV1_0);
+  .or(itWalletMetadataV1_0)
+  .or(itWalletMetadataAPTITUDE);
 
 // Type-level registry of version -> schema. The generic constraint acts as a
 // `satisfies` for types: omitting a version is a compile error here, and every
