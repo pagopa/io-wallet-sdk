@@ -57,6 +57,7 @@ interface BaseCreateAuthorizationRequestOptions<
 
   /**
    * Required callbacks used to create a signed/encrypted Request Object.
+   * A hash callback is also required when the client_id uses the x509_hash prefix.
    */
   callbacks: Partial<Pick<CallbackContext, "encryptJwe">> &
     Partial<Pick<CallbackContext, "hash">> &
@@ -216,7 +217,7 @@ async function createAuthorizationRequestWithHeader<TJar extends JarOptions>(
     authorizationRequestPayload,
   );
 
-  validateAuthorizationRequestClientBinding({
+  await validateAuthorizationRequestClientBinding({
     hash: options.callbacks.hash,
     header: authorizationRequestHeader,
     payload: authorizationRequestPayload,

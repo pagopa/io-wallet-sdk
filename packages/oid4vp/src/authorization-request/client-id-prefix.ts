@@ -88,7 +88,9 @@ export async function validateAuthorizationRequestClientBinding(options: {
   }
 
   if (!options.hash) {
-    return clientIdParts;
+    throw new ParseAuthorizeRequestError(
+      "hash callback is required for x509_hash client_id",
+    );
   }
 
   const expectedCertificateHash = await calculateX509CertificateHash({
