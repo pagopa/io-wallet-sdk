@@ -64,6 +64,7 @@ function findSignJwtCallByTyp(typ: string): SignJwtCallArgs {
 
 function setupMockCallbacks(): void {
   vi.restoreAllMocks();
+  vi.clearAllMocks();
   mockCallbacks.generateRandom.mockImplementation(async (byteLength: number) =>
     byteLength === 16 ? RT_JTI_BYTES : new Uint8Array([1, 2, 3, 4]),
   );
