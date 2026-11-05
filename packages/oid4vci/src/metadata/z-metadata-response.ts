@@ -1,5 +1,6 @@
 import {
   itWalletEntityStatementClaimsSchema,
+  itWalletMetadataAPTITUDE,
   itWalletMetadataV1_0,
   itWalletMetadataV1_3,
   itWalletMetadataV1_4,
@@ -29,16 +30,25 @@ export const zMetadataResponseV1_4 = zMetadataResponseV1_3.extend({
   metadata: itWalletMetadataV1_4,
 });
 
+export const zMetadataResponseAPTITUDE = zMetadataResponseV1_3.extend({
+  metadata: itWalletMetadataAPTITUDE,
+});
+
 export const zMetadataResponse = z.union([
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
   zMetadataResponseV1_4,
+  zMetadataResponseAPTITUDE,
 ]);
 
 export type MetadataResponseV1_0 = z.infer<typeof zMetadataResponseV1_0>;
 export type MetadataResponseV1_3 = z.infer<typeof zMetadataResponseV1_3>;
 export type MetadataResponseV1_4 = z.infer<typeof zMetadataResponseV1_4>;
+export type MetadataResponseAPTITUDE = z.infer<
+  typeof zMetadataResponseAPTITUDE
+>;
 export type MetadataResponse =
+  | MetadataResponseAPTITUDE
   | MetadataResponseV1_0
   | MetadataResponseV1_3
   | MetadataResponseV1_4;

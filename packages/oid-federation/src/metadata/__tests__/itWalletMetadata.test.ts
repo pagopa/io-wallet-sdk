@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   isItWalletMetadataVersion,
+  itWalletMetadataSchema,
   parseItWalletMetadataForVersion,
 } from "../itWalletMetadata";
 
@@ -48,6 +49,56 @@ const validV1_4Metadata = {
     },
   },
 };
+
+const validAptitudeMetadata = {
+  oauth_authorization_server: {
+    authorization_endpoint: "https://as.example.com/authorize",
+    client_attestation_pop_methods_supported: ["dpop_combined"],
+    client_attestation_signing_alg_values_supported: ["ES256"],
+    dpop_signing_alg_values_supported: ["ES256"],
+    issuer: "https://as.example.com",
+    pushed_authorization_request_endpoint: "https://as.example.com/par",
+    token_endpoint: "https://as.example.com/token",
+    token_endpoint_auth_methods_supported: ["attest_jwt_client_auth_dpop"],
+  },
+  openid_credential_issuer: {
+    authorization_servers: ["https://as.example.com"],
+    credential_configurations_supported: {
+      "eu.europa.ec.eudi.pid.1": {
+        format: "dc+sd-jwt",
+        vct: "urn:eudi:pid:1",
+      },
+    },
+    credential_endpoint: "https://issuer.example.com/credential",
+    credential_issuer: "https://issuer.example.com",
+    issuer_info: [
+      { data: "eyJhbGciOiJFUzI1NiJ9.e30.c2ln", format: "registration_cert" },
+    ],
+    nonce_endpoint: "https://issuer.example.com/nonce",
+  },
+};
+
+describe("itWalletMetadataSchema", () => {
+  it.each([
+    ["v1.0", validV1_0Metadata],
+    ["v1.3", validV1_3Metadata],
+    ["v1.4", validV1_4Metadata],
+  ])("should accept valid %s metadata", (_label, metadata) => {
+    expect(itWalletMetadataSchema.safeParse(metadata).success).toBe(true);
+  });
+
+  it("should accept valid APTITUDE metadata", () => {
+    expect(
+      isItWalletMetadataVersion(
+        validAptitudeMetadata,
+        ItWalletSpecsVersion.V1_4,
+      ),
+    ).toBe(false);
+    expect(
+      itWalletMetadataSchema.safeParse(validAptitudeMetadata).success,
+    ).toBe(true);
+  });
+});
 
 describe("isItWalletMetadataVersion", () => {
   it("should identify valid v1.0 metadata", () => {

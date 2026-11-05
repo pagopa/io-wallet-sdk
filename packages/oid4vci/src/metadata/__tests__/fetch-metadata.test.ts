@@ -112,6 +112,37 @@ const authorizationServerMetadataV1_3 = {
 // Keep backward-compatible alias for existing tests
 const authorizationServerMetadata = authorizationServerMetadataV1_3;
 
+const authorizationServerMetadataAptitude = {
+  authorization_endpoint: "https://auth.example.it/authorize",
+  client_attestation_pop_methods_supported: ["dpop_combined"],
+  client_attestation_signing_alg_values_supported: ["ES256"],
+  dpop_signing_alg_values_supported: ["ES256"],
+  issuer: "https://auth.example.it",
+  pushed_authorization_request_endpoint: "https://auth.example.it/par",
+  token_endpoint: "https://auth.example.it/token",
+  token_endpoint_auth_methods_supported: ["attest_jwt_client_auth_dpop"],
+};
+
+const credentialIssuerMetadataAptitude = {
+  credential_configurations_supported: {
+    "eu.europa.ec.eudi.pid.1": {
+      credential_signing_alg_values_supported: ["ES256"],
+      format: "dc+sd-jwt",
+      proof_types_supported: {
+        attestation: { proof_signing_alg_values_supported: ["ES256"] },
+        jwt: { proof_signing_alg_values_supported: ["ES256"] },
+      },
+      vct: "urn:eudi:pid:1",
+    },
+  },
+  credential_endpoint: "https://issuer.example.it/credential",
+  credential_issuer: "https://issuer.example.it",
+  issuer_info: [
+    { data: "eyJhbGciOiJFUzI1NiJ9.e30.c2ln", format: "registration_cert" },
+  ],
+  nonce_endpoint: "https://issuer.example.it/nonce",
+};
+
 // v1.0 authorization server metadata (trust-registry.eid-wallet URLs, no dpop)
 const authorizationServerMetadataV1_0 = {
   acr_values_supported: [
@@ -161,6 +192,14 @@ const configV1_0 = new IoWalletSdkConfig({
 const baseOptions: FetchMetadataOptions = {
   callbacks: { fetch: mockFetch },
   config: configV1_3,
+  credentialIssuerUrl: "https://issuer.example.it",
+};
+
+const baseOptionsAptitude: FetchMetadataOptions = {
+  callbacks: { fetch: mockFetch },
+  config: new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.APTITUDE,
+  }),
   credentialIssuerUrl: "https://issuer.example.it",
 };
 
@@ -275,6 +314,125 @@ describe("fetchMetadata", () => {
     );
     // Only federation + credential-issuer calls (no separate auth server fetch)
     expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  describe("APTITUDE when authorization_servers is absent", () => {
+    const issuerAsAuthServer = {
+      ...credentialIssuerMetadataAptitude,
+      ...authorizationServerMetadataAptitude,
+    };
+
+    it("should reject credential issuer metadata that does not follow the APTITUDE profile", async () => {
+      const withoutNonceEndpoint = Object.fromEntries(
+        Object.entries(credentialIssuerMetadataAptitude).filter(
+          ([key]) => key !== "nonce_endpoint",
+        ),
+      );
+      mockFetch.mockResolvedValueOnce({ status: 404 });
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(withoutNonceEndpoint),
+        status: 200,
+      });
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(authorizationServerMetadataAptitude),
+        status: 200,
+      });
+
+      await expect(fetchMetadata(baseOptionsAptitude)).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it("should reject auth server metadata that does not follow the APTITUDE profile", async () => {
+      mockFetch.mockResolvedValueOnce({ status: 404 });
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(credentialIssuerMetadataAptitude),
+        status: 200,
+      });
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue({
+          ...authorizationServerMetadataAptitude,
+          token_endpoint_auth_methods_supported: ["attest_jwt_client_auth"],
+        }),
+        status: 200,
+      });
+
+      await expect(fetchMetadata(baseOptionsAptitude)).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it("should fetch the auth server metadata from the credential issuer", async () => {
+      // Federation fails
+      mockFetch.mockResolvedValueOnce({ status: 404 });
+      // Credential issuer succeeds (no authorization_servers)
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(credentialIssuerMetadataAptitude),
+        status: 200,
+      });
+      // Auth server metadata served by the credential issuer
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(authorizationServerMetadataAptitude),
+        status: 200,
+      });
+
+      const result = await fetchMetadata(baseOptionsAptitude);
+
+      expect(result.discoveredVia).toBe("oid4vci");
+      expect(result.openid_federation_claims).toBeUndefined();
+      expect(result.metadata.openid_credential_issuer?.credential_issuer).toBe(
+        "https://issuer.example.it",
+      );
+      expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+        "https://auth.example.it",
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        3,
+        "https://issuer.example.it/.well-known/oauth-authorization-server",
+      );
+    });
+
+    it("should use the credential issuer metadata when the auth server request returns a non-200 status", async () => {
+      mockFetch.mockResolvedValueOnce({ status: 404 });
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(issuerAsAuthServer),
+        status: 200,
+      });
+      mockFetch.mockResolvedValueOnce({ status: 404 });
+
+      const result = await fetchMetadata(baseOptionsAptitude);
+
+      expect(result.discoveredVia).toBe("oid4vci");
+      expect(result.metadata.openid_credential_issuer?.credential_issuer).toBe(
+        "https://issuer.example.it",
+      );
+      expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+        "https://auth.example.it",
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        3,
+        "https://issuer.example.it/.well-known/oauth-authorization-server",
+      );
+    });
+
+    it("should use the credential issuer metadata when the auth server request throws a network error", async () => {
+      mockFetch.mockResolvedValueOnce({ status: 404 });
+      mockFetch.mockResolvedValueOnce({
+        json: vi.fn().mockResolvedValue(issuerAsAuthServer),
+        status: 200,
+      });
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
+
+      const result = await fetchMetadata(baseOptionsAptitude);
+
+      expect(result.discoveredVia).toBe("oid4vci");
+      expect(result.metadata.oauth_authorization_server?.issuer).toBe(
+        "https://auth.example.it",
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
   });
 
   it("should fall back to credential-issuer when federation endpoint throws a network error", async () => {
