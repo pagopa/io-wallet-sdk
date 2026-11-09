@@ -1,0 +1,272 @@
+{
+  "name": "NiScy PID Issuer",
+  "purpose": [
+    {
+      "lang": "en",
+      "value": "Issuer Authentication"
+    }
+  ],
+  "country": "EU",
+  "sub": "NTREU-123456789",
+  "registry_uri": "https://itb.registry.serviceproviders.eudiw.dev",
+  "privacy_policy": "https://issuer.eudiw.dev/privacy-statement",
+  "policy_id": ["0.4.0.19475.3.1"],
+  "iat": 1790947382,
+  "credentials": [
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eudi:pid:1"]
+      },
+      "claim": [
+        {
+          "path": ["family_name"]
+        },
+        {
+          "path": ["given_name"]
+        },
+        {
+          "path": ["birthdate"]
+        },
+        {
+          "path": ["place_of_birth", "country"]
+        },
+        {
+          "path": ["place_of_birth", "region"]
+        },
+        {
+          "path": ["place_of_birth", "locality"]
+        },
+        {
+          "path": ["nationalities"]
+        },
+        {
+          "path": ["date_of_expiry"]
+        },
+        {
+          "path": ["issuing_authority"]
+        },
+        {
+          "path": ["issuing_country"]
+        }
+      ]
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.pid.1"
+      },
+      "claim": [
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "family_name"]
+        },
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "given_name"]
+        },
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "birth_date"]
+        },
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "birth_place"]
+        },
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "nationality"]
+        },
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "expiry_date"]
+        },
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "issuing_authority"]
+        },
+        {
+          "path": ["eu.europa.ec.eudi.pid.1", "issuing_country"]
+        }
+      ]
+    }
+  ],
+  "entitlements": [
+    "https://uri.etsi.org/19475/Entitlement/PID_Provider",
+    "https://uri.etsi.org/19475/Entitlement/QEAA_Provider",
+    "https://uri.etsi.org/19475/Entitlement/Non_Q_EAA_Provider",
+    "https://uri.etsi.org/19475/Entitlement/PUB_EAA_Provider",
+    "https://uri.etsi.org/19475/Entitlement/Service_Provider"
+  ],
+  "public_body": false,
+  "srv_description": [
+    {
+      "lang": "en",
+      "value": "PID Issuer"
+    }
+  ],
+  "support_uri": "https://issuer.eudiw.dev",
+  "status": {
+    "status_list": {
+      "idx": 7372,
+      "uri": "https://itb.revocation.dev.issuer.eudiw.dev/token_status_list/FC/wrprc/46a3aca2-2e3e-43b0-8f58-9ecf4928f043"
+    }
+  },
+  "info_uri": "https://issuer.eudiw.dev",
+  "provides_attestations": [
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eudi:pid:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.pid.1"
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "org.iso.18013.5.1.mDL"
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.cor.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:diploma:1:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.ehic.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eudi:ehic:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.employee.1"
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.hiid.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:hiid:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.iban.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:iban:1"]
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:learning:credential:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.loyalty.1"
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.msisdn.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:msisdn:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.pda1.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:pda1:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "org.iso.23220.2.photoid.1"
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.por.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:por:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.seafarer.1"
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "eu.europa.ec.eudi.tax.1"
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:tax:1"]
+      }
+    },
+    {
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:tax:1:1"]
+      }
+    },
+    {
+      "format": "mso_mdoc",
+      "meta": {
+        "doctype_value": "org.iso.18013.5.1.reservation"
+      }
+    }
+  ],
+  "supervisory_authority": {
+    "email": "geral@cnpd.pt"
+  },
+  "sub_ln": "NiScy PID Issuer",
+  "certificate_policy": "https://itb.registry.serviceproviders.eudiw.devcertificate_policy"
+}
