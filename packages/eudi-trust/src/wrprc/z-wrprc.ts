@@ -73,7 +73,7 @@ const zWRPRCPayloadClaims = z.looseObject({
   public_body: z.boolean().optional(),
   purpose: z.array(zMultiLangString).optional(),
   registry_uri: z.url(),
-  srv_description: z.array(zMultiLangString).optional(),
+  srv_description: z.array(z.array(zMultiLangString)).optional(),
   status: z.object({
     status_list: z.object({
       idx: z.number().int().nonnegative(),
