@@ -232,10 +232,21 @@ The same flow applies to a Wallet Instance Attestation (`LoTEProfile.EUWalletPro
 
 To split steps 2 and 3, retrieve the candidates with `getTrustAnchors` and pass them to `validateCertificateChain`.
 
+## JAdES
+
+LoTEs and WRPRCs are signed with a JAdES Baseline B signature (ETSI TS 119 182-1 v1.2.1, as required by ETSI TS 119 602 and TS 119 475). `verifyJAdESSignature` implements the profile these documents use:
+
+- compact serialization, attached base64url payload, signing certificate in `x5c`;
+- `alg` asymmetric, `iat` as the claimed signing time (not later than the validation time);
+- `x5t#o`, `x5t#S256` and the first `sigX5ts` entry, when present, must match the signing certificate;
+- every `crit` name must be present in the header, and only `iat`, `sigX5ts` and `x5t#o` are supported as critical.
+
+The following are rejected: `sigT` (deprecated by clause 5.2.1 in favour of `iat`), the SHA-1 `x5t` (clause 5.1.6), detached payloads (`sigD`) and unencoded payloads (`b64`). The signing certificate itself is validated separately (`validateCertificateChain`) at the validation time, not at `iat`.
+
 ## Errors
 
 - `LoTEError`: the LoTE is expired, not signed by an OJEU certificate, signed with a certificate not matching the scheme operator or not valid, or of an unexpected type.
-- `JAdESError`: the `x5t#o` header does not match the signer certificate, or the signature (LoTE, WRPRC) or its time-based claims are invalid.
+- `JAdESError`: a signing certificate reference (`x5t#o`, `x5t#S256`, `sigX5ts`) does not match the signer certificate, a critical header parameter is missing, `iat` is in the future, or the signature (LoTE, WRPRC) or its time-based claims are invalid.
 - `CertificateChainError`: no candidate Trust Anchor, or no Trust Anchor validating the chain.
 - `JwtVerificationError` (from `@pagopa/io-wallet-utils`): invalid signature, or expired JWS, when verifying with `verifyJwt`.
 - `AuthorizationError`: the WRPRC does not belong to the WRPAC subject (`BINDING_FAILED`), does not include the expected entitlements (`WRONG_ENTITLEMENT`) or does not register a provided attestation type (`ATTESTATION_TYPE_NOT_REGISTERED`).
@@ -247,4 +258,5 @@ To split steps 2 and 3, retrieve the candidates with `getTrustAnchors` and pass 
 - Revocation checking, unless performed by `verifyX509CertificateChain`.
 - Trusted Lists (QEAA, qualified status of PuB-EAA providers).
 - Historical keys (`ServiceHistory`).
+- JAdES JSON serializations, `etsiU` unsigned components and the B-T, B-LT and B-LTA levels.
 - mdoc (COSE `x5chain`) signatures.
