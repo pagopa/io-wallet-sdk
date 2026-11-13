@@ -1,5 +1,11 @@
 # @pagopa/io-wallet-utils
 
+## 2.1.1
+
+### Patch Changes
+
+- 033c485: Modified OID4VCI APTITUDE parsers to filter out credential configurations using legacy `vc+sd-jwt` identifiers instead of throwing an error
+
 ## 2.1.0
 
 ### Minor Changes
