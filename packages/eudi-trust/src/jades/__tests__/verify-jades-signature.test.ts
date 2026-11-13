@@ -60,6 +60,8 @@ describe("zJAdESHeader", () => {
     ["an empty x5c", { x5c: [] }],
     ["an empty crit", { crit: [] }],
     ["an unsupported critical parameter", { crit: ["foo"] }],
+    ["x5t#S256 as critical", { crit: ["x5t#S256"] }],
+    ["an unprocessed JAdES critical parameter", { crit: ["sigPl"] }],
   ])("rejects a header with %s", (_, claims) => {
     expect(zJAdESHeader.safeParse({ ...header, ...claims }).success).toBe(
       false,
@@ -116,5 +118,96 @@ describe("verifyJAdESSignature", () => {
       code: "JADES_SIGNATURE_VERIFICATION_FAILED",
       name: "JAdESError",
     });
+  });
+});
+
+describe("signing certificate references", () => {
+  const sha256 = { digAlg: HashAlgorithm.Sha256, digVal: digest };
+  const wrong = { digAlg: HashAlgorithm.Sha256, digVal: "AAAA" };
+
+  it("accepts a matching x5t#S256", async () => {
+    await expect(
+      verifyJAdESSignature(options({ "x5t#S256": digest })),
+    ).resolves.toBeUndefined();
+  });
+
+  it("rejects a mismatching x5t#S256", async () => {
+    const verifyOptions = options({ "x5t#S256": "AAAA" });
+    await expect(verifyJAdESSignature(verifyOptions)).rejects.toMatchObject({
+      code: "JADES_X5T_S256_MISMATCH",
+    });
+    expect(verifyOptions.callbacks.verifyJwt).not.toHaveBeenCalled();
+  });
+
+  it("accepts a sigX5ts whose first entry matches the signer certificate", async () => {
+    await expect(
+      verifyJAdESSignature(options({ sigX5ts: [sha256, wrong] })),
+    ).resolves.toBeUndefined();
+  });
+
+  it("rejects a sigX5ts whose first entry does not match", async () => {
+    await expect(
+      verifyJAdESSignature(options({ sigX5ts: [wrong, sha256] })),
+    ).rejects.toMatchObject({ code: "JADES_SIG_X5TS_MISMATCH" });
+  });
+
+  it("rejects a sigX5ts with fewer than two entries", () => {
+    expect(
+      zJAdESHeader.safeParse({ ...header, sigX5ts: [sha256] }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the SHA-1 x5t thumbprint", () => {
+    expect(zJAdESHeader.safeParse({ ...header, x5t: "AAAA" }).success).toBe(
+      false,
+    );
+  });
+
+  it.each([
+    ["iat", {}],
+    ["sigX5ts", { sigX5ts: [sha256, wrong] }],
+    ["x5t#o", { "x5t#o": sha256 }],
+  ])("accepts %s as a critical parameter", async (name, extra) => {
+    const headerWithCrit = { crit: [name], ...extra } as Partial<JAdESHeader>;
+    expect(
+      zJAdESHeader.safeParse({ ...header, ...headerWithCrit }).success,
+    ).toBe(true);
+    await expect(
+      verifyJAdESSignature(options(headerWithCrit)),
+    ).resolves.toBeUndefined();
+  });
+
+  it("rejects a critical parameter missing from the header", async () => {
+    await expect(
+      verifyJAdESSignature(options({ crit: ["x5t#o"] })),
+    ).rejects.toMatchObject({ code: "JADES_CRIT_PARAMETER_MISSING" });
+  });
+
+  it("accepts a critical parameter present in the header", async () => {
+    await expect(
+      verifyJAdESSignature(options({ crit: ["x5t#o"], "x5t#o": sha256 })),
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("claimed signing time", () => {
+  it("rejects an iat later than the validation time", async () => {
+    const verifyOptions = {
+      ...options(),
+      now: new Date((header.iat - 1) * 1000),
+    };
+    await expect(verifyJAdESSignature(verifyOptions)).rejects.toMatchObject({
+      code: "JADES_IAT_IN_FUTURE",
+    });
+    expect(verifyOptions.callbacks.verifyJwt).not.toHaveBeenCalled();
+  });
+
+  it("accepts an iat equal to the validation time", async () => {
+    await expect(
+      verifyJAdESSignature({
+        ...options(),
+        now: new Date(header.iat * 1000),
+      }),
+    ).resolves.toBeUndefined();
   });
 });
