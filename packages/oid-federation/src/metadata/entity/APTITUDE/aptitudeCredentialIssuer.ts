@@ -74,6 +74,11 @@ const zSdJwtVcCredentialConfiguration = zCredentialConfigurationBase.extend({
   vct: z.string(),
 });
 
+const zLegacySdJwtVcCredentialConfiguration =
+  zSdJwtVcCredentialConfiguration.extend({
+    format: z.literal("vc+sd-jwt"),
+  });
+
 const zMdocCredentialConfiguration = zCredentialConfigurationBase.extend({
   credential_signing_alg_values_supported: z
     .array(z.number().int())
@@ -83,10 +88,36 @@ const zMdocCredentialConfiguration = zCredentialConfigurationBase.extend({
   format: z.literal("mso_mdoc"),
 });
 
+const zLegacyCredentialConfiguration = z.discriminatedUnion("format", [
+  zSdJwtVcCredentialConfiguration,
+  zLegacySdJwtVcCredentialConfiguration,
+  zMdocCredentialConfiguration,
+]);
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const zCredentialConfiguration = z.discriminatedUnion("format", [
   zSdJwtVcCredentialConfiguration,
   zMdocCredentialConfiguration,
 ]);
+type CredentialConfiguration = z.output<typeof zCredentialConfiguration>;
+
+/**
+ * Compatibility parser for OID4VCI `credential_configuration_supported`
+ * which allows configurations where the legacy SD-JWT-VC identifier
+ * `vc+sd-jwt` is used, but it just filters them out from the final result.
+ * Necessary for interoperability with issuers that post configurations for
+ * credentials that cannot be updated.
+ */
+const zCredentialConfigurationsSupported = z
+  .record(z.string(), zLegacyCredentialConfiguration)
+  .transform((configs) =>
+    Object.fromEntries(
+      Object.entries(configs).filter(
+        (entry): entry is [string, CredentialConfiguration] =>
+          entry[1].format !== "vc+sd-jwt",
+      ),
+    ),
+  );
 
 const zIssuerInfo = z.looseObject({
   data: z.union([z.string(), z.record(z.string(), z.unknown())]),
@@ -103,10 +134,7 @@ export const aptitudeCredentialIssuerMetadata = z.looseObject({
   batch_credential_issuance: z
     .looseObject({ batch_size: z.number().int().min(2) })
     .optional(),
-  credential_configurations_supported: z.record(
-    z.string(),
-    zCredentialConfiguration,
-  ),
+  credential_configurations_supported: zCredentialConfigurationsSupported,
   credential_endpoint: z.url(),
   credential_issuer: z.url(),
   deferred_credential_endpoint: z.url().optional(),

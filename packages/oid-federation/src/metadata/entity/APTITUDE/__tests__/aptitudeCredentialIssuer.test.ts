@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import { z } from "zod";
 
 import { itWalletMetadataAPTITUDE } from "../../../itWalletMetadata";
 import {
@@ -151,6 +152,107 @@ describe("aptitudeCredentialIssuerMetadata", () => {
         withConfiguration({ format: "jwt_vc_json" }),
       ).success,
     ).toBe(false);
+  });
+});
+
+describe("aptitudeCredentialIssuerMetadata legacy configuration filtering", () => {
+  const legacyConfiguration = {
+    format: "vc+sd-jwt",
+    vct: "urn:eudi:pid:1",
+  };
+
+  it("should remove legacy configurations while preserving supported configurations and extension fields", () => {
+    const supportedConfigurations = {
+      mdoc: {
+        credential_signing_alg_values_supported: [-7],
+        doctype: "org.iso.18013.5.1.mDL",
+        format: "mso_mdoc",
+      },
+      sdJwt: {
+        credential_signing_alg_values_supported: ["ES256"],
+        custom_metadata: { enabled: true },
+        format: "dc+sd-jwt",
+        vct: "urn:eudi:pid:1",
+      },
+    };
+    const configurations = {
+      legacy: legacyConfiguration,
+      ...supportedConfigurations,
+    };
+
+    const result = aptitudeCredentialIssuerMetadata.parse({
+      ...validMetadata,
+      credential_configurations_supported: configurations,
+    });
+
+    expect(result.credential_configurations_supported).toEqual(
+      supportedConfigurations,
+    );
+    expect(configurations.legacy).toEqual(legacyConfiguration);
+
+    type InputConfiguration = z.input<
+      typeof aptitudeCredentialIssuerMetadata
+    >["credential_configurations_supported"][string];
+    type OutputConfiguration = z.output<
+      typeof aptitudeCredentialIssuerMetadata
+    >["credential_configurations_supported"][string];
+
+    expectTypeOf<InputConfiguration["format"]>().toEqualTypeOf<
+      "dc+sd-jwt" | "mso_mdoc" | "vc+sd-jwt"
+    >();
+    expectTypeOf<OutputConfiguration["format"]>().toEqualTypeOf<
+      "dc+sd-jwt" | "mso_mdoc"
+    >();
+    expectTypeOf<
+      Extract<OutputConfiguration, { format: "dc+sd-jwt" }>["vct"]
+    >().toEqualTypeOf<string>();
+    expectTypeOf<
+      Extract<OutputConfiguration, { format: "mso_mdoc" }>["doctype"]
+    >().toEqualTypeOf<string>();
+  });
+
+  it.each([
+    ["only legacy configurations", { legacy: legacyConfiguration }],
+    ["no configurations", {}],
+  ])("should return an empty record for %s", (_label, configurations) => {
+    const result = aptitudeCredentialIssuerMetadata.parse({
+      ...validMetadata,
+      credential_configurations_supported: configurations,
+    });
+
+    expect(result.credential_configurations_supported).toEqual({});
+  });
+
+  it.each([
+    ["a missing vct", { format: "vc+sd-jwt" }],
+    [
+      "numeric signing algorithms",
+      {
+        ...legacyConfiguration,
+        credential_signing_alg_values_supported: [-7],
+      },
+    ],
+  ])(
+    "should reject a legacy configuration with %s before filtering",
+    (_label, configuration) => {
+      expect(
+        aptitudeCredentialIssuerMetadata.safeParse(
+          withConfiguration(configuration),
+        ).success,
+      ).toBe(false);
+    },
+  );
+
+  it("should filter legacy configurations through itWalletMetadataAPTITUDE", () => {
+    const result = itWalletMetadataAPTITUDE.parse({
+      [aptitudeCredentialIssuerIdentifier]:
+        withConfiguration(legacyConfiguration),
+    });
+
+    expect(
+      result[aptitudeCredentialIssuerIdentifier]
+        ?.credential_configurations_supported,
+    ).toEqual({});
   });
 });
 

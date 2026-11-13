@@ -34,7 +34,14 @@ export const zMetadataResponseAPTITUDE = zMetadataResponseV1_3.extend({
   metadata: itWalletMetadataAPTITUDE,
 });
 
-export const zMetadataResponse = z.union([
+export const zMetadataResponse: z.ZodUnion<
+  [
+    typeof zMetadataResponseV1_0,
+    typeof zMetadataResponseV1_3,
+    typeof zMetadataResponseV1_4,
+    typeof zMetadataResponseAPTITUDE,
+  ]
+> = z.union([
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
   zMetadataResponseV1_4,
