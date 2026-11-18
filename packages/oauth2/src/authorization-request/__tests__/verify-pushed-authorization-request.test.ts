@@ -876,7 +876,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
   describe("Time-based validation", () => {
     it("should use custom date for time-based validation with JAR", async () => {
-      const customDate = new Date(Date.now() - 2 * 60 * 1000);
+      const customDate = new Date("2024-01-01T00:00:00Z");
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
@@ -925,7 +925,7 @@ describe("verifyPushedAuthorizationRequest", () => {
     });
 
     it("should propagate custom date to DPoP and client attestation verification", async () => {
-      const customDate = new Date(Date.now() - 2 * 60 * 1000);
+      const customDate = new Date("2024-01-01T00:00:00Z");
 
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",

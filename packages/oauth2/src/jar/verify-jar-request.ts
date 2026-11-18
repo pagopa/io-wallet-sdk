@@ -74,6 +74,7 @@ export async function verifyJarRequest(
       authorizationRequestJwt,
       callbacks,
       jwtSigner,
+      now: options.now,
     });
 
   if (!authorizationRequestPayload.client_id) {
@@ -143,8 +144,9 @@ async function verifyJarRequestObject(options: {
   authorizationRequestJwt: string;
   callbacks: Pick<CallbackContext, "verifyJwt">;
   jwtSigner: JwtSigner;
+  now?: Date;
 }) {
-  const { authorizationRequestJwt, callbacks, jwtSigner } = options;
+  const { authorizationRequestJwt, callbacks, jwtSigner, now } = options;
 
   const jwt = decodeJwt({
     errorMessagePrefix: "Error decoding JAR authorization request JWT:",
@@ -158,6 +160,7 @@ async function verifyJarRequestObject(options: {
   const { signer } = await verifyJwt({
     compact: authorizationRequestJwt,
     header: jwt.header,
+    now,
     payload: authorizationRequestPayload,
     signer: jwtSigner,
 
