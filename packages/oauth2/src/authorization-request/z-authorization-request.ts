@@ -13,6 +13,11 @@ const zItL2DocumentProofAuthorizationDetails = z.object({
   type: z.literal("it_l2+document_proof"),
 });
 
+const zItL2DocumentProofAuthorizationDetailsV1_4 =
+  zItL2DocumentProofAuthorizationDetails.extend({
+    idphinting: z.url().optional(),
+  });
+
 const zAuthorizationRequestBaseObject = z.looseObject({
   authorization_details: z
     .array(
@@ -62,6 +67,32 @@ export type AuthorizationRequestV1_0 = z.infer<
 export const zAuthorizationRequestV1_3 = zAuthorizationRequestBase;
 export type AuthorizationRequestV1_3 = z.infer<
   typeof zAuthorizationRequestV1_3
+>;
+
+/**
+ * v1.4 requires both `authorization_details` and `scope`; `idphinting` becomes optional.
+ */
+export const zAuthorizationRequestV1_4 = zAuthorizationRequestBaseObject.extend(
+  {
+    authorization_details: z
+      .array(
+        z.discriminatedUnion("type", [
+          zOpenidCredentialAuthorizationDetails,
+          zItL2DocumentProofAuthorizationDetailsV1_4,
+        ]),
+      )
+      .refine(
+        (details) => details.some((d) => d.type === "openid_credential"),
+        {
+          message:
+            "'authorization_details' must contain at least one 'openid_credential' object.",
+        },
+      ),
+    scope: z.string().nonempty(),
+  },
+);
+export type AuthorizationRequestV1_4 = z.infer<
+  typeof zAuthorizationRequestV1_4
 >;
 
 export const zPushedAuthorizationRequestSigned = z.looseObject({
@@ -120,14 +151,24 @@ export type PushedAuthorizationRequestUnsignedV1_3 = z.infer<
   typeof zPushedAuthorizationRequestUnsignedV1_3
 >;
 
+export const zPushedAuthorizationRequestUnsignedV1_4 =
+  zPushedAuthorizationRequestUnsignedBase(zAuthorizationRequestV1_4);
+export type PushedAuthorizationRequestUnsignedV1_4 = z.infer<
+  typeof zPushedAuthorizationRequestUnsignedV1_4
+>;
+
+export type PushedAuthorizationRequestUnsigned =
+  | PushedAuthorizationRequestUnsignedV1_0
+  | PushedAuthorizationRequestUnsignedV1_3
+  | PushedAuthorizationRequestUnsignedV1_4;
+
 /**
  * Union type for Pushed Authorization Request - can be either signed (JAR) or unsigned.
  * The variant depends on the Authorization Server's require_signed_request_object metadata.
  */
 export type PushedAuthorizationRequest =
   | PushedAuthorizationRequestSigned
-  | PushedAuthorizationRequestUnsignedV1_0
-  | PushedAuthorizationRequestUnsignedV1_3;
+  | PushedAuthorizationRequestUnsigned;
 
 /**
  * Checks whether a pushed authorization request is represented as a signed JAR.
@@ -149,9 +190,7 @@ export function isPushedAuthorizationRequestSigned(
  */
 export function isPushedAuthorizationRequestUnsigned(
   par: PushedAuthorizationRequest,
-): par is
-  | PushedAuthorizationRequestUnsignedV1_0
-  | PushedAuthorizationRequestUnsignedV1_3 {
+): par is PushedAuthorizationRequestUnsigned {
   return "authorizationRequest" in par;
 }
 

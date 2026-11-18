@@ -430,3 +430,88 @@ describe("createPushedAuthorizationRequest - JAR signing policy", () => {
     });
   });
 });
+
+describe("createPushedAuthorizationRequest - v1.4", () => {
+  beforeEach(setupMocks);
+
+  const configV1_4 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { responseMode: _, ...baseWithoutResponseMode } = baseOptions;
+  const optionsV1_4 = {
+    ...baseWithoutResponseMode,
+    authorization_details: [
+      {
+        credential_configuration_id: "test-config",
+        type: "openid_credential" as const,
+      },
+    ],
+    config: configV1_4,
+    scope: "eid",
+  };
+
+  it("should sign the request object with typ oauth-authz-req+jwt", async () => {
+    await createPushedAuthorizationRequest(optionsV1_4);
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.objectContaining({ typ: "oauth-authz-req+jwt" }),
+      payload: expect.objectContaining({ scope: "eid" }),
+    });
+  });
+
+  it("should keep typ jwt for v1.3", async () => {
+    await createPushedAuthorizationRequest({
+      ...optionsV1_4,
+      config: configV1_3,
+    });
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.objectContaining({ typ: "jwt" }),
+      payload: expect.any(Object),
+    });
+  });
+
+  it("should reject a request without scope", async () => {
+    await expect(
+      // @ts-expect-error: v1.4 type requires scope, but we are testing it is missing
+      createPushedAuthorizationRequest({
+        ...optionsV1_4,
+        scope: undefined,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("should reject authorization_details without openid_credential", async () => {
+    await expect(
+      createPushedAuthorizationRequest({
+        ...optionsV1_4,
+        authorization_details: [
+          {
+            challenge_method: "mrtd+ias",
+            challenge_redirect_uri: "https://wallet.example.com/mrtd",
+            type: "it_l2+document_proof",
+          },
+        ],
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("should accept it_l2+document_proof without idphinting", async () => {
+    const result = await createPushedAuthorizationRequest({
+      ...optionsV1_4,
+      authorization_details: [
+        ...optionsV1_4.authorization_details,
+        {
+          challenge_method: "mrtd+ias",
+          challenge_redirect_uri: "https://wallet.example.com/mrtd",
+          type: "it_l2+document_proof",
+        },
+      ],
+      authorizationServerMetadata: { require_signed_request_object: false },
+    });
+
+    expect(result.authorizationRequest.authorization_details).toHaveLength(2);
+  });
+});
