@@ -33,7 +33,7 @@ const validV1_3Metadata = {
 };
 
 const validV1_4Metadata = {
-  wallet_solution: {
+  openid_wallet_provider: {
     logo_uri: "https://wallet-solution.example.com/logo.svg",
     wallet_metadata: {
       authorization_endpoint: "https://wallet-solution.example.com/authorize",
@@ -81,6 +81,38 @@ describe("isItWalletMetadataVersion", () => {
     expect(
       isItWalletMetadataVersion(validV1_4Metadata, ItWalletSpecsVersion.V1_3),
     ).toBe(false);
+  });
+
+  it("should reject the legacy wallet_solution key for v1.4", () => {
+    expect(
+      isItWalletMetadataVersion(validV1_3Metadata, ItWalletSpecsVersion.V1_4),
+    ).toBe(false);
+  });
+
+  it("should require homepage_uri or organization_uri in federation_entity", () => {
+    const withFederationEntity = (federation_entity: object) => ({
+      ...validV1_4Metadata,
+      federation_entity,
+    });
+
+    expect(
+      isItWalletMetadataVersion(
+        withFederationEntity({}),
+        ItWalletSpecsVersion.V1_4,
+      ),
+    ).toBe(false);
+    expect(
+      isItWalletMetadataVersion(
+        withFederationEntity({ homepage_uri: "https://example.com" }),
+        ItWalletSpecsVersion.V1_4,
+      ),
+    ).toBe(true);
+    expect(
+      isItWalletMetadataVersion(
+        withFederationEntity({ organization_uri: "https://example.com" }),
+        ItWalletSpecsVersion.V1_4,
+      ),
+    ).toBe(true);
   });
 });
 

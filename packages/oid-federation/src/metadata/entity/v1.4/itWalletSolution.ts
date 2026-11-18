@@ -27,4 +27,4 @@ export type ItWalletSolutionEntityMetadata = z.input<
   typeof itWalletSolutionEntityMetadata
 >;
 
-export const itWalletSolutionEntityIdentifier = "wallet_solution";
+export const itWalletSolutionEntityIdentifier = "openid_wallet_provider";
