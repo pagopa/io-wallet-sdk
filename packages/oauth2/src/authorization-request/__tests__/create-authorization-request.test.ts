@@ -4,6 +4,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { PushedAuthorizationRequestError } from "../../errors";
 import { PkceCodeChallengeMethod, createPkce } from "../../pkce";
 import {
   CreatePushedAuthorizationRequestOptions,
@@ -269,7 +270,7 @@ describe("createPushedAuthorizationRequest - timestamp handling", () => {
     await createPushedAuthorizationRequest(baseOptions);
 
     const expectedIat = Math.floor(mockNow / 1000);
-    const expectedExp = expectedIat + 3600;
+    const expectedExp = expectedIat + 300;
 
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
       header: expect.any(Object),
@@ -299,7 +300,7 @@ describe("createPushedAuthorizationRequest - timestamp handling", () => {
     });
   });
 
-  it("should default expiresAt to issuedAt plus one hour when only issuedAt is provided", async () => {
+  it("should default expiresAt to issuedAt plus 300 seconds when only issuedAt is provided", async () => {
     const issuedAt = new Date("2025-01-01T00:00:00.000Z");
 
     await createPushedAuthorizationRequest({
@@ -308,7 +309,7 @@ describe("createPushedAuthorizationRequest - timestamp handling", () => {
     });
 
     const expectedIat = Math.floor(issuedAt.getTime() / 1000);
-    const expectedExp = expectedIat + 3600;
+    const expectedExp = expectedIat + 300;
 
     expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
       header: expect.any(Object),
@@ -324,7 +325,7 @@ describe("createPushedAuthorizationRequest - timestamp handling", () => {
     vi.useFakeTimers();
     vi.setSystemTime(mockDate);
 
-    const expiresAt = new Date("2025-01-01T02:00:00.000Z");
+    const expiresAt = new Date("2025-01-01T01:05:00.000Z");
 
     await createPushedAuthorizationRequest({
       ...baseOptions,
@@ -459,6 +460,19 @@ describe("createPushedAuthorizationRequest - v1.4", () => {
       header: expect.objectContaining({ typ: "oauth-authz-req+jwt" }),
       payload: expect.objectContaining({ scope: "eid" }),
     });
+  });
+
+  it("should reject a request object lifetime above 300 seconds", async () => {
+    const issuedAt = new Date("2025-01-01T00:00:00.000Z");
+
+    await expect(
+      createPushedAuthorizationRequest({
+        ...optionsV1_4,
+        expiresAt: new Date("2025-01-01T00:05:01.000Z"),
+        issuedAt,
+      }),
+    ).rejects.toThrow(PushedAuthorizationRequestError);
+    expect(mockCallbacks.signJwt).not.toHaveBeenCalled();
   });
 
   it("should keep typ jwt for v1.3", async () => {

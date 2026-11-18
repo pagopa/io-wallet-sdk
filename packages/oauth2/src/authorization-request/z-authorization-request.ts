@@ -1,6 +1,8 @@
 import { MAX_JTI_LENGTH } from "@pagopa/io-wallet-utils";
 import z from "zod";
 
+export const MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS = 300;
+
 const zOpenidCredentialAuthorizationDetails = z.object({
   credential_configuration_id: z.string(),
   type: z.literal("openid_credential"),

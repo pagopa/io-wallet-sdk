@@ -10,6 +10,7 @@ import {
   type VerifyAuthorizationRequestResult,
   verifyAuthorizationRequest,
 } from "./verify-authorization-request";
+import { MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS } from "./z-authorization-request";
 
 export interface VerifyPushedAuthorizationRequestReturn extends VerifyAuthorizationRequestResult {
   /**
@@ -173,6 +174,7 @@ export async function verifyPushedAuthorizationRequest(
       callbacks: options.callbacks,
       jarRequestParams: options.authorizationRequest,
       jwtSigner: options.authorizationRequestJwt.signer,
+      maxTtlSeconds: MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS,
       now: options.now,
     });
 

@@ -24,6 +24,11 @@ export interface VerifyJarRequestOptions {
     client_id?: string;
   };
   jwtSigner: JwtSigner;
+  /**
+   * Maximum allowed lifetime of the request object, in seconds (`exp - iat`).
+   * The lifetime is not checked when omitted.
+   */
+  maxTtlSeconds?: number;
   now?: Date;
 }
 
@@ -116,6 +121,15 @@ export async function verifyJarRequest(
   const CLOCK_SKEW_TOLERANCE_SECONDS = 60;
   if (jwt.payload.iat - nowSeconds > CLOCK_SKEW_TOLERANCE_SECONDS) {
     throw new Oauth2Error("iat claim in request JWT is too far in the future");
+  }
+
+  if (
+    options.maxTtlSeconds !== undefined &&
+    jwt.payload.exp - jwt.payload.iat > options.maxTtlSeconds
+  ) {
+    throw new Oauth2Error(
+      `exp claim in request JWT must not be more than ${options.maxTtlSeconds} seconds after iat`,
+    );
   }
 
   return {

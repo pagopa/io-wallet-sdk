@@ -21,6 +21,7 @@ import {
   AuthorizationRequestV1_0,
   AuthorizationRequestV1_3,
   AuthorizationRequestV1_4,
+  MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS,
   PushedAuthorizationRequest,
   PushedAuthorizationRequestSigned,
   PushedAuthorizationRequestUnsigned,
@@ -32,7 +33,6 @@ import {
   zAuthorizationRequestV1_4,
 } from "./z-authorization-request";
 
-const JWT_EXPIRY_SECONDS = 3600; // 1 hour
 const RANDOM_BYTES_SIZE = 32;
 
 type AuthorizationRequest =
@@ -205,7 +205,7 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  * @param options.responseMode - Response mode (v1.0 only, must be supported by Credential Issuer)
  * @param options.scope - OAuth 2.0 scope to request
  * @param options.state - Optional state parameter (auto-generated if not provided)
- * @param options.expiresAt - Optional JWT expiration time (defaults to 1 hour from issuedAt)
+ * @param options.expiresAt - Optional JWT expiration time (defaults to 5 minutes from issuedAt and MUST NOT exceed 300 seconds from issuedAt)
  * @param options.issuedAt - Optional JWT issued at time (defaults to current time)
  *
  * @returns A promise resolving to either:
@@ -214,6 +214,7 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  *
  * @throws {PushedAuthorizationRequestError} If DPoP signer is missing required properties (alg, publicJwk.kid)
  * @throws {PushedAuthorizationRequestError} If PKCE code challenge method is not supported
+ * @throws {PushedAuthorizationRequestError} If `expiresAt` is more than 300 seconds after `issuedAt`
  * @throws {ZodError} If authorization request parameters fail validation
  *
  * @example
@@ -369,7 +370,17 @@ export async function createPushedAuthorizationRequest(
     }
 
     const iat = options.issuedAt ?? new Date();
-    const exp = options.expiresAt ?? addSecondsToDate(iat, JWT_EXPIRY_SECONDS);
+    const exp =
+      options.expiresAt ??
+      addSecondsToDate(iat, MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS);
+    if (
+      dateToSeconds(exp) - dateToSeconds(iat) >
+      MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS
+    ) {
+      throw new PushedAuthorizationRequestError(
+        `Request object lifetime must not exceed ${MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS} seconds`,
+      );
+    }
     const requestJwt = await options.callbacks.signJwt(dpop.signer, {
       header: {
         alg: dpop.signer.alg,
