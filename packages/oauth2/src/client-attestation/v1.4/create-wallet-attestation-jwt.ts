@@ -9,14 +9,13 @@ import { ClientAttestationError } from "../../errors";
 import { calculateDpopJwkThumbprint } from "../jwk-thumbprint";
 import { BaseWalletAttestationOptions } from "../types";
 import {
+  MAX_WALLET_ATTESTATION_TTL_SECONDS,
   WalletAttestationJwtV1_4,
   zWalletAttestationJwtHeaderV1_4,
   zWalletAttestationJwtPayloadV1_4,
 } from "./z-wallet-attestation";
 
 const DEFAULT_EXPIRATION_SECONDS = 3600;
-
-const MAX_EXPIRATION_SECONDS = 86400;
 
 export interface WalletAttestationOptionsV1_4 extends Omit<
   BaseWalletAttestationOptions,
@@ -55,8 +54,10 @@ export const createWalletAttestationJwt = async (
       throw new ValidationError("exp must be after iat");
     }
 
-    if (exp > addSecondsToDate(iat, MAX_EXPIRATION_SECONDS)) {
-      throw new ValidationError("exp must not be more than 24 hours after iat");
+    if (exp >= addSecondsToDate(iat, MAX_WALLET_ATTESTATION_TTL_SECONDS)) {
+      throw new ValidationError(
+        "exp must be strictly less than 24 hours after iat",
+      );
     }
 
     if (options.nbf && options.nbf >= exp) {
