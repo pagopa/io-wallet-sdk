@@ -69,9 +69,6 @@ export type AuthorizationRequestV1_3 = z.infer<
   typeof zAuthorizationRequestV1_3
 >;
 
-/**
- * v1.4 requires both `authorization_details` and `scope`; `idphinting` becomes optional.
- */
 export const zAuthorizationRequestV1_4 = zAuthorizationRequestBaseObject.extend(
   {
     authorization_details: z

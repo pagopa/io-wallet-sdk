@@ -19,9 +19,9 @@ export const zWalletAttestationJwtHeaderV1_4 = z.looseObject({
  * The maximum validity period of a Wallet Instance Attestation after issuance.
  * The v1.4 specification sets an upper limit of 24 hours.
  *
- * See {@link https://italia.github.io/eid-wallet-it-docs/releases/1.4.7/en/wallet-solution-requirements.html}
+ * See {@link https://italia.github.io/eid-wallet-it-docs/releases/1.4.7/en/wallet-solution-requirements.html#wia-time-to-live}
  */
-export const MAX_WALLET_ATTESTATION_TTL_SECONDS = 86400; // 24 hours
+export const MAX_WALLET_ATTESTATION_TTL_SECONDS = 86400;
 
 export const zWalletAttestationJwtPayloadV1_4 = z
   .looseObject({
