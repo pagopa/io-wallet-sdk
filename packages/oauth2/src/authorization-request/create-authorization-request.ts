@@ -12,11 +12,8 @@ import {
 import type { BaseAuthorizationServerMetadata } from "../authorization-server-metadata";
 
 import { PushedAuthorizationRequestError } from "../errors";
-import {
-  jwtAuthorizationRequestJwtHeaderTyp,
-  signedAuthorizationRequestJwtHeaderTyp,
-} from "../jar/z-jar";
 import { createPkce } from "../pkce";
+import { requestObjectTyps } from "./request-object-typ";
 import {
   AuthorizationRequestV1_0,
   AuthorizationRequestV1_3,
@@ -385,10 +382,7 @@ export async function createPushedAuthorizationRequest(
       header: {
         alg: dpop.signer.alg,
         kid: dpop.signer.publicJwk.kid,
-        typ:
-          options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_4
-            ? signedAuthorizationRequestJwtHeaderTyp
-            : jwtAuthorizationRequestJwtHeaderTyp,
+        typ: requestObjectTyps[options.config.itWalletSpecsVersion].sign,
       },
       payload: {
         aud: options.audience,

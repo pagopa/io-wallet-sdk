@@ -12,12 +12,24 @@ import {
 import { Oauth2Error } from "../errors";
 import {
   JarRequestObjectPayload,
+  JarRequestObjectTyp,
   jwtAuthorizationRequestJwtHeaderTyp,
   signedAuthorizationRequestJwtHeaderTyp,
   zJarRequestObjectPayload,
 } from "./z-jar";
 
+// Some existing deployments may alternatively be using both type
+const DEFAULT_ALLOWED_TYPS: readonly JarRequestObjectTyp[] = [
+  signedAuthorizationRequestJwtHeaderTyp,
+  jwtAuthorizationRequestJwtHeaderTyp,
+];
+
 export interface VerifyJarRequestOptions {
+  /**
+   * Accepted values for the request object `typ` header.
+   * Defaults to `oauth-authz-req+jwt` and `jwt`.
+   */
+  allowedTyps?: readonly JarRequestObjectTyp[];
   authorizationRequestJwt: string;
   callbacks: Pick<CallbackContext, "verifyJwt">;
   jarRequestParams: {
@@ -51,8 +63,13 @@ export interface VerifiedJarRequest {
 export async function verifyJarRequest(
   options: VerifyJarRequestOptions,
 ): Promise<VerifiedJarRequest> {
-  const { authorizationRequestJwt, callbacks, jarRequestParams, jwtSigner } =
-    options;
+  const {
+    allowedTyps,
+    authorizationRequestJwt,
+    callbacks,
+    jarRequestParams,
+    jwtSigner,
+  } = options;
 
   /* Encryption is not supported */
   const requestObjectIsEncrypted = zCompactJwe.safeParse(
@@ -71,6 +88,7 @@ export async function verifyJarRequest(
 
   const { authorizationRequestPayload, jwt, signer } =
     await verifyJarRequestObject({
+      allowedTyps,
       authorizationRequestJwt,
       callbacks,
       jwtSigner,
@@ -141,12 +159,19 @@ export async function verifyJarRequest(
 }
 
 async function verifyJarRequestObject(options: {
+  allowedTyps?: readonly JarRequestObjectTyp[];
   authorizationRequestJwt: string;
   callbacks: Pick<CallbackContext, "verifyJwt">;
   jwtSigner: JwtSigner;
   now?: Date;
 }) {
-  const { authorizationRequestJwt, callbacks, jwtSigner, now } = options;
+  const {
+    allowedTyps = DEFAULT_ALLOWED_TYPS,
+    authorizationRequestJwt,
+    callbacks,
+    jwtSigner,
+    now,
+  } = options;
 
   const jwt = decodeJwt({
     errorMessagePrefix: "Error decoding JAR authorization request JWT:",
@@ -167,13 +192,9 @@ async function verifyJarRequestObject(options: {
     verifyJwtCallback: callbacks.verifyJwt,
   });
 
-  // Some existing deployments may alternatively be using both type
-  if (
-    jwt.header.typ !== signedAuthorizationRequestJwtHeaderTyp &&
-    jwt.header.typ !== jwtAuthorizationRequestJwtHeaderTyp
-  ) {
+  if (!allowedTyps.some((typ) => typ === jwt.header.typ)) {
     throw new Oauth2Error(
-      `Invalid Jar Request Object typ header. Expected "oauth-authz-req+jwt" or "jwt", received "${jwt.header.typ}".`,
+      `Invalid Jar Request Object typ header. Expected ${allowedTyps.map((typ) => `"${typ}"`).join(" or ")}, received "${jwt.header.typ}".`,
     );
   }
 

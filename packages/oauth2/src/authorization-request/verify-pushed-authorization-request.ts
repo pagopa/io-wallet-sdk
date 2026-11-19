@@ -5,6 +5,7 @@ import {
   VerifiedJarRequest,
   verifyJarRequest,
 } from "../jar/verify-jar-request";
+import { requestObjectTyps } from "./request-object-typ";
 import {
   type VerifyAuthorizationRequestOptions,
   type VerifyAuthorizationRequestResult,
@@ -170,6 +171,8 @@ export async function verifyPushedAuthorizationRequest(
 
     // Verify JAR signature and claims
     jar = await verifyJarRequest({
+      allowedTyps:
+        requestObjectTyps[options.config.itWalletSpecsVersion].accept,
       authorizationRequestJwt: options.authorizationRequestJwt.jwt,
       callbacks: options.callbacks,
       jarRequestParams: options.authorizationRequest,
