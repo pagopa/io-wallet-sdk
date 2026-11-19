@@ -164,11 +164,26 @@ describe("createWalletAttestationJwt v1.4", () => {
     };
 
     await expect(createWalletAttestationJwt(options)).rejects.toThrow(
-      /exp must not be more than 24 hours after iat/,
+      /exp must be strictly less than 24 hours after iat/,
     );
   });
 
-  it("should accept an expiration exactly at the 24 hour boundary", async () => {
+  it("should fail when the lifetime is exactly 24 hours", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+      await expect(
+        createWalletAttestationJwt({
+          ...baseOptions,
+          expiresAt: new Date(Date.now() + 86400 * 1000),
+        }),
+      ).rejects.toThrow(/strictly less than 24 hours/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("should accept an expiration just below the 24 hour boundary", async () => {
     const options: WalletAttestationOptionsV1_4 = {
       ...baseOptions,
       expiresAt: new Date(Date.now() + 86400 * 1000 - 1000),

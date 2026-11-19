@@ -148,6 +148,47 @@ describe("verifyJarRequest", () => {
       ).resolves.toBeDefined();
     });
 
+    it("should throw error when exp is more than 300 seconds after iat", async () => {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const jarJwt = createMockJarJwt({
+        ...basePayload,
+        exp: nowSeconds + 301,
+        iat: nowSeconds,
+      });
+
+      await expect(
+        verifyJarRequest({ ...createOptions(jarJwt), maxTtlSeconds: 300 }),
+      ).rejects.toThrow(
+        "exp claim in request JWT must not be more than 300 seconds after iat",
+      );
+    });
+
+    it("should accept exp exactly 300 seconds after iat", async () => {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const jarJwt = createMockJarJwt({
+        ...basePayload,
+        exp: nowSeconds + 300,
+        iat: nowSeconds,
+      });
+
+      await expect(
+        verifyJarRequest({ ...createOptions(jarJwt), maxTtlSeconds: 300 }),
+      ).resolves.toBeDefined();
+    });
+
+    it("should not check the lifetime when maxTtlSeconds is omitted", async () => {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const jarJwt = createMockJarJwt({
+        ...basePayload,
+        exp: nowSeconds + 3600,
+        iat: nowSeconds,
+      });
+
+      await expect(
+        verifyJarRequest(createOptions(jarJwt)),
+      ).resolves.toBeDefined();
+    });
+
     it("should accept exp one second in the future", async () => {
       const now = new Date();
       const nowSeconds = Math.floor(now.getTime() / 1000);

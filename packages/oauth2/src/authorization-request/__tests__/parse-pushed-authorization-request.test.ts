@@ -18,13 +18,16 @@ describe("parsePushedAuthorizationRequest", () => {
   const configV1_3 = new IoWalletSdkConfig({
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
   });
+  const configV1_4 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+  });
   const mockRequest: RequestLike = {
     headers: new Headers(),
     method: "POST",
     url: "https://issuer.example.com",
   };
 
-  const baseAuthorizationRequest = {
+  const baseAuthRequestWithoutResponseMode = {
     authorization_details: [
       {
         credential_configuration_id: "test-config",
@@ -36,9 +39,18 @@ describe("parsePushedAuthorizationRequest", () => {
     code_challenge_method: "S256",
     jti: "test-jti",
     redirect_uri: "https://client.example.com/callback",
-    response_mode: "form_post",
     response_type: "code",
     state: "test-state",
+  };
+
+  const baseAuthorizationRequest = {
+    ...baseAuthRequestWithoutResponseMode,
+    response_mode: "form_post",
+  };
+
+  const authRequestWithDetailsAndScope = {
+    ...baseAuthRequestWithoutResponseMode,
+    scope: "eid",
   };
 
   beforeEach(() => {
@@ -163,6 +175,88 @@ describe("parsePushedAuthorizationRequest", () => {
           request: mockRequest,
         }),
       ).rejects.toThrow();
+    });
+
+    it("should parse a v1.4 request with scope and authorization_details", async () => {
+      const result = await parsePushedAuthorizationRequest({
+        authorizationRequest: authRequestWithDetailsAndScope,
+        callbacks: { fetch: mockFetch },
+        config: configV1_4,
+        request: mockRequest,
+      });
+
+      expect(result.authorizationRequest).toEqual(
+        authRequestWithDetailsAndScope,
+      );
+    });
+
+    it("should reject a v1.4 request without scope", async () => {
+      await expect(
+        parsePushedAuthorizationRequest({
+          authorizationRequest: baseAuthRequestWithoutResponseMode,
+          callbacks: { fetch: mockFetch },
+          config: configV1_4,
+          request: mockRequest,
+        }),
+      ).rejects.toThrow(Oauth2Error);
+    });
+
+    it("should reject a v1.4 request without authorization_details", async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { authorization_details: _, ...withoutDetails } =
+        authRequestWithDetailsAndScope;
+
+      await expect(
+        parsePushedAuthorizationRequest({
+          authorizationRequest: withoutDetails,
+          callbacks: { fetch: mockFetch },
+          config: configV1_4,
+          request: mockRequest,
+        }),
+      ).rejects.toThrow(Oauth2Error);
+    });
+
+    it("should reject v1.4 authorization_details without an openid_credential object", async () => {
+      await expect(
+        parsePushedAuthorizationRequest({
+          authorizationRequest: {
+            ...authRequestWithDetailsAndScope,
+            authorization_details: [
+              {
+                challenge_method: "mrtd+ias",
+                challenge_redirect_uri: "https://wallet.example.com/mrtd",
+                type: "it_l2+document_proof",
+              },
+            ],
+          },
+          callbacks: { fetch: mockFetch },
+          config: configV1_4,
+          request: mockRequest,
+        }),
+      ).rejects.toThrow(Oauth2Error);
+    });
+
+    it("should accept v1.4 it_l2+document_proof without idphinting", async () => {
+      const authRequestWithoutIdphinting = {
+        ...authRequestWithDetailsAndScope,
+        authorization_details: [
+          ...authRequestWithDetailsAndScope.authorization_details,
+          {
+            challenge_method: "mrtd+ias",
+            challenge_redirect_uri: "https://wallet.example.com/mrtd",
+            type: "it_l2+document_proof",
+          },
+        ],
+      };
+
+      const result = await parsePushedAuthorizationRequest({
+        authorizationRequest: authRequestWithoutIdphinting,
+        callbacks: { fetch: mockFetch },
+        config: configV1_4,
+        request: mockRequest,
+      });
+
+      expect(result.authorizationRequest).toEqual(authRequestWithoutIdphinting);
     });
   });
 
