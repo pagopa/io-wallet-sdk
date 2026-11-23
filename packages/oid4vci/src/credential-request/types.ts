@@ -25,6 +25,10 @@ export type CredentialRequestOptionsV1_4 = {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
 } & Omit<CredentialRequestOptionsV1_3, "config">;
 
+export type CredentialRequestOptionsV1_5 = {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_5>;
+} & Omit<CredentialRequestOptionsV1_3, "config">;
+
 /**
  * Union type for credential request options
  * Used by the version router
@@ -32,7 +36,8 @@ export type CredentialRequestOptionsV1_4 = {
 export type CredentialRequestOptions =
   | CredentialRequestOptionsV1_0
   | CredentialRequestOptionsV1_3
-  | CredentialRequestOptionsV1_4;
+  | CredentialRequestOptionsV1_4
+  | CredentialRequestOptionsV1_5;
 
 /**
  * Union type for credential request return values

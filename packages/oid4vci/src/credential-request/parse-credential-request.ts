@@ -487,6 +487,8 @@ const dispatchParseCredentialRequest = createVersionDispatcher<
   [ItWalletSpecsVersion.V1_0]: parseCredentialRequestV1_0,
   [ItWalletSpecsVersion.V1_3]: parseCredentialRequestV1_3,
   [ItWalletSpecsVersion.V1_4]: parseCredentialRequestV1_4,
+  // V1_5 reuses V1_4 credential request parsing.
+  [ItWalletSpecsVersion.V1_5]: parseCredentialRequestV1_4,
 });
 
 /**

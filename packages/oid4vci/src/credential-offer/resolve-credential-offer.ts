@@ -35,13 +35,19 @@ function parseCredentialOfferForVersion(
   switch (config.itWalletSpecsVersion) {
     case ItWalletSpecsVersion.V1_3:
       return zCredentialOfferV1_3.parse(data);
+    // V1_5 reuses V1_4 credential offer.
     case ItWalletSpecsVersion.V1_4:
+    case ItWalletSpecsVersion.V1_5:
       return zCredentialOfferV1_4.parse(data);
     default:
       throw new ItWalletSpecsVersionError(
         "resolveCredentialOffer",
         config.itWalletSpecsVersion,
-        [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+        [
+          ItWalletSpecsVersion.V1_3,
+          ItWalletSpecsVersion.V1_4,
+          ItWalletSpecsVersion.V1_5,
+        ],
       );
   }
 }
