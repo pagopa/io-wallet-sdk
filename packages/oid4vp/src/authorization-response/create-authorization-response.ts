@@ -17,6 +17,7 @@ export type {
   CreateAuthorizationResponseOptionsV1_0,
   CreateAuthorizationResponseOptionsV1_3,
   CreateAuthorizationResponseOptionsV1_4,
+  CreateAuthorizationResponseOptionsV1_5,
   CreateAuthorizationResponseResult,
   CreateAuthorizationResponseVersionedOptions,
 } from "./types";
@@ -35,6 +36,11 @@ const dispatchCreateAuthorizationResponse = createVersionDispatcher<
       o as CreateAuthorizationResponseOptionsV1_3,
     ),
   [ItWalletSpecsVersion.V1_4]: (o) =>
+    V1_4.createAuthorizationResponse(
+      o as CreateAuthorizationResponseOptionsV1_4,
+    ),
+  // V1_5 reuses V1_4 (presentation out of scope for 1.5).
+  [ItWalletSpecsVersion.V1_5]: (o) =>
     V1_4.createAuthorizationResponse(
       o as CreateAuthorizationResponseOptionsV1_4,
     ),
