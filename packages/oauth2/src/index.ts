@@ -65,6 +65,21 @@ export {
   zWalletAttestationJwtPayloadV1_4,
   zWalletAttestationJwtV1_4,
 } from "./client-attestation/v1.4/z-wallet-attestation";
+export {
+  type WalletAttestationOptionsV1_5,
+  createWalletAttestationJwt as createWalletAttestationJwtV1_5,
+} from "./client-attestation/v1.5/create-wallet-attestation-jwt";
+export {
+  type VerifiedWalletAttestationJwtV1_5,
+  type VerifyWalletAttestationJwtOptionsV1_5,
+  verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_5,
+} from "./client-attestation/v1.5/verify-wallet-attestation-jwt";
+export {
+  type WalletAttestationJwtV1_5,
+  zWalletAttestationJwtHeaderV1_5,
+  zWalletAttestationJwtPayloadV1_5,
+  zWalletAttestationJwtV1_5,
+} from "./client-attestation/v1.5/z-wallet-attestation";
 export * from "./client-attestation/verify-client-attestation";
 export * from "./client-attestation/wallet-attestation";
 export * from "./client-attestation/z-client-attestation-pop";

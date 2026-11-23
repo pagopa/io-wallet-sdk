@@ -1,6 +1,8 @@
 import {
   CONTENT_TYPES,
   HEADERS,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   UnexpectedStatusCodeError,
   ValidationError,
 } from "@pagopa/io-wallet-utils";
@@ -327,5 +329,71 @@ describe("toURLSearchParams", () => {
     expect(result.get("grant_type")).toBe("refresh_token");
     expect(result.get("refresh_token")).toBe("test-refresh-token");
     expect(result.get("scope")).toBeNull();
+  });
+});
+
+describe("fetchTokenResponse - v1.5", () => {
+  const optionsV1_5: FetchTokenResponseOptions = {
+    ...baseOptions,
+    config: new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
+    }),
+  };
+  const authorizationDetails = [
+    {
+      credential_configuration_id: "dc_sd_jwt_PersonIdentificationData",
+      credential_identifiers: ["pid-sd-jwt"],
+      type: "openid_credential",
+    },
+  ];
+  const mockTokenResponse = (body: Record<string, unknown>) =>
+    mockFetch.mockResolvedValue({
+      json: vi.fn().mockResolvedValue({
+        access_token: "test-access-token",
+        expires_in: 3600,
+        ...body,
+      }),
+      status: 200,
+    });
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should accept a DPoP response with credential_identifiers", async () => {
+    mockTokenResponse({
+      authorization_details: authorizationDetails,
+      token_type: "DPoP",
+    });
+
+    const result = await fetchTokenResponse(optionsV1_5);
+
+    expect(result.authorization_details).toEqual(authorizationDetails);
+  });
+
+  it.each([
+    ["authorization_details is missing", { token_type: "DPoP" }],
+    [
+      "credential_identifiers is missing",
+      {
+        authorization_details: [
+          {
+            credential_configuration_id: "dc_sd_jwt_PersonIdentificationData",
+            type: "openid_credential",
+          },
+        ],
+        token_type: "DPoP",
+      },
+    ],
+    [
+      "token_type is not DPoP",
+      { authorization_details: authorizationDetails, token_type: "Bearer" },
+    ],
+  ])("should throw ValidationError when %s", async (_, body) => {
+    mockTokenResponse(body);
+
+    await expect(fetchTokenResponse(optionsV1_5)).rejects.toThrow(
+      ValidationError,
+    );
   });
 });
