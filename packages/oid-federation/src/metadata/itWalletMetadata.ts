@@ -75,7 +75,6 @@ export const itWalletMetadataV1_3 = z.strictObject({
 });
 
 // v1.4 combined metadata (stubs re-export v1.3 schemas for some entities)
-// NOTE: this type is not backward compatible, it does not accept the previous itWalletSolutionEntityIdentifier
 export const itWalletMetadataV1_4 = z.strictObject({
   [itWalletAuthorizationServerIdentifierV1_3]:
     itWalletAuthorizationServerMetadataV1_3.optional(),
@@ -86,6 +85,12 @@ export const itWalletMetadataV1_4 = z.strictObject({
   [itWalletFederationEntityIdentifier]:
     itWalletFederationEntityMetadataV1_4.optional(),
   [itWalletSolutionEntityIdentifierV1_4]:
+    itWalletSolutionEntityMetadataV1_4.optional(),
+  /**
+   * @deprecated Use `openid_wallet_provider`
+   * The legacy key `wallet_solution` is accepted during the rollout period only.
+   */
+  [itWalletSolutionEntityIdentifierV1_3]:
     itWalletSolutionEntityMetadataV1_4.optional(),
 });
 

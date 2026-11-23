@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   isItWalletMetadataVersion,
+  itWalletMetadataSchema,
   parseItWalletMetadataForVersion,
 } from "../itWalletMetadata";
 
@@ -49,6 +50,10 @@ const validV1_4Metadata = {
   },
 };
 
+const legacyV1_4Metadata = {
+  wallet_solution: validV1_4Metadata.openid_wallet_provider,
+};
+
 describe("isItWalletMetadataVersion", () => {
   it("should identify valid v1.0 metadata", () => {
     expect(
@@ -83,9 +88,12 @@ describe("isItWalletMetadataVersion", () => {
     ).toBe(false);
   });
 
-  it("should reject the legacy wallet_solution key for v1.4", () => {
+  it("should accept the legacy wallet_solution key for v1.4 only", () => {
     expect(
-      isItWalletMetadataVersion(validV1_3Metadata, ItWalletSpecsVersion.V1_4),
+      isItWalletMetadataVersion(legacyV1_4Metadata, ItWalletSpecsVersion.V1_4),
+    ).toBe(true);
+    expect(
+      isItWalletMetadataVersion(legacyV1_4Metadata, ItWalletSpecsVersion.V1_3),
     ).toBe(false);
   });
 
@@ -172,5 +180,13 @@ describe("parseItWalletMetadataForVersion", () => {
         ItWalletSpecsVersion.V1_3,
       ),
     ).toThrow(/invalid v1\.3 metadata provided/);
+  });
+});
+
+describe("itWalletMetadataSchema", () => {
+  it("should parse v1.4 metadata using the legacy wallet_solution key", () => {
+    expect(itWalletMetadataSchema.parse(legacyV1_4Metadata)).toEqual(
+      legacyV1_4Metadata,
+    );
   });
 });
