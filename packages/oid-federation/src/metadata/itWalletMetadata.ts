@@ -84,13 +84,13 @@ export const itWalletMetadataV1_4 = z.strictObject({
     itWalletCredentialVerifierMetadataV1_3.optional(),
   [itWalletFederationEntityIdentifier]:
     itWalletFederationEntityMetadataV1_4.optional(),
-  [itWalletSolutionEntityIdentifierV1_4]:
-    itWalletSolutionEntityMetadataV1_4.optional(),
   /**
    * @deprecated Use `openid_wallet_provider`
    * The legacy key `wallet_solution` is accepted during the rollout period only.
    */
   [itWalletSolutionEntityIdentifierV1_3]:
+    itWalletSolutionEntityMetadataV1_4.optional(),
+  [itWalletSolutionEntityIdentifierV1_4]:
     itWalletSolutionEntityMetadataV1_4.optional(),
 });
 
