@@ -49,6 +49,21 @@ export const zAccessTokenResponse = z.looseObject({
 
 export type AccessTokenResponse = z.infer<typeof zAccessTokenResponse>;
 
+export const zAccessTokenResponseV1_5 = zAccessTokenResponse.extend({
+  authorization_details: z
+    .array(
+      z.looseObject({
+        credential_configuration_id: z.string(),
+        credential_identifiers: z.array(z.string()).nonempty(),
+        type: z.literal("openid_credential"),
+      }),
+    )
+    .nonempty(),
+  token_type: z.literal("DPoP"),
+});
+
+export type AccessTokenResponseV1_5 = z.infer<typeof zAccessTokenResponseV1_5>;
+
 export const zAccessTokenProfileJwtHeader = z.looseObject({
   ...zJwtHeader.shape,
   typ: z.enum(["application/at+jwt", "at+jwt"]),
