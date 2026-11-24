@@ -1,9 +1,10 @@
+/* eslint-disable max-lines-per-function */
 import {
   ValidationError,
   dateToSeconds,
   encodeToBase64Url,
 } from "@pagopa/io-wallet-utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ClientAttestationError } from "../../../errors";
 import {
@@ -181,6 +182,45 @@ describe("createWalletAttestationJwt v1.4", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe("with sub-second issuance time", () => {
+    const issuedAt = new Date("2026-01-01T00:00:00.900Z");
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(issuedAt);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each([
+      [
+        "a lifetime of 24 hours once truncated to seconds",
+        { expiresAt: new Date("2026-01-02T00:00:00.100Z") },
+        /exp must be strictly less than 24 hours after iat/,
+      ],
+      [
+        "expiresAt within the same second as iat",
+        { expiresAt: new Date("2026-01-01T00:00:00.950Z") },
+        /exp must be after iat/,
+      ],
+      [
+        "nbf within the same second as exp",
+        {
+          expiresAt: new Date("2026-01-01T01:00:00.950Z"),
+          nbf: new Date("2026-01-01T01:00:00.500Z"),
+        },
+        /nbf must be before exp/,
+      ],
+    ])("should reject %s before signing", async (_, overrides, error) => {
+      await expect(
+        createWalletAttestationJwt({ ...baseOptions, ...overrides }),
+      ).rejects.toThrow(error);
+      expect(mockSignJwt).not.toHaveBeenCalled();
+    });
   });
 
   it("should accept an expiration just below the 24 hour boundary", async () => {

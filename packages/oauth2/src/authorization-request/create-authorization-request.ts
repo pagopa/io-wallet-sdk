@@ -367,19 +367,22 @@ export async function createPushedAuthorizationRequest(
       );
     }
 
-    const iat = options.issuedAt ?? new Date();
-    const maxExp = addSecondsToDate(
-      iat,
-      MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS,
+    const issuedAt = options.issuedAt ?? new Date();
+    const iat = dateToSeconds(issuedAt);
+    const exp = dateToSeconds(
+      options.expiresAt ??
+        addSecondsToDate(
+          issuedAt,
+          MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS,
+        ),
     );
-    const exp = options.expiresAt ?? maxExp;
 
     if (exp <= iat) {
       throw new PushedAuthorizationRequestError(
         "Request object exp must be after iat",
       );
     }
-    if (exp > maxExp) {
+    if (exp - iat > MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS) {
       throw new PushedAuthorizationRequestError(
         `Request object lifetime must not exceed ${MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS} seconds`,
       );
@@ -393,8 +396,8 @@ export async function createPushedAuthorizationRequest(
       },
       payload: {
         aud: options.audience,
-        exp: dateToSeconds(exp),
-        iat: dateToSeconds(iat),
+        exp,
+        iat,
         iss: dpop.signer.publicJwk.kid,
         ...authorizationRequest,
       },
