@@ -211,6 +211,7 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  *
  * @throws {PushedAuthorizationRequestError} If DPoP signer is missing required properties (alg, publicJwk.kid)
  * @throws {PushedAuthorizationRequestError} If PKCE code challenge method is not supported
+ * @throws {PushedAuthorizationRequestError} If `expiresAt` is not after `issuedAt`
  * @throws {PushedAuthorizationRequestError} If `expiresAt` is more than 300 seconds after `issuedAt`
  * @throws {ZodError} If authorization request parameters fail validation
  *
@@ -367,17 +368,23 @@ export async function createPushedAuthorizationRequest(
     }
 
     const iat = options.issuedAt ?? new Date();
-    const exp =
-      options.expiresAt ??
-      addSecondsToDate(iat, MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS);
-    if (
-      dateToSeconds(exp) - dateToSeconds(iat) >
-      MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS
-    ) {
+    const maxExp = addSecondsToDate(
+      iat,
+      MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS,
+    );
+    const exp = options.expiresAt ?? maxExp;
+
+    if (exp <= iat) {
+      throw new PushedAuthorizationRequestError(
+        "Request object exp must be after iat",
+      );
+    }
+    if (exp > maxExp) {
       throw new PushedAuthorizationRequestError(
         `Request object lifetime must not exceed ${MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS} seconds`,
       );
     }
+
     const requestJwt = await options.callbacks.signJwt(dpop.signer, {
       header: {
         alg: dpop.signer.alg,

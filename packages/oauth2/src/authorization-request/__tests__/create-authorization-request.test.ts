@@ -475,6 +475,31 @@ describe("createPushedAuthorizationRequest - v1.4", () => {
     expect(mockCallbacks.signJwt).not.toHaveBeenCalled();
   });
 
+  it("should reject a request object lifetime above 300 seconds by less than a second", async () => {
+    await expect(
+      createPushedAuthorizationRequest({
+        ...optionsV1_4,
+        expiresAt: new Date("2025-01-01T00:05:00.950Z"),
+        issuedAt: new Date("2025-01-01T00:00:00.900Z"),
+      }),
+    ).rejects.toThrow(PushedAuthorizationRequestError);
+    expect(mockCallbacks.signJwt).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["before", "2024-12-31T23:59:59.000Z"],
+    ["equal to", "2025-01-01T00:00:00.000Z"],
+  ])("should reject expiresAt %s issuedAt", async (_, expiresAt) => {
+    await expect(
+      createPushedAuthorizationRequest({
+        ...optionsV1_4,
+        expiresAt: new Date(expiresAt),
+        issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+      }),
+    ).rejects.toThrow("Request object exp must be after iat");
+    expect(mockCallbacks.signJwt).not.toHaveBeenCalled();
+  });
+
   it("should keep typ jwt for v1.3", async () => {
     await createPushedAuthorizationRequest({
       ...optionsV1_4,
