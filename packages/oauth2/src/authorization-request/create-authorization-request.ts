@@ -25,7 +25,6 @@ import {
 } from "./z-authorization-request";
 
 const JWT_EXPIRY_SECONDS = 3600; // 1 hour
-const JWT_MAX_EXPIRY_SECONDS_V1_5 = 300;
 const RANDOM_BYTES_SIZE = 32;
 
 type AuthorizationRequest = AuthorizationRequestV1_0 | AuthorizationRequestV1_3;
@@ -131,14 +130,10 @@ export type CreatePushedAuthorizationRequestOptionsV1_3 =
 export type CreatePushedAuthorizationRequestOptionsV1_4 =
   BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_4>;
 
-export type CreatePushedAuthorizationRequestOptionsV1_5 =
-  BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_5>;
-
 export type CreatePushedAuthorizationRequestOptions =
   | CreatePushedAuthorizationRequestOptionsV1_0
   | CreatePushedAuthorizationRequestOptionsV1_3
-  | CreatePushedAuthorizationRequestOptionsV1_4
-  | CreatePushedAuthorizationRequestOptionsV1_5;
+  | CreatePushedAuthorizationRequestOptionsV1_4;
 
 type CreatePushedAuthorizationRequestOptionsSigned<
   TOptions extends CreatePushedAuthorizationRequestOptions,
@@ -283,15 +278,13 @@ export async function createPushedAuthorizationRequest(
 export async function createPushedAuthorizationRequest(
   options:
     | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_3>
-    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_4>
-    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_5>,
+    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_4>,
 ): Promise<PushedAuthorizationRequestUnsignedV1_3>;
 
 export async function createPushedAuthorizationRequest(
   options:
     | CreatePushedAuthorizationRequestOptionsV1_3
-    | CreatePushedAuthorizationRequestOptionsV1_4
-    | CreatePushedAuthorizationRequestOptionsV1_5,
+    | CreatePushedAuthorizationRequestOptionsV1_4,
 ): Promise<
   PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_3
 >;
@@ -325,7 +318,11 @@ export async function createPushedAuthorizationRequest(
     redirect_uri: options.redirectUri,
     response_type: "code",
     scope: options.scope,
-    state: options.state ?? (await generateState(options)),
+    state:
+      options.state ??
+      encodeToBase64Url(
+        await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
+      ),
   };
 
   const authorizationRequest = parseAuthorizationRequestByVersion(
@@ -344,35 +341,19 @@ export async function createPushedAuthorizationRequest(
       );
     }
 
-    const isV1_5 = options.config.isVersion(ItWalletSpecsVersion.V1_5);
     const iat = options.issuedAt ?? new Date();
-    const exp =
-      options.expiresAt ??
-      addSecondsToDate(
-        iat,
-        isV1_5 ? JWT_MAX_EXPIRY_SECONDS_V1_5 : JWT_EXPIRY_SECONDS,
-      );
-
-    if (
-      isV1_5 &&
-      (exp <= iat || exp > addSecondsToDate(iat, JWT_MAX_EXPIRY_SECONDS_V1_5))
-    ) {
-      throw new PushedAuthorizationRequestError(
-        `Request Object exp must be after iat and not more than ${JWT_MAX_EXPIRY_SECONDS_V1_5} seconds from iat`,
-      );
-    }
-
+    const exp = options.expiresAt ?? addSecondsToDate(iat, JWT_EXPIRY_SECONDS);
     const requestJwt = await options.callbacks.signJwt(dpop.signer, {
       header: {
         alg: dpop.signer.alg,
         kid: dpop.signer.publicJwk.kid,
-        typ: isV1_5 ? "oauth-authz-req+jwt" : "jwt",
+        typ: "jwt",
       },
       payload: {
         aud: options.audience,
         exp: dateToSeconds(exp),
         iat: dateToSeconds(iat),
-        iss: isV1_5 ? options.clientId : dpop.signer.publicJwk.kid,
+        iss: dpop.signer.publicJwk.kid,
         ...authorizationRequest,
       },
     });
@@ -416,19 +397,5 @@ function parseAuthorizationRequestByVersion(
       zAuthorizationRequestV1_3.parse(
         baseAuthorizationRequest,
       ) satisfies AuthorizationRequestV1_3,
-    // V1_5 reuses V1_3 authorization request schema.
-    [ItWalletSpecsVersion.V1_5]: () =>
-      zAuthorizationRequestV1_3.parse(
-        baseAuthorizationRequest,
-      ) satisfies AuthorizationRequestV1_3,
   });
-}
-
-async function generateState(
-  options: CreatePushedAuthorizationRequestOptions,
-): Promise<string> {
-  const random = await options.callbacks.generateRandom(RANDOM_BYTES_SIZE);
-  return options.config.isVersion(ItWalletSpecsVersion.V1_5)
-    ? Array.from(random, (b) => b.toString(16).padStart(2, "0")).join("")
-    : encodeToBase64Url(random);
 }

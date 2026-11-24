@@ -9,7 +9,6 @@ import {
   type VerifyJwtCallback,
   createFetcher,
   createVersionDispatcher,
-  dateToSeconds,
   decodeJwt,
   hasStatusOrThrow,
   parseWithErrorHandling,
@@ -23,10 +22,7 @@ import {
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
   zMetadataResponseV1_4,
-  zMetadataResponseV1_5,
   zPartialIssuerMetadata,
-  zSignedMetadataHeaderV1_5,
-  zSignedMetadataPayloadV1_5,
 } from "./z-metadata-response";
 
 interface RawFederationResult {
@@ -67,12 +63,10 @@ export interface FetchMetadataOptions {
   /** Callback providing the fetch implementation */
   callbacks: {
     /**
-     * JWT signature verification callback.
+     * Optional JWT signature verification callback.
      * When provided, the entity statement signature retrieved via federation
      * discovery is verified using this callback.
      * When omitted, trust is derived solely from TLS (the default behaviour).
-     * Required for v1.5, where it verifies the signed Credential Issuer metadata
-     * with the `x5c` signer method.
      */
     verifyJwt?: VerifyJwtCallback;
   } & Pick<CallbackContext, "fetch">;
@@ -392,104 +386,6 @@ async function fetchMetadataV1_4(
   );
 }
 
-async function fetchMetadataV1_5(
-  options: FetchMetadataOptions,
-): Promise<MetadataResponse> {
-  const { verifyJwt } = options.callbacks;
-  if (!verifyJwt) {
-    throw new ValidationError(
-      "callbacks.verifyJwt is required to verify v1.5 signed metadata",
-    );
-  }
-  const fetch = createFetcher(options.callbacks.fetch);
-
-  const issuerResponse = await fetch(
-    new URL(
-      ".well-known/openid-credential-issuer",
-      ensureTrailingSlash(options.credentialIssuerUrl),
-    ).toString(),
-    { headers: { Accept: "application/jwt" } },
-  );
-  await hasStatusOrThrow(200, UnexpectedStatusCodeError)(issuerResponse);
-  const signedMetadata = await issuerResponse.text();
-
-  const { header, payload } = decodeJwt({
-    errorMessagePrefix: "Error decoding signed credential issuer metadata:",
-    headerSchema: zSignedMetadataHeaderV1_5,
-    jwt: signedMetadata,
-    payloadSchema: zSignedMetadataPayloadV1_5,
-  });
-
-  if (
-    payload.sub !== options.credentialIssuerUrl ||
-    payload.credential_issuer !== options.credentialIssuerUrl
-  ) {
-    throw new ValidationError(
-      "Signed metadata sub and credential_issuer must match the requested Credential Issuer",
-    );
-  }
-  if (payload.exp !== undefined && payload.exp <= dateToSeconds()) {
-    throw new ValidationError("Signed metadata is expired");
-  }
-
-  const { verified } = await verifyJwt(
-    { alg: header.alg, method: "x5c", x5c: header.x5c },
-    { compact: signedMetadata, header, payload },
-  );
-  if (!verified) {
-    throw new ValidationError("Signed metadata signature verification failed");
-  }
-
-  assertAuthorizationServerAllowed(
-    options.authorizationServer,
-    payload.authorization_servers,
-  );
-  const authorizationServer =
-    options.authorizationServer ??
-    payload.authorization_servers?.[0] ??
-    payload.credential_issuer;
-  const parsedAuthorizationServer = z.url().safeParse(authorizationServer);
-  if (
-    !parsedAuthorizationServer.success ||
-    !parsedAuthorizationServer.data.startsWith("https://")
-  ) {
-    throw new ValidationError(
-      "selected authorization server is not a valid HTTPS URL",
-    );
-  }
-
-  const authServerResponse = await fetch(
-    new URL(
-      ".well-known/oauth-authorization-server",
-      ensureTrailingSlash(parsedAuthorizationServer.data),
-    ).toString(),
-  );
-  await hasStatusOrThrow(200, UnexpectedStatusCodeError)(authServerResponse);
-  const oauthAuthorizationServer = (await authServerResponse.json()) as Record<
-    string,
-    unknown
-  >;
-  if (oauthAuthorizationServer.issuer !== authorizationServer) {
-    throw new ValidationError(
-      "Authorization server metadata issuer does not match the selected authorization server",
-    );
-  }
-
-  return parseWithErrorHandling(
-    zMetadataResponseV1_5,
-    {
-      discoveredVia: "oid4vci",
-      metadata: {
-        oauth_authorization_server: oauthAuthorizationServer,
-        openid_credential_issuer: payload,
-      },
-      signed_metadata: signedMetadata,
-      x5c: header.x5c,
-    },
-    "Failed to parse v1.5 metadata response",
-  );
-}
-
 const dispatchFetchMetadata = createVersionDispatcher<
   FetchMetadataOptions,
   Promise<MetadataResponse>
@@ -497,7 +393,6 @@ const dispatchFetchMetadata = createVersionDispatcher<
   [ItWalletSpecsVersion.V1_0]: (o) => fetchMetadataV1_0(o),
   [ItWalletSpecsVersion.V1_3]: (o) => fetchMetadataV1_3(o),
   [ItWalletSpecsVersion.V1_4]: (o) => fetchMetadataV1_4(o),
-  [ItWalletSpecsVersion.V1_5]: (o) => fetchMetadataV1_5(o),
 });
 
 /**
@@ -516,14 +411,6 @@ const dispatchFetchMetadata = createVersionDispatcher<
  * **v1.4**: Same discovery strategy as v1.3, validated against the v1.4 metadata schema.
  * Returns `MetadataResponseV1_4`.
  *
- * **v1.5**: Fetches the signed Credential Issuer metadata from
- * `.well-known/openid-credential-issuer` (`Accept: application/jwt`), checks
- * `typ`, `x5c`, `sub` and `credential_issuer`, and verifies the signature via
- * `callbacks.verifyJwt` (`x5c` method) before use. The Authorization Server
- * metadata is then fetched from `.well-known/oauth-authorization-server` and its
- * `issuer` must match the selected server. Returns `MetadataResponseV1_5`,
- * including the raw `signed_metadata` and its `x5c` chain.
- *
  * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving
  * any path segment (e.g. `"https://issuer.example.it/v1"` →
  * `"https://issuer.example.it/v1/.well-known/..."`).
@@ -536,7 +423,7 @@ const dispatchFetchMetadata = createVersionDispatcher<
  *
  * @param options - Configuration for metadata fetching, including `config` for version routing
  * @returns Normalised metadata with `discoveredVia` indicating the discovery path used
- * @throws {UnexpectedStatusCodeError} If a fallback endpoint returns a non-200 status (v1.3/v1.4/v1.5)
+ * @throws {UnexpectedStatusCodeError} If a fallback endpoint returns a non-200 status (v1.3/v1.4 only)
  * @throws {ValidationError} If the response does not match the expected schema
  * @throws {FetchMetadataError} If federation discovery fails for v1.0, or for any other unexpected error
  */

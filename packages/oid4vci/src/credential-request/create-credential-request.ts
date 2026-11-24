@@ -7,7 +7,6 @@ import type {
   CredentialRequest,
   CredentialRequestOptions,
   CredentialRequestOptionsV1_4,
-  CredentialRequestOptionsV1_5,
 } from "./types";
 import type { CredentialRequestV1_0 } from "./v1.0/z-credential";
 import type { CredentialRequestV1_3 } from "./v1.3/z-credential";
@@ -26,9 +25,6 @@ const dispatchCreateCredentialRequest = createVersionDispatcher<
   [ItWalletSpecsVersion.V1_4]: (o) =>
     // V1_4 reuses V1_3 credential request schema — no breaking changes between versions.
     // Verified against compare/1.3.3...1.4.1: credential request parameters (format, proofs, key_attestation) identical.
-    V1_3.createCredentialRequest(o as V1_3.CredentialRequestOptionsV1_3),
-  // V1_5 reuses V1_3 credential request.
-  [ItWalletSpecsVersion.V1_5]: (o) =>
     V1_3.createCredentialRequest(o as V1_3.CredentialRequestOptionsV1_3),
 });
 
@@ -76,10 +72,7 @@ export function createCredentialRequest(
 ): Promise<CredentialRequestV1_0>;
 
 export function createCredentialRequest(
-  options:
-    | CredentialRequestOptionsV1_4
-    | CredentialRequestOptionsV1_5
-    | V1_3.CredentialRequestOptionsV1_3,
+  options: CredentialRequestOptionsV1_4 | V1_3.CredentialRequestOptionsV1_3,
 ): Promise<CredentialRequestV1_3>;
 
 export async function createCredentialRequest(

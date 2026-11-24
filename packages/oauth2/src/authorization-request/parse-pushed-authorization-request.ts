@@ -129,7 +129,5 @@ function getAuthorizationRequestSchema(config: IoWalletSdkConfig) {
     // V1_4 reuses V1_3 PAR schema — no breaking changes between versions.
     // Verified against compare/1.3.3...1.4.1: authorization request parameters identical.
     [ItWalletSpecsVersion.V1_4]: () => zAuthorizationRequestV1_3,
-    // V1_5 reuses V1_3 PAR schema.
-    [ItWalletSpecsVersion.V1_5]: () => zAuthorizationRequestV1_3,
   });
 }

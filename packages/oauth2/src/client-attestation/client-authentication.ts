@@ -84,8 +84,7 @@ export function clientAuthenticationAnonymous(): ClientAuthenticationCallback {
 export interface ClientAuthenticationWalletAttestationJwtOptions<
   V extends ItWalletSpecsVersion = ItWalletSpecsVersion,
 > {
-  callbacks: Partial<Pick<CallbackContext, "hash">> &
-    Pick<CallbackContext, "generateRandom" | "signJwt">;
+  callbacks: Pick<CallbackContext, "generateRandom" | "signJwt">;
   config: IoWalletSdkConfig<V>;
   walletAttestationJwt: string;
 }

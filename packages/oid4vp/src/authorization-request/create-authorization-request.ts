@@ -156,12 +156,6 @@ const dispatchCreateAuthorizationRequest = createVersionDispatcher<
       o as CreateAuthorizationRequestOptionsV1_4,
       zOpenid4vpAuthorizationRequestHeaderV1_3,
     ),
-  // V1_5 reuses V1_4 (presentation out of scope for 1.5).
-  [ItWalletSpecsVersion.V1_5]: async (o) =>
-    createAuthorizationRequestWithHeader(
-      o as CreateAuthorizationRequestOptionsV1_4,
-      zOpenid4vpAuthorizationRequestHeaderV1_3,
-    ),
 });
 
 /**

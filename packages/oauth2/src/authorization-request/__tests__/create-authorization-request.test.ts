@@ -4,7 +4,6 @@ import {
 } from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { PushedAuthorizationRequestError } from "../../errors";
 import { PkceCodeChallengeMethod, createPkce } from "../../pkce";
 import {
   CreatePushedAuthorizationRequestOptions,
@@ -429,47 +428,5 @@ describe("createPushedAuthorizationRequest - JAR signing policy", () => {
       client_id: "test-client-id",
       pkceCodeVerifier: "test-code-verifier",
     });
-  });
-});
-
-describe("createPushedAuthorizationRequest - v1.5", () => {
-  beforeEach(setupMocks);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { responseMode: _, ...baseWithoutResponseMode } = baseOptions;
-  const optionsV1_5: CreatePushedAuthorizationRequestOptions = {
-    ...baseWithoutResponseMode,
-    config: new IoWalletSdkConfig({
-      itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
-    }),
-  };
-
-  it("should sign the Request Object with typ, iss and a 300 seconds default exp", async () => {
-    const issuedAt = new Date("2025-01-01T00:00:00.000Z");
-    const iat = Math.floor(issuedAt.getTime() / 1000);
-
-    await createPushedAuthorizationRequest({ ...optionsV1_5, issuedAt });
-
-    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
-      header: expect.objectContaining({ typ: "oauth-authz-req+jwt" }),
-      payload: expect.objectContaining({
-        exp: iat + 300,
-        iat,
-        iss: "test-client-id",
-        state: "01020304",
-      }),
-    });
-  });
-
-  it("should throw when exp is more than 300 seconds after iat", async () => {
-    const issuedAt = new Date("2025-01-01T00:00:00.000Z");
-
-    await expect(
-      createPushedAuthorizationRequest({
-        ...optionsV1_5,
-        expiresAt: new Date("2025-01-01T00:05:01.000Z"),
-        issuedAt,
-      }),
-    ).rejects.toThrow(PushedAuthorizationRequestError);
   });
 });

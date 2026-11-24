@@ -2,11 +2,9 @@ import {
   type WalletAttestationOptionsV1_0,
   type WalletAttestationOptionsV1_3,
   type WalletAttestationOptionsV1_4,
-  type WalletAttestationOptionsV1_5,
   createWalletAttestationJwtV1_0,
   createWalletAttestationJwtV1_3,
   createWalletAttestationJwtV1_4,
-  createWalletAttestationJwtV1_5,
 } from "@pagopa/io-wallet-oauth2";
 import { KeyStorageLevelV1_3 } from "@pagopa/io-wallet-oid-federation";
 import {
@@ -64,29 +62,6 @@ function assertV1_4Options(
     throw new WalletProviderError(
       `Version mismatch: provider is configured for v1.4 but 'walletName' is required and missing`,
     );
-  }
-}
-
-function assertV1_5Options(
-  options: WalletAttestationOptions,
-): asserts options is WalletAttestationOptionsV1_5 {
-  if (options.signer.method !== "x5c") {
-    throw new WalletProviderError(
-      `Version mismatch: provider is configured for v1.5 (x5c) but received options with signer method "${options.signer.method}"`,
-    );
-  }
-  for (const key of [
-    "clientStatus",
-    "walletLink",
-    "walletName",
-    "walletSolutionId",
-    "walletVersion",
-  ] as const) {
-    if (!(key in options) || !options[key as keyof typeof options]) {
-      throw new WalletProviderError(
-        `Version mismatch: provider is configured for v1.5 but '${key}' is required and missing`,
-      );
-    }
   }
 }
 
@@ -328,23 +303,6 @@ export class WalletProvider {
           signer: options.signer,
           walletLink: options.walletLink,
           walletName: options.walletName,
-        });
-      },
-      [ItWalletSpecsVersion.V1_5]: () => {
-        assertV1_5Options(options);
-        return createWalletAttestationJwtV1_5({
-          callbacks: options.callbacks,
-          clientStatus: options.clientStatus,
-          dpopJwkPublic: options.dpopJwkPublic,
-          expiresAt: options.expiresAt,
-          nbf: options.nbf,
-          signer: options.signer,
-          walletLink: options.walletLink,
-          walletName: options.walletName,
-          walletSolutionCertificationInformation:
-            options.walletSolutionCertificationInformation,
-          walletSolutionId: options.walletSolutionId,
-          walletVersion: options.walletVersion,
         });
       },
     });

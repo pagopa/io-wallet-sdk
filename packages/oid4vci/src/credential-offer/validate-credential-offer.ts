@@ -137,19 +137,12 @@ const dispatchValidateCredentialOffer = createVersionDispatcher<
     throw new ItWalletSpecsVersionError(
       "validateCredentialOffer",
       ItWalletSpecsVersion.V1_0,
-      [
-        ItWalletSpecsVersion.V1_3,
-        ItWalletSpecsVersion.V1_4,
-        ItWalletSpecsVersion.V1_5,
-      ],
+      [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
     );
   },
   [ItWalletSpecsVersion.V1_3]: (o) =>
     validateCredentialOfferV1_3(o as ValidateCredentialOfferOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
-    validateCredentialOfferV1_4(o as ValidateCredentialOfferOptionsV1_4),
-  // V1_5 reuses V1_4 credential offer.
-  [ItWalletSpecsVersion.V1_5]: (o) =>
     validateCredentialOfferV1_4(o as ValidateCredentialOfferOptionsV1_4),
 });
 

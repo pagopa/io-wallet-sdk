@@ -99,15 +99,10 @@ export type VerifyCredentialRequestJwtProofOptionsV1_4 = {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
 } & Omit<VerifyCredentialRequestJwtProofOptionsV1_3, "config">;
 
-export type VerifyCredentialRequestJwtProofOptionsV1_5 = {
-  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_5>;
-} & Omit<VerifyCredentialRequestJwtProofOptionsV1_3, "config">;
-
 export type VerifyCredentialRequestJwtProofOptions =
   | VerifyCredentialRequestJwtProofOptionsV1_0
   | VerifyCredentialRequestJwtProofOptionsV1_3
-  | VerifyCredentialRequestJwtProofOptionsV1_4
-  | VerifyCredentialRequestJwtProofOptionsV1_5;
+  | VerifyCredentialRequestJwtProofOptionsV1_4;
 
 interface IsJwkInSetOptions {
   callbacks: Pick<CallbackContext, "hash">;
@@ -283,9 +278,6 @@ const dispatchVerifyProof = createVersionDispatcher<
   [ItWalletSpecsVersion.V1_3]: (o) =>
     verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
-    verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
-  // V1_5 reuses V1_3 proof verification.
-  [ItWalletSpecsVersion.V1_5]: (o) =>
     verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
 });
 

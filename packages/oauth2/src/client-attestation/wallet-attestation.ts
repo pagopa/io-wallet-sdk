@@ -24,11 +24,6 @@ import {
   type VerifyWalletAttestationJwtOptionsV1_4,
   verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_4,
 } from "./v1.4/verify-wallet-attestation-jwt";
-import {
-  type VerifiedWalletAttestationJwtV1_5,
-  type VerifyWalletAttestationJwtOptionsV1_5,
-  verifyWalletAttestationJwt as verifyWalletAttestationJwtV1_5,
-} from "./v1.5/verify-wallet-attestation-jwt";
 
 const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
   VerifyWalletAttestationJwtOptions,
@@ -40,21 +35,17 @@ const dispatchVerifyWalletAttestationJwt = createVersionDispatcher<
     verifyWalletAttestationJwtV1_3(o as VerifyWalletAttestationJwtOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
     verifyWalletAttestationJwtV1_4(o as VerifyWalletAttestationJwtOptionsV1_4),
-  [ItWalletSpecsVersion.V1_5]: (o) =>
-    verifyWalletAttestationJwtV1_5(o as VerifyWalletAttestationJwtOptionsV1_5),
 });
 
 export type VerifiedWalletAttestationJwt =
   | VerifiedWalletAttestationJwtV1_0
   | VerifiedWalletAttestationJwtV1_3
-  | VerifiedWalletAttestationJwtV1_4
-  | VerifiedWalletAttestationJwtV1_5;
+  | VerifiedWalletAttestationJwtV1_4;
 
 export type VerifyWalletAttestationJwtOptions =
   | VerifyWalletAttestationJwtOptionsV1_0
   | VerifyWalletAttestationJwtOptionsV1_3
-  | VerifyWalletAttestationJwtOptionsV1_4
-  | VerifyWalletAttestationJwtOptionsV1_5;
+  | VerifyWalletAttestationJwtOptionsV1_4;
 
 /**
  * Verifies a wallet/client attestation JWT according to the configured IT-Wallet version.
@@ -77,10 +68,6 @@ export async function verifyWalletAttestationJwt(
 export async function verifyWalletAttestationJwt(
   options: VerifyWalletAttestationJwtOptionsV1_4,
 ): Promise<VerifiedWalletAttestationJwtV1_4>;
-
-export async function verifyWalletAttestationJwt(
-  options: VerifyWalletAttestationJwtOptionsV1_5,
-): Promise<VerifiedWalletAttestationJwtV1_5>;
 
 export async function verifyWalletAttestationJwt(
   options: VerifyWalletAttestationJwtOptions,

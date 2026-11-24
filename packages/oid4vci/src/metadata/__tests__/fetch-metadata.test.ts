@@ -8,11 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CredentialOfferError, FetchMetadataError } from "../../errors";
 import { FetchMetadataOptions, fetchMetadata } from "../fetch-metadata";
-import {
-  MetadataResponseV1_0,
-  MetadataResponseV1_3,
-  MetadataResponseV1_5,
-} from "../z-metadata-response";
+import { MetadataResponseV1_3 } from "../z-metadata-response";
 
 const mockFetch = vi.fn();
 
@@ -200,7 +196,7 @@ describe("fetchMetadata", () => {
 
     const result = await fetchMetadata(baseOptions);
     expect(result.discoveredVia).toBe("federation");
-    expect((result as MetadataResponseV1_3).openid_federation_claims?.iss).toBe(
+    expect(result.openid_federation_claims?.iss).toBe(
       "https://issuer.example.it",
     );
     expect(result.metadata.openid_credential_issuer?.credential_issuer).toBe(
@@ -235,9 +231,7 @@ describe("fetchMetadata", () => {
 
     const result = await fetchMetadata(baseOptions);
     expect(result.discoveredVia).toBe("oid4vci");
-    expect(
-      (result as MetadataResponseV1_3).openid_federation_claims,
-    ).toBeUndefined();
+    expect(result.openid_federation_claims).toBeUndefined();
     expect(result.metadata.openid_credential_issuer?.credential_issuer).toBe(
       "https://issuer.example.it",
     );
@@ -273,9 +267,7 @@ describe("fetchMetadata", () => {
     const result = await fetchMetadata(baseOptions);
 
     expect(result.discoveredVia).toBe("oid4vci");
-    expect(
-      (result as MetadataResponseV1_3).openid_federation_claims,
-    ).toBeUndefined();
+    expect(result.openid_federation_claims).toBeUndefined();
     expect(result.metadata.openid_credential_issuer?.credential_issuer).toBe(
       "https://issuer.example.it",
     );
@@ -305,9 +297,7 @@ describe("fetchMetadata", () => {
     const result = await fetchMetadata(baseOptions);
 
     expect(result.discoveredVia).toBe("oid4vci");
-    expect(
-      (result as MetadataResponseV1_3).openid_federation_claims,
-    ).toBeUndefined();
+    expect(result.openid_federation_claims).toBeUndefined();
     expect(result.metadata.openid_credential_issuer?.credential_issuer).toBe(
       "https://issuer.example.it",
     );
@@ -397,7 +387,7 @@ describe("fetchMetadata - v1.0", () => {
 
     const result = await fetchMetadata(baseOptionsV1_0);
     expect(result.discoveredVia).toBe("federation");
-    expect((result as MetadataResponseV1_0).openid_federation_claims?.iss).toBe(
+    expect(result.openid_federation_claims?.iss).toBe(
       "https://issuer.example.it",
     );
     expect(result.metadata.oauth_authorization_server?.issuer).toBe(
@@ -987,161 +977,5 @@ describe("fetchMetadata - verifyJwt callback", () => {
         callbacks: { ...baseOptions.callbacks, verifyJwt },
       }),
     ).rejects.toThrow(ValidationError);
-  });
-});
-
-describe("fetchMetadata - v1.5 signed metadata", () => {
-  beforeEach(() => {
-    mockFetch.mockReset();
-  });
-
-  const configV1_5 = new IoWalletSdkConfig({
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
-  });
-  const issuerInfo = [
-    { data: "eyJ...WRPRC", format: "registration_cert" },
-    { data: { identifier: [] }, format: "registrar_dataset" },
-  ];
-  const signedPayload = {
-    ...credentialIssuerMetadata,
-    authorization_servers: ["https://auth.example.it"],
-    iat: 1_700_000_000,
-    iss: "https://issuer.example.it",
-    issuer_info: issuerInfo,
-    sub: "https://issuer.example.it",
-  };
-  const signedHeader = {
-    alg: "ES256",
-    typ: "openidvci-issuer-metadata+jwt",
-    x5c: ["MIIB...leaf"],
-  };
-
-  const buildSignedMetadata = (
-    header: Record<string, unknown> = signedHeader,
-    payload: Record<string, unknown> = signedPayload,
-  ) =>
-    `${base64UrlEncode(header)}.${base64UrlEncode(payload)}.${base64UrlEncode({ fake: "signature" })}`;
-
-  const mockResponses = (
-    signedMetadata = buildSignedMetadata(),
-    authServer: Record<string, unknown> = authorizationServerMetadata,
-  ) => {
-    mockFetch
-      .mockResolvedValueOnce({
-        status: 200,
-        text: vi.fn().mockResolvedValue(signedMetadata),
-      })
-      .mockResolvedValueOnce({
-        json: vi.fn().mockResolvedValue(authServer),
-        status: 200,
-      });
-  };
-
-  const optionsV1_5 = (
-    verifyJwt = vi.fn().mockResolvedValue({ verified: true }),
-  ): FetchMetadataOptions => ({
-    callbacks: { fetch: mockFetch, verifyJwt },
-    config: configV1_5,
-    credentialIssuerUrl: "https://issuer.example.it",
-  });
-
-  it("should return verified metadata with signed_metadata and x5c", async () => {
-    const verifyJwt = vi.fn().mockResolvedValue({ verified: true });
-    const signedMetadata = buildSignedMetadata();
-    mockResponses(signedMetadata);
-
-    const result = (await fetchMetadata(
-      optionsV1_5(verifyJwt),
-    )) as MetadataResponseV1_5;
-
-    expect(mockFetch).toHaveBeenNthCalledWith(
-      1,
-      "https://issuer.example.it/.well-known/openid-credential-issuer",
-      { headers: { Accept: "application/jwt" } },
-    );
-    expect(mockFetch).toHaveBeenNthCalledWith(
-      2,
-      "https://auth.example.it/.well-known/oauth-authorization-server",
-    );
-    expect(verifyJwt).toHaveBeenCalledWith(
-      { alg: "ES256", method: "x5c", x5c: ["MIIB...leaf"] },
-      expect.objectContaining({ compact: signedMetadata }),
-    );
-    expect(result.discoveredVia).toBe("oid4vci");
-    expect(result.signed_metadata).toBe(signedMetadata);
-    expect(result.x5c).toEqual(["MIIB...leaf"]);
-    expect(result.metadata.openid_credential_issuer?.issuer_info).toEqual(
-      issuerInfo,
-    );
-    expect(result.metadata.oauth_authorization_server?.issuer).toBe(
-      "https://auth.example.it",
-    );
-  });
-
-  it("should throw when verifyJwt is not provided", async () => {
-    await expect(
-      fetchMetadata({ ...optionsV1_5(), callbacks: { fetch: mockFetch } }),
-    ).rejects.toThrow(ValidationError);
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ["typ is wrong", { ...signedHeader, typ: "JWT" }],
-    ["x5c is missing", { alg: "ES256", typ: signedHeader.typ }],
-    ["alg is a MAC algorithm", { ...signedHeader, alg: "HS256" }],
-  ])("should throw when %s", async (_, header) => {
-    const verifyJwt = vi.fn();
-    mockResponses(buildSignedMetadata(header));
-
-    await expect(fetchMetadata(optionsV1_5(verifyJwt))).rejects.toThrow();
-    expect(verifyJwt).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ["sub", { ...signedPayload, sub: "https://other.example.it" }],
-    [
-      "credential_issuer",
-      { ...signedPayload, credential_issuer: "https://other.example.it" },
-    ],
-  ])(
-    "should throw ValidationError when %s differs from the requested issuer",
-    async (_, payload) => {
-      mockResponses(buildSignedMetadata(signedHeader, payload));
-
-      await expect(fetchMetadata(optionsV1_5())).rejects.toThrow(
-        ValidationError,
-      );
-    },
-  );
-
-  it("should throw ValidationError when signature verification fails", async () => {
-    mockResponses();
-
-    await expect(
-      fetchMetadata(
-        optionsV1_5(vi.fn().mockResolvedValue({ verified: false })),
-      ),
-    ).rejects.toThrow(ValidationError);
-    expect(mockFetch).toHaveBeenCalledOnce();
-  });
-
-  it("should throw CredentialOfferError when the selected authorization server is not declared", async () => {
-    mockResponses();
-
-    await expect(
-      fetchMetadata({
-        ...optionsV1_5(),
-        authorizationServer: "https://evil.example.it",
-      }),
-    ).rejects.toThrow(CredentialOfferError);
-  });
-
-  it("should throw ValidationError when the authorization server issuer does not match", async () => {
-    mockResponses(buildSignedMetadata(), {
-      ...authorizationServerMetadata,
-      issuer: "https://evil.example.it",
-    });
-
-    await expect(fetchMetadata(optionsV1_5())).rejects.toThrow(ValidationError);
   });
 });

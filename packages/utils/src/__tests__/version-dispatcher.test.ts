@@ -20,7 +20,6 @@ describe("createVersionDispatcher", () => {
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     const result = dispatch(makeOptions(ItWalletSpecsVersion.V1_0));
@@ -38,7 +37,6 @@ describe("createVersionDispatcher", () => {
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     const result = dispatch(makeOptions(ItWalletSpecsVersion.V1_3));
@@ -55,7 +53,6 @@ describe("createVersionDispatcher", () => {
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: v1_4Handler,
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     const result = dispatch(makeOptions(ItWalletSpecsVersion.V1_4));
@@ -74,7 +71,6 @@ describe("createVersionDispatcher", () => {
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     const result = await dispatch(makeOptions(ItWalletSpecsVersion.V1_0));
@@ -89,7 +85,6 @@ describe("createVersionDispatcher", () => {
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     const options = makeOptions(ItWalletSpecsVersion.V1_3);
@@ -103,7 +98,6 @@ describe("createVersionDispatcher", () => {
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     const unknownVersion = "v9.9" as unknown as ItWalletSpecsVersion;
@@ -124,7 +118,6 @@ describe("dispatchByVersion", () => {
       [ItWalletSpecsVersion.V1_0]: v1_0Handler,
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     expect(result).toBe("v1.0");
@@ -139,7 +132,6 @@ describe("dispatchByVersion", () => {
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: v1_3Handler,
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     expect(result).toBe("v1.3");
@@ -153,7 +145,6 @@ describe("dispatchByVersion", () => {
       [ItWalletSpecsVersion.V1_0]: vi.fn(),
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: v1_4Handler,
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     expect(result).toBe("v1.4");
@@ -167,7 +158,6 @@ describe("dispatchByVersion", () => {
       [ItWalletSpecsVersion.V1_0]: asyncHandler,
       [ItWalletSpecsVersion.V1_3]: vi.fn(),
       [ItWalletSpecsVersion.V1_4]: vi.fn(),
-      [ItWalletSpecsVersion.V1_5]: vi.fn(),
     });
 
     expect(result).toBe("async-result");
@@ -182,7 +172,6 @@ describe("dispatchByVersion", () => {
         [ItWalletSpecsVersion.V1_0]: vi.fn(),
         [ItWalletSpecsVersion.V1_3]: vi.fn(),
         [ItWalletSpecsVersion.V1_4]: vi.fn(),
-        [ItWalletSpecsVersion.V1_5]: vi.fn(),
       }),
     ).toThrow(ItWalletSpecsVersionError);
   });

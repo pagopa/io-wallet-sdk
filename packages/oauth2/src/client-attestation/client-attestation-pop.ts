@@ -13,7 +13,6 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 import { Oauth2Error } from "../errors";
-import { calculateDpopJwkThumbprint } from "./jwk-thumbprint";
 import {
   IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
   ItWalletClientAttestationPopJwtHeader,
@@ -140,7 +139,7 @@ interface BaseCreateClientAttestationPopJwtOptions<
    * Callback used for dpop
    * generateRandom is mandatory if jti is not provided
    */
-  callbacks: Partial<Pick<CallbackContext, "generateRandom" | "hash">> &
+  callbacks: Partial<Pick<CallbackContext, "generateRandom">> &
     Pick<CallbackContext, "signJwt">;
 
   /**
@@ -185,7 +184,6 @@ interface CreateClientAttestationPopJwtVersionOptions {
   };
   [ItWalletSpecsVersion.V1_3]: NoClientAttestationPopJwtExtraOptions;
   [ItWalletSpecsVersion.V1_4]: NoClientAttestationPopJwtExtraOptions;
-  [ItWalletSpecsVersion.V1_5]: NoClientAttestationPopJwtExtraOptions;
 }
 
 type CreateClientAttestationPopJwtExtraOptions<V extends ItWalletSpecsVersion> =
@@ -206,9 +204,6 @@ export type CreateClientAttestationPopJwtOptionsV1_3 =
 
 export type CreateClientAttestationPopJwtOptionsV1_4 =
   CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_4>;
-
-export type CreateClientAttestationPopJwtOptionsV1_5 =
-  CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion.V1_5>;
 
 export type CreateClientAttestationPopJwtOptions =
   CreateClientAttestationPopJwtOptionsForVersion<ItWalletSpecsVersion>;
@@ -273,26 +268,12 @@ export async function createClientAttestationPopJwt<
       );
     }
 
-    let iss = sub;
-    if (options.config.isVersion(ItWalletSpecsVersion.V1_5)) {
-      const { hash } = options.callbacks;
-      if (!hash) {
-        throw new Oauth2Error(
-          "A hash callback is required to create the client attestation PoP JWT",
-        );
-      }
-      iss = await calculateDpopJwkThumbprint({
-        callbacks: { hash },
-        dpopJwkPublic: jwk,
-      });
-    }
-
     const payload = parseWithErrorHandling(
       zItWalletClientAttestationPopJwtPayload,
       {
         aud: options.authorizationServer,
         iat: dateToSeconds(issuedAt),
-        iss,
+        iss: sub,
         jti,
         ...(options.config.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0
           ? {

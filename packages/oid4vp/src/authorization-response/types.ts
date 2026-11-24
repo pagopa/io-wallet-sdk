@@ -81,15 +81,10 @@ export type CreateAuthorizationResponseOptionsV1_4 = {
 /**
  * Union of all version-specific option types for the version router
  */
-export type CreateAuthorizationResponseOptionsV1_5 = {
-  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_5>;
-} & Omit<CreateAuthorizationResponseOptions, "config">;
-
 export type CreateAuthorizationResponseVersionedOptions =
   | CreateAuthorizationResponseOptionsV1_0
   | CreateAuthorizationResponseOptionsV1_3
-  | CreateAuthorizationResponseOptionsV1_4
-  | CreateAuthorizationResponseOptionsV1_5;
+  | CreateAuthorizationResponseOptionsV1_4;
 
 /**
  * Result of createAuthorizationResponse function.
