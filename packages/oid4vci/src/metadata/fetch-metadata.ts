@@ -436,8 +436,12 @@ async function fetchMetadataV1_5(
       "Signed metadata sub and credential_issuer must match the requested Credential Issuer",
     );
   }
-  if (payload.exp !== undefined && payload.exp <= dateToSeconds()) {
+  const nowInSeconds = dateToSeconds();
+  if (payload.exp !== undefined && payload.exp <= nowInSeconds) {
     throw new ValidationError("Signed metadata is expired");
+  }
+  if (payload.nbf !== undefined && payload.nbf > nowInSeconds) {
+    throw new ValidationError("Signed metadata is not yet valid");
   }
 
   const { verified } = await verifyJwt(

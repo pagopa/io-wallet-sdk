@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function */
+import { itWalletMetadataSchema } from "@pagopa/io-wallet-oid-federation";
 import {
   IoWalletSdkConfig,
   ItWalletSpecsVersion,
@@ -1187,6 +1188,28 @@ describe("fetchMetadata - v1.5 signed metadata", () => {
     },
   );
 
+  it.each([
+    ["expired", { exp: Math.floor(Date.now() / 1000) - 60 }, /expired/],
+    [
+      "not yet valid",
+      { nbf: Math.floor(Date.now() / 1000) + 3600 },
+      /not yet valid/,
+    ],
+  ])(
+    "should throw ValidationError when signed metadata is %s",
+    async (_, claims, message) => {
+      const verifyJwt = vi.fn();
+      mockResponses(
+        buildSignedMetadata(signedHeader, { ...signedPayload, ...claims }),
+      );
+
+      await expect(fetchMetadata(optionsV1_5(verifyJwt))).rejects.toThrow(
+        message,
+      );
+      expect(verifyJwt).not.toHaveBeenCalled();
+    },
+  );
+
   it("should throw ValidationError when signature verification fails", async () => {
     mockResponses();
 
@@ -1216,5 +1239,52 @@ describe("fetchMetadata - v1.5 signed metadata", () => {
     });
 
     await expect(fetchMetadata(optionsV1_5())).rejects.toThrow(ValidationError);
+  });
+});
+
+describe("itWalletMetadataSchema - v1.5 credential configurations", () => {
+  const [configId, config] = Object.entries(
+    credentialIssuerMetadata.credential_configurations_supported,
+  )[0] as [string, Record<string, unknown>];
+  const parentCredentials = ["urn:eudi:pid:it:1"];
+
+  it("should accept a configuration with only parent_credentials", () => {
+    const configWithoutSources = { ...config };
+    delete configWithoutSources.authentic_sources;
+
+    const parsed = itWalletMetadataSchema.parse({
+      openid_credential_issuer: {
+        ...credentialIssuerMetadata,
+        credential_configurations_supported: {
+          [configId]: {
+            ...configWithoutSources,
+            parent_credentials: parentCredentials,
+          },
+        },
+      },
+    });
+
+    expect(
+      parsed.openid_credential_issuer?.credential_configurations_supported[
+        configId
+      ],
+    ).toMatchObject({ parent_credentials: parentCredentials });
+  });
+
+  it("should keep parent_credentials when authentic_sources is also present", () => {
+    const parsed = itWalletMetadataSchema.parse({
+      openid_credential_issuer: {
+        ...credentialIssuerMetadata,
+        credential_configurations_supported: {
+          [configId]: { ...config, parent_credentials: parentCredentials },
+        },
+      },
+    });
+
+    expect(
+      parsed.openid_credential_issuer?.credential_configurations_supported[
+        configId
+      ],
+    ).toMatchObject({ parent_credentials: parentCredentials });
   });
 });

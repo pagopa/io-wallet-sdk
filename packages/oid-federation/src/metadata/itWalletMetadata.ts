@@ -93,7 +93,10 @@ export const itWalletMetadataV1_5 = itWalletMetadataV1_4.extend({
 // Order matters: v1.4 only relaxes v1.3 wallet_solution constraints, so every v1.3
 // document also satisfies v1.4. The narrower schema must stay first, otherwise v1.3
 // documents would match the v1.4 branch. New versions go after the ones they relax.
-export const itWalletMetadataSchema = itWalletMetadataV1_3
+// Exception: v1.5 goes first because the v1.3/v1.4 credential configuration schema
+// would strip `parent_credentials` when `authentic_sources` is also present.
+export const itWalletMetadataSchema = itWalletMetadataV1_5
+  .or(itWalletMetadataV1_3)
   .or(itWalletMetadataV1_4)
   .or(itWalletMetadataV1_0);
 

@@ -75,6 +75,17 @@ export type VerifyKeyAttestationJwtOptionsV1_5 = {
 } & Omit<VerifyKeyAttestationJwtOptions, "config">;
 
 /**
+ * Options for the v1.3/v1.4 key attestation profile (also used when `config` is omitted).
+ */
+export type VerifyKeyAttestationJwtOptionsLegacy = {
+  config?: IoWalletSdkConfig<
+    | ItWalletSpecsVersion.V1_0
+    | ItWalletSpecsVersion.V1_3
+    | ItWalletSpecsVersion.V1_4
+  >;
+} & Omit<VerifyKeyAttestationJwtOptions, "config">;
+
+/**
  * Result of a successful v1.5 key attestation JWT verification.
  */
 export type VerifyKeyAttestationJwtResultV1_5 = {
@@ -109,8 +120,12 @@ export async function verifyKeyAttestationJwt(
 ): Promise<VerifyKeyAttestationJwtResultV1_5>;
 
 export async function verifyKeyAttestationJwt(
-  options: VerifyKeyAttestationJwtOptions,
+  options: VerifyKeyAttestationJwtOptionsLegacy,
 ): Promise<VerifyKeyAttestationJwtResult>;
+
+export async function verifyKeyAttestationJwt(
+  options: VerifyKeyAttestationJwtOptions,
+): Promise<VerifyKeyAttestationJwtResult | VerifyKeyAttestationJwtResultV1_5>;
 
 export async function verifyKeyAttestationJwt(
   options: VerifyKeyAttestationJwtOptions,
