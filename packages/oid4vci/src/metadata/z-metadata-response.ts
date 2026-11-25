@@ -58,11 +58,12 @@ export const zMetadataResponseV1_5 = z.object({
   x5c: zCertificateChain,
 });
 
+// V1_5 must come first: V1_3/V1_4 also accept V1_5 responses and would strip signed_metadata and x5c.
 export const zMetadataResponse = z.union([
+  zMetadataResponseV1_5,
   zMetadataResponseV1_0,
   zMetadataResponseV1_3,
   zMetadataResponseV1_4,
-  zMetadataResponseV1_5,
 ]);
 
 export type MetadataResponseV1_0 = z.infer<typeof zMetadataResponseV1_0>;

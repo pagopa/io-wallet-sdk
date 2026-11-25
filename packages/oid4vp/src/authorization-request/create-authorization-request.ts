@@ -99,10 +99,17 @@ export type CreateAuthorizationRequestOptionsV1_4 =
     JarOptionsV1_4
   >;
 
+export type CreateAuthorizationRequestOptionsV1_5 =
+  BaseCreateAuthorizationRequestOptions<
+    ItWalletSpecsVersion.V1_5,
+    JarOptionsV1_4
+  >;
+
 export type CreateAuthorizationRequestOptions =
   | CreateAuthorizationRequestOptionsV1_0
   | CreateAuthorizationRequestOptionsV1_3
-  | CreateAuthorizationRequestOptionsV1_4;
+  | CreateAuthorizationRequestOptionsV1_4
+  | CreateAuthorizationRequestOptionsV1_5;
 
 interface BaseCreateAuthorizationRequestResult<TJar extends JarOptions> {
   authorizationRequest: string;
@@ -159,7 +166,7 @@ const dispatchCreateAuthorizationRequest = createVersionDispatcher<
   // V1_5 reuses V1_4 (presentation out of scope for 1.5).
   [ItWalletSpecsVersion.V1_5]: async (o) =>
     createAuthorizationRequestWithHeader(
-      o as CreateAuthorizationRequestOptionsV1_4,
+      o as CreateAuthorizationRequestOptionsV1_5,
       zOpenid4vpAuthorizationRequestHeaderV1_3,
     ),
 });
@@ -183,7 +190,9 @@ export async function createAuthorizationRequest(
 ): Promise<CreateAuthorizationRequestResultV1_3>;
 
 export async function createAuthorizationRequest(
-  options: CreateAuthorizationRequestOptionsV1_4,
+  options:
+    | CreateAuthorizationRequestOptionsV1_4
+    | CreateAuthorizationRequestOptionsV1_5,
 ): Promise<CreateAuthorizationRequestResultV1_4>;
 
 export async function createAuthorizationRequest(

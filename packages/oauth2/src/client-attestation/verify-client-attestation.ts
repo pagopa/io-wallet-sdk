@@ -2,6 +2,7 @@ import {
   type CallbackContext,
   HashAlgorithm,
   IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   calculateJwkThumbprint,
 } from "@pagopa/io-wallet-utils";
 
@@ -75,7 +76,8 @@ export interface VerifyClientAttestationOptions {
    * The client id provided in the authorization request, if any.
    *
    * Pass this when the authorization request includes a `client_id` parameter.
-   * The function will verify that it matches the `sub` claim in the client attestation JWT.
+   * The function will verify that it matches the `sub` claim in the client attestation JWT
+   * (for V1_5, the JWK thumbprint of the attestation `cnf.jwk`).
    * If not provided, no client_id validation is performed.
    */
   requestClientId?: string;
@@ -123,14 +125,21 @@ export async function verifyClientAttestation(
     now: options.now,
   });
 
-  if (
-    options.requestClientId &&
-    options.requestClientId !== clientAttestation.payload.sub
-  ) {
-    // Ensure the client id matches with the client id provided in the authorization request
-    throw new Oauth2Error(
-      `The client_id '${options.requestClientId}' in the request does not match the client id '${clientAttestation.payload.sub}' in the client attestation`,
-    );
+  if (options.requestClientId) {
+    // From V1_5 the WIA `sub` is the wallet solution URL and the client_id is the cnf.jwk thumbprint
+    const attestedClientId = options.config.isVersion(ItWalletSpecsVersion.V1_5)
+      ? await calculateJwkThumbprint({
+          hashAlgorithm: HashAlgorithm.Sha256,
+          hashCallback: options.callbacks.hash,
+          jwk: clientAttestation.payload.cnf.jwk,
+        })
+      : clientAttestation.payload.sub;
+
+    if (options.requestClientId !== attestedClientId) {
+      throw new Oauth2Error(
+        `The client_id '${options.requestClientId}' in the request does not match the client id '${attestedClientId}' in the client attestation`,
+      );
+    }
   }
 
   if (

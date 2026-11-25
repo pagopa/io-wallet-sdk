@@ -12,6 +12,7 @@ import {
   MetadataResponseV1_0,
   MetadataResponseV1_3,
   MetadataResponseV1_5,
+  zMetadataResponse,
 } from "../z-metadata-response";
 
 const mockFetch = vi.fn();
@@ -1076,6 +1077,18 @@ describe("fetchMetadata - v1.5 signed metadata", () => {
     expect(result.metadata.oauth_authorization_server?.issuer).toBe(
       "https://auth.example.it",
     );
+  });
+
+  it("should keep signed_metadata and x5c when parsed with zMetadataResponse", async () => {
+    const signedMetadata = buildSignedMetadata();
+    mockResponses(signedMetadata);
+
+    const parsed = zMetadataResponse.parse(
+      await fetchMetadata(optionsV1_5()),
+    ) as MetadataResponseV1_5;
+
+    expect(parsed.signed_metadata).toBe(signedMetadata);
+    expect(parsed.x5c).toEqual(["MIIB...leaf"]);
   });
 
   it("should throw when verifyJwt is not provided", async () => {
