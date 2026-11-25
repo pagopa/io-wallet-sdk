@@ -33,3 +33,7 @@ export const signedAuthorizationRequestJwtHeaderTyp =
 const zJwtAuthorizationRequestJwtHeaderTyp = z.literal("jwt");
 export const jwtAuthorizationRequestJwtHeaderTyp =
   zJwtAuthorizationRequestJwtHeaderTyp.value;
+
+export type JarRequestObjectTyp =
+  | typeof jwtAuthorizationRequestJwtHeaderTyp
+  | typeof signedAuthorizationRequestJwtHeaderTyp;

@@ -30,7 +30,7 @@ describe("verifyWalletAttestationJwt v1.4", () => {
 
   const validPayload = {
     cnf: { jwk: mockJwk },
-    exp: Math.floor(new Date("2099-01-01").getTime() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 3600,
     iat: Math.floor(Date.now() / 1000),
     iss: "https://wallet-provider.example.com",
     sub: "test-client-id",
@@ -44,6 +44,21 @@ describe("verifyWalletAttestationJwt v1.4", () => {
       encodeToBase64Url(JSON.stringify(payload)),
       "signature",
     ].join(".");
+
+  it("should reject a JWT whose lifetime is not strictly below 24 hours", async () => {
+    const jwt = buildJwt(validHeader, {
+      ...validPayload,
+      exp: validPayload.iat + 86400,
+    });
+
+    await expect(
+      verifyWalletAttestationJwt({
+        callbacks: { verifyJwt: mockVerifyJwt },
+        config: mockConfig,
+        walletAttestationJwt: jwt,
+      }),
+    ).rejects.toThrow(/strictly less than 24 hours/);
+  });
 
   it("should verify a valid v1.4 wallet attestation JWT", async () => {
     const jwt = buildJwt(validHeader, validPayload);

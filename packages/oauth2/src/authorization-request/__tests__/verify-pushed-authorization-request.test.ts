@@ -18,6 +18,8 @@ import {
   verifyPushedAuthorizationRequest,
 } from "../verify-pushed-authorization-request";
 
+const TTL_SECONDS = 300;
+
 describe("verifyPushedAuthorizationRequest", () => {
   const mockJwk: Jwk = {
     crv: "P-256",
@@ -101,7 +103,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         response_type: "code",
@@ -111,7 +113,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -119,7 +121,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -151,11 +153,146 @@ describe("verifyPushedAuthorizationRequest", () => {
       expect(result.jar?.signer).toBeDefined();
     });
 
+    it("should reject a JAR whose lifetime exceeds the maximum TTL", async () => {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const jarJwt = createMockJarJwt({
+        aud: "https://auth.example.com",
+        client_id: "client-123",
+        exp: nowSeconds + TTL_SECONDS + 1,
+        iat: nowSeconds,
+        iss: "client-123",
+        response_type: "code",
+        scope: "openid",
+      });
+
+      const clientAttestationJwt = createMockWalletAttestationJwt({
+        aal: "high",
+        cnf: { jwk: mockJwk },
+        exp: nowSeconds + TTL_SECONDS,
+        iat: nowSeconds,
+        iss: "https://issuer.example.com",
+        sub: "client-123",
+      });
+
+      const clientAttestationPopJwt = createMockClientAttestationPopJwt({
+        aud: "https://auth.example.com",
+        exp: nowSeconds + TTL_SECONDS,
+        iat: nowSeconds,
+        iss: "client-123",
+        jti: "test-jti",
+      });
+
+      await expect(
+        verifyPushedAuthorizationRequest({
+          authorizationRequest: mockAuthorizationRequest,
+          authorizationRequestJwt: {
+            jwt: jarJwt,
+            signer: mockJwtSigner,
+          },
+          authorizationServerMetadata: mockAuthorizationServerMetadata,
+          callbacks: mockCallbacks,
+          clientAttestation: {
+            clientAttestationPopJwt,
+            walletAttestationJwt: clientAttestationJwt,
+          },
+          config: mockConfig,
+          request: mockRequest,
+        }),
+      ).rejects.toThrow(
+        `exp claim in request JWT must not be more than ${TTL_SECONDS} seconds after iat`,
+      );
+    });
+
+    it("should reject a V1_4 JAR with typ 'jwt'", async () => {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const jarJwt = createMockJwt(
+        { alg: "ES256", typ: "jwt" },
+        {
+          aud: "https://auth.example.com",
+          client_id: "client-123",
+          exp: nowSeconds + TTL_SECONDS,
+          iat: nowSeconds,
+          iss: "client-123",
+          response_type: "code",
+          scope: "openid",
+        },
+      );
+
+      await expect(
+        verifyPushedAuthorizationRequest({
+          authorizationRequest: mockAuthorizationRequest,
+          authorizationRequestJwt: {
+            jwt: jarJwt,
+            signer: mockJwtSigner,
+          },
+          authorizationServerMetadata: mockAuthorizationServerMetadata,
+          callbacks: mockCallbacks,
+          clientAttestation: {
+            clientAttestationPopJwt: "unused",
+            walletAttestationJwt: "unused",
+          },
+          config: new IoWalletSdkConfig({
+            itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+          }),
+          request: mockRequest,
+        }),
+      ).rejects.toThrow(
+        'Invalid Jar Request Object typ header. Expected "oauth-authz-req+jwt", received "jwt".',
+      );
+    });
+
+    it("should accept a V1_0 JAR with typ 'jwt'", async () => {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const jarJwt = createMockJwt(
+        { alg: "ES256", typ: "jwt" },
+        {
+          aud: "https://auth.example.com",
+          client_id: "client-123",
+          exp: nowSeconds + TTL_SECONDS,
+          iat: nowSeconds,
+          iss: "client-123",
+          response_type: "code",
+          scope: "openid",
+        },
+      );
+
+      const result = await verifyPushedAuthorizationRequest({
+        authorizationRequest: mockAuthorizationRequest,
+        authorizationRequestJwt: {
+          jwt: jarJwt,
+          signer: mockJwtSigner,
+        },
+        authorizationServerMetadata: mockAuthorizationServerMetadata,
+        callbacks: mockCallbacks,
+        clientAttestation: {
+          clientAttestationPopJwt: createMockClientAttestationPopJwt({
+            aud: "https://auth.example.com",
+            exp: nowSeconds + TTL_SECONDS,
+            iat: nowSeconds,
+            iss: "client-123",
+            jti: "test-jti",
+          }),
+          walletAttestationJwt: createMockWalletAttestationJwt({
+            aal: "high",
+            cnf: { jwk: mockJwk },
+            exp: nowSeconds + TTL_SECONDS,
+            iat: nowSeconds,
+            iss: "https://issuer.example.com",
+            sub: "client-123",
+          }),
+        },
+        config: mockConfig,
+        request: mockRequest,
+      });
+
+      expect(result.jar?.jwt.header.typ).toBe("jwt");
+    });
+
     it("should verify pushed authorization request without JAR", async () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -163,7 +300,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -194,7 +331,7 @@ describe("verifyPushedAuthorizationRequest", () => {
         client_id: "client-123",
         code_challenge: "test-challenge",
         code_challenge_method: "S256",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         redirect_uri: "https://client.example.com/callback",
@@ -206,7 +343,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -214,7 +351,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -290,7 +427,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -298,7 +435,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -332,7 +469,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -340,7 +477,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -373,7 +510,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -388,7 +525,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -396,7 +533,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -433,7 +570,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -448,7 +585,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -456,7 +593,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -492,7 +629,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -500,7 +637,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -508,7 +645,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -547,7 +684,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -555,7 +692,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -563,7 +700,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -597,7 +734,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -632,7 +769,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         scope: "openid",
@@ -648,7 +785,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -656,7 +793,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -697,7 +834,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -712,7 +849,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -720,7 +857,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -764,7 +901,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -779,7 +916,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: differentJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -787,7 +924,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -828,7 +965,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(customDate.getTime() / 1000) + TTL_SECONDS,
         iat: Math.floor(customDate.getTime() / 1000),
         iss: "client-123",
       });
@@ -836,7 +973,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(customDate.getTime() / 1000) + 3600,
+        exp: Math.floor(customDate.getTime() / 1000) + TTL_SECONDS,
         iat: Math.floor(customDate.getTime() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -844,7 +981,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(customDate.getTime() / 1000) + 3600,
+        exp: Math.floor(customDate.getTime() / 1000) + TTL_SECONDS,
         iat: Math.floor(customDate.getTime() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -878,7 +1015,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(customDate.getTime() / 1000) + TTL_SECONDS,
         iat: Math.floor(customDate.getTime() / 1000),
         iss: "client-123",
       });
@@ -893,7 +1030,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -901,7 +1038,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -940,7 +1077,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const jarJwt = createMockJarJwt({
         aud: "https://auth.example.com",
         client_id: "client-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
       });
@@ -948,7 +1085,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -956,7 +1093,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -996,7 +1133,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -1004,7 +1141,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",
@@ -1036,7 +1173,7 @@ describe("verifyPushedAuthorizationRequest", () => {
       const clientAttestationJwt = createMockWalletAttestationJwt({
         aal: "high",
         cnf: { jwk: mockJwk },
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "https://issuer.example.com",
         sub: "client-123",
@@ -1044,7 +1181,7 @@ describe("verifyPushedAuthorizationRequest", () => {
 
       const clientAttestationPopJwt = createMockClientAttestationPopJwt({
         aud: "https://auth.example.com",
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
         iat: Math.floor(Date.now() / 1000),
         iss: "client-123",
         jti: "test-jti",

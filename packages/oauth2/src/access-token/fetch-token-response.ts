@@ -80,7 +80,7 @@ export async function fetchTokenResponse(
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(tokenResponse);
 
     return parseWithErrorHandling(
-      zAccessTokenResponse,
+      zAccessTokenResponse, // TODO: [SIW-5560] Make authorization_details mandatory in the v1.4 response
       await tokenResponse.json(),
       "Failed to parse token response",
     );

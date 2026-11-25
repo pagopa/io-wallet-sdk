@@ -263,3 +263,69 @@ describe("createItWalletEntityConfiguration v1.3 metadata", () => {
     ).toHaveProperty("issuerauth_alg_values");
   });
 });
+
+describe("createItWalletEntityConfiguration v1.4 metadata", () => {
+  const mockClaimsV1_4 = {
+    ...mockClaims,
+    metadata: {
+      federation_entity: {
+        ...mockClaims.metadata.federation_entity,
+        homepage_uri: undefined,
+        organization_uri: "https://io.italia.it",
+      },
+      openid_wallet_provider: {
+        jwks: { keys: [mockTestKey] },
+        logo_uri: "https://wallet.example.com/logo.svg",
+        wallet_metadata: {
+          authorization_endpoint: "https://wallet.example.com/authorize",
+          client_id_prefixes_supported: ["openid_federation"],
+          credential_offer_endpoint:
+            "https://wallet.example.com/credential_offer",
+          request_object_signing_alg_values_supported: ["ES256"],
+          vp_formats_supported: { "dc+sd-jwt": {} },
+          wallet_name: "Test Wallet",
+        },
+      },
+    },
+  };
+
+  it("should create a signed entity configuration JWT with openid_wallet_provider metadata", async () => {
+    const result = await createItWalletEntityConfiguration({
+      claims: mockClaimsV1_4,
+      header: mockHeader,
+      signJwtCallback: mockSignJwtCallback,
+    });
+
+    const payloadB64 = result.split(".")[1];
+    if (!payloadB64) throw new Error("JWT payload missing");
+    const decodedPayload = JSON.parse(Base64.decode(payloadB64));
+    expect(
+      decodedPayload.metadata.openid_wallet_provider.wallet_metadata
+        .wallet_name,
+    ).toBe("Test Wallet");
+    expect(decodedPayload.metadata.federation_entity.organization_uri).toBe(
+      "https://io.italia.it",
+    );
+    expect(decodedPayload.metadata.wallet_solution).toBeUndefined();
+  });
+
+  it("should reject federation_entity without homepage_uri and organization_uri", async () => {
+    await expect(
+      createItWalletEntityConfiguration({
+        claims: {
+          ...mockClaimsV1_4,
+          metadata: {
+            ...mockClaimsV1_4.metadata,
+            federation_entity: {
+              ...mockClaims.metadata.federation_entity,
+              homepage_uri: undefined,
+              organization_uri: undefined,
+            },
+          },
+        },
+        header: mockHeader,
+        signJwtCallback: mockSignJwtCallback,
+      }),
+    ).rejects.toThrow("invalid payload claims provided");
+  });
+});

@@ -294,13 +294,16 @@ export async function createAccessTokenResponse(
       refreshToken = refreshTokenSignResult.jwt;
     }
 
-    const accessTokenResponse = parseWithErrorHandling(zAccessTokenResponse, {
-      ...options.additionalPayload,
-      access_token: jwt,
-      expires_in: options.expiresInSeconds,
-      refresh_token: refreshToken,
-      token_type: options.tokenType,
-    } satisfies AccessTokenResponse);
+    const accessTokenResponse = parseWithErrorHandling(
+      zAccessTokenResponse, // TODO: [SIW-5560] Make authorization_details mandatory in the v1.4 response
+      {
+        ...options.additionalPayload,
+        access_token: jwt,
+        expires_in: options.expiresInSeconds,
+        refresh_token: refreshToken,
+        token_type: options.tokenType,
+      } satisfies AccessTokenResponse,
+    );
 
     return accessTokenResponse;
   } catch (error) {
