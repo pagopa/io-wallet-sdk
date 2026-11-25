@@ -27,6 +27,7 @@ This SDK is a monorepo containing the following packages:
 | **`@pagopa/io-wallet-oid4vci`**        | Manages **Verifiable Credential Issuance** flows. Use this to build Issuer services for credentials like the `mso_mdoc` (e.g., Digital Driver's License). |
 | **`@pagopa/io-wallet-oid4vp`**         | Manages **Verifiable Presentation** flows. Use this to build Relying Party services that request and verify user credentials from the IT-Wallet.          |
 | **`@pagopa/io-wallet-utils`**          | Shared types, configuration (`IoWalletSdkConfig`, `ItWalletSpecsVersion`), and utilities used across all packages.                                        |
+| **`@pagopa/io-wallet-eudi-trust`**     | Validates EUDI Wallet artifacts using Lists of Trusted Entities (ETSI TS 119 602). |
 
 ## Documentation
 
@@ -51,13 +52,13 @@ Install the packages for your role:
 
 ```bash
 # Relying Party (Verifier)
-pnpm add @pagopa/io-wallet-oid4vp @pagopa/io-wallet-oid-federation @pagopa/io-wallet-utils
+pnpm add @pagopa/io-wallet-oid4vp @pagopa/io-wallet-oid-federation @pagopa/io-wallet-eudi-trust @pagopa/io-wallet-utils
 
 # Credential Issuer
-pnpm add @pagopa/io-wallet-oid4vci @pagopa/io-wallet-oid-federation @pagopa/io-wallet-utils
+pnpm add @pagopa/io-wallet-oid4vci @pagopa/io-wallet-oid-federation @pagopa/io-wallet-eudi-trust @pagopa/io-wallet-utils
 
 # Wallet Provider
-pnpm add @pagopa/io-wallet-oid4vci @pagopa/io-wallet-oauth2 @pagopa/io-wallet-oid-federation @pagopa/io-wallet-utils
+pnpm add @pagopa/io-wallet-oid4vci @pagopa/io-wallet-oauth2 @pagopa/io-wallet-oid-federation @pagopa/io-wallet-eudi-trust @pagopa/io-wallet-utils
 ```
 
 ## Callback Pattern
