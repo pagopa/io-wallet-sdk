@@ -1079,6 +1079,66 @@ describe("fetchMetadata - v1.5 signed metadata", () => {
     );
   });
 
+  it.each([
+    [
+      "parent_credentials only",
+      { parent_credentials: ["urn:eudi:pid:it:1"] },
+      true,
+    ],
+    ["neither authentic_sources nor parent_credentials", {}, false],
+  ])(
+    "should handle a credential configuration with %s",
+    async (_, sourceFields, isValid) => {
+      const [configId, config] = Object.entries(
+        credentialIssuerMetadata.credential_configurations_supported,
+      )[0] as [string, Record<string, unknown>];
+      const configWithoutSources = { ...config };
+      delete configWithoutSources.authentic_sources;
+      mockResponses(
+        buildSignedMetadata(signedHeader, {
+          ...signedPayload,
+          credential_configurations_supported: {
+            [configId]: { ...configWithoutSources, ...sourceFields },
+          },
+        }),
+      );
+
+      const result = fetchMetadata(optionsV1_5());
+
+      if (isValid) {
+        await expect(result).resolves.toBeDefined();
+      } else {
+        await expect(result).rejects.toThrow();
+      }
+    },
+  );
+
+  it("should insert the well-known segment before path-based issuer and AS identifiers", async () => {
+    const issuer = "https://issuer.example.it/tenant";
+    const authServer = "https://auth.example.it/tenant";
+    mockResponses(
+      buildSignedMetadata(signedHeader, {
+        ...signedPayload,
+        authorization_servers: [authServer],
+        credential_issuer: issuer,
+        sub: issuer,
+      }),
+      { ...authorizationServerMetadata, issuer: authServer },
+    );
+
+    await fetchMetadata({ ...optionsV1_5(), credentialIssuerUrl: issuer });
+
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      1,
+      "https://issuer.example.it/.well-known/openid-credential-issuer/tenant",
+      { headers: { Accept: "application/jwt" } },
+    );
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://auth.example.it/.well-known/oauth-authorization-server/tenant",
+    );
+  });
+
   it("should keep signed_metadata and x5c when parsed with zMetadataResponse", async () => {
     const signedMetadata = buildSignedMetadata();
     mockResponses(signedMetadata);

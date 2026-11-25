@@ -56,6 +56,17 @@ function ensureTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
 
+/**
+ * Inserts the well-known segment between host and path component, as required by
+ * RFC 8414 §3 and OpenID4VCI (e.g. `https://host/tenant` →
+ * `https://host/.well-known/<name>/tenant`).
+ */
+function buildWellKnownUrl(identifier: string, wellKnownName: string): string {
+  const url = new URL(identifier);
+  const path = url.pathname.replace(/\/+$/, "");
+  return `${url.origin}/.well-known/${wellKnownName}${path}`;
+}
+
 export interface FetchMetadataOptions {
   /**
    * Optional Authorization Server URL selected from a credential offer.
@@ -404,10 +415,7 @@ async function fetchMetadataV1_5(
   const fetch = createFetcher(options.callbacks.fetch);
 
   const issuerResponse = await fetch(
-    new URL(
-      ".well-known/openid-credential-issuer",
-      ensureTrailingSlash(options.credentialIssuerUrl),
-    ).toString(),
+    buildWellKnownUrl(options.credentialIssuerUrl, "openid-credential-issuer"),
     { headers: { Accept: "application/jwt" } },
   );
   await hasStatusOrThrow(200, UnexpectedStatusCodeError)(issuerResponse);
@@ -459,10 +467,10 @@ async function fetchMetadataV1_5(
   }
 
   const authServerResponse = await fetch(
-    new URL(
-      ".well-known/oauth-authorization-server",
-      ensureTrailingSlash(parsedAuthorizationServer.data),
-    ).toString(),
+    buildWellKnownUrl(
+      parsedAuthorizationServer.data,
+      "oauth-authorization-server",
+    ),
   );
   await hasStatusOrThrow(200, UnexpectedStatusCodeError)(authServerResponse);
   const oauthAuthorizationServer = (await authServerResponse.json()) as Record<
@@ -524,9 +532,11 @@ const dispatchFetchMetadata = createVersionDispatcher<
  * `issuer` must match the selected server. Returns `MetadataResponseV1_5`,
  * including the raw `signed_metadata` and its `x5c` chain.
  *
- * Well-known paths are appended relative to the full `credentialIssuerUrl`, preserving
- * any path segment (e.g. `"https://issuer.example.it/v1"` →
- * `"https://issuer.example.it/v1/.well-known/..."`).
+ * For v1.0–v1.4, well-known paths are appended relative to the full `credentialIssuerUrl`,
+ * preserving any path segment (e.g. `"https://issuer.example.it/v1"` →
+ * `"https://issuer.example.it/v1/.well-known/..."`). For v1.5 the well-known segment is
+ * inserted before the path, as required by OpenID4VCI and RFC 8414 §3
+ * (`"https://issuer.example.it/.well-known/openid-credential-issuer/v1"`).
  *
  * When federation discovery succeeds, the full entity statement claims are
  * preserved in `openid_federation_claims`.

@@ -73,6 +73,7 @@ export {
 export type { ItWalletSolutionEntityMetadata as ItWalletSolutionEntityMetadataV1_4 } from "./metadata/entity/v1.4/itWalletSolution";
 export {
   IssuerInfo as IssuerInfoV1_5,
+  SupportedCredentialMetadata as SupportedCredentialMetadataV1_5,
   itWalletCredentialIssuerMetadata as itWalletCredentialIssuerMetadataV1_5,
 } from "./metadata/entity/v1.5/itWalletCredentialIssuer";
 export type { ItWalletCredentialIssuerMetadata as ItWalletCredentialIssuerMetadataV1_5 } from "./metadata/entity/v1.5/itWalletCredentialIssuer";

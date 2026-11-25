@@ -80,4 +80,13 @@ describe("verifyWalletAttestationJwt v1.5", () => {
 
     await expect(verify(header, validPayload)).rejects.toThrow();
   });
+
+  it("should reject a MAC algorithm before invoking verifyJwt", async () => {
+    mockVerifyJwt.mockClear();
+
+    await expect(
+      verify({ ...validHeader, alg: "HS256" }, validPayload),
+    ).rejects.toThrow();
+    expect(mockVerifyJwt).not.toHaveBeenCalled();
+  });
 });

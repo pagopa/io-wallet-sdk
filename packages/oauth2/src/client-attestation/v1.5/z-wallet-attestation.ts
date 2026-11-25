@@ -9,6 +9,9 @@ import { z } from "zod";
 
 export const zWalletAttestationJwtHeaderV1_5 = z.looseObject({
   ...zJwtHeader.shape,
+  alg: zJwtHeader.shape.alg.refine((alg) => !alg.startsWith("HS"), {
+    message: "alg value may not be a MAC algorithm",
+  }),
   kid: z.string(),
   trust_chain: zTrustChain.optional(),
   typ: z.literal("oauth-client-attestation+jwt"),
