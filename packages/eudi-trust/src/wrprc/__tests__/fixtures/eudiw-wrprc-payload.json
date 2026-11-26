@@ -93,10 +93,12 @@
   ],
   "public_body": false,
   "srv_description": [
-    {
-      "lang": "en",
-      "value": "PID Issuer"
-    }
+    [
+      {
+        "lang": "en",
+        "value": "PID Issuer"
+      }
+    ]
   ],
   "support_uri": "https://issuer.eudiw.dev",
   "status": {

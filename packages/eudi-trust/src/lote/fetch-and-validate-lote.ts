@@ -149,6 +149,7 @@ async function verifyLoTESignature(
     compact: lote.compact,
     errorMessagePrefix: "LoTE signature verification failed:",
     header,
+    now,
     payload,
   });
 }

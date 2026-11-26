@@ -55,9 +55,11 @@ export function verifyWRPAuthorization(
 
   const identifier =
     wrpac.subject.organizationIdentifier ?? wrpac.subject.serialNumber;
-  if (identifier !== wrprc.sub) {
+  const expectedIdentifier = wrprc.intermediary?.sub ?? wrprc.sub;
+
+  if (identifier !== expectedIdentifier) {
     throw new AuthorizationError(
-      `The WRPRC subject ${wrprc.sub} does not match the WRPAC subject ${identifier}`,
+      `The WRPRC ${wrprc.intermediary ? "intermediary" : "subject"} ${expectedIdentifier} does not match the WRPAC subject ${identifier}`,
       { code: "BINDING_FAILED" },
     );
   }

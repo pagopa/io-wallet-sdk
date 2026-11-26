@@ -24,13 +24,21 @@ const zX5tODigestAlgorithm = z.union([
     .transform((alg) => JADES_DIGEST_ALGORITHMS[alg]),
 ]);
 
+const zCertificateDigest = z.object({
+  digAlg: zX5tODigestAlgorithm,
+  digVal: z.string(),
+});
+
 /**
  * Critical header parameters this SDK processes (ETSI TS 119 182-1 section 5.1.9).
- * Currently only `x5t#o` is supported; see `verifyJAdESSignature`.
- *
- * TODO: full JAdES header processing will be implemented later.
+ * Only the parameters enforced by `verifyJAdESSignature` are supported. `x5t#S256`
+ * is excluded because RFC 7515 section 4.1.11 forbids listing JWS-defined parameters.
  */
-const SUPPORTED_CRITICAL_PARAMETERS: readonly string[] = ["x5t#o"];
+const SUPPORTED_CRITICAL_PARAMETERS: readonly string[] = [
+  "iat",
+  "sigX5ts",
+  "x5t#o",
+];
 
 const zCrit = z
   .array(z.string())
@@ -52,7 +60,8 @@ const zCrit = z
  *
  * The payload is always attached and base64url-encoded, so detached
  * signatures (`sigD`) and unencoded payloads (`b64`) are rejected; `iat`
- * replaces the legacy `sigT` signing time.
+ * replaces the deprecated `sigT` signing time (clause 5.2.1), and the SHA-1
+ * thumbprint `x5t` is forbidden (clause 5.1.6).
  *
  * @see https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.02.01_60/ts_11918201v010201p.pdf
  */
@@ -71,12 +80,10 @@ export const zJAdESHeader = z.object({
   kid: z.string().optional(),
   sigD: z.never().optional(),
   sigT: z.never().optional(),
+  sigX5ts: z.array(zCertificateDigest).min(2).optional(),
   typ: z.string(),
   x5c: z.tuple([z.string()], z.string()),
-  "x5t#o": z
-    .object({
-      digAlg: zX5tODigestAlgorithm,
-      digVal: z.string(),
-    })
-    .optional(),
+  x5t: z.never().optional(),
+  "x5t#S256": z.string().optional(),
+  "x5t#o": zCertificateDigest.optional(),
 });

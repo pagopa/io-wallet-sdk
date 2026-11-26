@@ -1,5 +1,6 @@
 import {
   CallbackContext,
+  HashAlgorithm,
   JwtPayload,
   decodeBase64,
   encodeToBase64Url,
@@ -30,6 +31,12 @@ export interface VerifyJAdESSignatureOptions {
  * Verifies a compact JAdES Baseline B signature (ETSI TS 119 182-1) made with
  * the first certificate of the `x5c` header.
  *
+ * The claimed signing time `iat` must not be later than `now`.
+ *
+ * The signing certificate references `x5t#o`, `x5t#S256` and the first entry
+ * of `sigX5ts`, when present, must match it; the other `sigX5ts` entries are
+ * not checked.
+ *
  * The signing certificate is not validated: use `validateCertificateChain` for
  * that. The header is expected to be already validated with `zJAdESHeader`.
  *
@@ -41,28 +48,72 @@ export async function verifyJAdESSignature(
   const { errorMessagePrefix, header } = options;
   const [signerCertificate] = header.x5c;
 
-  const x5tO = header["x5t#o"];
-  if (x5tO) {
-    const digest = await options.callbacks.hash(
-      decodeBase64(signerCertificate),
-      x5tO.digAlg,
+  const digestMatches = async (digAlg: HashAlgorithm, digVal: string) =>
+    encodeToBase64Url(
+      await options.callbacks.hash(decodeBase64(signerCertificate), digAlg),
+    ) === digVal;
+
+  const now = options.now ?? new Date();
+  if (header.iat * 1000 > now.getTime()) {
+    throw new JAdESError(
+      formatError("iat is later than the validation time", errorMessagePrefix),
+      { code: "JADES_IAT_IN_FUTURE" },
     );
-    if (encodeToBase64Url(digest) !== x5tO.digVal) {
+  }
+
+  for (const name of header.crit ?? []) {
+    if (!(name in header)) {
       throw new JAdESError(
         formatError(
-          "x5t#o does not match the signer certificate",
+          `Critical header parameter ${name} is not present`,
           errorMessagePrefix,
         ),
-        { code: "JADES_X5T_O_MISMATCH" },
+        { code: "JADES_CRIT_PARAMETER_MISSING" },
       );
     }
+  }
+
+  const x5tO = header["x5t#o"];
+  if (x5tO && !(await digestMatches(x5tO.digAlg, x5tO.digVal))) {
+    throw new JAdESError(
+      formatError(
+        "x5t#o does not match the signer certificate",
+        errorMessagePrefix,
+      ),
+      { code: "JADES_X5T_O_MISMATCH" },
+    );
+  }
+
+  const x5tS256 = header["x5t#S256"];
+  if (x5tS256 && !(await digestMatches(HashAlgorithm.Sha256, x5tS256))) {
+    throw new JAdESError(
+      formatError(
+        "x5t#S256 does not match the signer certificate",
+        errorMessagePrefix,
+      ),
+      { code: "JADES_X5T_S256_MISMATCH" },
+    );
+  }
+
+  const [signerReference] = header.sigX5ts ?? [];
+  if (
+    signerReference &&
+    !(await digestMatches(signerReference.digAlg, signerReference.digVal))
+  ) {
+    throw new JAdESError(
+      formatError(
+        "The first sigX5ts entry does not match the signer certificate",
+        errorMessagePrefix,
+      ),
+      { code: "JADES_SIG_X5TS_MISMATCH" },
+    );
   }
 
   try {
     await verifyJwt({
       compact: options.compact,
       header,
-      now: options.now,
+      now,
       payload: options.payload,
       signer: {
         alg: header.alg,
