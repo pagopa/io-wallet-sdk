@@ -13,22 +13,29 @@ import type { BaseAuthorizationServerMetadata } from "../authorization-server-me
 
 import { PushedAuthorizationRequestError } from "../errors";
 import { createPkce } from "../pkce";
+import { requestObjectTyps } from "./request-object-typ";
 import {
   AuthorizationRequestV1_0,
   AuthorizationRequestV1_3,
+  AuthorizationRequestV1_4,
+  MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS,
   PushedAuthorizationRequest,
   PushedAuthorizationRequestSigned,
+  PushedAuthorizationRequestUnsigned,
   PushedAuthorizationRequestUnsignedV1_0,
   PushedAuthorizationRequestUnsignedV1_3,
+  PushedAuthorizationRequestUnsignedV1_4,
   zAuthorizationRequestV1_0,
   zAuthorizationRequestV1_3,
+  zAuthorizationRequestV1_4,
 } from "./z-authorization-request";
 
-const JWT_EXPIRY_SECONDS = 3600; // 1 hour
-const JWT_MAX_EXPIRY_SECONDS_V1_5 = 300;
 const RANDOM_BYTES_SIZE = 32;
 
-type AuthorizationRequest = AuthorizationRequestV1_0 | AuthorizationRequestV1_3;
+type AuthorizationRequest =
+  | AuthorizationRequestV1_0
+  | AuthorizationRequestV1_3
+  | AuthorizationRequestV1_4;
 
 interface BaseCreatePushedAuthorizationRequestOptions<
   V extends ItWalletSpecsVersion,
@@ -128,11 +135,22 @@ export interface CreatePushedAuthorizationRequestOptionsV1_0 extends BaseCreateP
 export type CreatePushedAuthorizationRequestOptionsV1_3 =
   BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_3>;
 
-export type CreatePushedAuthorizationRequestOptionsV1_4 =
-  BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_4>;
+export interface CreatePushedAuthorizationRequestOptionsV1_4 extends BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_4> {
+  /**
+   * REQUIRED. At least one `openid_credential` object is required.
+   */
+  authorization_details: AuthorizationRequestV1_4["authorization_details"];
 
-export type CreatePushedAuthorizationRequestOptionsV1_5 =
-  BaseCreatePushedAuthorizationRequestOptions<ItWalletSpecsVersion.V1_5>;
+  /**
+   * REQUIRED. Scope advertised for the requested Credential Configuration in the
+   * Credential Issuer metadata or in the Credential Offer.
+   */
+  scope: string;
+}
+
+export type CreatePushedAuthorizationRequestOptionsV1_5 = {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_5>;
+} & Omit<CreatePushedAuthorizationRequestOptionsV1_4, "config">;
 
 export type CreatePushedAuthorizationRequestOptions =
   | CreatePushedAuthorizationRequestOptionsV1_0
@@ -189,7 +207,7 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  * @param options.responseMode - Response mode (v1.0 only, must be supported by Credential Issuer)
  * @param options.scope - OAuth 2.0 scope to request
  * @param options.state - Optional state parameter (auto-generated if not provided)
- * @param options.expiresAt - Optional JWT expiration time (defaults to 1 hour from issuedAt)
+ * @param options.expiresAt - Optional JWT expiration time (defaults to 5 minutes from issuedAt and MUST NOT exceed 300 seconds from issuedAt)
  * @param options.issuedAt - Optional JWT issued at time (defaults to current time)
  *
  * @returns A promise resolving to either:
@@ -198,6 +216,8 @@ type CreatePushedAuthorizationRequestOptionsUnsigned<
  *
  * @throws {PushedAuthorizationRequestError} If DPoP signer is missing required properties (alg, publicJwk.kid)
  * @throws {PushedAuthorizationRequestError} If PKCE code challenge method is not supported
+ * @throws {PushedAuthorizationRequestError} If `expiresAt` is not after `issuedAt`
+ * @throws {PushedAuthorizationRequestError} If `expiresAt` is more than 300 seconds after `issuedAt`
  * @throws {ZodError} If authorization request parameters fail validation
  *
  * @example
@@ -281,19 +301,27 @@ export async function createPushedAuthorizationRequest(
 >;
 
 export async function createPushedAuthorizationRequest(
-  options:
-    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_3>
-    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_4>
-    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_5>,
+  options: CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_3>,
 ): Promise<PushedAuthorizationRequestUnsignedV1_3>;
 
 export async function createPushedAuthorizationRequest(
+  options: CreatePushedAuthorizationRequestOptionsV1_3,
+): Promise<
+  PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_3
+>;
+
+export async function createPushedAuthorizationRequest(
   options:
-    | CreatePushedAuthorizationRequestOptionsV1_3
+    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_4>
+    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_5>,
+): Promise<PushedAuthorizationRequestUnsignedV1_4>;
+
+export async function createPushedAuthorizationRequest(
+  options:
     | CreatePushedAuthorizationRequestOptionsV1_4
     | CreatePushedAuthorizationRequestOptionsV1_5,
 ): Promise<
-  PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_3
+  PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_4
 >;
 
 export async function createPushedAuthorizationRequest(
@@ -344,21 +372,24 @@ export async function createPushedAuthorizationRequest(
       );
     }
 
-    const isV1_5 = options.config.isVersion(ItWalletSpecsVersion.V1_5);
-    const iat = options.issuedAt ?? new Date();
-    const exp =
+    const issuedAt = options.issuedAt ?? new Date();
+    const iat = dateToSeconds(issuedAt);
+    const exp = dateToSeconds(
       options.expiresAt ??
-      addSecondsToDate(
-        iat,
-        isV1_5 ? JWT_MAX_EXPIRY_SECONDS_V1_5 : JWT_EXPIRY_SECONDS,
-      );
+        addSecondsToDate(
+          issuedAt,
+          MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS,
+        ),
+    );
 
-    if (
-      isV1_5 &&
-      (exp <= iat || exp > addSecondsToDate(iat, JWT_MAX_EXPIRY_SECONDS_V1_5))
-    ) {
+    if (exp <= iat) {
       throw new PushedAuthorizationRequestError(
-        `Request Object exp must be after iat and not more than ${JWT_MAX_EXPIRY_SECONDS_V1_5} seconds from iat`,
+        "Request object exp must be after iat",
+      );
+    }
+    if (exp - iat > MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS) {
+      throw new PushedAuthorizationRequestError(
+        `Request object lifetime must not exceed ${MAX_PUSHED_AUTHORIZATION_REQUEST_TTL_SECONDS} seconds`,
       );
     }
 
@@ -366,13 +397,15 @@ export async function createPushedAuthorizationRequest(
       header: {
         alg: dpop.signer.alg,
         kid: dpop.signer.publicJwk.kid,
-        typ: isV1_5 ? "oauth-authz-req+jwt" : "jwt",
+        typ: requestObjectTyps[options.config.itWalletSpecsVersion].sign,
       },
       payload: {
         aud: options.audience,
-        exp: dateToSeconds(exp),
-        iat: dateToSeconds(iat),
-        iss: isV1_5 ? options.clientId : dpop.signer.publicJwk.kid,
+        exp,
+        iat,
+        iss: options.config.isVersion(ItWalletSpecsVersion.V1_5)
+          ? options.clientId
+          : dpop.signer.publicJwk.kid,
         ...authorizationRequest,
       },
     });
@@ -388,40 +421,32 @@ export async function createPushedAuthorizationRequest(
     authorizationRequest,
     client_id: options.clientId,
     pkceCodeVerifier: pkce.codeVerifier,
-  };
+  } as PushedAuthorizationRequestUnsigned;
 }
 
 function parseAuthorizationRequestByVersion(
   options: CreatePushedAuthorizationRequestOptions,
-  baseAuthorizationRequest: Omit<
-    AuthorizationRequest,
-    "authorization_details" | "response_mode" | "scope"
-  > &
-    Pick<AuthorizationRequest, "authorization_details" | "scope">,
+  baseAuthorizationRequest: Partial<AuthorizationRequest>,
 ): AuthorizationRequest {
-  return dispatchByVersion(options.config.itWalletSpecsVersion, {
-    [ItWalletSpecsVersion.V1_0]: () =>
-      zAuthorizationRequestV1_0.parse({
-        ...baseAuthorizationRequest,
-        response_mode: (options as CreatePushedAuthorizationRequestOptionsV1_0)
-          .responseMode,
-      }) satisfies AuthorizationRequestV1_0,
-    [ItWalletSpecsVersion.V1_3]: () =>
-      zAuthorizationRequestV1_3.parse(
-        baseAuthorizationRequest,
-      ) satisfies AuthorizationRequestV1_3,
-    // V1_4 reuses V1_3 authorization request schema — no breaking changes between versions.
-    // Verified against compare/1.3.3...1.4.1: authorization request parameters identical.
-    [ItWalletSpecsVersion.V1_4]: () =>
-      zAuthorizationRequestV1_3.parse(
-        baseAuthorizationRequest,
-      ) satisfies AuthorizationRequestV1_3,
-    // V1_5 reuses V1_3 authorization request schema.
-    [ItWalletSpecsVersion.V1_5]: () =>
-      zAuthorizationRequestV1_3.parse(
-        baseAuthorizationRequest,
-      ) satisfies AuthorizationRequestV1_3,
-  });
+  return dispatchByVersion<AuthorizationRequest>(
+    options.config.itWalletSpecsVersion,
+    {
+      [ItWalletSpecsVersion.V1_0]: () =>
+        zAuthorizationRequestV1_0.parse({
+          ...baseAuthorizationRequest,
+          response_mode: (
+            options as CreatePushedAuthorizationRequestOptionsV1_0
+          ).responseMode,
+        }),
+      [ItWalletSpecsVersion.V1_3]: () =>
+        zAuthorizationRequestV1_3.parse(baseAuthorizationRequest),
+      [ItWalletSpecsVersion.V1_4]: () =>
+        zAuthorizationRequestV1_4.parse(baseAuthorizationRequest),
+      // V1_5 reuses the V1_4 (1.4.7) PAR schema: parameters identical in 1.5.0.
+      [ItWalletSpecsVersion.V1_5]: () =>
+        zAuthorizationRequestV1_4.parse(baseAuthorizationRequest),
+    },
+  );
 }
 
 async function generateState(

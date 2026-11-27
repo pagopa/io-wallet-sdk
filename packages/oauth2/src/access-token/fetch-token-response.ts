@@ -87,7 +87,7 @@ export async function fetchTokenResponse(
     return parseWithErrorHandling(
       options.config?.isVersion(ItWalletSpecsVersion.V1_5)
         ? zAccessTokenResponseV1_5
-        : zAccessTokenResponse,
+        : zAccessTokenResponse, // TODO: [SIW-5560] Make authorization_details mandatory in the v1.4 response
       await tokenResponse.json(),
       "Failed to parse token response",
     );

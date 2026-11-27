@@ -41,6 +41,7 @@ import {
   itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_3,
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
 } from "./entity/v1.3/itWalletSolution";
+import { itWalletFederationEntityMetadata as itWalletFederationEntityMetadataV1_4 } from "./entity/v1.4/itWalletFederationEntity";
 import {
   itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_4,
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_4,
@@ -77,8 +78,22 @@ export const itWalletMetadataV1_3 = z.strictObject({
     itWalletSolutionEntityMetadataV1_3.optional(),
 });
 
-// v1.4 combined metadata (only wallet_solution diverges from v1.3)
-export const itWalletMetadataV1_4 = itWalletMetadataV1_3.extend({
+// v1.4 combined metadata (stubs re-export v1.3 schemas for some entities)
+export const itWalletMetadataV1_4 = z.strictObject({
+  [itWalletAuthorizationServerIdentifierV1_3]:
+    itWalletAuthorizationServerMetadataV1_3.optional(),
+  [itWalletCredentialIssuerIdentifierV1_3]:
+    itWalletCredentialIssuerMetadataV1_3.optional(),
+  [itWalletCredentialVerifierIdentifierV1_3]:
+    itWalletCredentialVerifierMetadataV1_3.optional(),
+  [itWalletFederationEntityIdentifier]:
+    itWalletFederationEntityMetadataV1_4.optional(),
+  /**
+   * @deprecated Use `openid_wallet_provider`
+   * The legacy key `wallet_solution` is accepted during the rollout period only.
+   */
+  [itWalletSolutionEntityIdentifierV1_3]:
+    itWalletSolutionEntityMetadataV1_4.optional(),
   [itWalletSolutionEntityIdentifierV1_4]:
     itWalletSolutionEntityMetadataV1_4.optional(),
 });
@@ -90,14 +105,11 @@ export const itWalletMetadataV1_5 = itWalletMetadataV1_4.extend({
 });
 
 // Union — used by entity statement / entity configuration claims.
-// Order matters: v1.4 only relaxes v1.3 wallet_solution constraints, so every v1.3
-// document also satisfies v1.4. The narrower schema must stay first, otherwise v1.3
-// documents would match the v1.4 branch. New versions go after the ones they relax.
-// Exception: v1.5 goes first because the v1.3/v1.4 credential configuration schema
-// would strip `parent_credentials` when `authentic_sources` is also present.
+// v1.5 goes first because the v1.3/v1.4 credential configuration schema would
+// strip `parent_credentials` when `authentic_sources` is also present.
 export const itWalletMetadataSchema = itWalletMetadataV1_5
-  .or(itWalletMetadataV1_3)
   .or(itWalletMetadataV1_4)
+  .or(itWalletMetadataV1_3)
   .or(itWalletMetadataV1_0);
 
 // Type-level registry of version -> schema. The generic constraint acts as a

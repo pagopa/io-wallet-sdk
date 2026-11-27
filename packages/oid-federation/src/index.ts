@@ -66,6 +66,8 @@ export {
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_3,
 } from "./metadata/entity/v1.3/itWalletSolution";
 export type { ItWalletSolutionEntityMetadata as ItWalletSolutionEntityMetadataV1_3 } from "./metadata/entity/v1.3/itWalletSolution";
+export { itWalletFederationEntityMetadata as itWalletFederationEntityMetadataV1_4 } from "./metadata/entity/v1.4/itWalletFederationEntity";
+export type { ItWalletFederationEntityMetadata as ItWalletFederationEntityMetadataV1_4 } from "./metadata/entity/v1.4/itWalletFederationEntity";
 export {
   itWalletSolutionEntityIdentifier as itWalletSolutionEntityIdentifierV1_4,
   itWalletSolutionEntityMetadata as itWalletSolutionEntityMetadataV1_4,
