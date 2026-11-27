@@ -47,6 +47,11 @@ const dispatchBuildVersionedResponse = createVersionDispatcher<
       // V1_4 reuses V1_3 credential response schema — no breaking changes between versions.
       // Verified against compare/1.3.3...1.4.1: credential response parameters identical.
     ),
+  // V1_5 reuses V1_3 credential response.
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    V1_3.createCredentialResponseV1_3(
+      (o as CreateCredentialResponseOptionsV1_4).flow,
+    ),
 });
 
 export type {
@@ -54,6 +59,7 @@ export type {
   CreateCredentialResponseOptionsV1_0,
   CreateCredentialResponseOptionsV1_3,
   CreateCredentialResponseOptionsV1_4,
+  CreateCredentialResponseOptionsV1_5,
   CreateCredentialResponseResult,
   CreateCredentialResponseResultWithFlow,
   DeferredFlowOptionsV1_0,

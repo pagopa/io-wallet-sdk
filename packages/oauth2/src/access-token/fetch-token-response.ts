@@ -2,6 +2,7 @@ import {
   CONTENT_TYPES,
   type CallbackContext,
   HEADERS,
+  type IoWalletSdkConfig,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,
@@ -13,7 +14,7 @@ import { FetchTokenResponseError } from "../errors";
 import {
   AccessTokenRequest,
   AccessTokenResponse,
-  zAccessTokenResponse,
+  getAccessTokenResponseSchema,
 } from "./z-token";
 
 export interface FetchTokenResponseOptions {
@@ -38,6 +39,8 @@ export interface FetchTokenResponseOptions {
    * Used for OAuth-Client-Attestation-PoP header to prove possession of the client key
    */
   clientAttestationDPoP: string;
+
+  config?: IoWalletSdkConfig;
 
   /**
    * DPoP proof for the token request
@@ -80,7 +83,7 @@ export async function fetchTokenResponse(
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(tokenResponse);
 
     return parseWithErrorHandling(
-      zAccessTokenResponse, // TODO: [SIW-5560] Make authorization_details mandatory in the v1.4 response
+      getAccessTokenResponseSchema(options.config),
       await tokenResponse.json(),
       "Failed to parse token response",
     );

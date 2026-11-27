@@ -22,6 +22,7 @@ import {
 import {
   FetchStatusListCallback,
   VerifyKeyAttestationJwtResult,
+  VerifyKeyAttestationJwtResultV1_5,
   verifyKeyAttestationJwt,
 } from "./verify-key-attestation-jwt";
 import {
@@ -99,10 +100,23 @@ export type VerifyCredentialRequestJwtProofOptionsV1_4 = {
   config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_4>;
 } & Omit<VerifyCredentialRequestJwtProofOptionsV1_3, "config">;
 
+/**
+ * v1.5 Key Attestations have no `iss`: trust in the Wallet Provider is
+ * established through the `x5c` chain, which the `verifyJwt` callback MUST
+ * validate against the National Wallet Trust Anchor.
+ */
+export type VerifyCredentialRequestJwtProofOptionsV1_5 = {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_5>;
+} & Omit<
+  VerifyCredentialRequestJwtProofOptionsV1_3,
+  "config" | "trustedWalletProviderIssuers"
+>;
+
 export type VerifyCredentialRequestJwtProofOptions =
   | VerifyCredentialRequestJwtProofOptionsV1_0
   | VerifyCredentialRequestJwtProofOptionsV1_3
-  | VerifyCredentialRequestJwtProofOptionsV1_4;
+  | VerifyCredentialRequestJwtProofOptionsV1_4
+  | VerifyCredentialRequestJwtProofOptionsV1_5;
 
 interface IsJwkInSetOptions {
   callbacks: Pick<CallbackContext, "hash">;
@@ -173,10 +187,19 @@ export interface VerifyCredentialRequestJwtProofResultV1_3 {
 export type VerifyCredentialRequestJwtProofResultV1_4 =
   VerifyCredentialRequestJwtProofResultV1_3;
 
+/**
+ * Verification result for IT-Wallet specification v1.5.
+ * Includes the verified v1.5 key attestation.
+ */
+export type VerifyCredentialRequestJwtProofResultV1_5 = {
+  keyAttestation: VerifyKeyAttestationJwtResultV1_5;
+} & Omit<VerifyCredentialRequestJwtProofResultV1_3, "keyAttestation">;
+
 export type VerifyCredentialRequestJwtProofResult =
   | VerifyCredentialRequestJwtProofResultV1_0
   | VerifyCredentialRequestJwtProofResultV1_3
-  | VerifyCredentialRequestJwtProofResultV1_4;
+  | VerifyCredentialRequestJwtProofResultV1_4
+  | VerifyCredentialRequestJwtProofResultV1_5;
 
 async function verifyProofV1_0(
   options: VerifyCredentialRequestJwtProofOptionsV1_0,
@@ -206,9 +229,11 @@ async function verifyProofV1_0(
   return { header, payload, signer };
 }
 
-async function verifyProofV1_3(
-  options: VerifyCredentialRequestJwtProofOptionsV1_3,
-): Promise<VerifyCredentialRequestJwtProofResultV1_3> {
+async function verifyProofJwtWithKeyAttestationHeader(
+  options:
+    | VerifyCredentialRequestJwtProofOptionsV1_3
+    | VerifyCredentialRequestJwtProofOptionsV1_5,
+) {
   const { header, payload } = decodeJwt({
     errorMessagePrefix: "Error decoding credential request proof JWT:",
     headerSchema: zProofJwtHeaderV1_3,
@@ -230,6 +255,33 @@ async function verifyProofV1_3(
     signer: jwtSignerFromJwt({ header, payload }),
     verifyJwtCallback: options.callbacks.verifyJwt,
   });
+
+  return { header, payload, signer };
+}
+
+async function assertSignedWithAttestedKey(options: {
+  attestedKeys: Jwk[];
+  callbacks: Pick<CallbackContext, "hash">;
+  signer: Awaited<ReturnType<typeof verifyJwt>>["signer"];
+}) {
+  const isSignedWithAttestedKey = await isJwkInSet({
+    callbacks: options.callbacks,
+    jwk: options.signer.publicJwk,
+    jwks: options.attestedKeys,
+  });
+
+  if (!isSignedWithAttestedKey) {
+    throw new VerifyCredentialRequestJwtProofError(
+      "Credential request jwt proof is not signed with a key in the 'key_attestation' jwt payload 'attested_keys'",
+    );
+  }
+}
+
+async function verifyProofV1_3(
+  options: VerifyCredentialRequestJwtProofOptionsV1_3,
+): Promise<VerifyCredentialRequestJwtProofResultV1_3> {
+  const { header, payload, signer } =
+    await verifyProofJwtWithKeyAttestationHeader(options);
 
   if (options.trustedWalletProviderIssuers.length === 0) {
     throw new VerifyCredentialRequestJwtProofError(
@@ -254,17 +306,34 @@ async function verifyProofV1_3(
     );
   }
 
-  const isSignedWithAttestedKey = await isJwkInSet({
+  await assertSignedWithAttestedKey({
+    attestedKeys: keyAttestationResult.payload.attested_keys,
     callbacks: options.callbacks,
-    jwk: signer.publicJwk,
-    jwks: keyAttestationResult.payload.attested_keys,
+    signer,
   });
 
-  if (!isSignedWithAttestedKey) {
-    throw new VerifyCredentialRequestJwtProofError(
-      "Credential request jwt proof is not signed with a key in the 'key_attestation' jwt payload 'attested_keys'",
-    );
-  }
+  return { header, keyAttestation: keyAttestationResult, payload, signer };
+}
+
+async function verifyProofV1_5(
+  options: VerifyCredentialRequestJwtProofOptionsV1_5,
+): Promise<VerifyCredentialRequestJwtProofResultV1_5> {
+  const { header, payload, signer } =
+    await verifyProofJwtWithKeyAttestationHeader(options);
+
+  const keyAttestationResult = await verifyKeyAttestationJwt({
+    callbacks: options.callbacks,
+    config: options.config,
+    fetchStatusList: options.fetchStatusList,
+    keyAttestationJwt: header.key_attestation,
+    now: options.now,
+  });
+
+  await assertSignedWithAttestedKey({
+    attestedKeys: keyAttestationResult.payload.attested_keys,
+    callbacks: options.callbacks,
+    signer,
+  });
 
   return { header, keyAttestation: keyAttestationResult, payload, signer };
 }
@@ -279,6 +348,8 @@ const dispatchVerifyProof = createVersionDispatcher<
     verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
     verifyProofV1_3(o as VerifyCredentialRequestJwtProofOptionsV1_3),
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    verifyProofV1_5(o as VerifyCredentialRequestJwtProofOptionsV1_5),
 });
 
 /**
@@ -291,7 +362,9 @@ const dispatchVerifyProof = createVersionDispatcher<
  * 4. Verifies the JWT signature via the `verifyJwt` callback
  * 5. (v1.3 only) Verifies the `key_attestation` JWT and checks that the proof signer key
  *    is present in the key attestation's `attested_keys`
- * 6. (v1.3 only) Ensures key attestation `iss` belongs to `trustedWalletProviderIssuers`
+ * 6. (v1.3/v1.4 only) Ensures key attestation `iss` belongs to `trustedWalletProviderIssuers`.
+ *    For v1.5 the Key Attestation has no `iss`: it is verified with its `x5c` signer and
+ *    the `verifyJwt` callback MUST validate that chain against the National Wallet Trust Anchor.
  *
  * @param options - Verification options and callbacks.
  * @returns Decoded header, payload, signer, and (v1.3) key attestation result.
@@ -309,6 +382,10 @@ export async function verifyCredentialRequestJwtProof(
     | VerifyCredentialRequestJwtProofOptionsV1_3
     | VerifyCredentialRequestJwtProofOptionsV1_4,
 ): Promise<VerifyCredentialRequestJwtProofResultV1_3>;
+
+export async function verifyCredentialRequestJwtProof(
+  options: VerifyCredentialRequestJwtProofOptionsV1_5,
+): Promise<VerifyCredentialRequestJwtProofResultV1_5>;
 
 export async function verifyCredentialRequestJwtProof(
   options: VerifyCredentialRequestJwtProofOptions,

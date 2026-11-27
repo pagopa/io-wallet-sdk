@@ -49,6 +49,25 @@ export const zKeyAttestationPayload = z.object({
 
 export type KeyAttestationPayload = z.infer<typeof zKeyAttestationPayload>;
 
+/**
+ * Key Attestation payload for IT-Wallet v1.5: `iss` is removed and the
+ * top-level `status` is replaced by `key_storage_status`.
+ *
+ * {@link https://italia.github.io/eid-wallet-it-docs/releases/1.5.0/en/wallet-provider-endpoint.html}
+ */
+export const zKeyAttestationPayloadV1_5 = zKeyAttestationPayload
+  .omit({ iss: true, status: true })
+  .extend({
+    key_storage_status: z.object({
+      exp: z.number(),
+      status: zKeyAttestationStatus,
+    }),
+  });
+
+export type KeyAttestationPayloadV1_5 = z.infer<
+  typeof zKeyAttestationPayloadV1_5
+>;
+
 export const zKeyAttestationTypeHeader = z.literal("key-attestation+jwt");
 
 export const keyAttestationTypeHeader = zKeyAttestationTypeHeader.value;

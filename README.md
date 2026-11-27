@@ -11,7 +11,7 @@ The project is structured as a monorepo using `pnpm` and is designed to be envir
 
 ## Key Features
 
-- **Full IT-Wallet Compliance**: Implements the specific profiles and flows required by the official [IT Wallet specifications](https://italia.github.io/eid-wallet-it-docs/en/), supporting versions **V1.0**, **V1.3**, and **V1.4**.
+- **Full IT-Wallet Compliance**: Implements the specific profiles and flows required by the official [IT Wallet specifications](https://italia.github.io/eid-wallet-it-docs/en/), supporting versions **V1.0**, **V1.3**, **V1.4**, and **V1.5**.
 - **Modern & Secure**: Built with TypeScript and includes support for modern OAuth 2.0 extensions like `PAR`, `DPoP`, and `PKCE`.
 - **Modular Architecture**: The core logic is split into scoped packages, so you only use what you need.
 - **Crypto Agnostic**: Does not impose a specific cryptographic library.
@@ -128,6 +128,7 @@ The SDK supports multiple versions of the Italian Wallet technical specification
 | V1.0         | Supported |
 | V1.3         | Supported |
 | V1.4         | Supported |
+| V1.5         | Supported |
 
 ```typescript
 import {
@@ -136,7 +137,7 @@ import {
 } from "@pagopa/io-wallet-utils";
 
 const config = new IoWalletSdkConfig({
-  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4, // or V1_0, V1_3
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_5, // or V1_0, V1_3, V1_4
 });
 ```
 

@@ -114,7 +114,7 @@ describe("createPushedAuthorizationRequest", () => {
         code_challenge_method: "S256",
         exp: expect.any(Number),
         iat: expect.any(Number),
-        iss: "test-kid",
+        iss: "test-client-id",
         jti: "base64url_1,2,3,4",
         redirect_uri: "https://client.example.com/callback",
         response_mode: "form_post",
@@ -145,7 +145,7 @@ describe("createPushedAuthorizationRequest", () => {
     });
   });
 
-  it("should use signer kid as issuer in JWT payload", async () => {
+  it("should use client_id as issuer and signer kid in the JWT header", async () => {
     const customSigner = {
       alg: "ES256",
       method: "jwk" as const,
@@ -172,7 +172,7 @@ describe("createPushedAuthorizationRequest", () => {
         kid: "custom-signer-kid",
       }),
       payload: expect.objectContaining({
-        iss: "custom-signer-kid",
+        iss: "test-client-id",
       }),
     });
   });
@@ -552,5 +552,59 @@ describe("createPushedAuthorizationRequest - v1.4", () => {
     });
 
     expect(result.authorizationRequest.authorization_details).toHaveLength(2);
+  });
+});
+
+describe("createPushedAuthorizationRequest - v1.5", () => {
+  beforeEach(setupMocks);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { responseMode: _, ...baseWithoutResponseMode } = baseOptions;
+  const optionsV1_5 = {
+    ...baseWithoutResponseMode,
+    authorization_details: [
+      {
+        credential_configuration_id: "test-config",
+        type: "openid_credential" as const,
+      },
+    ],
+    config: new IoWalletSdkConfig({
+      itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
+    }),
+    scope: "eid",
+  };
+
+  it("should sign the Request Object with typ, iss and a 300 seconds default exp", async () => {
+    const issuedAt = new Date("2025-01-01T00:00:00.000Z");
+    const iat = Math.floor(issuedAt.getTime() / 1000);
+
+    await createPushedAuthorizationRequest({ ...optionsV1_5, issuedAt });
+
+    expect(mockCallbacks.signJwt).toHaveBeenCalledWith(mockSigner, {
+      header: expect.objectContaining({ typ: "oauth-authz-req+jwt" }),
+      payload: expect.objectContaining({
+        exp: iat + 300,
+        iat,
+        iss: "test-client-id",
+        state: "01020304",
+      }),
+    });
+  });
+
+  it("should throw when exp is more than 300 seconds after iat", async () => {
+    await expect(
+      createPushedAuthorizationRequest({
+        ...optionsV1_5,
+        expiresAt: new Date("2025-01-01T00:05:01.000Z"),
+        issuedAt: new Date("2025-01-01T00:00:00.000Z"),
+      }),
+    ).rejects.toThrow(PushedAuthorizationRequestError);
+  });
+
+  it("should reject a request without scope", async () => {
+    await expect(
+      // @ts-expect-error: v1.5 type requires scope, but we are testing it is missing
+      createPushedAuthorizationRequest({ ...optionsV1_5, scope: undefined }),
+    ).rejects.toThrow();
   });
 });

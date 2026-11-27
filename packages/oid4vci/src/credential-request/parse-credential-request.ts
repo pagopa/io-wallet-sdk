@@ -213,7 +213,6 @@ function validateProofPayloadSemantics(options: {
 function parseProofJwt(options: {
   expected?: ParseCredentialRequestExpectedValues;
   grantType: GrantType;
-  // V1_4 uses the same proof header schema as V1_3.
   itWalletSpecsVersion: ItWalletSpecsVersion;
   jwt: string;
 }): ParsedCredentialProof {
@@ -221,11 +220,11 @@ function parseProofJwt(options: {
     errorMessagePrefix: "Error decoding credential request proof JWT:",
     jwt: options.jwt,
   });
+  // V1_4 and V1_5 use the same proof header schema as V1_3.
   const headerValidation =
-    options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_3 ||
-    options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_4
-      ? zProofJwtHeaderV1_3.safeParse(decoded.header)
-      : zProofJwtHeaderV1_0.safeParse(decoded.header);
+    options.itWalletSpecsVersion === ItWalletSpecsVersion.V1_0
+      ? zProofJwtHeaderV1_0.safeParse(decoded.header)
+      : zProofJwtHeaderV1_3.safeParse(decoded.header);
 
   if (!headerValidation.success) {
     throw new ValidationError(
@@ -321,7 +320,7 @@ async function normalizeProofs(options: {
 }
 
 /**
- * Builds the normalized parse result shared by v1.0, v1.3 and v1.4 flows.
+ * Builds the normalized parse result shared by v1.0, v1.3, v1.4 and v1.5 flows.
  */
 async function toResult<
   TRequest extends CredentialRequestV1_0 | CredentialRequestV1_3,
@@ -336,7 +335,8 @@ async function toResult<
   itWalletSpecsVersion:
     | ItWalletSpecsVersion.V1_0
     | ItWalletSpecsVersion.V1_3
-    | ItWalletSpecsVersion.V1_4;
+    | ItWalletSpecsVersion.V1_4
+    | ItWalletSpecsVersion.V1_5;
 }): Promise<ParsedCredentialRequest> {
   validateExpectedValues(options.credentialRequest, options.expected);
   validateTransactionContext({
@@ -460,13 +460,15 @@ function parseCredentialRequestV1_3(
   });
 }
 
-function parseCredentialRequestV1_4(
+function parseCredentialRequestV1_3Schema(
   options: ParseCredentialRequestHandlerOptions,
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_4 | ItWalletSpecsVersion.V1_5,
+  versionLabel: string,
 ): Promise<ParsedCredentialRequest> {
   const credentialRequest = parseWithErrorHandling(
     zCredentialRequestV1_3,
     options.credentialRequest,
-    "Invalid credential request format for ItWalletSpecsVersion 1.4",
+    `Invalid credential request format for ItWalletSpecsVersion ${versionLabel}`,
   );
   return toResult({
     accessToken: options.accessToken,
@@ -476,7 +478,7 @@ function parseCredentialRequestV1_4(
     expected: options.expected,
     grantType: options.grantType,
     isDeferredFlow: options.isDeferredFlow,
-    itWalletSpecsVersion: ItWalletSpecsVersion.V1_4, // V1_4 reuses V1_3 proof schema
+    itWalletSpecsVersion,
   });
 }
 
@@ -486,7 +488,11 @@ const dispatchParseCredentialRequest = createVersionDispatcher<
 >({
   [ItWalletSpecsVersion.V1_0]: parseCredentialRequestV1_0,
   [ItWalletSpecsVersion.V1_3]: parseCredentialRequestV1_3,
-  [ItWalletSpecsVersion.V1_4]: parseCredentialRequestV1_4,
+  // V1_4 and V1_5 reuse the V1_3 credential request schema.
+  [ItWalletSpecsVersion.V1_4]: (o) =>
+    parseCredentialRequestV1_3Schema(o, ItWalletSpecsVersion.V1_4, "1.4"),
+  [ItWalletSpecsVersion.V1_5]: (o) =>
+    parseCredentialRequestV1_3Schema(o, ItWalletSpecsVersion.V1_5, "1.5"),
 });
 
 /**

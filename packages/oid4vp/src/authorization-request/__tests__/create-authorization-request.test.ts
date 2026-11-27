@@ -11,6 +11,7 @@ import {
   type CreateAuthorizationRequestOptionsV1_0,
   type CreateAuthorizationRequestOptionsV1_3,
   type CreateAuthorizationRequestOptionsV1_4,
+  type CreateAuthorizationRequestResultV1_4,
   createAuthorizationRequest,
 } from "../create-authorization-request";
 import { Openid4vpAuthorizationRequestPayload } from "../z-authorization-request";
@@ -34,6 +35,10 @@ const configV1_3 = new IoWalletSdkConfig({
 
 const configV1_4 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+});
+
+const configV1_5 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
 });
 
 const authorizationRequestPayload: Openid4vpAuthorizationRequestPayload = {
@@ -328,6 +333,35 @@ describe("createAuthorizationRequest", () => {
           typ: "oauth-authz-req+jwt",
         },
       }),
+    );
+  });
+
+  it("creates a v1.5 authorization request through the typed public API", async () => {
+    vi.mocked(createJarRequest).mockResolvedValue({
+      authorizationRequestJwt: "signed.jwt.value",
+      jarAuthorizationRequest: {
+        client_id: "openid_federation:https://rp.example.org",
+        request_uri: "https://rp.example.org/request.jwt",
+      },
+      signerJwk: {
+        crv: "P-256",
+        kty: "EC",
+        x: "x-value",
+        y: "y-value",
+      },
+    });
+
+    const result: CreateAuthorizationRequestResultV1_4 =
+      await createAuthorizationRequest({
+        authorizationRequestPayload:
+          openidFederationAuthorizationRequestPayload,
+        callbacks,
+        config: configV1_5,
+        jar,
+      });
+
+    expect(result.authorizationRequestObject.request_uri).toBe(
+      "https://rp.example.org/request.jwt",
     );
   });
 

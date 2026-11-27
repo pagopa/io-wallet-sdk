@@ -41,6 +41,10 @@ const configV1_3 = new IoWalletSdkConfig({
   itWalletSpecsVersion: ItWalletSpecsVersion.V1_3,
 });
 
+const configV1_5 = new IoWalletSdkConfig({
+  itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
+});
+
 const mockPublicJwk = {
   crv: "P-256",
   kty: "EC",
@@ -75,6 +79,40 @@ function createJwt(options?: {
       iss: TEST_CLIENT_ID,
       nonce: TEST_NONCE,
       ...options?.payload,
+    }),
+    true,
+  );
+
+  return `${header}.${payload}.signature`;
+}
+
+function createKeyAttestationJwtV1_5(
+  payloadOverrides?: Record<string, unknown>,
+): string {
+  const header = Base64.encode(
+    JSON.stringify({
+      alg: "ES256",
+      kid: "ka-key-1",
+      typ: "key-attestation+jwt",
+      x5c: ["cert-chain-1"],
+    }),
+    true,
+  );
+
+  const payload = Base64.encode(
+    JSON.stringify({
+      attested_keys: [mockPublicJwk],
+      exp: 1700100000,
+      iat: 1700000000,
+      key_storage: ["iso_18045_high"],
+      key_storage_status: {
+        exp: 1700100000,
+        status: {
+          status_list: { idx: 7, uri: "https://status.example.com/v15" },
+        },
+      },
+      user_authentication: ["iso_18045_high"],
+      ...payloadOverrides,
     }),
     true,
   );
@@ -453,6 +491,58 @@ describe("verifyCredentialRequestJwtProof", () => {
         }),
       ).rejects.toThrow(
         /Invalid iat claim in credential request proof JWT: iat claim in JWT is too old/,
+      );
+    });
+  });
+
+  describe("v1.5", () => {
+    const verifyV1_5 = (
+      keyAttestationJwt: string,
+      fetchStatusList?: (statusList: {
+        index: number;
+        uri: string;
+      }) => Promise<boolean>,
+    ) =>
+      verifyCredentialRequestJwtProof({
+        callbacks: { hash: vi.fn(), verifyJwt: vi.fn() },
+        config: configV1_5,
+        credentialIssuer: TEST_CREDENTIAL_ISSUER,
+        expectedNonce: TEST_NONCE,
+        fetchStatusList,
+        jwt: createJwt({ header: { key_attestation: keyAttestationJwt } }),
+        nonceExpiresAt: DEFAULT_NONCE_EXPIRES_AT,
+      });
+
+    it("should verify a v1.5 key attestation without iss using the x5c signer", async () => {
+      const result = await verifyV1_5(createKeyAttestationJwtV1_5());
+
+      expect(result.keyAttestation.payload.key_storage_status.exp).toBe(
+        1700100000,
+      );
+      expect(mockVerifyJwt).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          signer: expect.objectContaining({
+            method: "x5c",
+            x5c: ["cert-chain-1"],
+          }),
+        }),
+      );
+    });
+
+    it("should check revocation through key_storage_status", async () => {
+      const fetchStatusList = vi.fn().mockResolvedValue(false);
+
+      await verifyV1_5(createKeyAttestationJwtV1_5(), fetchStatusList);
+
+      expect(fetchStatusList).toHaveBeenCalledWith({
+        index: 7,
+        uri: "https://status.example.com/v15",
+      });
+    });
+
+    it("should reject a key attestation without key_storage_status", async () => {
+      await expect(verifyV1_5(createKeyAttestationJwt())).rejects.toThrow(
+        ValidationError,
       );
     });
   });

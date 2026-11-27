@@ -40,4 +40,5 @@ export const requestObjectTyps: Record<
   [ItWalletSpecsVersion.V1_0]: LEGACY,
   [ItWalletSpecsVersion.V1_3]: LEGACY,
   [ItWalletSpecsVersion.V1_4]: STRICT,
+  [ItWalletSpecsVersion.V1_5]: STRICT,
 };

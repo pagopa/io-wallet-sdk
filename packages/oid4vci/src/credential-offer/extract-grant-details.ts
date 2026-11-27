@@ -77,12 +77,19 @@ const dispatchExtractGrantDetails = createVersionDispatcher<
     throw new ItWalletSpecsVersionError(
       "extractGrantDetails",
       ItWalletSpecsVersion.V1_0,
-      [ItWalletSpecsVersion.V1_3, ItWalletSpecsVersion.V1_4],
+      [
+        ItWalletSpecsVersion.V1_3,
+        ItWalletSpecsVersion.V1_4,
+        ItWalletSpecsVersion.V1_5,
+      ],
     );
   },
   [ItWalletSpecsVersion.V1_3]: (o) =>
     extractGrantDetailsV1_3(o as ExtractGrantDetailsOptionsV1_3),
   [ItWalletSpecsVersion.V1_4]: (o) =>
+    extractGrantDetailsV1_4(o as ExtractGrantDetailsOptionsV1_4),
+  // V1_5 reuses V1_4 credential offer.
+  [ItWalletSpecsVersion.V1_5]: (o) =>
     extractGrantDetailsV1_4(o as ExtractGrantDetailsOptionsV1_4),
 });
 

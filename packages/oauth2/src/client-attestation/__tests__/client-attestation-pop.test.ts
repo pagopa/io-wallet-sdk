@@ -13,6 +13,7 @@ import {
   createClientAttestationPopJwt,
   verifyClientAttestationPopJwt,
 } from "../client-attestation-pop";
+import { calculateDpopJwkThumbprint } from "../jwk-thumbprint";
 import {
   IT_WALLET_CLIENT_ATTESTATION_POP_ALLOWED_ALG_VALUES,
   zItWalletClientAttestationPopJwtPayload,
@@ -27,6 +28,9 @@ describe("client-attestation-pop", () => {
   });
   const mockConfigV1_4 = new IoWalletSdkConfig({
     itWalletSpecsVersion: ItWalletSpecsVersion.V1_4,
+  });
+  const mockConfigV1_5 = new IoWalletSdkConfig({
+    itWalletSpecsVersion: ItWalletSpecsVersion.V1_5,
   });
   const mockJwk = { crv: "P-256", kty: "EC", x: "...", y: "..." };
   const mockHeader = { alg: "ES256", typ: "oauth-client-attestation-pop+jwt" };
@@ -110,6 +114,38 @@ describe("client-attestation-pop", () => {
     });
 
     expect(decodeJwtPayload(jwt)).not.toHaveProperty("exp");
+  });
+
+  it("should set iss to the cnf.jwk thumbprint for IT-Wallet v1.5", async () => {
+    const hash = vi.fn(async () => new Uint8Array([1, 2, 3]));
+    const jwt = await createClientAttestationPopJwt({
+      authorizationServer: "https://auth.example",
+      callbacks: {
+        generateRandom: mockGenerateRandom,
+        hash,
+        signJwt: mockSignJwt,
+      },
+      clientAttestation: mockClientAttestation,
+      config: mockConfigV1_5,
+    });
+
+    expect(decodeJwtPayload(jwt).iss).toBe(
+      await calculateDpopJwkThumbprint({
+        callbacks: { hash },
+        dpopJwkPublic: mockJwk,
+      }),
+    );
+  });
+
+  it("should throw without a hash callback for IT-Wallet v1.5", async () => {
+    await expect(
+      createClientAttestationPopJwt({
+        authorizationServer: "https://auth.example",
+        callbacks: { generateRandom: mockGenerateRandom, signJwt: mockSignJwt },
+        clientAttestation: mockClientAttestation,
+        config: mockConfigV1_5,
+      }),
+    ).rejects.toThrow(Oauth2Error);
   });
 
   it("should throw if client attestation does not contain cnf.jwk", async () => {

@@ -127,8 +127,9 @@ export type SupportedCredentialMetadata = z.infer<
   typeof SupportedCredentialMetadata
 >;
 
-export const SupportedCredentialMetadata = z.intersection(
-  z.discriminatedUnion("format", [
+export const SupportedCredentialFormatMetadata = z.discriminatedUnion(
+  "format",
+  [
     z.object({
       credential_signing_alg_values_supported: z.array(z.string()),
       format: z.literal("dc+sd-jwt"),
@@ -139,24 +140,30 @@ export const SupportedCredentialMetadata = z.intersection(
       doctype: z.string(),
       format: z.literal("mso_mdoc"),
     }),
-  ]),
-  z.object({
-    authentic_sources: AuthenticSources,
-    credential_metadata: CredentialMetadata,
-    cryptographic_binding_methods_supported: z.array(z.string()),
-    /**
-     * @deprecated Use `error_description` in the Issuer response: https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/credential-issuer-endpoint.html#credential-response
-     *
-     * Map of errors that can occur during credential issuance. Retained from the legacy
-     * specifications while waiting for full compliance with the new error specifications.
-     */
-    issuance_errors_supported: z
-      .record(z.string(), LegacyIssuanceErrorSupported)
-      .optional(),
-    proof_types_supported: ProofTypesSupported,
-    schema_id: z.string(),
-    scope: z.string(),
-  }),
+  ],
+);
+
+export const SupportedCredentialCommonMetadata = z.object({
+  authentic_sources: AuthenticSources,
+  credential_metadata: CredentialMetadata,
+  cryptographic_binding_methods_supported: z.array(z.string()),
+  /**
+   * @deprecated Use `error_description` in the Issuer response: https://italia.github.io/eid-wallet-it-docs/releases/1.3.3/en/credential-issuer-endpoint.html#credential-response
+   *
+   * Map of errors that can occur during credential issuance. Retained from the legacy
+   * specifications while waiting for full compliance with the new error specifications.
+   */
+  issuance_errors_supported: z
+    .record(z.string(), LegacyIssuanceErrorSupported)
+    .optional(),
+  proof_types_supported: ProofTypesSupported,
+  schema_id: z.string(),
+  scope: z.string(),
+});
+
+export const SupportedCredentialMetadata = z.intersection(
+  SupportedCredentialFormatMetadata,
+  SupportedCredentialCommonMetadata,
 );
 
 /**

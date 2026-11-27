@@ -148,10 +148,15 @@ export interface CreatePushedAuthorizationRequestOptionsV1_4 extends BaseCreateP
   scope: string;
 }
 
+export type CreatePushedAuthorizationRequestOptionsV1_5 = {
+  config: IoWalletSdkConfig<ItWalletSpecsVersion.V1_5>;
+} & Omit<CreatePushedAuthorizationRequestOptionsV1_4, "config">;
+
 export type CreatePushedAuthorizationRequestOptions =
   | CreatePushedAuthorizationRequestOptionsV1_0
   | CreatePushedAuthorizationRequestOptionsV1_3
-  | CreatePushedAuthorizationRequestOptionsV1_4;
+  | CreatePushedAuthorizationRequestOptionsV1_4
+  | CreatePushedAuthorizationRequestOptionsV1_5;
 
 type CreatePushedAuthorizationRequestOptionsSigned<
   TOptions extends CreatePushedAuthorizationRequestOptions,
@@ -306,11 +311,15 @@ export async function createPushedAuthorizationRequest(
 >;
 
 export async function createPushedAuthorizationRequest(
-  options: CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_4>,
+  options:
+    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_4>
+    | CreatePushedAuthorizationRequestOptionsUnsigned<CreatePushedAuthorizationRequestOptionsV1_5>,
 ): Promise<PushedAuthorizationRequestUnsignedV1_4>;
 
 export async function createPushedAuthorizationRequest(
-  options: CreatePushedAuthorizationRequestOptionsV1_4,
+  options:
+    | CreatePushedAuthorizationRequestOptionsV1_4
+    | CreatePushedAuthorizationRequestOptionsV1_5,
 ): Promise<
   PushedAuthorizationRequestSigned | PushedAuthorizationRequestUnsignedV1_4
 >;
@@ -344,11 +353,7 @@ export async function createPushedAuthorizationRequest(
     redirect_uri: options.redirectUri,
     response_type: "code",
     scope: options.scope,
-    state:
-      options.state ??
-      encodeToBase64Url(
-        await options.callbacks.generateRandom(RANDOM_BYTES_SIZE),
-      ),
+    state: options.state ?? (await generateState(options)),
   };
 
   const authorizationRequest = parseAuthorizationRequestByVersion(
@@ -398,7 +403,7 @@ export async function createPushedAuthorizationRequest(
         aud: options.audience,
         exp,
         iat,
-        iss: dpop.signer.publicJwk.kid,
+        iss: options.clientId,
         ...authorizationRequest,
       },
     });
@@ -435,6 +440,18 @@ function parseAuthorizationRequestByVersion(
         zAuthorizationRequestV1_3.parse(baseAuthorizationRequest),
       [ItWalletSpecsVersion.V1_4]: () =>
         zAuthorizationRequestV1_4.parse(baseAuthorizationRequest),
+      // V1_5 reuses the V1_4 (1.4.7) PAR schema: parameters identical in 1.5.0.
+      [ItWalletSpecsVersion.V1_5]: () =>
+        zAuthorizationRequestV1_4.parse(baseAuthorizationRequest),
     },
   );
+}
+
+async function generateState(
+  options: CreatePushedAuthorizationRequestOptions,
+): Promise<string> {
+  const random = await options.callbacks.generateRandom(RANDOM_BYTES_SIZE);
+  return options.config.isVersion(ItWalletSpecsVersion.V1_5)
+    ? Array.from(random, (b) => b.toString(16).padStart(2, "0")).join("")
+    : encodeToBase64Url(random);
 }
