@@ -403,9 +403,7 @@ export async function createPushedAuthorizationRequest(
         aud: options.audience,
         exp,
         iat,
-        iss: options.config.isVersion(ItWalletSpecsVersion.V1_5)
-          ? options.clientId
-          : dpop.signer.publicJwk.kid,
+        iss: options.clientId,
         ...authorizationRequest,
       },
     });

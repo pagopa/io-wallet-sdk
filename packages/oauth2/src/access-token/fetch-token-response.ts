@@ -3,7 +3,6 @@ import {
   type CallbackContext,
   HEADERS,
   type IoWalletSdkConfig,
-  ItWalletSpecsVersion,
   UnexpectedStatusCodeError,
   ValidationError,
   createFetcher,
@@ -15,8 +14,7 @@ import { FetchTokenResponseError } from "../errors";
 import {
   AccessTokenRequest,
   AccessTokenResponse,
-  zAccessTokenResponse,
-  zAccessTokenResponseV1_5,
+  getAccessTokenResponseSchema,
 } from "./z-token";
 
 export interface FetchTokenResponseOptions {
@@ -85,9 +83,7 @@ export async function fetchTokenResponse(
     await hasStatusOrThrow(200, UnexpectedStatusCodeError)(tokenResponse);
 
     return parseWithErrorHandling(
-      options.config?.isVersion(ItWalletSpecsVersion.V1_5)
-        ? zAccessTokenResponseV1_5
-        : zAccessTokenResponse, // TODO: [SIW-5560] Make authorization_details mandatory in the v1.4 response
+      getAccessTokenResponseSchema(options.config),
       await tokenResponse.json(),
       "Failed to parse token response",
     );

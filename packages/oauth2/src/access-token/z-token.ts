@@ -1,4 +1,6 @@
 import {
+  type IoWalletSdkConfig,
+  ItWalletSpecsVersion,
   MAX_JTI_LENGTH,
   zJwtHeader,
   zJwtPayload,
@@ -49,7 +51,11 @@ export const zAccessTokenResponse = z.looseObject({
 
 export type AccessTokenResponse = z.infer<typeof zAccessTokenResponse>;
 
-export const zAccessTokenResponseV1_5 = zAccessTokenResponse.extend({
+/**
+ * Token Response since IT-Wallet specs 1.4.7 (unchanged in 1.5.0): `token_type`
+ * MUST be `DPoP` and `authorization_details` with `credential_identifiers` is REQUIRED.
+ */
+export const zAccessTokenResponseV1_4 = zAccessTokenResponse.extend({
   authorization_details: z
     .array(
       z.looseObject({
@@ -62,7 +68,23 @@ export const zAccessTokenResponseV1_5 = zAccessTokenResponse.extend({
   token_type: z.literal("DPoP"),
 });
 
-export type AccessTokenResponseV1_5 = z.infer<typeof zAccessTokenResponseV1_5>;
+export type AccessTokenResponseV1_4 = z.infer<typeof zAccessTokenResponseV1_4>;
+
+export const zAccessTokenResponseV1_5 = zAccessTokenResponseV1_4;
+export type AccessTokenResponseV1_5 = AccessTokenResponseV1_4;
+
+/**
+ * Selects the Token Response schema for the given configuration. Without a
+ * configuration the permissive legacy schema is used.
+ */
+export function getAccessTokenResponseSchema(
+  config?: IoWalletSdkConfig,
+): typeof zAccessTokenResponse | typeof zAccessTokenResponseV1_4 {
+  return config?.isVersion(ItWalletSpecsVersion.V1_4) ||
+    config?.isVersion(ItWalletSpecsVersion.V1_5)
+    ? zAccessTokenResponseV1_4
+    : zAccessTokenResponse;
+}
 
 export const zAccessTokenProfileJwtHeader = z.looseObject({
   ...zJwtHeader.shape,

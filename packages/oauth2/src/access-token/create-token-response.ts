@@ -2,6 +2,7 @@ import {
   type CallbackContext,
   type GenerateRandomCallback,
   HashAlgorithm,
+  type IoWalletSdkConfig,
   Jwk,
   JwtSigner,
   addSecondsToDate,
@@ -18,9 +19,9 @@ import {
   AccessTokenResponse,
   RefreshTokenProfileJwtHeader,
   RefreshTokenProfileJwtPayload,
+  getAccessTokenResponseSchema,
   zAccessTokenProfileJwtHeader,
   zAccessTokenProfileJwtPayload,
-  zAccessTokenResponse,
   zRefreshTokenProfileJwtHeader,
   zRefreshTokenProfileJwtPayload,
 } from "./z-token";
@@ -103,6 +104,13 @@ export interface CreateAccessTokenResponseOptions {
    * OAuth client identifier (`client_id` claim).
    */
   clientId: string;
+
+  /**
+   * IT-Wallet configuration. For V1_4 and V1_5 the response must have
+   * `token_type: DPoP` and `authorization_details` with `credential_identifiers`.
+   * When omitted, the permissive legacy schema is used.
+   */
+  config?: IoWalletSdkConfig;
 
   /**
    * DPoP public key used to bind the access token (`cnf.jkt` claim).
@@ -295,7 +303,7 @@ export async function createAccessTokenResponse(
     }
 
     const accessTokenResponse = parseWithErrorHandling(
-      zAccessTokenResponse, // TODO: [SIW-5560] Make authorization_details mandatory in the v1.4 response
+      getAccessTokenResponseSchema(options.config),
       {
         ...options.additionalPayload,
         access_token: jwt,

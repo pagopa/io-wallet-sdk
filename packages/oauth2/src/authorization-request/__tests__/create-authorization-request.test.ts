@@ -114,7 +114,7 @@ describe("createPushedAuthorizationRequest", () => {
         code_challenge_method: "S256",
         exp: expect.any(Number),
         iat: expect.any(Number),
-        iss: "test-kid",
+        iss: "test-client-id",
         jti: "base64url_1,2,3,4",
         redirect_uri: "https://client.example.com/callback",
         response_mode: "form_post",
@@ -145,7 +145,7 @@ describe("createPushedAuthorizationRequest", () => {
     });
   });
 
-  it("should use signer kid as issuer in JWT payload", async () => {
+  it("should use client_id as issuer and signer kid in the JWT header", async () => {
     const customSigner = {
       alg: "ES256",
       method: "jwk" as const,
@@ -172,7 +172,7 @@ describe("createPushedAuthorizationRequest", () => {
         kid: "custom-signer-kid",
       }),
       payload: expect.objectContaining({
-        iss: "custom-signer-kid",
+        iss: "test-client-id",
       }),
     });
   });

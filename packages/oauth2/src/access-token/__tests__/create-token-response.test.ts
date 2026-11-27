@@ -1,4 +1,8 @@
-import { HashAlgorithm } from "@pagopa/io-wallet-utils";
+import {
+  HashAlgorithm,
+  IoWalletSdkConfig,
+  ItWalletSpecsVersion,
+} from "@pagopa/io-wallet-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -237,6 +241,43 @@ describe("createAccessTokenResponse", () => {
     expect(invalidOptions).toBeDefined();
   });
 });
+
+describe.each([ItWalletSpecsVersion.V1_4, ItWalletSpecsVersion.V1_5])(
+  "createAccessTokenResponse - %s",
+  (itWalletSpecsVersion) => {
+    beforeEach(() => {
+      setupMockCallbacks();
+    });
+
+    const options: CreateAccessTokenResponseOptions = {
+      ...baseOptions,
+      config: new IoWalletSdkConfig({ itWalletSpecsVersion }),
+      dpop: { jwk: mockSigner.publicJwk },
+      tokenType: "DPoP",
+    };
+
+    it("accepts authorization_details with credential_identifiers", async () => {
+      const authorization_details = [
+        {
+          credential_configuration_id: "pid-sd-jwt",
+          credential_identifiers: ["pid-1"],
+          type: "openid_credential",
+        },
+      ];
+
+      const result = await createAccessTokenResponse({
+        ...options,
+        additionalPayload: { authorization_details },
+      });
+
+      expect(result.authorization_details).toEqual(authorization_details);
+    });
+
+    it("rejects a response without authorization_details", async () => {
+      await expect(createAccessTokenResponse(options)).rejects.toThrow();
+    });
+  },
+);
 
 describe("createAccessTokenResponse - Refresh Token issuance", () => {
   const dpopOptions: CreateAccessTokenResponseOptions = {
